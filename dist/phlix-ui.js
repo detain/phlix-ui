@@ -1,27 +1,27 @@
-import { r as e } from "./AuthField-D9JecZ2P.js";
+import { r as e } from "./AuthField-NF3XTP7U.js";
 import { n as t, t as n } from "./Icon-CIwTuFLd.js";
 import { t as r } from "./IconButton-y6A8Bq4D.js";
 import { a as i, i as a, n as o, o as s, r as c, t as l } from "./useFocusTrap-rrmOWOBy.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-CFPikE8Z.js";
 import { a as h, i as g, n as _, o as v, r as y, s as b, t as x } from "./plural-DMM7pLFA.js";
-import { i as S, n as C, r as w, t as T } from "./useMessages-OTo-5xOb.js";
-import { _ as ee, a as E, b as te, c as ne, d as re, f as ie, g as ae, h as oe, i as se, l as ce, m as le, n as ue, o as de, p as fe, r as pe, t as me, u as he, v as ge, y as D } from "./client-DdVqCKVh.js";
+import { i as S, n as C, r as w, t as T } from "./useMessages-UXduf5_a.js";
+import { _ as ee, a as E, b as te, c as ne, d as re, f as ie, g as ae, h as oe, i as se, l as ce, m as le, n as ue, o as de, p as fe, r as pe, t as me, u as he, v as ge, y as D } from "./client-BoMeMmx0.js";
 import { n as O, r as _e, t as ve } from "./useApiBase-CV_r-Kk4.js";
-import { t as ye } from "./useAuthStore-Bi1-VYV4.js";
-import { a as be, c as xe, i as Se, l as Ce, n as we, o as Te, r as Ee, s as De, t as Oe } from "./users-BAU_aMQB.js";
-import { n as ke, r as Ae, t as je } from "./useProfileStore-2NN98uqT.js";
+import { t as ye } from "./useAuthStore-Cj_Gp0xO.js";
+import { a as be, c as xe, i as Se, l as Ce, n as we, o as Te, r as Ee, s as De, t as Oe } from "./users-Cuae7EMf.js";
+import { n as ke, r as Ae, t as je } from "./useProfileStore-BFU3hKfR.js";
 import { i as Me, n as Ne, r as Pe, t as k } from "./useImageSrc-KnN1T9Ga.js";
 import { i as Fe, n as Ie, r as Le, t as Re } from "./usePlayerStore-D8A_gb_c.js";
 import { t as ze } from "./useToastStore-DIWpaCOl.js";
-import { n as Be, t as Ve } from "./ThumbRating-CXlGmbKm.js";
+import { n as Be, t as Ve } from "./ThumbRating-K7VmEs6I.js";
 import { i as He, o as Ue, s as We } from "./shortcuts-Ck2yBFUB.js";
 import { t as Ge } from "./Tooltip-D_txjC1i.js";
-import { t as Ke } from "./Spinner-DNw3jstB.js";
-import { t as qe } from "./NetworkHealthIndicator-BtXLI5LJ.js";
-import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-CeDPjX6h.js";
+import { t as Ke } from "./Spinner-DNkdcdz-.js";
+import { t as qe } from "./NetworkHealthIndicator-DIPOK-9p.js";
+import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-BiJmOWOI.js";
 import { i as vt, n as yt, r as bt, t as xt } from "./Kbd-DdcgRPIx.js";
-import { a as St, i as Ct, n as wt, o as Tt, r as Et, t as Dt } from "./useLibrariesStore-5icSJdQF.js";
-import { n as Ot, t as kt } from "./HomeRow-BGevIwX8.js";
+import { a as St, i as Ct, n as wt, o as Tt, r as Et, t as Dt } from "./useLibrariesStore-CzGRTmnM.js";
+import { n as Ot, t as kt } from "./HomeRow-DmdJqIV7.js";
 import { t as At } from "./safeHref-C9H0Sqte.js";
 import { t as A } from "./EmptyState-BAyOxAcK.js";
 import { t as j } from "./Button-BuG0GvCa.js";
@@ -32,20 +32,20 @@ import { t as M } from "./Badge-A88fI41k.js";
 import { t as Kt } from "./Slider-DqFxiMp4.js";
 import { t as qt } from "./Switch-ibkXiiN-.js";
 import { t as Jt } from "./Chip-CYhlmz6l.js";
-import { t as Yt } from "./Select-Cb4gljeK.js";
-import { t as Xt } from "./Combobox-BozhhY7p.js";
-import { t as Zt } from "./Modal-2Qr50B3R.js";
-import { t as Qt } from "./ConfirmDialog-wsq8_uS0.js";
+import { t as Yt } from "./Select-Bg8_ptkF.js";
+import { t as Xt } from "./Combobox-D72RKH-3.js";
+import { t as Zt } from "./Modal-CyrT3xhg.js";
+import { t as Qt } from "./ConfirmDialog-DcGOVACI.js";
 import { t as N } from "./Skeleton-rHw-IJtl.js";
 import { t as $t } from "./PageHint-BGYg6qRJ.js";
 import { t as en } from "./Tabs-7t3yuCWn.js";
 import { t as tn } from "./Menu-Dm56tG4N.js";
 import { t as nn } from "./HelpText-aA3EQtU4.js";
-import { o as rn, t as an } from "./MediaCard-DTXMqpVg.js";
-import { t as on } from "./MediaGrid-Cp1ECrqw.js";
-import { t as sn } from "./MediaRow-Du8t4M9v.js";
+import { o as rn, t as an } from "./MediaCard-nqF-ftWR.js";
+import { t as on } from "./MediaGrid-Bsj34_NB.js";
+import { t as sn } from "./MediaRow-DKnElcjE.js";
 import { n as cn, t as ln } from "./media-query-DKjhlX8r.js";
-import { n as un, t as dn } from "./metadata-sources-B64y_6Mh.js";
+import { n as un, t as dn } from "./metadata-sources-BEHj4zQp.js";
 import { n as fn, t as pn } from "./logs-DadTfaTq.js";
 import { t as mn } from "./dashboard-BTCOCTHQ.js";
 import { n as hn, r as gn, t as _n } from "./webhooks-aMh0Jywf.js";
@@ -61,16 +61,16 @@ import { t as En } from "./history-Cz9DDbWX.js";
 import { t as Dn } from "./syncPlay-DPzJkgkK.js";
 import { n as On, r as kn, t as An } from "./libraries-BESAWRyW.js";
 import { n as jn, r as Mn, t as Nn } from "./useSettingsPrefs-CEFxTJFG.js";
-import { i as Pn, n as Fn, r as In, t as Ln } from "./plugins-Dj2gQeBS.js";
+import { i as Pn, n as Fn, r as In, t as Ln } from "./plugins-PapuJnR-.js";
 import { n as Rn, r as zn, t as Bn } from "./maintenance-CETCLHzL.js";
 import { t as Vn } from "./hubDashboard-BhOaaDD-.js";
-import { t as Hn } from "./LoginForm-D7RYjNCc.js";
-import { t as Un } from "./SignupForm-mE0GzX88.js";
+import { t as Hn } from "./LoginForm-D0XHFMZv.js";
+import { t as Un } from "./SignupForm-Dy9beod7.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as Wn, t as Gn } from "./debounce-BkSsZiXZ.js";
 import { t as Kn } from "./Input-DOj6fN8q.js";
-import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-DxeYbjpG.js";
-import { t as Zn } from "./useMediaStore-ULPg9CCv.js";
+import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-JWr2uIln.js";
+import { t as Zn } from "./useMediaStore-B-LuJkZN.js";
 import { Fragment as F, Teleport as Qn, Transition as $n, TransitionGroup as er, computed as I, createApp as tr, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as nr, createTextVNode as V, createVNode as H, defineAsyncComponent as rr, defineComponent as U, getCurrentScope as ir, inject as ar, nextTick as or, normalizeClass as W, normalizeStyle as sr, onBeforeUnmount as cr, onMounted as G, onScopeDispose as lr, onUnmounted as ur, openBlock as K, provide as dr, readonly as fr, ref as q, renderList as J, renderSlot as pr, resolveComponent as mr, resolveDynamicComponent as hr, toDisplayString as Y, toValue as gr, unref as X, useId as _r, vModelSelect as vr, vModelText as yr, vShow as br, watch as Z, watchEffect as xr, withCtx as Q, withDirectives as Sr, withModifiers as Cr } from "vue";
 import { createPinia as wr, defineStore as Tr } from "pinia";
 import { RouterLink as Er, RouterView as Dr, createRouter as Or, createWebHistory as kr, useRoute as Ar, useRouter as $ } from "vue-router";
@@ -918,7 +918,7 @@ var la = ["src", "alt"], ua = { class: "brand-wordmark" }, da = {
 		Qi();
 		let t = vt(), i = $(), a = Ar(), { t: o } = T(), s = Ue(), c = I(() => a.meta?.fullBleed === !0 && s.theaterActive);
 		$i();
-		let l = rr(() => import("./CommandPalette-B8sWtPUX.js")), u = q(!1);
+		let l = rr(() => import("./CommandPalette-nFtBS-Kg.js")), u = q(!1);
 		Z(() => t.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1279,111 +1279,111 @@ function eo(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-D5XS1kpy.js")
+			component: () => import("./BrowsePage-K4WxxXEc.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-DNXN8D3f.js")
+			component: () => import("./MediaDetailPage-B7rYDmq-.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-Bd0pBMVa.js")
+			component: () => import("./SeasonPage-BqbIsTEb.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-5oYiAiSA.js")
+			component: () => import("./LibraryPage-4owd-wS9.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-C51NUiHi.js")
+			component: () => import("./PlayerPage-8KRC2ESQ.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DNrL2pR4.js")
+			component: () => import("./LoginPage-CI9hWh2C.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-Dg2c9M9f.js")
+			component: () => import("./SignupPage-DR67KS4Z.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-DzP5eBL1.js")
+			component: () => import("./ConnectPage-B3ku8XfG.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-CSn4cKB5.js")
+			component: () => import("./SettingsPage-B9q0L4WL.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-qcdrliUi.js")
+			component: () => import("./ExplorePage-Bhu7fBwY.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-DldZPCYl.js")
+			component: () => import("./RecommendationsPage-CzQ1Sq8e.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-CVmhVyye.js")
+			component: () => import("./WatchHistoryPage-DVGCrbw5.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-BxyAg_zX.js")
+			component: () => import("./SyncPlayPage-C-R5LIhI.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-DwheVLKt.js")
+			component: () => import("./MusicLibraryPage-DH0ulQyt.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-DQxrWifz.js")
+			component: () => import("./ParentalControlsPage-Bv6j5z-C.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-DPPiWbnk.js")
+			component: () => import("./ProfilesPage-DqwB2bcF.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-D0i0XSno.js")
+			component: () => import("./PlaylistsPage-DfZQJcov.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-Dyo-If57.js")
+			component: () => import("./PlaylistDetailPage-DMZ4UJlj.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Wa}`,
 		name: Ua,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-L3XwVdJG.js")
+		component: () => import("./McpTokensPage-CPIAl0Px.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1662,145 +1662,145 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-PJyZO0dU.js")
+	component: () => import("./DashboardPage-CjZWNmlz.js")
 }, _o = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-BVYlvg0D.js")
+	component: () => import("./UsersPage-vCh_iH_p.js")
 }, vo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-BfowtWAD.js")
+	component: () => import("./LogsPage-DJwIRRBZ.js")
 }, yo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-kKKg9YLE.js")
+	component: () => import("./WebhooksPage-BC0ybwIe.js")
 }, bo = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-EQx3R_w7.js")
+	component: () => import("./ServicesPage-Dc2rpFuz.js")
 }, xo = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-Cle27PUW.js")
+	component: () => import("./IntegrationsPage-DQIyL_cR.js")
 }, So = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-CSuA7XCo.js")
+	component: () => import("./BackupPage-qORtsleI.js")
 }, Co = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-9AVB43mM.js")
+	component: () => import("./CastDevicesPage-BX0GhHYI.js")
 }, wo = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-lRSWOR28.js")
+	component: () => import("./DlnaServerPage-DfSuCeMj.js")
 }, To = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-Bb9pufry.js")
+	component: () => import("./RemoteAccessPage-DaZff15Z.js")
 }, Eo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-V3WEjSvx.js")
+	component: () => import("./LiveTvPage-dXAXtrJN.js")
 }, Do = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-Dru54Zkw.js")
+	component: () => import("./CollectionsPage-B8i0kNil.js")
 }, Oo = {
 	name: "admin-history",
 	path: "history",
-	label: "Watch History",
+	label: "Watch history",
 	icon: "film",
-	component: () => import("./HistoryPage-B25AhyIb.js")
+	component: () => import("./HistoryPage-k46GsihR.js")
 }, ko = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-Bb8OdIzH.js")
+	component: () => import("./SyncPlayPage-D6pe5bXq.js")
 }, Ao = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-D3kQty5x.js")
+	component: () => import("./LibrariesPage-C_p4HIzg.js")
 }, jo = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-DN9vqr3L.js")
+	component: () => import("./DuplicatesPage-p6kKg6tS.js")
 }, Mo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-3hPBEqeI.js")
+	component: () => import("./PluginsPage-Dt416dTq.js")
 }, No = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-Cs5C-kjW.js")
+	component: () => import("./TasksPage-DbEZyrvK.js")
 }, Po = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-RmRAQhLP.js")
+	component: () => import("./TranscodingSettingsPage-B9RBbsuA.js")
 }, Fo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-CSJHQnWc.js")
+	component: () => import("./SettingsPage-C6JGBhRM.js")
 }, Io = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-B1T9o2xN.js")
+	component: () => import("./HubDashboardPage-CAdd-LHI.js")
 }, Lo = {
 	name: "admin-metrics",
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-BzQzEV5f.js")
+	component: () => import("./MetricsPage-BJefavvi.js")
 }, Ro = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
 	label: "Audit Logs",
 	icon: "eye",
-	component: () => import("./AuditLogsPage-CVbkJ_3W.js")
+	component: () => import("./AuditLogsPage-Dmi6lO6F.js")
 }, zo = {
 	name: "admin-requests",
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-oATUnnal.js")
+	component: () => import("./RequestsPage-B3kB8TLt.js")
 }, Bo = [
 	go,
 	Lo,
@@ -1900,7 +1900,7 @@ function Jo(e = "/app", t = Ko) {
 	}), [{
 		path: n,
 		meta: { requiresAdmin: !0 },
-		component: () => import("./AdminLayout-DPStvWjf.js"),
+		component: () => import("./AdminLayout-ftrn46qj.js"),
 		props: {
 			base: e,
 			pages: t
@@ -2140,7 +2140,7 @@ var Qo = { class: "pis" }, $o = { class: "pis__group" }, es = { class: "pis__ava
 		})])) : o.value ? (K(), L(A, {
 			key: 1,
 			icon: "alert",
-			title: "Couldn't load libraries",
+			title: "Couldn’t load libraries",
 			description: o.value
 		}, {
 			actions: Q(() => [H(j, {
@@ -2209,7 +2209,7 @@ var Qo = { class: "pis" }, $o = { class: "pis__group" }, es = { class: "pis__ava
 			])])])
 		]))), 128))])])]))]));
 	}
-}), [["__scopeId", "data-v-c4999265"]]), Ss = class extends Error {
+}), [["__scopeId", "data-v-7d2e0c9c"]]), Ss = class extends Error {
 	kind;
 	code;
 	constructor(e, t, n = null) {
@@ -2363,9 +2363,9 @@ var Os = {
 			if (T.value = null, e) {
 				u.value = e.id;
 				try {
-					await se.delete(`/api/v1/me/servers/${e.id}`), s.value = s.value.filter((t) => t.id !== e.id), n.success(`"${e.name}" removed.`);
+					await se.delete(`/api/v1/me/servers/${e.id}`), s.value = s.value.filter((t) => t.id !== e.id), n.success(`“${e.name}” removed.`);
 				} catch (t) {
-					n.error(D(t, `Failed to remove "${e.name}".`));
+					n.error(D(t, `Failed to remove “${e.name}”.`));
 				} finally {
 					u.value = null;
 				}
@@ -2393,9 +2393,9 @@ var Os = {
 					B("strong", null, "Add server", -1),
 					V(" claims another; ", -1),
 					B("strong", null, "Browse", -1),
-					V(" opens a server's library once its relay is active; ", -1),
+					V(" opens a server’s library once its relay is active; ", -1),
 					B("strong", null, "Manage", -1),
-					V(" opens the server's own admin page; ", -1),
+					V(" opens the server’s own admin page; ", -1),
 					B("strong", null, "Remove", -1),
 					V(" unlinks it from your account. ", -1)
 				]]),
@@ -2407,7 +2407,7 @@ var Os = {
 			})])) : l.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load servers",
+				title: "Couldn’t load servers",
 				description: l.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -2470,7 +2470,7 @@ var Os = {
 						size: "sm",
 						"left-icon": "play",
 						disabled: !e.relayActive,
-						title: e.relayActive ? `Browse ${e.name} here` : x(e) ? `${e.name} is online but its relay tunnel isn't connected yet — it can't be browsed here until it reconnects.` : "This server is offline — it must be connected to browse it here",
+						title: e.relayActive ? `Browse ${e.name} here` : x(e) ? `${e.name} is online but its relay tunnel isn’t connected yet — it can’t be browsed here until it reconnects.` : "This server is offline — it must be connected to browse it here",
 						"aria-label": `Browse ${e.name}`,
 						onClick: (t) => C(e)
 					}, {
@@ -2579,7 +2579,7 @@ var Os = {
 			}, null, 8, ["open", "message"])
 		]));
 	}
-}), [["__scopeId", "data-v-193f540d"]]), Hs = {
+}), [["__scopeId", "data-v-0b677331"]]), Hs = {
 	class: "server-detail",
 	"aria-labelledby": "server-detail-heading"
 }, Us = { class: "server-detail__back" }, Ws = {
@@ -2718,7 +2718,7 @@ var Os = {
 			])) : c.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load server details",
+				title: "Couldn’t load server details",
 				description: c.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -2815,7 +2815,7 @@ var Os = {
 			])) : R("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-243ecc5b"]]), Yc = {
+}), [["__scopeId", "data-v-579ba134"]]), Yc = {
 	class: "federation",
 	"aria-labelledby": "federation-heading"
 }, Xc = {
@@ -2930,7 +2930,7 @@ var Os = {
 			})])) : a.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load federation peers",
+				title: "Couldn’t load federation peers",
 				description: a.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -3035,7 +3035,7 @@ var Os = {
 			}, null, 8, ["open", "message"])
 		]));
 	}
-}), [["__scopeId", "data-v-9058c15d"]]), cl = {
+}), [["__scopeId", "data-v-b374460f"]]), cl = {
 	class: "fed-shares",
 	"aria-labelledby": "fed-shares-heading"
 }, ll = {
@@ -3232,7 +3232,7 @@ var Os = {
 			})])) : c.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load incoming offers",
+				title: "Couldn’t load incoming offers",
 				description: c.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -3304,7 +3304,7 @@ var Os = {
 			})])) : l.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load outgoing shares",
+				title: "Couldn’t load outgoing shares",
 				description: l.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -3361,7 +3361,7 @@ var Os = {
 			]))), 128))])])]))], 512), [[br, r.value === "outgoing"]])
 		]));
 	}
-}), [["__scopeId", "data-v-43d15a72"]]), jl = {
+}), [["__scopeId", "data-v-f9f6711c"]]), jl = {
 	class: "shares",
 	"aria-labelledby": "shares-heading"
 }, Ml = {
@@ -3441,7 +3441,7 @@ var Os = {
 			})])) : a.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load shares",
+				title: "Couldn’t load shares",
 				description: a.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -3499,7 +3499,7 @@ var Os = {
 			]))), 128))])])]))
 		]));
 	}
-}), [["__scopeId", "data-v-1ddc3ba7"]]), Vl = {
+}), [["__scopeId", "data-v-68388211"]]), Vl = {
 	class: "shared-with-me",
 	"aria-labelledby": "shared-with-me-heading"
 }, Hl = {
@@ -3572,7 +3572,7 @@ var Os = {
 			})])) : i.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load shared libraries",
+				title: "Couldn’t load shared libraries",
 				description: i.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -3630,7 +3630,7 @@ var Os = {
 			], 2))), 128))]))
 		]));
 	}
-}), [["__scopeId", "data-v-4f2136df"]]), tu = {
+}), [["__scopeId", "data-v-98a6febf"]]), tu = {
 	class: "requests",
 	"aria-labelledby": "requests-heading"
 }, nu = { class: "requests__head" }, ru = {
@@ -3783,7 +3783,7 @@ var Os = {
 			})])) : o.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load requests",
+				title: "Couldn’t load requests",
 				description: o.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -3817,7 +3817,7 @@ var Os = {
 					id: "requests-status",
 					"onUpdate:modelValue": n[3] ||= (e) => _.value = e,
 					class: "requests__filter"
-				}, [...n[16] ||= [nr("<option value=\"all\" data-v-237f236e>All</option><option value=\"pending\" data-v-237f236e>Pending</option><option value=\"approved\" data-v-237f236e>Approved</option><option value=\"available\" data-v-237f236e>Available</option><option value=\"rejected\" data-v-237f236e>Rejected</option>", 5)]], 512), [[vr, _.value]])]),
+				}, [...n[16] ||= [nr("<option value=\"all\" data-v-77f725f5>All</option><option value=\"pending\" data-v-77f725f5>Pending</option><option value=\"approved\" data-v-77f725f5>Approved</option><option value=\"available\" data-v-77f725f5>Available</option><option value=\"rejected\" data-v-77f725f5>Rejected</option>", 5)]], 512), [[vr, _.value]])]),
 				y.value ? (K(), z("p", ou, Y(S.value.length) + " of " + Y(i.value.length) + " shown ", 1)) : R("", !0)
 			]), S.value.length === 0 ? (K(), L(A, {
 				key: 0,
@@ -3969,7 +3969,7 @@ var Os = {
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-237f236e"]]), Au = class {
+}), [["__scopeId", "data-v-77f725f5"]]), Au = class {
 	client;
 	constructor(e) {
 		this.client = e;
@@ -4254,7 +4254,7 @@ var Os = {
 			])) : d.value ? (K(), L(A, {
 				key: 1,
 				icon: "alert",
-				title: "Couldn't load invite links",
+				title: "Couldn’t load invite links",
 				description: d.value
 			}, {
 				actions: Q(() => [H(j, {
@@ -4444,7 +4444,7 @@ var Os = {
 			])])) : R("", !0)]))
 		]));
 	}
-}), [["__scopeId", "data-v-5db3fe38"]]), ld = {
+}), [["__scopeId", "data-v-5b57c1e4"]]), ld = {
 	class: "accept-invite",
 	"aria-labelledby": "accept-invite-heading"
 }, ud = { class: "accept-invite__card" }, dd = {
@@ -4495,7 +4495,7 @@ var Os = {
 		}, "Accept Invite", -1), o.value ? (K(), z(F, { key: 0 }, [c.value ? (K(), z(F, { key: 0 }, [t[3] ||= B("div", {
 			class: "accept-invite__success",
 			role: "status"
-		}, [B("p", null, "You've been granted access to the library!")], -1), H(j, {
+		}, [B("p", null, "You’ve been granted access to the library!")], -1), H(j, {
 			variant: "solid",
 			size: "lg",
 			block: "",
@@ -4504,7 +4504,7 @@ var Os = {
 			default: Q(() => [...t[2] ||= [V(" View Shared Libraries ", -1)]]),
 			_: 1
 		})], 64)) : (K(), z(F, { key: 1 }, [
-			t[4] ||= B("p", { class: "accept-invite__lead" }, "You've been invited to access a library.", -1),
+			t[4] ||= B("p", { class: "accept-invite__lead" }, "You’ve been invited to access a library.", -1),
 			l.value ? (K(), z("p", dd, Y(l.value), 1)) : R("", !0),
 			H(j, {
 				variant: "solid",
@@ -4516,7 +4516,7 @@ var Os = {
 				default: Q(() => [V(Y(s.value ? "Accepting…" : "Accept Invite"), 1)]),
 				_: 1
 			}, 8, ["loading"])
-		], 64))], 64)) : (K(), z(F, { key: 1 }, [t[7] ||= B("p", { class: "accept-invite__lead" }, " You've been invited to access a library. Log in or create an account to accept. ", -1), B("div", fd, [H(j, {
+		], 64))], 64)) : (K(), z(F, { key: 1 }, [t[7] ||= B("p", { class: "accept-invite__lead" }, " You’ve been invited to access a library. Log in or create an account to accept. ", -1), B("div", fd, [H(j, {
 			variant: "solid",
 			size: "lg",
 			block: "",
@@ -4534,7 +4534,7 @@ var Os = {
 			_: 1
 		})])], 64))])]));
 	}
-}), [["__scopeId", "data-v-ffc08837"]]), md = { class: "album-page" }, hd = { class: "album-page__back-nav" }, gd = {
+}), [["__scopeId", "data-v-2dc78f80"]]), md = { class: "album-page" }, hd = { class: "album-page__back-nav" }, gd = {
 	key: 0,
 	class: "album-page__loading",
 	role: "status",
@@ -6419,9 +6419,10 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		}), t[0] ||= V(" Photo Albums ", -1)]), c.value ? (K(), z("p", gg, Y(c.value.name), 1)) : R("", !0)])]), u.value ? (K(), z("div", _g, [H(Ke, { size: "large" }), t[1] ||= B("p", null, "Loading albums...", -1)])) : d.value ? (K(), L(A, {
 			key: 1,
 			icon: "alert-circle",
-			title: d.value
+			title: "Couldn’t load albums",
+			description: d.value
 		}, {
-			default: Q(() => [H(j, {
+			actions: Q(() => [H(j, {
 				variant: "solid",
 				onClick: p
 			}, {
@@ -6429,7 +6430,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["title"])) : _.value ? (K(), L(A, {
+		}, 8, ["description"])) : _.value ? (K(), L(A, {
 			key: 2,
 			icon: "image",
 			title: "Select a Photo Library"
@@ -6448,7 +6449,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 			icon: "image",
 			title: "No photo libraries"
 		}, {
-			default: Q(() => [...t[4] ||= [B("p", null, "You don't have any photo libraries configured.", -1)]]),
+			default: Q(() => [...t[4] ||= [B("p", null, "You don’t have any photo libraries configured.", -1)]]),
 			_: 1
 		})) : !u.value && l.value.length === 0 ? (K(), L(A, {
 			key: 4,
@@ -6471,7 +6472,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 			loading: "lazy"
 		}, null, 8, wg)) : (K(), z("div", Tg, [H(n, { name: "image" })]))]), B("div", Eg, [B("h3", Dg, Y(X(ug)(e)), 1), B("p", Og, Y(g(e.photo_count)), 1)])], 8, Sg))), 128))])]))), 128))]))]));
 	}
-}), [["__scopeId", "data-v-1a2629cf"]]), Ag = { class: "photo-album-page" }, jg = { class: "page-header" }, Mg = { class: "header-content" }, Ng = { class: "title-section" }, Pg = { class: "page-title" }, Fg = {
+}), [["__scopeId", "data-v-b2288696"]]), Ag = { class: "photo-album-page" }, jg = { class: "page-header" }, Mg = { class: "header-content" }, Ng = { class: "title-section" }, Pg = { class: "page-title" }, Fg = {
 	key: 0,
 	class: "photo-count"
 }, Ig = {
@@ -6737,9 +6738,10 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		])]), f.value ? (K(), z("div", Zg, [H(Ke, { size: "large" }), t[1] ||= B("p", null, "Loading photo...", -1)])) : p.value ? (K(), L(A, {
 			key: 1,
 			icon: "alert-circle",
-			title: p.value
+			title: "Couldn’t load photo",
+			description: p.value
 		}, {
-			default: Q(() => [H(j, {
+			actions: Q(() => [H(j, {
 				variant: "solid",
 				onClick: w
 			}, {
@@ -6747,7 +6749,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["title"])) : u.value ? (K(), z("div", Qg, [B("div", { class: W(["image-container", { zoomed: g.value }]) }, [
+		}, 8, ["description"])) : u.value ? (K(), z("div", Qg, [B("div", { class: W(["image-container", { zoomed: g.value }]) }, [
 			B("div", {
 				class: "image-wrapper",
 				style: sr({ transform: `scale(${h.value})` })
@@ -6798,13 +6800,13 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 				variant: "subtle",
 				onClick: ne
 			}, {
-				default: Q(() => [...t[10] ||= [V("Go Back", -1)]]),
+				default: Q(() => [...t[10] ||= [V("Go back", -1)]]),
 				_: 1
 			})]),
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-3bc132aa"]]), m_ = { class: "photo-slideshow-page" }, h_ = {
+}), [["__scopeId", "data-v-24d34e3a"]]), m_ = { class: "photo-slideshow-page" }, h_ = {
 	key: 0,
 	class: "loading-state"
 }, g_ = {
@@ -6946,9 +6948,10 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		}), (e, t) => (K(), z("div", m_, [d.value ? (K(), z("div", h_, [H(Ke, { size: "large" }), t[0] ||= B("p", null, "Loading slideshow...", -1)])) : f.value ? (K(), L(A, {
 			key: 1,
 			icon: "alert-circle",
-			title: f.value
+			title: "Couldn’t load slideshow",
+			description: f.value
 		}, {
-			default: Q(() => [H(j, {
+			actions: Q(() => [H(j, {
 				variant: "solid",
 				onClick: w
 			}, {
@@ -6962,7 +6965,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 				_: 1
 			})]),
 			_: 1
-		}, 8, ["title"])) : o.value ? u.value.length === 0 ? (K(), L(A, {
+		}, 8, ["description"])) : o.value ? u.value.length === 0 ? (K(), L(A, {
 			key: 3,
 			icon: "image",
 			title: "No photos"
@@ -6971,7 +6974,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 				variant: "subtle",
 				onClick: oe
 			}, {
-				default: Q(() => [...t[5] ||= [V("Go Back", -1)]]),
+				default: Q(() => [...t[5] ||= [V("Go back", -1)]]),
 				_: 1
 			})]),
 			_: 1
@@ -7049,13 +7052,13 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 				variant: "subtle",
 				onClick: oe
 			}, {
-				default: Q(() => [...t[3] ||= [V("Go Back", -1)]]),
+				default: Q(() => [...t[3] ||= [V("Go back", -1)]]),
 				_: 1
 			})]),
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-684564bd"]]);
+}), [["__scopeId", "data-v-c1333f4b"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
 function k_(e, t) {
@@ -7523,7 +7526,7 @@ var H_ = {
 		noRooms: "No hay salas públicas disponibles",
 		errorCreate: "No se pudo crear la sala.",
 		errorJoin: "No se pudo unir a la sala.",
-		errorLeave: "No se pudo salir de la sala",
+		errorLeave: "No se pudo salir de la sala.",
 		yourRole: "Eres {role}",
 		roleOwner: "Propietario",
 		roleMember: "Miembro",
@@ -8024,7 +8027,7 @@ var H_ = {
 		noRooms: "Aucun salon public disponible",
 		errorCreate: "Impossible de créer le salon.",
 		errorJoin: "Impossible de rejoindre le salon.",
-		errorLeave: "Impossible de quitter le salon",
+		errorLeave: "Impossible de quitter le salon.",
 		yourRole: "Vous êtes {role}",
 		roleOwner: "Propriétaire",
 		roleMember: "Membre",
@@ -8525,7 +8528,7 @@ var H_ = {
 		noRooms: "Keine öffentlichen Räume verfügbar",
 		errorCreate: "Raum konnte nicht erstellt werden.",
 		errorJoin: "Raum konnte nicht beigetreten werden.",
-		errorLeave: "Raum konnte nicht verlassen werden",
+		errorLeave: "Raum konnte nicht verlassen werden.",
 		yourRole: "Du bist {role}",
 		roleOwner: "Eigentümer",
 		roleMember: "Mitglied",
@@ -9026,7 +9029,7 @@ var H_ = {
 		noRooms: "Nessuna sala pubblica disponibile",
 		errorCreate: "Impossibile creare la sala.",
 		errorJoin: "Impossibile unirsi alla sala.",
-		errorLeave: "Impossibile uscire dalla sala",
+		errorLeave: "Impossibile uscire dalla sala.",
 		yourRole: "Sei {role}",
 		roleOwner: "Proprietario",
 		roleMember: "Membro",
@@ -9527,7 +9530,7 @@ var H_ = {
 		noRooms: "Nenhuma sala pública disponível",
 		errorCreate: "Falha ao criar a sala.",
 		errorJoin: "Falha ao entrar na sala.",
-		errorLeave: "Falha ao sair da sala",
+		errorLeave: "Falha ao sair da sala.",
 		yourRole: "Você é {role}",
 		roleOwner: "Proprietário",
 		roleMember: "Membro",
@@ -10028,7 +10031,7 @@ var H_ = {
 		noRooms: "公開ルームはありません",
 		errorCreate: "ルームを作成できませんでした。",
 		errorJoin: "ルームに参加できませんでした。",
-		errorLeave: "ルームから退出できませんでした",
+		errorLeave: "ルームから退出できませんでした。",
 		yourRole: "あなたの役割：{role}",
 		roleOwner: "オーナー",
 		roleMember: "メンバー",
@@ -10245,7 +10248,7 @@ var H_ = {
 	it: G_,
 	pt_BR: K_,
 	ja: q_
-}, Y_ = rr(() => import("./MediaDetail-6xQiEzVc.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-BEYz1frQ.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-BRV0bIqM.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-pDy_ZkkA.js"));
+}, Y_ = rr(() => import("./MediaDetail-CWyb6LVo.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-CoYfW3Ug.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-CuB1QpB8.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-CLwZcURs.js"));
 //#endregion
 export { je as ACTIVE_PROFILE_KEY, pn as ALL_LOGS, pd as AcceptInvitePage, bn as AdminBackupApi, xn as AdminCastApi, Tn as AdminCollectionsApi, mn as AdminDashboardApi, Sn as AdminDlnaServerApi, En as AdminHistoryApi, Vn as AdminHubDashboardApi, yn as AdminIntegrationsApi, An as AdminLibrariesApi, wn as AdminLiveTvApi, fn as AdminLogsApi, Bn as AdminMaintenanceApi, dn as AdminMetadataSourcesApi, Ln as AdminPluginsApi, Cn as AdminRemoteAccessApi, vn as AdminServicesApi, jn as AdminSettingsApi, Dn as AdminSyncPlayApi, Oe as AdminUsersApi, _n as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Kr as AppLayout, Oh as AudiobookDetailPage, cg as AudiobookPlayerPage, Qm as AudiobooksPage, it as BUILT_IN_THEME_IDS, M as Badge, ym as BookDetailPage, Lm as BookReaderPage, Qp as BooksPage, j as Button, zt as CONNECTION_API_BASE_KEY, Ft as CONNECTION_CONFIRMED_ORIGIN_KEY, ha as CURRENT_SERVER_ID_KEY, ga as CURRENT_SERVER_NAME_KEY, Jt as Chip, Xt as Combobox, Qt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, W_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, H_ as ES_MESSAGES, A as EmptyState, Ze as FOCUS_RING_MIN_CONTRAST, U_ as FR_MESSAGES, sl as FederationPage, Al as FederationSharesPage, Z_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, xa as HUB_SYNC_PLAY_PORT, lo as HelpPopover, nn as HelpText, G_ as IT_MESSAGES, n as Icon, r as IconButton, cd as InviteLinksPage, q_ as JA_MESSAGES, xt as Kbd, On as LIBRARY_TYPES, J_ as LOCALE_MESSAGES, xs as LibraryScanPage, ce as LocalStorageTokenStore, Hn as LoginForm, Rn as MAINTENANCE_ENDPOINTS, zn as MAINTENANCE_TASK_NAMES, ct as MAX_EXTENDS_DEPTH, Ua as MCP_TOKENS_ROUTE_NAME, Wa as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Bl as ManageSharesPage, an as MediaCard, Y_ as MediaDetail, on as MediaGrid, kt as MediaHomeRow, sn as MediaRow, tn as Menu, X_ as MetadataMatchModal, Zt as Modal, Pd as MusicAlbumPage, Sf as MusicArtistPage, $d as MusicArtistsPage, Rp as MusicPlayerPage, sp as MusicTracksPage, Vs as MyServersPage, ee as NetworkError, Fn as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, K_ as PT_BR_MESSAGES, $t as PageHint, ro as PageTransition, fa as PhlixApp, Wg as PhotoAlbumPage, kg as PhotoAlbumsPage, O_ as PhotoSlideshowPage, p_ as PhotoViewPage, ls as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, Gn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, dt as RING_GROUND_KEYS, po as RatingBadge, ku as RequestsPage, no as Reveal, kn as SCAN_JOB_TYPES, Mn as SETTINGS_SECRET_MASK, Ct as SORT_TITLE_ARTICLES, hn as SUBSCRIBABLE_EVENTS, Q_ as SearchPage, ft as SecuritySettingsPage, Yt as Select, Jc as ServerDetailPage, eu as SharedWithMePage, Ir as Sheet, Un as SignupForm, N as Skeleton, Kt as Slider, un as SourcePriorityEditor, Ke as Spinner, qt as Switch, $e as THEME_CACHE_KEY, at as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, en as Tabs, Ve as ThumbRating, ge as TimeoutError, Bi as ToastHost, Ge as Tooltip, ho as UserRatingPicker, gn as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, pt as activeThemeStyle, Zo as adminMenu, Zi as applyStoredThemeEarly, et as applyThemeTokens, F_ as bestCandidate, k_ as bindMediaStoreToRouter, Jo as buildAdminRoutes, Xo as buildHubAdminRoutes, Ea as buildHubRelayUrl, ln as buildMediaQuery, cn as buildMediaUrl, Yo as buildServerAdminRoutes, tt as clearThemeTokens, Fa as closeHubRelayConnection, Uo as commonAdminPages, St as compareByStrippedTitle, lt as compositedContrastOver, to as createPhlixApp, w as createTranslator, Wn as debounce, Ji as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, wt as fetchLibraries, ut as fetchThemes, ot as focusRingLawViolation, c as focusable, a as focusableRegistry, Gt as formatPageTitle, yt as fuzzyScore, E as getDefaultApiHeaders, Ia as getHubRelaySocket, p as hasStoredPreferences, Go as hubAdminPages, i as installFocusable, Lt as isAllowedBase, rt as isAllowedThemeToken, nt as isBuiltInThemeId, te as isOffline, Nt as isPlaintextPublic, _ as isPluralTemplate, jt as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, Xe as isSafeThemeTokenValue, de as isTmdbUnconfigured, bt as matchCommand, Ga as mcpTokensMenuItem, S as mergeMessages, It as normalizeBase, mt as normalizeServerTheme, Ma as openHubRelayConnection, Rt as originOf, wa as parsePendingCommandFrame, _t as parseThemeColor, In as pluginErrorCode, Pn as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Mt as probeServer, Qe as readCachedTheme, d as readStoredPreferences, A_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, gt as resolveThemeBase, Ye as resolveThemeTokens, At as safeHref, Je as sanitizeThemeTokens, b as selectPluralTemplate, Wo as serverAdminPages, Ut as setAppName, ne as setDefaultApiHeaders, Wt as setPageTitle, Et as sortLibraries, Tt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, $i as useCommandPaletteHotkey, vt as useCommandStore, Pt as useConnectionStore, o as useFocusTrap, k as useImageSrc, Dt as useLibrariesStore, O as useMediaApiBase, Zn as useMediaStore, T as useMessages, V_ as useOnline, Ht as usePageTitle, Fe as usePlayerStore, ia as usePreconnect, u as usePreferencesStore, rn as usePrefetch, Ae as useProfileStore, ca as useResumeReporter, Ot as useResumeSync, ba as useServerStore, Nn as useSettingsPrefsStore, B_ as useSpatialNav, Qi as useTheme, st as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Bt as withScheme, ht as writeCachedTheme };
 

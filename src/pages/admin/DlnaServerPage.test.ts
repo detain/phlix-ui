@@ -324,7 +324,7 @@ describe('Admin DlnaServerPage', () => {
     // misleading "DLNA server is not configured." empty state (status stays null).
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.text()).toContain("Couldn't load DLNA server status");
+    expect(empty.text()).toContain("Couldn’t load DLNA server status");
     expect(w.text()).toContain('boom');
     expect(w.text()).not.toContain('DLNA server is not configured.');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'boom')).toBe(true);

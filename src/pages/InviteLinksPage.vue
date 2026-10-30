@@ -373,7 +373,7 @@ onMounted(() => loadLinks(true));
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load invite links"
+      title="Couldn’t load invite links"
       :description="error"
     >
       <template #actions>

@@ -12,6 +12,71 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui minors lane 2026-10-30 (W-min187): the copy law gets its teeth — one typographic set across every catalog and every inline title, the last-resort error lanes finally speak catalog, and "the 412-key catalog" is now a number that cannot rot
+
+- **M-UI-04 / M-UI-36 (copywriter m4, writer m5).** The apostrophe split is
+  closed with the typographic set as the single house convention: eleven
+  straight-apostrophe values swept in the English catalogs (the nine
+  `Couldn't`/`Who's`/`You're` chrome keys — the review's "errors.ts EN is
+  all-curly" claim was itself drifting: the two relay-tunnel values carried
+  `isn't`/`can't` too), and every locale bundle was verified clean at value
+  level (their remaining straight hits are comment prose). The inline half —
+  the same word rendered straight next to a catalog curly on one TV screen —
+  is swept across the pages' EmptyState titles, help popovers, toasts and
+  template prose (123 lines: `toasts.*` interpolations to `“…”`, the
+  `Couldn’t load …` title family across 48 files). A tripwire walk in
+  `locales.test.ts` now pins the law where it can actually be checked: every
+  string VALUE in all ten shipped registries is scanned; a straight `'` or `"`
+  anywhere reds the suite. (Code-context quotes — CSS `url("…")`, `codecs="…"`,
+  selector templates — are deliberately out of scope: they are wire syntax,
+  not copy.)
+- **M-UI-10 (copywriter m10).** The ladder's last missing rung: store
+  last-resort copy now resolves through the message catalog.
+  `useAuthStore`/`useSyncPlayStore` build a translator on the same
+  `PhlixAppConfig.messages` seam components use (English defaults outside an
+  app context), so the fallback for a failed sign-in is literally
+  `t('auth.signInFailed')` — the product's only stray "login" string is gone —
+  and the SyncPlay create/join/leave fallbacks carry their catalog periods.
+  The photo pages' `:title="error"` inversion (dev-speak `e.message` rendered
+  as the headline of a 7-locale surface) is fixed to the shape the review
+  asked for: a friendly sentence-case title plus the raw detail in
+  `EmptyState`'s description lane (its Retry buttons move to the `#actions`
+  slot, matching the BrowsePage idiom); the three `Failed to remove "X":
+  ${e.message}` splice-toasts split into title + detail the way the W-min186
+  `withLabel` contract intends. Disclosed pin rotation: the syncplay
+  join-fallback literal in `useSyncPlayStore.actions.test.ts` (period, via
+  key). The two refresh-command fallbacks keep literals (no catalog keys
+  exist; they now carry their periods and a rider row).
+- **M-UI-12 (copywriter m12).** "the 412-key UI-chrome catalog" was three
+  mentions of a number that stopped being true two catalogs ago; measured
+  truth at tip is **466**, and the three prose sites (`errors.ts` header,
+  README, `errors.test.ts`) now carry it. The same test file refuses to let
+  the class recur: the size tripwire walks `DEFAULT_MESSAGES` and requires
+  the measured count to appear verbatim in all three files — drift either way
+  is red, never silent. (The route-manifest's 412 tuples are a different 412
+  and were left exactly where they belong.)
+- **M-UI-35 (writer m4).** The capitalization law is now DECLARED, not implied
+  — the `DEFAULT_MESSAGES` header states sentence case with the two named
+  exception families (initialisms, brand theme names) and points at its teeth.
+  The residual islands the W-min186 sweep left go with it: `explore.title`
+  reads its preferred 'Explore similar titles', the whole 'Watch History'
+  label family (user menu key, admin nav, page heading, help copy) and
+  'Now Playing' (card heading + help text) sentence-case, the two remaining
+  `ParentalControlsPage` modal titles follow, and the photo pages' `Go Back`
+  buttons close. Disclosed re-pins: `UserMenu`/`AdminLayout`/`admin` menu
+  expectations, `DashboardPage` card-heading assertion — bug-encoding of the
+  old case, rotated to the law (R15's per-key sweep finally made per-surface).
+- **M-UI-37 sibling.** `syncplay.errorLeave` was the one status line in the
+  create/join/leave trio that never closed its sentence in the W-min186
+  sweep — perioded in all seven locales (ja `。`), now that M-UI-10 made the
+  key user-visible.
+- Verified-stale alongside (fixed earlier, re-proven at tip): M-UI-33 (the
+  German register split — closed by the majors M-UI-03 wave: de.ts is du
+  throughout incl. `Bist du sicher?`, and the errors.ts DE-block doc-comment
+  tells the truth) and M-UI-38 (the plural-branch period — closed by the
+  W-min186 M-UI-37 cluster). Parked for owner: M-UI-32 (room vs. watch-group
+  vocabulary — the naming ruling the estate owes; see the M-UI-01 precedent).
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min186): the copy-law cluster — toasts stop swallowing their labels, SyncPlay roles speak wire truth, the Title Case islands sentence-case, status/error lines close their sentences in all seven locales, and the CHANGELOG gets its H1, its format law, and its honest headers
 
 - **M-UI-28 (webux).** `toasts.error(label, { message })` — the shape ten call

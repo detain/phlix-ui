@@ -278,7 +278,7 @@ onMounted(() => {
       <EmptyState
         v-else-if="backupsError"
         icon="alert"
-        title="Couldn't load backups"
+        title="Couldn’t load backups"
         :description="backupsError"
       >
         <template #actions>
@@ -365,7 +365,7 @@ onMounted(() => {
       <EmptyState
         v-else-if="scheduleError"
         icon="alert"
-        title="Couldn't load schedule"
+        title="Couldn’t load schedule"
         :description="scheduleError"
       >
         <template #actions>

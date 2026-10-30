@@ -144,7 +144,7 @@ describe('Admin ServicesPage — Trakt section', () => {
     const btn = findBtn(w, 'Connect to Trakt');
     expect(btn).toBeTruthy();
     expect(btn!.attributes('disabled')).toBeUndefined();
-    expect(w.text()).not.toContain("Trakt isn't configured yet");
+    expect(w.text()).not.toContain("Trakt isn’t configured yet");
     w.unmount();
   });
 
@@ -152,7 +152,7 @@ describe('Admin ServicesPage — Trakt section', () => {
     const { client } = makeClient({ trakt: { connected: false, username: null, configured: false } });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain("Trakt isn't configured yet");
+    expect(w.text()).toContain("Trakt isn’t configured yet");
     const btn = findBtn(w, 'Connect to Trakt');
     expect(btn!.attributes('disabled')).toBeDefined();
     w.unmount();
@@ -203,7 +203,7 @@ describe('Admin ServicesPage — Trakt section', () => {
     const w = mountPage(client);
     await flushPromises();
     expect(w.findAllComponents(EmptyState).length).toBeGreaterThan(0);
-    expect(w.text()).toContain("Couldn't load Trakt");
+    expect(w.text()).toContain("Couldn’t load Trakt");
     expect(w.text()).toContain('trakt status boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'trakt status boom')).toBe(true);
@@ -223,11 +223,11 @@ describe('Admin ServicesPage — Trakt section', () => {
     });
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load Trakt");
+    expect(w.text()).toContain("Couldn’t load Trakt");
     // Only the Trakt section errored → exactly one Retry button.
     await findBtn(w, 'Retry')!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load Trakt");
+    expect(w.text()).not.toContain("Couldn’t load Trakt");
     expect(w.text()).toContain('traktuser');
     w.unmount();
   });
@@ -282,7 +282,7 @@ describe('Admin ServicesPage — Last.fm section', () => {
     const btn = findBtn(w, 'Connect Last.fm');
     expect(btn).toBeTruthy();
     expect(btn!.attributes('disabled')).toBeUndefined();
-    expect(w.text()).not.toContain("Last.fm isn't configured yet");
+    expect(w.text()).not.toContain("Last.fm isn’t configured yet");
     w.unmount();
   });
 
@@ -292,7 +292,7 @@ describe('Admin ServicesPage — Last.fm section', () => {
     await flushPromises();
     const btn = findBtn(w, 'Connect Last.fm');
     expect(btn!.attributes('disabled')).toBeDefined();
-    expect(w.text()).toContain("Last.fm isn't configured yet");
+    expect(w.text()).toContain("Last.fm isn’t configured yet");
     expect(w.text()).toContain('last.fm/api/account/create');
     w.unmount();
   });
@@ -326,7 +326,7 @@ describe('Admin ServicesPage — Last.fm section', () => {
     const { client } = makeClient({ lastfmReject: true });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load Last.fm");
+    expect(w.text()).toContain("Couldn’t load Last.fm");
     expect(w.text()).toContain('lastfm status boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'lastfm status boom')).toBe(true);
@@ -346,11 +346,11 @@ describe('Admin ServicesPage — Last.fm section', () => {
     });
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load Last.fm");
+    expect(w.text()).toContain("Couldn’t load Last.fm");
     // Trakt loaded fine → the only Retry button is Last.fm's.
     await findBtn(w, 'Retry')!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load Last.fm");
+    expect(w.text()).not.toContain("Couldn’t load Last.fm");
     expect(w.text()).toContain('lastfmuser');
     w.unmount();
   });

@@ -172,7 +172,7 @@ onMounted(loadGroups);
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load groups"
+      title="Couldn’t load groups"
       :description="error"
     >
       <template #actions>

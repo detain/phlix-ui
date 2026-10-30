@@ -24,6 +24,17 @@ import { isPluralTemplate, selectPluralTemplate } from '../utils/plural';
  * operator-facing admin pages keep their inline English and can adopt this same
  * seam incrementally later — every key here is backed by a real adoption site.
  *
+ * COPY LAW (review writer m4/m5 + copywriter m4, W-min187):
+ *  1. Capitalization — sentence case everywhere, in the catalog and in inline
+ *     page copy, except initialisms (MCP, HLS, DLNA, SyncPlay) and the brand
+ *     theme names. Titles and headings are not exempt (R15 swept per-key; this
+ *     is the per-surface declaration it always wanted).
+ *  2. Typography — the typographic set only: `’` for apostrophes and `“ ”` for
+ *     embedded quotation. No straight `'` or `"` inside any value, in any
+ *     locale. Pinned by the tripwire walk in `locales.test.ts`.
+ *  3. End punctuation — a complete status/error sentence carries a period;
+ *     labels, titles and buttons never do (the M-UI-37 sweep + siblings).
+ *
  * `satisfies` (not `as const`) keeps the value types as `string` — exactly what the
  * override type wants — while still narrowing the keys for `MessageKey`.
  */
@@ -60,7 +71,7 @@ export const DEFAULT_MESSAGES = {
     browse: 'Browse',
     explore: 'Explore',
     recommendations: 'For You',
-    watchHistory: 'Watch History',
+    watchHistory: 'Watch history',
     settings: 'Settings',
     themeToggleLabel: 'Theme: {current} (switch to {next})',
     account: 'Account',
@@ -72,7 +83,7 @@ export const DEFAULT_MESSAGES = {
   },
   // S82 — the Who's-watching gate + the self-service profiles surface.
   profiles: {
-    whoIsWatching: "Who's watching?",
+    whoIsWatching: "Who’s watching?",
     loading: 'Loading profiles…',
     active: 'Active',
     manageTitle: 'Manage profiles',
@@ -167,7 +178,7 @@ export const DEFAULT_MESSAGES = {
     connecting: 'Connecting…',
     addressRequired: 'Enter your server address.',
     invalidAddress: 'Enter a valid http:// or https:// server address.',
-    unreachable: "Couldn't reach a Phlix server at that address. Check it and try again.",
+    unreachable: "Couldn’t reach a Phlix server at that address. Check it and try again.",
     connectAnyway: 'Connect anyway',
     // Non-blocking warning shown for an http:// address on a PUBLIC host —
     // credentials would travel unencrypted and could be intercepted.
@@ -183,7 +194,7 @@ export const DEFAULT_MESSAGES = {
     // entirely unless the shell supplies `PhlixAppConfig.connectScan`.
     scan: 'Scan your network',
     scanning: 'Scanning…',
-    scanFailed: "Couldn't scan your network right now. Enter the address manually.",
+    scanFailed: "Couldn’t scan your network right now. Enter the address manually.",
     scanEmpty: 'No Phlix servers found on your network.',
     scanListLabel: 'Servers found on your network',
   },
@@ -372,14 +383,14 @@ export const DEFAULT_MESSAGES = {
     noRooms: 'No public rooms available',
     errorCreate: 'Failed to create the room.',
     errorJoin: 'Failed to join the room.',
-    errorLeave: 'Failed to leave the room',
+    errorLeave: 'Failed to leave the room.',
     yourRole: 'You are {role}',
     roleOwner: 'Owner',
     roleMember: 'Member',
     roleEditor: 'Editor',
     roleContributor: 'Contributor',
     currentRoom: 'Current room',
-    notInRoom: "You're not in a SyncPlay room.",
+    notInRoom: "You’re not in a SyncPlay room.",
     notInRoomHint: 'Create or join a room to watch together with others.',
     title: 'SyncPlay',
     roomNamePlaceholder: 'Enter room name',
@@ -564,7 +575,7 @@ export const DEFAULT_MESSAGES = {
     groupSaved: '{name} settings saved.',
     groupSaveError: 'Failed to save {name} settings.',
     loadFailed: 'Failed to load settings.',
-    loadErrorTitle: "Couldn't load settings",
+    loadErrorTitle: "Couldn’t load settings",
     // NOTE: the appearance option *enum* labels (theme/accent/density/grid/motion/
     // quality/subtitle-language names) deliberately stay inline-English —
     // operator/technical copy, matching the R6.5c decision to keep enum + admin
@@ -572,13 +583,13 @@ export const DEFAULT_MESSAGES = {
     // schema `meta` block, not from this catalogue at all.
   },
   explore: {
-    title: 'Explore Similar',
+    title: 'Explore similar titles',
   },
   recommendations: {
     title: 'For You',
   },
   history: {
-    title: 'Watch History',
+    title: 'Watch history',
   },
   season: {
     // Season page top actions (whole-season Play + per-season-row user data)
@@ -594,7 +605,7 @@ export const DEFAULT_MESSAGES = {
     noEpisodes: 'No episodes to play yet',
     // Empty/error-state copy (L3)
     loadingAria: 'Loading season',
-    loadError: "Couldn't load this season.",
+    loadError: "Couldn’t load this season.",
     backToSeries: 'Back to series',
     episodes: 'Episodes',
     notFound: 'Season not found',
@@ -638,9 +649,9 @@ export const DEFAULT_MESSAGES = {
     streamLimitsUpdated: 'Stream limits updated.',
     deleteScheduleConfirm: 'Delete schedule {name}?',
     removeTagConfirm: 'Remove tag {tag}?',
-    loadErrorSchedules: "Couldn't load schedules.",
-    loadErrorTags: "Couldn't load tags",
-    loadErrorStreamLimits: "Couldn't load stream limits",
+    loadErrorSchedules: "Couldn’t load schedules.",
+    loadErrorTags: "Couldn’t load tags",
+    loadErrorStreamLimits: "Couldn’t load stream limits",
     retry: 'Retry',
   },
   admin: {

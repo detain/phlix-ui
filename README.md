@@ -368,7 +368,7 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-412-key identity and downstream clients (tizen, windows) pin bundle↔installed
+466-key identity and downstream clients (tizen, windows) pin bundle↔installed
 equality at tag `v0.99.5` — ~150 registry strings would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
 DERIVED from contracts (`Record<ErrorCode, string>` makes adding/removing a

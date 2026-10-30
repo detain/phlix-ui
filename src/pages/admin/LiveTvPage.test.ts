@@ -211,7 +211,7 @@ describe('LiveTvPage — Tuners', () => {
     const { client } = makeClient({ failTuners: true });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load tuners");
+    expect(w.text()).toContain("Couldn’t load tuners");
     expect(w.text()).toContain('tuner boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
@@ -230,10 +230,10 @@ describe('LiveTvPage — Tuners', () => {
     });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load tuners");
+    expect(w.text()).toContain("Couldn’t load tuners");
     await findBtn(w, 'Retry')!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load tuners");
+    expect(w.text()).not.toContain("Couldn’t load tuners");
     expect(w.text()).toContain('Front Room');
   });
 
@@ -348,7 +348,7 @@ describe('LiveTvPage — Guide', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Guide / EPG');
-    expect(w.text()).toContain("Couldn't load guide");
+    expect(w.text()).toContain("Couldn’t load guide");
     expect(w.text()).toContain('guide boom');
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
@@ -369,10 +369,10 @@ describe('LiveTvPage — Guide', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Guide / EPG');
-    expect(w.text()).toContain("Couldn't load guide");
+    expect(w.text()).toContain("Couldn’t load guide");
     await findBtn(w, 'Retry')!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load guide");
+    expect(w.text()).not.toContain("Couldn’t load guide");
     expect(w.text()).toContain('Evening News');
   });
 });
@@ -489,7 +489,7 @@ describe('LiveTvPage — Recordings', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    expect(w.text()).toContain("Couldn't load recordings");
+    expect(w.text()).toContain("Couldn’t load recordings");
     expect(w.text()).toContain('rec boom');
     expect(w.text()).not.toContain('No recordings yet.');
     const toasts = useToastStore();
@@ -511,10 +511,10 @@ describe('LiveTvPage — Recordings', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    expect(w.text()).toContain("Couldn't load recordings");
+    expect(w.text()).toContain("Couldn’t load recordings");
     await findBtn(w, 'Retry')!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load recordings");
+    expect(w.text()).not.toContain("Couldn’t load recordings");
     expect(w.text()).toContain('The Movie');
   });
 });
@@ -594,7 +594,7 @@ describe('LiveTvPage — Series Rules', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Series Rules');
-    expect(w.text()).toContain("Couldn't load series rules");
+    expect(w.text()).toContain("Couldn’t load series rules");
     expect(w.text()).toContain('rule boom');
     expect(w.text()).not.toContain('No series rules');
     const toasts = useToastStore();
@@ -617,10 +617,10 @@ describe('LiveTvPage — Series Rules', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Series Rules');
-    expect(w.text()).toContain("Couldn't load series rules");
+    expect(w.text()).toContain("Couldn’t load series rules");
     await findBtn(w, 'Retry')!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load series rules");
+    expect(w.text()).not.toContain("Couldn’t load series rules");
     expect(w.text()).toContain('News%');
   });
 

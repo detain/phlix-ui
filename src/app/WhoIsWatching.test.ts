@@ -209,6 +209,6 @@ describe('WhoIsWatching (S82)', () => {
     const dialog = w.find('[role="dialog"]');
     expect(dialog.exists()).toBe(true);
     expect(dialog.attributes('aria-modal')).toBe('true');
-    expect(dialog.attributes('aria-label')).toBe("Who's watching?");
+    expect(dialog.attributes('aria-label')).toBe("Who’s watching?");
   });
 });

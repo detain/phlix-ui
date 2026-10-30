@@ -166,7 +166,7 @@ onMounted(loadStatus);
       <EmptyState
         v-else-if="error"
         icon="alert"
-        title="Couldn't load DLNA server status"
+        title="Couldn’t load DLNA server status"
         :description="error"
       >
         <template #actions>

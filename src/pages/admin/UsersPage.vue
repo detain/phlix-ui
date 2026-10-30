@@ -738,14 +738,14 @@ onMounted(loadUsers);
       <strong>Reject</strong> handle pending sign-up requests, and <strong>Disable</strong> /
       <strong>Enable</strong> block or restore access. <strong>Set Admin</strong> /
       <strong>Demote</strong> toggles admin rights, <strong>Reset Password</strong> issues a new
-      one, and <strong>Profiles</strong> manages a user's watch profiles and their optional PINs.
+      one, and <strong>Profiles</strong> manages a user’s watch profiles and their optional PINs.
     </PageHint>
 
     <div v-if="loading" class="admin-users__skel"><Skeleton variant="text" :lines="6" /></div>
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load users"
+      title="Couldn’t load users"
       :description="error"
     >
       <template #actions>

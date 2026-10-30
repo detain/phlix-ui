@@ -148,7 +148,7 @@ const collectionsPage: AdminPage = {
 const historyPage: AdminPage = {
   name: 'admin-history',
   path: 'history',
-  label: 'Watch History',
+  label: 'Watch history',
   icon: 'film',
   component: () => import('../pages/admin/HistoryPage.vue'),
 };

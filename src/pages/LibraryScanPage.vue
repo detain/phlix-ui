@@ -182,7 +182,7 @@ onMounted(loadLibraries);
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load libraries"
+      title="Couldn’t load libraries"
       :description="error"
     >
       <template #actions>

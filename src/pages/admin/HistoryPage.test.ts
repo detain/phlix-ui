@@ -136,7 +136,7 @@ describe('Admin HistoryPage — all-users list', () => {
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.text()).toContain("Couldn't load watch history");
+    expect(empty.text()).toContain("Couldn’t load watch history");
     expect(w.text()).toContain('load boom');
     expect(w.text()).not.toContain('No watch history yet');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'load boom')).toBe(true);

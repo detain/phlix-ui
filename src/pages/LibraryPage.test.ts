@@ -399,7 +399,7 @@ describe('LibraryPage', () => {
       await flushPromises();
 
       expect(toggleFavorite).not.toHaveBeenCalled();
-      expect(toasts.toasts.some((t) => t.tone === 'success' && /marked "Dune" as watched/i.test(t.message))).toBe(true);
+      expect(toasts.toasts.some((t) => t.tone === 'success' && /marked “Dune” as watched/i.test(t.message))).toBe(true);
     });
 
     it('never calls toggleFavorite and toasts info when the item is now unwatched', async () => {
@@ -416,7 +416,7 @@ describe('LibraryPage', () => {
       await flushPromises();
 
       expect(toggleFavorite).not.toHaveBeenCalled();
-      expect(toasts.toasts.some((t) => t.tone === 'info' && /marked "Dune" as unwatched/i.test(t.message))).toBe(true);
+      expect(toasts.toasts.some((t) => t.tone === 'info' && /marked “Dune” as unwatched/i.test(t.message))).toBe(true);
     });
   });
 });
@@ -717,7 +717,7 @@ describe('LibraryPage — list view (S68)', () => {
     userItemData.entries.set('lr1', { favorite: false, rating: null, like_level: 0, watched: true });
     w.findComponent(MediaListRow).vm.$emit('mark-watched', media({ id: 'lr1', name: 'Dune' }));
     await flushPromises();
-    expect(toasts.toasts.some((t) => /marked "Dune" as watched/i.test(t.message))).toBe(true);
+    expect(toasts.toasts.some((t) => /marked “Dune” as watched/i.test(t.message))).toBe(true);
   });
 
   it('a list row admin action (`explore-data`) opens the inspector', async () => {

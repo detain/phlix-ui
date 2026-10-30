@@ -185,7 +185,7 @@ onMounted(() => {
       Link your <strong>Trakt.tv</strong> and <strong>Last.fm</strong> accounts so watches and
       listens are scrobbled automatically. <strong>Connect</strong> starts the sign-in flow for a
       service (it's greyed out until you add that service's API keys under Settings), and
-      <strong>Disconnect</strong> unlinks it. The badge beside each service shows whether it's
+      <strong>Disconnect</strong> unlinks it. The badge beside each service shows whether it’s
       currently connected.
     </PageHint>
 
@@ -209,7 +209,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="traktStatus === null"
           icon="alert"
-          title="Couldn't load Trakt"
+          title="Couldn’t load Trakt"
           :description="traktError ?? undefined"
         >
           <template #actions>
@@ -226,7 +226,7 @@ onMounted(() => {
           </dl>
 
           <p v-if="!traktStatus.connected && traktConfiguredMissing" class="admin-services__hint">
-            Trakt isn't configured yet. Register an application at
+            Trakt isn’t configured yet. Register an application at
             <a
               href="https://trakt.tv/oauth/applications"
               target="_blank"
@@ -282,7 +282,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="lastfmStatus === null"
           icon="alert"
-          title="Couldn't load Last.fm"
+          title="Couldn’t load Last.fm"
           :description="lastfmError ?? undefined"
         >
           <template #actions>
@@ -301,7 +301,7 @@ onMounted(() => {
           </dl>
 
           <p v-if="!lastfmStatus.connected && lastfmConfiguredMissing" class="admin-services__hint">
-            Last.fm isn't configured yet. Register an API account at
+            Last.fm isn’t configured yet. Register an API account at
             <a
               href="https://www.last.fm/api/account/create"
               target="_blank"

@@ -152,7 +152,7 @@ describe('McpTokensPage — list and states', () => {
         const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
         const toasts = useToastStore();
         await flushPromises();
-        expect(w.text()).toContain("Couldn't load MCP tokens");
+        expect(w.text()).toContain("Couldn’t load MCP tokens");
         expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'hub down')).toBe(true);
         w.unmount();
     });

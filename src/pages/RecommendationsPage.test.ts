@@ -134,7 +134,7 @@ describe('RecommendationsPage — renders', () => {
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.props('title')).toBe("Couldn't load recommendations");
+    expect(empty.props('title')).toBe("Couldn’t load recommendations");
   });
 
   it('renders retry button on error', async () => {

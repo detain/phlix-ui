@@ -228,7 +228,7 @@ onMounted(() => loadServer(true));
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load server details"
+      title="Couldn’t load server details"
       :description="error"
     >
       <template #actions>

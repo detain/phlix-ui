@@ -21,7 +21,7 @@
  *      a stale allow entry that no longer equals English).
  *   5. ja rendering sanity: every value contains CJK codepoints (empty allow-list).
  *   6. Latin sanity: aggregate diacritical counts at the same bars as the
- *      412-key locale-bundle suite (measured margins here: es 137, fr 129, de
+ *      466-key locale-bundle suite (measured margins here: es 137, fr 129, de
  *      96, it 96, pt_BR 191 — the bars are held, not relaxed, across the
  *      204-key catalog).
  *   7. Accessor degradation matrix: known/unknown/empty/non-string codes ×

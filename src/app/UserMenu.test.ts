@@ -222,7 +222,7 @@ describe('UserMenu — profile arms respect the feature flag (S462)', () => {
     // Collateral check: the rest of the menu is the plain signed-in list.
     const items = panel.findAll('.usermenu__item');
     expect(items).toHaveLength(3);
-    expect(items.map((i) => i.text())).toEqual(['Watch History', 'Settings', 'Sign out']);
+    expect(items.map((i) => i.text())).toEqual(['Watch history', 'Settings', 'Sign out']);
   });
 
   it('hides both arms on the hub (app: hub, no explicit features flag)', async () => {

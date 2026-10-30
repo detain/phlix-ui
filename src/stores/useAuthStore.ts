@@ -11,6 +11,7 @@ import { ApiClient, type AuthUser } from '../api/client';
 import { ApiError } from '../api/errors';
 import { LocalStorageTokenStore } from '../api/tokenStore';
 import { useApiBase } from '../composables/useApiBase';
+import { useMessages } from '../composables/useMessages';
 
 /** The login path injected by the app (e.g. '/app/login'). Falls back to '/login'. */
 type InjectedLoginPath = string | ComputedRef<string> | undefined;
@@ -40,6 +41,12 @@ export const useAuthStore = defineStore('auth', () => {
     // client — already exist). The single `client` instance is kept (consumers
     // hold the reference); we re-point it in place whenever the base changes.
     const apiBase = useApiBase();
+    // M-UI-10: the last-resort error lane speaks through the message catalog —
+    // the same seam components use (`PhlixAppConfig.messages` override honored
+    // inside an app context, English defaults outside one). Before this, the
+    // store carried its own literals: the only "login" copy in a product that
+    // everywhere else says "sign in", unperioded against the status-line law.
+    const { t } = useMessages();
     // loginPath is set once at app boot (from config.routerBase) and never changes
     // after, but we watch it in case a native client ever supplies it as a ref.
     const injectedLoginPath = inject<InjectedLoginPath>('loginPath', '/login');
@@ -110,7 +117,7 @@ export const useAuthStore = defineStore('auth', () => {
             // accepts the password but 404s/401s on /auth/me is treated as a failure.
             return isLoggedIn.value;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Login failed';
+            error.value = e instanceof Error ? e.message : t('auth.signInFailed');
             errorCode.value = parseErrorCode(e);
             return false;
         } finally {
@@ -133,7 +140,7 @@ export const useAuthStore = defineStore('auth', () => {
             // Same as login(): only report success if the session survived fetchUser().
             return isLoggedIn.value;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : 'Registration failed';
+            error.value = e instanceof Error ? e.message : t('auth.signupFailed');
             errorCode.value = parseErrorCode(e);
             return false;
         } finally {

@@ -21,6 +21,17 @@
  * operator-facing admin pages keep their inline English and can adopt this same
  * seam incrementally later — every key here is backed by a real adoption site.
  *
+ * COPY LAW (review writer m4/m5 + copywriter m4, W-min187):
+ *  1. Capitalization — sentence case everywhere, in the catalog and in inline
+ *     page copy, except initialisms (MCP, HLS, DLNA, SyncPlay) and the brand
+ *     theme names. Titles and headings are not exempt (R15 swept per-key; this
+ *     is the per-surface declaration it always wanted).
+ *  2. Typography — the typographic set only: `’` for apostrophes and `“ ”` for
+ *     embedded quotation. No straight `'` or `"` inside any value, in any
+ *     locale. Pinned by the tripwire walk in `locales.test.ts`.
+ *  3. End punctuation — a complete status/error sentence carries a period;
+ *     labels, titles and buttons never do (the M-UI-37 sweep + siblings).
+ *
  * `satisfies` (not `as const`) keeps the value types as `string` — exactly what the
  * override type wants — while still narrowing the keys for `MessageKey`.
  */

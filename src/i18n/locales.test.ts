@@ -37,6 +37,7 @@
  * @license MIT
  */
 
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MESSAGES,
@@ -57,6 +58,7 @@ import {
   PT_BR_MESSAGES,
   type PhlixLocaleCode,
 } from './locales';
+import { ERROR_TITLES, GENERIC_ERROR_MESSAGE, ERROR_MESSAGES } from './errors';
 
 /** Catalog viewed as plain nested string maps (leaf access in tests). */
 type Nested = Record<string, Record<string, string>>;
@@ -377,5 +379,67 @@ describe('locale registry', () => {
     expect(LOCALE_MESSAGES.it).toBe(IT_MESSAGES);
     expect(LOCALE_MESSAGES.pt_BR).toBe(PT_BR_MESSAGES);
     expect(LOCALE_MESSAGES.ja).toBe(JA_MESSAGES);
+  });
+});
+
+/**
+ * Copy-law tripwires (W-min187 — review writer m5, copywriter m4/m12).
+ *
+ * The law lives in the `DEFAULT_MESSAGES` header (declared once); these are the
+ * teeth that keep it closed:
+ *
+ *   A. Typography walk — every string VALUE in every shipped catalog (EN chrome,
+ *      the six locale bundles, and the three error registries) must be free of
+ *      straight `'` and `"`: the house set is typographic (`’` `“ ”`), matching
+ *      what the catalogs already overwhelmingly ship (errors.ts EN was quoted as
+ *      "all-curly" at review time; the two relay-tunnel drifters are now swept,
+ *      so a whole-repo value rule is honest). Comments and code are out of scope
+ *      by construction — the walk sees parsed values, not source.
+ *
+ *   B. Catalog-size prose — "the N-key UI-chrome catalog" is itself copy, and it
+ *      rotted at three sites (412 vs the shipped count). Rotate-and-pin: the
+ *      measured leaf count must appear verbatim in `errors.ts`, `README.md` and
+ *      `errors.test.ts`; drift in either direction is red, never silent.
+ */
+function collectStrings(node: unknown, out: string[] = []): string[] {
+  if (typeof node === 'string') out.push(node);
+  else if (Array.isArray(node)) for (const value of node) collectStrings(value, out);
+  else if (node && typeof node === 'object') for (const value of Object.values(node)) collectStrings(value, out);
+  return out;
+}
+
+describe('copy law tripwires (W-min187)', () => {
+  it('no catalog value carries a straight apostrophe or straight double quote', () => {
+    const catalogs = [
+      ['DEFAULT_MESSAGES', DEFAULT_MESSAGES],
+      ['DE_MESSAGES', DE_MESSAGES],
+      ['ES_MESSAGES', ES_MESSAGES],
+      ['FR_MESSAGES', FR_MESSAGES],
+      ['IT_MESSAGES', IT_MESSAGES],
+      ['JA_MESSAGES', JA_MESSAGES],
+      ['PT_BR_MESSAGES', PT_BR_MESSAGES],
+      ['ERROR_TITLES', ERROR_TITLES],
+      ['GENERIC_ERROR_MESSAGE', GENERIC_ERROR_MESSAGE],
+      ['ERROR_MESSAGES', ERROR_MESSAGES],
+    ] as const;
+    for (const [name, catalog] of catalogs) {
+      for (const value of collectStrings(catalog)) {
+        expect(
+          value,
+          `${name}: straight quote in value ${JSON.stringify(value.slice(0, 80))}`,
+        ).not.toMatch(/['"]/);
+      }
+    }
+  });
+
+  it('the prose catalog-size claims match the measured leaf count', () => {
+    const measured = collectStrings(DEFAULT_MESSAGES).length;
+    for (const rel of ['./errors.ts', './errors.test.ts', '../../README.md']) {
+      const text = readFileSync(new URL(rel, import.meta.url), 'utf8');
+      expect(
+        text,
+        `${rel}: no "${measured}-key" claim (measured count is ${measured}; rotate the prose)`,
+      ).toContain(`${measured}-key`);
+    }
   });
 });

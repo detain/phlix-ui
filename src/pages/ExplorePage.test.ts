@@ -147,7 +147,7 @@ describe('ExplorePage — renders', () => {
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.props('title')).toBe("Couldn't load similar items");
+    expect(empty.props('title')).toBe("Couldn’t load similar items");
   });
 
   it('renders retry button on error', async () => {

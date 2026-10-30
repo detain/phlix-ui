@@ -207,7 +207,7 @@ onMounted(() => loadPeers(true));
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load federation peers"
+      title="Couldn’t load federation peers"
       :description="error"
     >
       <template #actions>

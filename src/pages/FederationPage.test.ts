@@ -152,7 +152,7 @@ describe('FederationPage — load errors', () => {
     const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load federation peers");
+    expect(w.text()).toContain("Couldn’t load federation peers");
     expect(w.text()).toContain('federation down');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'federation down')).toBe(true);
     w.unmount();
@@ -173,7 +173,7 @@ describe('FederationPage — load errors', () => {
       .mockResolvedValueOnce({ peers: [hubPeer] });
     const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load federation peers");
+    expect(w.text()).toContain("Couldn’t load federation peers");
     await findBtnByText(w, 'Retry')!.trigger('click');
     await flushPromises();
     expect(w.find('.federation__table').exists()).toBe(true);

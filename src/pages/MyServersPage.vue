@@ -240,9 +240,9 @@ async function confirmRemove(): Promise<void> {
   try {
     await api.delete(`/api/v1/me/servers/${server.id}`);
     servers.value = servers.value.filter((s) => s.id !== server.id);
-    toasts.success(`"${server.name}" removed.`);
+    toasts.success(`“${server.name}” removed.`);
   } catch (e) {
-    toasts.error(errMessage(e, `Failed to remove "${server.name}".`));
+    toasts.error(errMessage(e, `Failed to remove “${server.name}”.`));
   } finally {
     removing.value = null;
   }
@@ -263,8 +263,8 @@ onMounted(loadServers);
 
     <PageHint :links="hubPageHelp['my-servers'].links" :details="hubPageHelp['my-servers'].details">
       The Phlix servers you have claimed to your hub account. <strong>Add server</strong>
-      claims another; <strong>Browse</strong> opens a server's library once its relay is
-      active; <strong>Manage</strong> opens the server's own admin page; <strong>Remove</strong>
+      claims another; <strong>Browse</strong> opens a server’s library once its relay is
+      active; <strong>Manage</strong> opens the server’s own admin page; <strong>Remove</strong>
       unlinks it from your account.
     </PageHint>
 
@@ -273,7 +273,7 @@ onMounted(loadServers);
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load servers"
+      title="Couldn’t load servers"
       :description="error"
     >
       <template #actions>
@@ -332,7 +332,7 @@ onMounted(loadServers);
                     server.relayActive
                       ? `Browse ${server.name} here`
                       : relayPending(server)
-                        ? `${server.name} is online but its relay tunnel isn't connected yet — it can't be browsed here until it reconnects.`
+                        ? `${server.name} is online but its relay tunnel isn’t connected yet — it can’t be browsed here until it reconnects.`
                         : 'This server is offline — it must be connected to browse it here'
                   "
                   :aria-label="`Browse ${server.name}`"

@@ -916,7 +916,7 @@ onBeforeUnmount(() => {
         <dt>Regenerate media assets</dt>
         <dd>
           Re-creates the file-based media assets (chapter thumbnails, trickplay sprite, Roku BIF)
-          for the library's existing items. <strong>Idempotent</strong> — firing it while a
+          for the library’s existing items. <strong>Idempotent</strong> — firing it while a
           regeneration is already queued is a no-op success, not an error.
         </dd>
 
@@ -944,7 +944,7 @@ onBeforeUnmount(() => {
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load libraries"
+      title="Couldn’t load libraries"
       :description="error"
     >
       <template #actions>

@@ -603,7 +603,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="hubError"
           icon="alert"
-          title="Couldn't load hub status"
+          title="Couldn’t load hub status"
           :description="hubError"
         >
           <template #actions>
@@ -663,7 +663,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="subdomainError"
           icon="alert"
-          title="Couldn't load subdomain status"
+          title="Couldn’t load subdomain status"
           :description="subdomainError"
         >
           <template #actions>
@@ -718,7 +718,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="relayError"
           icon="alert"
-          title="Couldn't load relay status"
+          title="Couldn’t load relay status"
           :description="relayError"
         >
           <template #actions>
@@ -838,7 +838,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="portForwardError"
           icon="alert"
-          title="Couldn't load port-forward status"
+          title="Couldn’t load port-forward status"
           :description="portForwardError"
         >
           <template #actions>
@@ -918,7 +918,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="networkHealthError"
           icon="alert"
-          title="Couldn't load network health"
+          title="Couldn’t load network health"
           :description="networkHealthError ?? undefined"
         >
           <template #actions>

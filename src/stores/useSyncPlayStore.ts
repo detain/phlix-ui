@@ -21,6 +21,7 @@ import {
   sendSyncPlayCommand,
   sendSyncPlayStateUpdate,
 } from '../api/syncplay';
+import { useMessages } from '../composables/useMessages';
 import { useAuthStore } from './useAuthStore';
 
 /** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
@@ -122,6 +123,11 @@ export class SyncPlayCommandNotDeliveredError extends Error {
 }
 
 export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
+  // M-UI-10: fallback copy resolves through the message catalog (see the note
+  // in `useAuthStore` for the override seam). Catalog values are the single
+  // source for these status lines — they carry the periods the old literals
+  // lacked (status-sentence law, review writer m6).
+  const { t } = useMessages();
   // ---- state --------------------------------------------------------------
   const currentRoom = ref<SyncPlayRoom | null>(null);
   const currentSession = ref<SyncPlaySession | null>(null);
@@ -388,7 +394,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
         passwordHash,
       );
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to create the room';
+      error.value = e instanceof Error ? e.message : t('syncplay.errorCreate');
       throw e;
     } finally {
       isLoading.value = false;
@@ -434,7 +440,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
         passwordHash,
       );
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to join the room';
+      error.value = e instanceof Error ? e.message : t('syncplay.errorJoin');
       throw e;
     } finally {
       isLoading.value = false;
@@ -460,7 +466,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       currentSession.value = null;
       members.value = [];
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to leave the room';
+      error.value = e instanceof Error ? e.message : t('syncplay.errorLeave');
       throw e;
     } finally {
       isLoading.value = false;
@@ -615,7 +621,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       currentSession.value = session;
       _lastDriftCaptureMs = Date.now(); // anchor for drift computation
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to refresh state';
+      error.value = e instanceof Error ? e.message : 'Failed to refresh state.';
       throw e;
     }
   }
@@ -630,7 +636,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       const membersList = await api.getMembers(currentRoom.value.id);
       members.value = membersList;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to refresh members';
+      error.value = e instanceof Error ? e.message : 'Failed to refresh members.';
       throw e;
     }
   }

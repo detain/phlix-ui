@@ -116,7 +116,7 @@ describe('Admin DashboardPage', () => {
     expect(get).toHaveBeenCalledWith('/api/v1/admin/dashboard/storage');
 
     const text = w.text();
-    expect(text).toContain('Now Playing');
+    expect(text).toContain('Now playing');
     expect(text).toContain('Top Users');
     expect(text).toContain('Top Media');
     expect(text).toContain('Storage');
@@ -223,11 +223,11 @@ describe('Admin DashboardPage', () => {
     const text = w.text();
     // Each section renders its own in-body error (with the error message) instead
     // of falling through to the misleading empty state.
-    expect(text).toContain("Couldn't load now playing");
-    expect(text).toContain("Couldn't load top users");
-    expect(text).toContain("Couldn't load top media");
-    expect(text).toContain("Couldn't load storage");
-    expect(text).toContain("Couldn't load activity");
+    expect(text).toContain("Couldn’t load now playing");
+    expect(text).toContain("Couldn’t load top users");
+    expect(text).toContain("Couldn’t load top media");
+    expect(text).toContain("Couldn’t load storage");
+    expect(text).toContain("Couldn’t load activity");
     expect(text).toContain('boom');
     expect(text).not.toContain('No active sessions');
     expect(text).not.toContain('No recent activity');
@@ -268,12 +268,12 @@ describe('Admin DashboardPage', () => {
     const w = mountPage({ get } as unknown as ApiClient);
     await flushPromises();
     // Only Now Playing failed → one Retry button on the page.
-    expect(w.text()).toContain("Couldn't load now playing");
+    expect(w.text()).toContain("Couldn’t load now playing");
     const retry = w.findAllComponents(Button).find((b) => b.text().trim() === 'Retry');
     expect(retry).toBeTruthy();
     await retry!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load now playing");
+    expect(w.text()).not.toContain("Couldn’t load now playing");
     expect(w.find('[role="progressbar"]').exists()).toBe(true);
     w.unmount();
   });
@@ -302,7 +302,7 @@ describe('Admin DashboardPage', () => {
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.message === 'more boom')).toBe(true);
     // The already-loaded list is preserved; no in-body error wipes the activity card.
-    expect(w.find('[aria-labelledby="act-heading"]').text()).not.toContain("Couldn't load activity");
+    expect(w.find('[aria-labelledby="act-heading"]').text()).not.toContain("Couldn’t load activity");
     expect(w.find('.admin-dash__activity-list').exists()).toBe(true);
     w.unmount();
   });

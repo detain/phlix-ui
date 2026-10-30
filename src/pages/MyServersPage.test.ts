@@ -291,7 +291,7 @@ describe('MyServersPage — load errors', () => {
     const w = mountPage({ get } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load servers");
+    expect(w.text()).toContain("Couldn’t load servers");
     expect(w.text()).toContain('hub unreachable');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'hub unreachable')).toBe(true);
     w.unmount();
@@ -314,7 +314,7 @@ describe('MyServersPage — load errors', () => {
       .mockResolvedValueOnce({ servers: [hubServer] });
     const w = mountPage({ get } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load servers");
+    expect(w.text()).toContain("Couldn’t load servers");
     await findBtnByText(w, 'Retry')!.trigger('click');
     await flushPromises();
     expect(w.find('.my-servers__table').exists()).toBe(true);

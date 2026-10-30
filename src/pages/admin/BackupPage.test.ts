@@ -171,7 +171,7 @@ describe('Admin BackupPage — list', () => {
     await flushPromises();
     const toasts = useToastStore();
     // The backups section shows an in-body error EmptyState (not the empty-list one).
-    expect(w.text()).toContain("Couldn't load backups");
+    expect(w.text()).toContain("Couldn’t load backups");
     expect(w.text()).toContain('list boom');
     expect(w.text()).not.toContain('No backups yet');
     expect(toasts.toasts.some((t) => t.message === 'list boom')).toBe(true);
@@ -192,11 +192,11 @@ describe('Admin BackupPage — list', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = mountPage(client);
     await flushPromises();
-    const errorEmpty = w.findAllComponents(EmptyState).find((e) => e.text().includes("Couldn't load backups"))!;
+    const errorEmpty = w.findAllComponents(EmptyState).find((e) => e.text().includes("Couldn’t load backups"))!;
     expect(errorEmpty).toBeTruthy();
     await errorEmpty.find('button').trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load backups");
+    expect(w.text()).not.toContain("Couldn’t load backups");
     expect(w.text()).toContain('Weekly Backup');
     w.unmount();
   });
@@ -471,7 +471,7 @@ describe('Admin BackupPage — schedule', () => {
     expect(toasts.toasts.some((t) => t.message === 'schedule load boom')).toBe(true);
     // The schedule card is NOT rendered; an in-body error EmptyState replaces it.
     expect(w.find('.admin-backup__card').exists()).toBe(false);
-    expect(w.text()).toContain("Couldn't load schedule");
+    expect(w.text()).toContain("Couldn’t load schedule");
     expect(w.text()).toContain('schedule load boom');
     w.unmount();
   });
@@ -490,11 +490,11 @@ describe('Admin BackupPage — schedule', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = mountPage(client);
     await flushPromises();
-    const errorEmpty = w.findAllComponents(EmptyState).find((e) => e.text().includes("Couldn't load schedule"))!;
+    const errorEmpty = w.findAllComponents(EmptyState).find((e) => e.text().includes("Couldn’t load schedule"))!;
     expect(errorEmpty).toBeTruthy();
     await errorEmpty.find('button').trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load schedule");
+    expect(w.text()).not.toContain("Couldn’t load schedule");
     expect(w.find('.admin-backup__card').exists()).toBe(true);
     w.unmount();
   });

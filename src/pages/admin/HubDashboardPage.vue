@@ -144,7 +144,7 @@ onMounted(() => {
     <EmptyState
       v-else-if="summaryError"
       icon="alert"
-      title="Couldn't load hub summary"
+      title="Couldn’t load hub summary"
       :description="summaryError"
     >
       <template #actions>
@@ -170,7 +170,7 @@ onMounted(() => {
       <EmptyState
         v-else-if="activityError"
         icon="alert"
-        title="Couldn't load activity"
+        title="Couldn’t load activity"
         :description="activityError"
       >
         <template #actions>

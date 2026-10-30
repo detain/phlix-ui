@@ -131,7 +131,7 @@ onMounted(() => loadLogs());
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load audit logs"
+      title="Couldn’t load audit logs"
       :description="error"
     >
       <template #actions>

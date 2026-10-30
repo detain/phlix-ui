@@ -253,7 +253,7 @@ onMounted(loadWebhooks);
       Send a POST to an external URL whenever chosen events happen on your server (for
       notifications or automations). <strong>Add webhook</strong> creates one — you give it a
       name, a URL, an optional signing secret, and tick the events to subscribe to.
-      <strong>Test</strong> fires a sample payload so you can confirm it's wired up correctly,
+      <strong>Test</strong> fires a sample payload so you can confirm it’s wired up correctly,
       and <strong>Edit</strong> / <strong>Delete</strong> update or remove an endpoint.
     </PageHint>
 
@@ -261,7 +261,7 @@ onMounted(loadWebhooks);
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load webhooks"
+      title="Couldn’t load webhooks"
       :description="error"
     >
       <template #actions>

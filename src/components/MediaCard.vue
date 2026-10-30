@@ -348,7 +348,7 @@ function onMenuSelect(menuItem: { label: string }): void {
       emit('remove', props.item);
       break;
     default:
-      toasts.info(`${menuItem.label} isn't available yet`);
+      toasts.info(`${menuItem.label} isn’t available yet`);
   }
 }
 

@@ -965,7 +965,7 @@ onMounted(() => {
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load settings"
+      title="Couldn’t load settings"
       :description="error"
     >
       <template #actions>

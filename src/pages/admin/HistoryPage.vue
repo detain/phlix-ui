@@ -104,7 +104,7 @@ onMounted(loadHistory);
 <template>
   <section class="admin-history" aria-labelledby="history-heading">
     <header class="admin-history__head">
-      <h1 id="history-heading" class="admin-history__title">Watch History</h1>
+      <h1 id="history-heading" class="admin-history__title">Watch history</h1>
     </header>
 
     <PageHint :links="adminPageHelp.history.links" :details="adminPageHelp.history.details">
@@ -117,7 +117,7 @@ onMounted(loadHistory);
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load watch history"
+      title="Couldn’t load watch history"
       :description="error"
     >
       <template #actions>

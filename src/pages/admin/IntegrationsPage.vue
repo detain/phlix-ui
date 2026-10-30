@@ -393,7 +393,7 @@ onBeforeUnmount(clearSyncTimer);
       <h1 id="integrations-heading" class="admin-integrations__title">Integrations</h1>
     </header>
 
-    <PageHint :links="adminPageHelp.integrations.links" :details="adminPageHelp.integrations.details" title="What's on this page">
+    <PageHint :links="adminPageHelp.integrations.links" :details="adminPageHelp.integrations.details" title="What’s on this page">
       Connect Phlix to outside tools. <strong>Arr sync</strong> pulls quality-profile settings
       from TRaSH-Guides for Radarr/Sonarr — <strong>Sync now</strong> runs it once, and
       <strong>Auto-sync</strong> keeps it updated on a schedule. The
@@ -419,7 +419,7 @@ onBeforeUnmount(clearSyncTimer);
         <EmptyState
           v-else-if="syncError"
           icon="alert"
-          title="Couldn't load sync status"
+          title="Couldn’t load sync status"
           :description="syncError"
         >
           <template #actions>
@@ -463,7 +463,7 @@ onBeforeUnmount(clearSyncTimer);
       <EmptyState
         v-else-if="providersError"
         icon="alert"
-        title="Couldn't load auth providers"
+        title="Couldn’t load auth providers"
         :description="providersError"
       >
         <template #actions>

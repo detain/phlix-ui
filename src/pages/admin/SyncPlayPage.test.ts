@@ -150,7 +150,7 @@ describe('Admin SyncPlayPage — list', () => {
     const toasts = useToastStore();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.text()).toContain("Couldn't load groups");
+    expect(empty.text()).toContain("Couldn’t load groups");
     expect(w.text()).toContain('list boom');
     expect(w.text()).not.toContain('No groups yet');
     expect(toasts.toasts.some((t) => t.message === 'list boom')).toBe(true);

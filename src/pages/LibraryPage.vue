@@ -195,7 +195,7 @@ function onMatchApplied(): void {
 
 function onPosterApplied(updated: MediaItem): void {
   store.items = store.items.map((i) => (i.id === updated.id ? updated : i));
-  toasts.success(`Updated poster for "${updated.name}"`);
+  toasts.success(`Updated poster for “${updated.name}”`);
 }
 
 const libraryId = computed(() => {
@@ -363,9 +363,9 @@ function onInfo(item: MediaItem): void {
 // `onWatchlist`).
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked "${item.name}" as watched`);
+    toasts.success(`Marked “${item.name}” as watched`);
   } else {
-    toasts.info(`Marked "${item.name}" as unwatched`);
+    toasts.info(`Marked “${item.name}” as unwatched`);
   }
 }
 
@@ -398,10 +398,12 @@ async function confirmRemove(): Promise<void> {
     await client.deleteMediaItem(item.id);
     if (stale()) return;
     store.items = store.items.filter((i) => i.id !== item.id);
-    toasts.success(`Removed "${item.name}"`);
+    toasts.success(`Removed “${item.name}”`);
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.error(`Failed to remove "${item.name}": ${e instanceof Error ? e.message : 'Unknown error'}`);
+    toasts.error(`Failed to remove “${item.name}”.`, {
+      message: e instanceof Error ? e.message : 'Unknown error',
+    });
   }
 }
 </script>
@@ -426,7 +428,7 @@ async function confirmRemove(): Promise<void> {
       <EmptyState
         v-if="store.error"
         icon="alert"
-        title="Couldn't load titles"
+        title="Couldn’t load titles"
         :description="store.error"
       >
         <template #actions>

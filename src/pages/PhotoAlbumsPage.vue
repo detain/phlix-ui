@@ -155,8 +155,10 @@ function selectLibrary(id: string): void {
         </div>
 
         <!-- Error state -->
-        <EmptyState v-else-if="error" icon="alert-circle" :title="error">
-            <Button variant="solid" @click="loadAlbums">Retry</Button>
+        <EmptyState v-else-if="error" icon="alert-circle" title="Couldn’t load albums" :description="error">
+            <template #actions>
+                <Button variant="solid" @click="loadAlbums">Retry</Button>
+            </template>
         </EmptyState>
 
         <!-- No library selected -->
@@ -176,7 +178,7 @@ function selectLibrary(id: string): void {
 
         <!-- No photo libraries -->
         <EmptyState v-else-if="!loading && photoLibraries.length === 0" icon="image" title="No photo libraries">
-            <p>You don't have any photo libraries configured.</p>
+            <p>You don’t have any photo libraries configured.</p>
         </EmptyState>
 
         <!-- No albums -->

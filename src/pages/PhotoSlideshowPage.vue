@@ -300,21 +300,23 @@ watch([libraryId, albumId], () => {
         </div>
 
         <!-- Error state -->
-        <EmptyState v-else-if="error" icon="alert-circle" :title="error">
-            <Button variant="solid" @click="loadSlideshow">Retry</Button>
-            <Button variant="subtle" @click="exit">Exit</Button>
+        <EmptyState v-else-if="error" icon="alert-circle" title="Couldn’t load slideshow" :description="error">
+            <template #actions>
+                <Button variant="solid" @click="loadSlideshow">Retry</Button>
+                <Button variant="subtle" @click="exit">Exit</Button>
+            </template>
         </EmptyState>
 
         <!-- No library selected -->
         <EmptyState v-else-if="!libraryId" icon="image" title="No library selected">
             <p>Please access the slideshow from an album.</p>
-            <Button variant="subtle" @click="exit">Go Back</Button>
+            <Button variant="subtle" @click="exit">Go back</Button>
         </EmptyState>
 
         <!-- No slides -->
         <EmptyState v-else-if="slides.length === 0" icon="image" title="No photos">
             <p>This slideshow has no photos.</p>
-            <Button variant="subtle" @click="exit">Go Back</Button>
+            <Button variant="subtle" @click="exit">Go back</Button>
         </EmptyState>
 
         <!-- Slideshow view -->

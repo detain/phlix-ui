@@ -182,7 +182,7 @@ describe('SeasonPage (U3)', () => {
     const fetchMock = vi.fn().mockResolvedValue(errorResponse());
     const { w } = await mountAt('sh1', '1', fetchMock);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load this season");
+    expect(w.text()).toContain("Couldn’t load this season");
   });
 
   it('sets the document title to "<Series> · Season N"', async () => {

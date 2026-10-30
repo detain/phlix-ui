@@ -474,7 +474,7 @@ const gridDefaults = {
         <EmptyState
           v-else-if="historyError"
           icon="alert"
-          title="Couldn't load bandwidth history"
+          title="Couldn’t load bandwidth history"
           :description="historyError"
         >
           <template #actions>
@@ -514,7 +514,7 @@ const gridDefaults = {
         <EmptyState
           v-else-if="historyError"
           icon="alert"
-          title="Couldn't load latency history"
+          title="Couldn’t load latency history"
           :description="historyError"
         >
           <template #actions>
@@ -549,7 +549,7 @@ const gridDefaults = {
         <EmptyState
           v-else-if="historyError"
           icon="alert"
-          title="Couldn't load request history"
+          title="Couldn’t load request history"
           :description="historyError"
         >
           <template #actions>
@@ -591,7 +591,7 @@ const gridDefaults = {
         <EmptyState
           v-else-if="connectionsError"
           icon="alert"
-          title="Couldn't load connections"
+          title="Couldn’t load connections"
           :description="connectionsError"
         >
           <template #actions>
@@ -655,7 +655,7 @@ const gridDefaults = {
         <EmptyState
           v-else-if="routesError"
           icon="alert"
-          title="Couldn't load routes"
+          title="Couldn’t load routes"
           :description="routesError"
         >
           <template #actions>

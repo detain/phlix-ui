@@ -372,7 +372,7 @@ function onMatch(m?: MediaItem): void {
 function onMatchApplied(updated: MediaItem): void {
   item.value = updated;
   matchTarget.value = updated;
-  toasts.success(`Updated metadata for "${updated.name}"`);
+  toasts.success(`Updated metadata for “${updated.name}”`);
   if (updated.type === 'series') {
     const client = new ApiClient({ baseUrl: apiBase.value });
     void loadSeasons(client, updated);
@@ -384,9 +384,9 @@ function onMatchApplied(updated: MediaItem): void {
 // `onWatchlist`) — a second toggle would flip it straight back.
 function onMarkWatched(m: MediaItem): void {
   if (userItemData.isWatched(m.id)) {
-    toasts.success(`Marked "${m.name}" as watched`);
+    toasts.success(`Marked “${m.name}” as watched`);
   } else {
-    toasts.info(`Marked "${m.name}" as unwatched`);
+    toasts.info(`Marked “${m.name}” as unwatched`);
   }
 }
 
@@ -398,7 +398,7 @@ function onChoosePoster(m: MediaItem): void {
 function onPosterApplied(updated: MediaItem): void {
   item.value = updated;
   matchTarget.value = updated;
-  toasts.success(`Updated poster for "${updated.name}"`);
+  toasts.success(`Updated poster for “${updated.name}”`);
 }
 
 let removeController: AbortController | null = null;
@@ -420,11 +420,13 @@ async function confirmRemove(): Promise<void> {
     await client.deleteMediaItem(m.id);
     if (stale()) return;
     item.value = null;
-    toasts.success(`Removed "${m.name}"`);
+    toasts.success(`Removed “${m.name}”`);
     backOrHome(); // R13-08: deleting from a cold deep-link needs a home, not a dead back
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.error(`Failed to remove "${m.name}": ${e instanceof Error ? e.message : 'Unknown error'}`);
+    toasts.error(`Failed to remove “${m.name}”.`, {
+      message: e instanceof Error ? e.message : 'Unknown error',
+    });
   }
 }
 </script>
@@ -445,7 +447,7 @@ async function confirmRemove(): Promise<void> {
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load this title"
+      title="Couldn’t load this title"
       :description="error"
     >
       <template #actions>

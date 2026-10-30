@@ -653,7 +653,7 @@ function onBlockingErrorOk(): void {
         v-else-if="error"
         class="player-page__error"
         icon="alert"
-        title="Couldn't play this title"
+        title="Couldn’t play this title"
         :description="error"
       >
         <template #actions>

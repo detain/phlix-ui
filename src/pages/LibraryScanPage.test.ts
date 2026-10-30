@@ -163,7 +163,7 @@ describe('LibraryScanPage — load errors', () => {
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load libraries");
+    expect(w.text()).toContain("Couldn’t load libraries");
     expect(w.text()).toContain('DB down');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'DB down')).toBe(true);
     w.unmount();
@@ -187,7 +187,7 @@ describe('LibraryScanPage — load errors', () => {
       .mockResolvedValue({ job: null });
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load libraries");
+    expect(w.text()).toContain("Couldn’t load libraries");
     await findBtnByText(w, 'Retry')!.trigger('click');
     await flushPromises();
     expect(w.find('.library-scan__table').exists()).toBe(true);

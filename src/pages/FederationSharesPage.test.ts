@@ -122,7 +122,7 @@ describe('FederationSharesPage — load + tabs', () => {
     const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load incoming offers");
+    expect(w.text()).toContain("Couldn’t load incoming offers");
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'incoming down')).toBe(true);
     w.unmount();
   });

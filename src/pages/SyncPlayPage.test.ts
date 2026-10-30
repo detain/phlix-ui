@@ -208,7 +208,7 @@ describe('SyncPlayPage — empty state (not in a room)', () => {
     const { w } = await mountPage();
     expect(w.find('.syncplay-page__title').text()).toBe('SyncPlay');
     expect(w.find('.syncplay-page__empty').exists()).toBe(true);
-    expect(w.text()).toContain("You're not in a SyncPlay room");
+    expect(w.text()).toContain("You’re not in a SyncPlay room");
     expect(w.text()).toContain('Create or join a room to watch together with others.');
     expect(w.find('.syncplay-page__section').exists()).toBe(false);
   });

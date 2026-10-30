@@ -197,7 +197,7 @@ onMounted(loadLibraries);
     <EmptyState
       v-else-if="librariesError"
       icon="alert"
-      title="Couldn't load libraries"
+      title="Couldn’t load libraries"
       :description="librariesError"
     >
       <template #actions>
@@ -224,7 +224,7 @@ onMounted(loadLibraries);
       <EmptyState
         v-else-if="groupsError"
         icon="alert"
-        title="Couldn't load duplicates"
+        title="Couldn’t load duplicates"
         :description="groupsError"
       >
         <template #actions>

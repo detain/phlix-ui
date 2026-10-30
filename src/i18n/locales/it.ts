@@ -328,7 +328,7 @@ export const IT_MESSAGES = {
     noRooms: 'Nessuna sala pubblica disponibile',
     errorCreate: 'Impossibile creare la sala.',
     errorJoin: 'Impossibile unirsi alla sala.',
-    errorLeave: 'Impossibile uscire dalla sala',
+    errorLeave: 'Impossibile uscire dalla sala.',
     yourRole: 'Sei {role}',
     roleOwner: 'Proprietario',
     roleMember: 'Membro',

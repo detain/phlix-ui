@@ -236,7 +236,7 @@ describe('Admin PluginsPage — installed list', () => {
     const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load installed plugins");
+    expect(w.text()).toContain("Couldn’t load installed plugins");
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
     w.unmount();
   });
@@ -324,7 +324,7 @@ describe('Admin PluginsPage — catalog', () => {
     const { client } = makeClient({ plugins: [], catalog });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load catalog");
+    expect(w.text()).toContain("Couldn’t load catalog");
     expect(w.text()).toContain('HTTP 404');
     w.unmount();
   });
@@ -409,7 +409,7 @@ describe('Admin PluginsPage — enable / disable', () => {
     await flushPromises();
     const banner = document.querySelector('.admin-plugins__install-error[role="alert"]');
     expect(banner).toBeTruthy();
-    expect(banner!.textContent).toContain("Couldn't enable mal");
+    expect(banner!.textContent).toContain("Couldn’t enable mal");
     expect(banner!.textContent).toContain('OMDb API key not configured');
     w.unmount();
   });

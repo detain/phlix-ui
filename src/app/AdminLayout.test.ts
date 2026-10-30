@@ -72,7 +72,7 @@ describe('AdminLayout — server set', () => {
     'Remote Access',
     'Live TV / DVR',
     'Collections',
-    'Watch History',
+    'Watch history',
     'SyncPlay',
     'Libraries',
     'Duplicates',

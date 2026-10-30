@@ -328,7 +328,7 @@ export const DE_MESSAGES = {
     noRooms: 'Keine öffentlichen Räume verfügbar',
     errorCreate: 'Raum konnte nicht erstellt werden.',
     errorJoin: 'Raum konnte nicht beigetreten werden.',
-    errorLeave: 'Raum konnte nicht verlassen werden',
+    errorLeave: 'Raum konnte nicht verlassen werden.',
     yourRole: 'Du bist {role}',
     roleOwner: 'Eigentümer',
     roleMember: 'Mitglied',

@@ -377,7 +377,7 @@ onMounted(() => {
       <EmptyState
         v-else-if="currentError"
         icon="alert"
-        :title="`Couldn't load ${activeLabel} devices`"
+        :title="`Couldn’t load ${activeLabel} devices`"
         :description="currentError"
       >
         <template #actions>

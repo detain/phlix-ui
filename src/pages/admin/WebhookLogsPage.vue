@@ -256,7 +256,7 @@ onMounted(async () => {
       -->
       <EmptyState
         v-else-if="error"
-        title="Couldn't load webhook logs"
+        title="Couldn’t load webhook logs"
         :description="error"
       >
         <template #actions>

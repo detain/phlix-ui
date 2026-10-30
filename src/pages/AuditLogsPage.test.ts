@@ -149,7 +149,7 @@ describe('AuditLogsPage — load errors', () => {
     const w = mountPage({ get } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load audit logs");
+    expect(w.text()).toContain("Couldn’t load audit logs");
     expect(w.text()).toContain('audit db down');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'audit db down')).toBe(true);
     w.unmount();
@@ -170,7 +170,7 @@ describe('AuditLogsPage — load errors', () => {
       .mockResolvedValueOnce({ logs: [hubLog], total: 1, limit: PAGE_SIZE });
     const w = mountPage({ get } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load audit logs");
+    expect(w.text()).toContain("Couldn’t load audit logs");
     await findBtnByText(w, 'Retry')!.trigger('click');
     await flushPromises();
     expect(w.find('.audit__table').exists()).toBe(true);

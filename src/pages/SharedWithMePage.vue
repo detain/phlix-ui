@@ -177,7 +177,7 @@ onMounted(() => loadShares(true));
         <EmptyState
             v-else-if="error"
             icon="alert"
-            title="Couldn't load shared libraries"
+            title="Couldn’t load shared libraries"
             :description="error"
         >
             <template #actions>

@@ -113,7 +113,7 @@ describe('SharedWithMePage — states', () => {
       .mockResolvedValueOnce({ incoming: [activeShare], outgoing: [] });
     const w = mountPage({ get } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load shared libraries");
+    expect(w.text()).toContain("Couldn’t load shared libraries");
     expect(w.text()).toContain('shares down');
     await findBtnByText(w, 'Retry')!.trigger('click');
     await flushPromises();

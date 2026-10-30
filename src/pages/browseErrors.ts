@@ -35,5 +35,5 @@ export function libraryLoadErrorInfo(
   if (title !== null) {
     return { title, description: errorCodeMessage(code, locale) };
   }
-  return { title: "Couldn't load your libraries", description: fallbackDescription };
+  return { title: "Couldn’t load your libraries", description: fallbackDescription };
 }

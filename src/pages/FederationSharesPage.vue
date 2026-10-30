@@ -260,7 +260,7 @@ onMounted(() => loadAll());
       <EmptyState
         v-else-if="errorIncoming"
         icon="alert"
-        title="Couldn't load incoming offers"
+        title="Couldn’t load incoming offers"
         :description="errorIncoming"
       >
         <template #actions>
@@ -335,7 +335,7 @@ onMounted(() => loadAll());
       <EmptyState
         v-else-if="errorOutgoing"
         icon="alert"
-        title="Couldn't load outgoing shares"
+        title="Couldn’t load outgoing shares"
         :description="errorOutgoing"
       >
         <template #actions>

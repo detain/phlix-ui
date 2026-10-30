@@ -160,7 +160,7 @@ describe('HubDashboardPage', () => {
     const { client, get } = makeClient({ failSummary: true });
     const w = mountPage(client);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load hub summary");
+    expect(w.text()).toContain("Couldn’t load hub summary");
     // The failure was reported to the toast store.
     expect(useToastStore().toasts.length).toBeGreaterThan(0);
 
@@ -180,7 +180,7 @@ describe('HubDashboardPage', () => {
     await flushPromises();
     // Summary still renders; only the activity card shows its error.
     expect(w.text()).toContain('Servers');
-    expect(w.text()).toContain("Couldn't load activity");
+    expect(w.text()).toContain("Couldn’t load activity");
     w.unmount();
   });
 });

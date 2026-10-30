@@ -533,7 +533,7 @@ onBeforeUnmount(() => {
     <EmptyState
       v-else-if="listError"
       icon="alert"
-      title="Couldn't load log files"
+      title="Couldn’t load log files"
       :description="listError"
     >
       <template #actions>
@@ -543,7 +543,7 @@ onBeforeUnmount(() => {
     <EmptyState
       v-else-if="contentError"
       icon="alert"
-      title="Couldn't read log"
+      title="Couldn’t read log"
       :description="contentError"
     >
       <template #actions>

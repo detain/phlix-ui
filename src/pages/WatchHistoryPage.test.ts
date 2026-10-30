@@ -143,7 +143,7 @@ describe('WatchHistoryPage — renders', () => {
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.props('title')).toBe("Couldn't load watch history");
+    expect(empty.props('title')).toBe("Couldn’t load watch history");
   });
 
   it('renders retry button on error', async () => {

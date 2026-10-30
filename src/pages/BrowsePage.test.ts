@@ -488,7 +488,7 @@ describe('BrowsePage — empty + error', () => {
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
     expect(empty.props('title')).toBe('Server relay not connected');
-    expect(empty.text()).toContain("secure relay tunnel isn't connected");
+    expect(empty.text()).toContain("secure relay tunnel isn’t connected");
   });
 
   it('maps a hub server.offline 503 to the "Server offline" EmptyState', async () => {

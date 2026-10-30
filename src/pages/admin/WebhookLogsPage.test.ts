@@ -719,7 +719,7 @@ describe('WebhookLogsPage — list states', () => {
   it('shows the ERROR state, toasts, and empties the table when the list rejects', async () => {
     const { client } = makeRichClient({ listLogsError: new ApiError('logs table locked', 503) });
     const w = await mountRich(client);
-    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn't load webhook logs");
+    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn’t load webhook logs");
     expect(w.find('.admin-webhook-logs__table').exists()).toBe(false);
     expect(useToastStore().toasts.map((t) => [t.tone, t.message])).toEqual([
       ['error', 'logs table locked'],
@@ -746,7 +746,7 @@ describe('WebhookLogsPage — list states', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
 
     const w = await mountRich(client);
-    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn't load webhook logs");
+    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn’t load webhook logs");
 
     fail = false;
     await w.findComponent(EmptyState).find('button').trigger('click');
@@ -789,7 +789,7 @@ describe('WebhookLogsPage — list states', () => {
     // …and only `logs` is reset. `total` is deliberately left alone, so a mutation
     // that "fixes" this by clearing everything in the catch reds here.
     expect(vm.total).toBe(7);
-    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn't load webhook logs");
+    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn’t load webhook logs");
   });
 
   it('renders the table header columns in the documented order', async () => {
@@ -827,7 +827,7 @@ describe('WebhookLogsPage — list states', () => {
 /** The four strings these two states render. Kept in one place so the
  *  substring-hazard test below genuinely covers what the others assert on. */
 const S262_STRINGS = {
-  errorTitle: "Couldn't load webhook logs",
+  errorTitle: "Couldn’t load webhook logs",
   errorReason: 'logs table locked',
   emptyTitle: 'No webhook logs yet',
   emptyBody: 'No delivery attempts match your current filters.',
@@ -970,7 +970,7 @@ describe('WebhookLogsPage — the `apiBase` injection seam', () => {
     expect(urls).toContain(
       'https://relay.example/s/4/api/v1/admin/webhooks/logs?page=1&per_page=50',
     );
-    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn't load webhook logs");
+    expect(w.findComponent(EmptyState).props('title')).toBe("Couldn’t load webhook logs");
   });
 
   it('prefixes requests with a plain-string apiBase (the string arm)', async () => {

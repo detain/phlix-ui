@@ -280,7 +280,7 @@ onMounted(loadCollections);
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load collections"
+      title="Couldn’t load collections"
       :description="error"
     >
       <template #actions>

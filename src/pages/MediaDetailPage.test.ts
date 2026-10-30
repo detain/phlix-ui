@@ -157,7 +157,7 @@ describe('MediaDetailPage — load', () => {
     const { w } = await mountAt('bad', fetchMock);
     await flushPromises();
     expect(w.findComponent(MediaDetail).exists()).toBe(false);
-    expect(w.text()).toContain("Couldn't load this title");
+    expect(w.text()).toContain("Couldn’t load this title");
   });
 });
 

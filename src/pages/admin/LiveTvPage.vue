@@ -586,7 +586,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="tunersError"
           icon="alert"
-          title="Couldn't load tuners"
+          title="Couldn’t load tuners"
           :description="tunersError"
         >
           <template #actions>
@@ -691,7 +691,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="programsError"
           icon="alert"
-          title="Couldn't load guide"
+          title="Couldn’t load guide"
           :description="programsError"
         >
           <template #actions>
@@ -800,7 +800,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="recordingsError"
           icon="alert"
-          title="Couldn't load recordings"
+          title="Couldn’t load recordings"
           :description="recordingsError"
         >
           <template #actions>
@@ -873,7 +873,7 @@ onMounted(() => {
         <EmptyState
           v-else-if="rulesError"
           icon="alert"
-          title="Couldn't load series rules"
+          title="Couldn’t load series rules"
           :description="rulesError"
         >
           <template #actions>

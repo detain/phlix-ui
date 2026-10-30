@@ -604,7 +604,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="schedulesError"
               icon="alert"
-              title="Couldn't load schedules"
+              title="Couldn’t load schedules"
               :description="schedulesError"
             >
               <template #actions>
@@ -664,7 +664,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="tagsError"
               icon="alert"
-              title="Couldn't load tags"
+              title="Couldn’t load tags"
               :description="tagsError"
             >
               <template #actions>
@@ -718,7 +718,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="streamLimitsError"
               icon="alert"
-              title="Couldn't load stream limits"
+              title="Couldn’t load stream limits"
               :description="streamLimitsError"
             >
               <template #actions>
@@ -845,7 +845,7 @@ function askDeleteTag(tag: ProfileTag): void {
     </Modal>
 
     <!-- Delete schedule confirmation -->
-    <Modal v-model="showDeleteScheduleModal" title="Delete Schedule" size="sm">
+    <Modal v-model="showDeleteScheduleModal" title="Delete schedule" size="sm">
       <p v-if="pendingDeleteSchedule">
         Delete schedule <strong>{{ pendingDeleteSchedule.name }}</strong>?
       </p>
@@ -858,7 +858,7 @@ function askDeleteTag(tag: ProfileTag): void {
     </Modal>
 
     <!-- Delete tag confirmation -->
-    <Modal v-model="showDeleteTagModal" title="Remove Tag" size="sm">
+    <Modal v-model="showDeleteTagModal" title="Remove tag" size="sm">
       <p v-if="pendingDeleteTag">
         Remove tag <strong>{{ pendingDeleteTag.tag }}</strong>?
       </p>

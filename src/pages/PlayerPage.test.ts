@@ -361,7 +361,7 @@ describe('PlayerPage — load + stream resolution', () => {
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     expect(w.findComponent(Player).exists()).toBe(false);
-    expect(w.text()).toContain("Couldn't play this title");
+    expect(w.text()).toContain("Couldn’t play this title");
 
     const retry = w.findAll('button').find((b) => b.text() === 'Retry');
     expect(retry).toBeTruthy();

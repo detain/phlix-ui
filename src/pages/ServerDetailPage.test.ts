@@ -144,7 +144,7 @@ describe('ServerDetailPage — load + render', () => {
       .mockResolvedValueOnce(makeDetail());
     const { w } = await mountPage({ get } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load server details");
+    expect(w.text()).toContain("Couldn’t load server details");
     expect(w.text()).toContain('server down');
     await findBtnByText(w, 'Retry')!.trigger('click');
     await flushPromises();

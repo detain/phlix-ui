@@ -328,7 +328,7 @@ export const PT_BR_MESSAGES = {
     noRooms: 'Nenhuma sala pública disponível',
     errorCreate: 'Falha ao criar a sala.',
     errorJoin: 'Falha ao entrar na sala.',
-    errorLeave: 'Falha ao sair da sala',
+    errorLeave: 'Falha ao sair da sala.',
     yourRole: 'Você é {role}',
     roleOwner: 'Proprietário',
     roleMember: 'Membro',

@@ -227,7 +227,7 @@ describe('ConnectPage', () => {
     await w.find('form').trigger('submit.prevent');
     await flushPromises();
 
-    expect(w.text()).toContain("Couldn't reach a Phlix server");
+    expect(w.text()).toContain("Couldn’t reach a Phlix server");
     expect(useConnectionStore().apiBase).toBeNull();
     const anyway = w.find('.connect__anyway');
     expect(anyway.exists()).toBe(true);
@@ -327,7 +327,7 @@ describe('S532 — host-injected connect scan', () => {
     const push = vi.spyOn(router, 'push');
     await w.find('.connect__scan .phlix-btn').trigger('click');
     await flushPromises();
-    expect(w.find('.connect__scan-note').text()).toContain("Couldn't scan your network");
+    expect(w.find('.connect__scan-note').text()).toContain("Couldn’t scan your network");
     expect(w.findAll('.connect__scan-row')).toHaveLength(0);
     expect(useConnectionStore().apiBase).toBeNull();
     expect(push).not.toHaveBeenCalled();

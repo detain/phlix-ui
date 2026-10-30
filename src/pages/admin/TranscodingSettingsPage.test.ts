@@ -244,7 +244,7 @@ describe('TranscodingSettingsPage — load failure', () => {
 
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.props('title')).toBe("Couldn't load transcoding settings");
+    expect(empty.props('title')).toBe("Couldn’t load transcoding settings");
     expect(empty.props('description')).toBe('accelerator probe timed out');
     expect(w.find('form').exists()).toBe(false);
 

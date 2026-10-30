@@ -160,7 +160,7 @@ async function onPlay(item: MediaItem): Promise<void> {
 
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
-  else toasts.info(`Details for "${item.name}" are coming soon`);
+  else toasts.info(`Details for “${item.name}” are coming soon`);
 }
 
 function retry(): void {
@@ -188,7 +188,7 @@ watch(
 <template>
   <div class="history-page">
     <div class="history-header">
-      <h1 class="history-title">Watch History</h1>
+      <h1 class="history-title">Watch history</h1>
     </div>
 
     <Spinner v-if="loading && allItems.length === 0" label="Loading watch history" />
@@ -196,7 +196,7 @@ watch(
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load watch history"
+      title="Couldn’t load watch history"
       :description="error"
     >
       <template #actions>

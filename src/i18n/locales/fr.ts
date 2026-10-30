@@ -332,7 +332,7 @@ export const FR_MESSAGES = {
     noRooms: 'Aucun salon public disponible',
     errorCreate: 'Impossible de créer le salon.',
     errorJoin: 'Impossible de rejoindre le salon.',
-    errorLeave: 'Impossible de quitter le salon',
+    errorLeave: 'Impossible de quitter le salon.',
     yourRole: 'Vous êtes {role}',
     roleOwner: 'Propriétaire',
     roleMember: 'Membre',

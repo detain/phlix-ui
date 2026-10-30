@@ -128,7 +128,7 @@ describe('ManageSharesPage — load errors', () => {
     const w = mountPage({ get, delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load shares");
+    expect(w.text()).toContain("Couldn’t load shares");
     expect(w.text()).toContain('shares down');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'shares down')).toBe(true);
     w.unmount();
@@ -149,7 +149,7 @@ describe('ManageSharesPage — load errors', () => {
       .mockResolvedValueOnce({ outgoing: [hubShare] });
     const w = mountPage({ get, delete: vi.fn() } as unknown as ApiClient);
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load shares");
+    expect(w.text()).toContain("Couldn’t load shares");
     await findBtnByText(w, 'Retry')!.trigger('click');
     await flushPromises();
     expect(w.find('.shares__table').exists()).toBe(true);

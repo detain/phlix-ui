@@ -228,7 +228,7 @@ describe('Admin MetricsPage', () => {
     await nextTick();
 
     const text = w.text();
-    expect(text).toContain("Couldn't load bandwidth history");
+    expect(text).toContain("Couldn’t load bandwidth history");
     expect(w.findComponent(Button).exists()).toBe(true); // retry button
     w.unmount();
   });

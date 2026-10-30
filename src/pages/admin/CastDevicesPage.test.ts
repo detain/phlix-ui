@@ -225,7 +225,7 @@ describe('Admin CastDevicesPage', () => {
     await flushPromises();
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
-    expect(empty.props('title')).toContain("Couldn't load Chromecast devices");
+    expect(empty.props('title')).toContain("Couldn’t load Chromecast devices");
     expect(w.text()).toContain('disk gone');
     expect(w.text()).not.toContain('No Chromecast devices');
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'disk gone')).toBe(true);
@@ -246,11 +246,11 @@ describe('Admin CastDevicesPage', () => {
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     await flushPromises();
     const empty = w.findComponent(EmptyState);
-    expect(empty.props('title')).toContain("Couldn't load Chromecast devices");
+    expect(empty.props('title')).toContain("Couldn’t load Chromecast devices");
     await empty.find('button').trigger('click');
     await flushPromises();
     expect(w.text()).toContain('Living Room TV');
-    expect(w.text()).not.toContain("Couldn't load Chromecast devices");
+    expect(w.text()).not.toContain("Couldn’t load Chromecast devices");
     w.unmount();
   });
 
@@ -264,12 +264,12 @@ describe('Admin CastDevicesPage', () => {
     await flushPromises();
     // Chromecast loaded fine → no error on the active tab.
     expect(w.text()).toContain('Living Room TV');
-    expect(w.text()).not.toContain("Couldn't load");
+    expect(w.text()).not.toContain("Couldn’t load");
     // Switch to AirPlay → its own error state shows.
     await w.findAll('[role="tab"]')[1].trigger('click');
     await flushPromises();
     const empty = w.findComponent(EmptyState);
-    expect(empty.props('title')).toContain("Couldn't load AirPlay devices");
+    expect(empty.props('title')).toContain("Couldn’t load AirPlay devices");
     expect(w.text()).toContain('airplay gone');
     w.unmount();
   });

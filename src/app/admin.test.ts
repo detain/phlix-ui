@@ -277,7 +277,7 @@ describe('adminMenu', () => {
       'admin-remote-access': { label: 'Remote Access', to: '/app/admin/remote-access' },
       'admin-livetv': { label: 'Live TV / DVR', to: '/app/admin/livetv' },
       'admin-collections': { label: 'Collections', to: '/app/admin/collections' },
-      'admin-history': { label: 'Watch History', to: '/app/admin/history' },
+      'admin-history': { label: 'Watch history', to: '/app/admin/history' },
       'admin-syncplay': { label: 'SyncPlay', to: '/app/admin/syncplay' },
       'admin-libraries': { label: 'Libraries', to: '/app/admin/libraries' },
       'admin-duplicates': { label: 'Duplicates', to: '/app/admin/duplicates' },

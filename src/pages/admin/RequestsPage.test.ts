@@ -74,7 +74,7 @@ describe('admin/RequestsPage — list + states', () => {
     const w = mountPage({ get, post: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load requests");
+    expect(w.text()).toContain("Couldn’t load requests");
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'queue down')).toBe(true);
     w.unmount();
   });

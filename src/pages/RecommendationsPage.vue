@@ -90,7 +90,7 @@ async function onPlay(item: MediaItem): Promise<void> {
 
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
-  else toasts.info(`Details for "${item.name}" are coming soon`);
+  else toasts.info(`Details for “${item.name}” are coming soon`);
 }
 
 function onWatchlist(item: MediaItem): void {
@@ -103,9 +103,9 @@ function onWatchlist(item: MediaItem): void {
 
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked "${item.name}" as watched`);
+    toasts.success(`Marked “${item.name}” as watched`);
   } else {
-    toasts.info(`Marked "${item.name}" as unwatched`);
+    toasts.info(`Marked “${item.name}” as unwatched`);
   }
 }
 
@@ -123,7 +123,7 @@ function onMatch(item: MediaItem): void {
 }
 function onMatchApplied(updated: MediaItem): void {
   items.value = items.value.map((i) => (i.id === updated.id ? updated : i));
-  toasts.success(`Updated metadata for "${updated.name}"`);
+  toasts.success(`Updated metadata for “${updated.name}”`);
 }
 
 function retry(): void {
@@ -147,7 +147,7 @@ onMounted(() => {
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load recommendations"
+      title="Couldn’t load recommendations"
       :description="error"
     >
       <template #actions>
@@ -159,7 +159,7 @@ onMounted(() => {
       v-else-if="!loading && items.length === 0"
       icon="star"
       title="No recommendations yet"
-      description="Watch a few titles and we'll suggest others you'll love."
+      description="Watch a few titles and we’ll suggest others you’ll love."
     />
 
     <MediaGrid

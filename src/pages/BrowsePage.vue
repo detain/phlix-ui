@@ -99,7 +99,7 @@ function onMatchApplied(item: MediaItem): void {
   // A fresh object identity each apply so re-applying the SAME id still triggers
   // the rails' watch (a structural-equal value wouldn't re-fire on identity).
   appliedItem.value = { ...item };
-  toasts.success(`Updated metadata for "${item.name}"`);
+  toasts.success(`Updated metadata for “${item.name}”`);
 }
 
 /** Patch the item's poster in place after the admin picks a new one (same
@@ -107,7 +107,7 @@ function onMatchApplied(item: MediaItem): void {
 function onPosterApplied(updated: MediaItem): void {
   registry.set(updated.id, updated);
   appliedItem.value = { ...updated };
-  toasts.success(`Updated poster for "${updated.name}"`);
+  toasts.success(`Updated poster for “${updated.name}”`);
 }
 
 // One HomeRow config per library: a library-scoped rail titled by the library
@@ -452,7 +452,7 @@ function onWatchlist(item: MediaItem): void {
 }
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
-  else toasts.info(`Details for "${item.name}" are coming soon`);
+  else toasts.info(`Details for “${item.name}” are coming soon`);
 }
 
 // The card/menu already toggled the watched store + persisted the change before
@@ -461,9 +461,9 @@ function onInfo(item: MediaItem): void {
 // `onWatchlist`).
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked "${item.name}" as watched`);
+    toasts.success(`Marked “${item.name}” as watched`);
   } else {
-    toasts.info(`Marked "${item.name}" as unwatched`);
+    toasts.info(`Marked “${item.name}” as unwatched`);
   }
 }
 
@@ -497,10 +497,12 @@ async function confirmRemove(): Promise<void> {
     if (stale()) return;
     favoriteItems.value = favoriteItems.value.filter((f) => f.id !== item.id);
     registry.delete(item.id);
-    toasts.success(`Removed "${item.name}"`);
+    toasts.success(`Removed “${item.name}”`);
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.error(`Failed to remove "${item.name}": ${e instanceof Error ? e.message : 'Unknown error'}`);
+    toasts.error(`Failed to remove “${item.name}”.`, {
+      message: e instanceof Error ? e.message : 'Unknown error',
+    });
   }
 }
 

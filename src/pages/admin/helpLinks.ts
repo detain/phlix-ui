@@ -74,10 +74,10 @@ export const adminPageHelp = {
   dashboard: {
     links: [doc('admin/dashboard', 'Dashboard'), doc('admin/stats', 'Stats')],
     details:
-      'Now Playing is computed live, but the activity feed, Top Users, Top Media and the storage ' +
+      'Now playing is computed live, but the activity feed, Top Users, Top Media and the storage ' +
       'figures all come from recorded statistics — storage in particular is snapshotted ' +
       'periodically rather than measured when you open the page. Turning statistics recording off ' +
-      'in Settings blanks all four of those cards; Now Playing keeps working.',
+      'in Settings blanks all four of those cards; Now playing keeps working.',
   },
   metrics: {
     links: [doc('admin/stats', 'Stats')],

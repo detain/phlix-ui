@@ -329,7 +329,7 @@ export const JA_MESSAGES = {
     noRooms: '公開ルームはありません',
     errorCreate: 'ルームを作成できませんでした。',
     errorJoin: 'ルームに参加できませんでした。',
-    errorLeave: 'ルームから退出できませんでした',
+    errorLeave: 'ルームから退出できませんでした。',
     yourRole: 'あなたの役割：{role}',
     roleOwner: 'オーナー',
     roleMember: 'メンバー',

@@ -143,7 +143,7 @@ onMounted(() => loadShares(true));
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load shares"
+      title="Couldn’t load shares"
       :description="error"
     >
       <template #actions>

@@ -384,7 +384,7 @@ onMounted(() => loadTokens(true));
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load MCP tokens"
+      title="Couldn’t load MCP tokens"
       :description="error"
     >
       <template #actions>

@@ -238,8 +238,10 @@ watch(() => props.id, () => {
         </div>
 
         <!-- Error state -->
-        <EmptyState v-else-if="error" icon="alert-circle" :title="error">
-            <Button variant="solid" @click="loadPhoto">Retry</Button>
+        <EmptyState v-else-if="error" icon="alert-circle" title="Couldn’t load photo" :description="error">
+            <template #actions>
+                <Button variant="solid" @click="loadPhoto">Retry</Button>
+            </template>
         </EmptyState>
 
         <!-- Photo view -->
@@ -325,7 +327,7 @@ watch(() => props.id, () => {
         <!-- Photo not found -->
         <EmptyState v-else icon="image" title="Photo not found">
             <p>This photo could not be found.</p>
-            <Button variant="subtle" @click="goBack">Go Back</Button>
+            <Button variant="subtle" @click="goBack">Go back</Button>
         </EmptyState>
     </div>
 </template>

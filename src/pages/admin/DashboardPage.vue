@@ -7,7 +7,7 @@
 /**
  * Admin DashboardPage (RA.2) — the server stats dashboard, ported from the
  * deleted React `DashboardPage` onto the `@phlix/ui` primitives. Five cards:
- * Now Playing (live sessions + progress bars, auto-refreshing every 30s), Top
+ * Now playing (live sessions + progress bars, auto-refreshing every 30s), Top
  * Users (leaderboard), Top Media (ranked list), Storage (per-type breakdown),
  * and Recent Activity (event feed with load-more). A 7d/30d/90d range filter
  * drives the top-users + top-media queries. Errors surface as toasts; the
@@ -330,10 +330,10 @@ onBeforeUnmount(() => {
     </PageHint>
 
     <div class="admin-dash__grid">
-      <!-- Now Playing -->
+      <!-- Now playing -->
       <section class="admin-dash__card" aria-labelledby="np-heading">
         <header class="admin-dash__card-head">
-          <h2 id="np-heading" class="admin-dash__card-title">Now Playing</h2>
+          <h2 id="np-heading" class="admin-dash__card-title">Now playing</h2>
           <Badge
             v-if="nowPlaying.length > 0"
             tone="accent"
@@ -343,7 +343,7 @@ onBeforeUnmount(() => {
           </Badge>
         </header>
         <div v-if="loadingNowPlaying" class="admin-dash__skel"><Skeleton variant="text" :lines="4" /></div>
-        <EmptyState v-else-if="nowPlayingError" icon="alert" title="Couldn't load now playing" :description="nowPlayingError">
+        <EmptyState v-else-if="nowPlayingError" icon="alert" title="Couldn’t load now playing" :description="nowPlayingError">
           <template #actions>
             <Button variant="solid" size="sm" left-icon="rewind" @click="fetchNowPlaying">Retry</Button>
           </template>
@@ -378,7 +378,7 @@ onBeforeUnmount(() => {
           <h2 id="tu-heading" class="admin-dash__card-title">Top Users</h2>
         </header>
         <div v-if="loadingTopUsers" class="admin-dash__skel"><Skeleton variant="text" :lines="4" /></div>
-        <EmptyState v-else-if="topUsersError" icon="alert" title="Couldn't load top users" :description="topUsersError">
+        <EmptyState v-else-if="topUsersError" icon="alert" title="Couldn’t load top users" :description="topUsersError">
           <template #actions>
             <Button variant="solid" size="sm" left-icon="rewind" @click="fetchTopUsers(dateRange)">Retry</Button>
           </template>
@@ -410,7 +410,7 @@ onBeforeUnmount(() => {
           <h2 id="tm-heading" class="admin-dash__card-title">Top Media</h2>
         </header>
         <div v-if="loadingTopMedia" class="admin-dash__skel"><Skeleton variant="text" :lines="4" /></div>
-        <EmptyState v-else-if="topMediaError" icon="alert" title="Couldn't load top media" :description="topMediaError">
+        <EmptyState v-else-if="topMediaError" icon="alert" title="Couldn’t load top media" :description="topMediaError">
           <template #actions>
             <Button variant="solid" size="sm" left-icon="rewind" @click="fetchTopMedia(dateRange)">Retry</Button>
           </template>
@@ -445,7 +445,7 @@ onBeforeUnmount(() => {
           <h2 id="st-heading" class="admin-dash__card-title">Storage</h2>
         </header>
         <div v-if="loadingStorage" class="admin-dash__skel"><Skeleton variant="text" :lines="3" /></div>
-        <EmptyState v-else-if="storageError" icon="alert" title="Couldn't load storage" :description="storageError">
+        <EmptyState v-else-if="storageError" icon="alert" title="Couldn’t load storage" :description="storageError">
           <template #actions>
             <Button variant="solid" size="sm" left-icon="rewind" @click="fetchStorage">Retry</Button>
           </template>
@@ -471,7 +471,7 @@ onBeforeUnmount(() => {
           <h2 id="act-heading" class="admin-dash__card-title">Recent Activity</h2>
         </header>
         <div v-if="loadingActivity" class="admin-dash__skel"><Skeleton variant="text" :lines="5" /></div>
-        <EmptyState v-else-if="activityError" icon="alert" title="Couldn't load activity" :description="activityError">
+        <EmptyState v-else-if="activityError" icon="alert" title="Couldn’t load activity" :description="activityError">
           <template #actions>
             <Button variant="solid" size="sm" left-icon="rewind" @click="fetchActivity(ACTIVITY_PAGE_SIZE)">Retry</Button>
           </template>
@@ -555,7 +555,7 @@ onBeforeUnmount(() => {
   padding-block: var(--space-2);
 }
 
-/* Now Playing */
+/* Now playing */
 .admin-dash__np-list,
 .admin-dash__media-list,
 .admin-dash__activity-list {

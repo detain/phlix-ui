@@ -187,7 +187,7 @@ onMounted(() => void loadRequests(activeTab.value));
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load requests"
+      title="Couldn’t load requests"
       :description="error"
     >
       <template #actions>

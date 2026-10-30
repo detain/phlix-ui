@@ -528,14 +528,14 @@ describe('ParentalControlsPage — schedules list', () => {
     });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
-    expect(w.text()).toContain("Couldn't load schedules");
+    expect(w.text()).toContain("Couldn’t load schedules");
     expect(w.text()).toContain('schedules boom');
     // An error must not read as "no restrictions configured".
     expect(w.text()).not.toContain('No access schedules');
 
     await findBtn(w, 'Retry')!.trigger('click');
     await flushPromises();
-    expect(w.text()).not.toContain("Couldn't load schedules");
+    expect(w.text()).not.toContain("Couldn’t load schedules");
     expect(w.findAll('.parental-section__item').length).toBe(1);
   });
 
@@ -867,7 +867,7 @@ describe('ParentalControlsPage — deleting a schedule requires confirmation', (
     await flushPromises();
     expect(del).not.toHaveBeenCalled();
     expect(anyModalOpen()).toBe(true);
-    expect(modalPanel().textContent).toContain('Delete Schedule');
+    expect(modalPanel().textContent).toContain('Delete schedule');
     expect(modalPanel().textContent).toContain('Weekday Evenings');
   });
 
@@ -976,7 +976,7 @@ describe('ParentalControlsPage — tags', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
     await goToTags(w);
-    expect(w.text()).toContain("Couldn't load tags");
+    expect(w.text()).toContain("Couldn’t load tags");
     expect(w.text()).toContain('tags boom');
     expect(w.text()).not.toContain('No tags');
 
@@ -1097,7 +1097,7 @@ describe('ParentalControlsPage — tags', () => {
     await findBtn(w, 'Remove')!.trigger('click');
     await flushPromises();
     expect(del).not.toHaveBeenCalled();
-    expect(modalPanel().textContent).toContain('Remove Tag');
+    expect(modalPanel().textContent).toContain('Remove tag');
     expect(modalPanel().textContent).toContain('horror');
   });
 
@@ -1195,7 +1195,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
     await goToLimits(w);
-    expect(w.text()).toContain("Couldn't load stream limits");
+    expect(w.text()).toContain("Couldn’t load stream limits");
     expect(w.text()).toContain('limits boom');
 
     get.mockImplementation(async () => limits);

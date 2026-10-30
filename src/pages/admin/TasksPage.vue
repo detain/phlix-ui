@@ -455,7 +455,7 @@ onBeforeUnmount(stopPolling);
     </header>
 
     <PageHint :links="adminPageHelp.tasks.links" :details="adminPageHelp.tasks.details">
-      Run the server's maintenance work by hand. <strong>Sync</strong> tasks finish before the
+      Run the server’s maintenance work by hand. <strong>Sync</strong> tasks finish before the
       button stops spinning and report their numbers here; <strong>queued</strong> tasks are handed
       to the maintenance worker and appear in <strong>Recent jobs</strong> below. Firing a queued
       task that is already running does not start a second one.
@@ -592,7 +592,7 @@ onBeforeUnmount(stopPolling);
         <EmptyState
           v-else-if="jobsError"
           icon="alert"
-          title="Couldn't load maintenance jobs"
+          title="Couldn’t load maintenance jobs"
           :description="jobsError"
         >
           <template #actions>

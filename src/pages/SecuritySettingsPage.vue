@@ -323,7 +323,7 @@ onMounted(() => {
                 <EmptyState
                     v-else-if="error"
                     icon="alert"
-                    title="Couldn't load passkeys"
+                    title="Couldn’t load passkeys"
                     :description="error"
                 >
                     <template #actions>

@@ -480,7 +480,7 @@ describe('useSyncPlayStore — error paths', () => {
 
         await expect(store.joinRoom(BASE, GROUP_ID)).rejects.toBeTruthy();
         // The `e instanceof Error ? e.message : <fallback>` arm.
-        expect(store.error).toBe('Failed to join the room');
+        expect(store.error).toBe('Failed to join the room.');
     });
 });
 

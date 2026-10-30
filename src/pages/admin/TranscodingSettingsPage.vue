@@ -163,7 +163,7 @@ onMounted(loadData);
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn't load transcoding settings"
+      title="Couldn’t load transcoding settings"
       :description="error"
     >
       <template #actions>

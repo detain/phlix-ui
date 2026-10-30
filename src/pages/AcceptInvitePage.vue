@@ -127,7 +127,7 @@ function viewShared(): void {
       <template v-if="isLoggedIn">
         <template v-if="accepted">
           <div class="accept-invite__success" role="status">
-            <p>You've been granted access to the library!</p>
+            <p>You’ve been granted access to the library!</p>
           </div>
           <Button variant="solid" size="lg" block @click="viewShared">
             View Shared Libraries
@@ -135,7 +135,7 @@ function viewShared(): void {
         </template>
 
         <template v-else>
-          <p class="accept-invite__lead">You've been invited to access a library.</p>
+          <p class="accept-invite__lead">You’ve been invited to access a library.</p>
 
           <p v-if="error" class="accept-invite__error" role="alert">{{ error }}</p>
 
@@ -154,7 +154,7 @@ function viewShared(): void {
       <!-- Unauthenticated: log in / sign up to continue -->
       <template v-else>
         <p class="accept-invite__lead">
-          You've been invited to access a library. Log in or create an account to accept.
+          You’ve been invited to access a library. Log in or create an account to accept.
         </p>
         <div class="accept-invite__actions">
           <Button variant="solid" size="lg" block @click="router.push(loginTo)">

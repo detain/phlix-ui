@@ -182,7 +182,7 @@ describe('SecuritySettingsPage', () => {
     stubFetch({ listError: true });
     const w = mountPage();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load passkeys");
+    expect(w.text()).toContain("Couldn’t load passkeys");
     w.unmount();
   });
 

@@ -246,7 +246,7 @@ describe('MediaDetailPage — SWR item cache (UI-2.1)', () => {
     const detail = w.findComponent(MediaDetail);
     expect(detail.exists()).toBe(true); // no error state — stale cache shown
     expect((detail.props('item') as MediaItem).name).toBe('STALE-BUT-USABLE');
-    expect(w.text()).not.toContain("Couldn't load this title");
+    expect(w.text()).not.toContain("Couldn’t load this title");
   });
 });
 

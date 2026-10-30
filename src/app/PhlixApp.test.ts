@@ -642,7 +642,7 @@ describe('PhlixApp — Who’s-watching gate after login (S82)', () => {
 
     const dialog = wrapper.find('[role="dialog"]');
     expect(dialog.exists()).toBe(true);
-    expect(dialog.text()).toContain("Who's watching?");
+    expect(dialog.text()).toContain("Who’s watching?");
     expect(dialog.find('[data-testid="whos-tile-p1"]').exists()).toBe(true);
     expect(dialog.find('[data-testid="whos-tile-p2"]').exists()).toBe(true);
     // The shell (bar + nav + main) stays mounted underneath — this is an overlay,

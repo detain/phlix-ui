@@ -465,7 +465,7 @@ async function updatePlugin(plugin: Plugin): Promise<void> {
     clearUpdate(plugin.name);
     await refreshAll();
   } catch (e) {
-    opError.value = { title: `Couldn't update ${plugin.name}`, message: updateErrorMessage(e) };
+    opError.value = { title: `Couldn’t update ${plugin.name}`, message: updateErrorMessage(e) };
     toasts.error(updateErrorMessage(e));
   } finally {
     updatingName.value = null;
@@ -551,7 +551,7 @@ async function toggleEnabled(plugin: Plugin, enabled: boolean): Promise<void> {
     // verbatim (e.g. "OMDb API key not configured", "entry class … could not
     // be resolved"), so surface it rather than a generic line.
     reportOpError(
-      enabled ? `Couldn't enable ${plugin.name}` : `Couldn't disable ${plugin.name}`,
+      enabled ? `Couldn’t enable ${plugin.name}` : `Couldn’t disable ${plugin.name}`,
       e,
       'Failed to update plugin.',
     );
@@ -572,7 +572,7 @@ async function confirmUninstall(): Promise<void> {
     uninstalling.value = null;
     await refreshAll();
   } catch (e) {
-    reportOpError(`Couldn't uninstall ${target.name}`, e, 'Failed to uninstall plugin.');
+    reportOpError(`Couldn’t uninstall ${target.name}`, e, 'Failed to uninstall plugin.');
     uninstalling.value = null;
   }
 }
@@ -1098,7 +1098,7 @@ onMounted(() => {
     <div v-if="installError" class="admin-plugins__install-error" role="alert">
       <Icon name="alert" class="admin-plugins__install-error-icon" />
       <div class="admin-plugins__install-error-body">
-        <strong>Couldn't install the plugin.</strong>
+        <strong>Couldn’t install the plugin.</strong>
         <span>{{ installError }}</span>
       </div>
       <button
@@ -1140,7 +1140,7 @@ onMounted(() => {
         class="admin-plugins__catalog-error"
         role="alert"
       >
-        Couldn't load catalog <strong>{{ sourceLabel(err.source) }}</strong> — {{ err.error }}
+        Couldn’t load catalog <strong>{{ sourceLabel(err.source) }}</strong> — {{ err.error }}
       </p>
 
       <EmptyState
@@ -1282,7 +1282,7 @@ onMounted(() => {
     <EmptyState
       v-if="error && !loading"
       icon="alert"
-      title="Couldn't load installed plugins"
+      title="Couldn’t load installed plugins"
       :description="error"
     >
       <template #actions>

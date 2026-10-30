@@ -108,7 +108,7 @@ describe('InviteLinksPage — list + states', () => {
     const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
     const toasts = useToastStore();
     await flushPromises();
-    expect(w.text()).toContain("Couldn't load invite links");
+    expect(w.text()).toContain("Couldn’t load invite links");
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'links down')).toBe(true);
     w.unmount();
   });

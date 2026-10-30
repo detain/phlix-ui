@@ -10,7 +10,7 @@
  *
  * WHY A SEPARATE LAYER AND NOT `errors.*` KEYS IN `DEFAULT_MESSAGES`:
  * every `src/i18n/locales/*.ts` bundle is `satisfies PhlixMessages` with exact
- * key-identity against the 412-key UI-chrome catalog, and downstream clients
+ * key-identity against the 466-key UI-chrome catalog, and downstream clients
  * (tizen, windows) PIN bundle↔installed equality at the release tag. Folding
  * ~204 registry-adjacent error strings into the main catalog would force churn
  * in every equality pin on each registry edit. The error catalog is instead a
@@ -80,11 +80,11 @@ const EN: PhlixErrorCatalog = {
   'server.not_found': 'That server could not be found.',
   'server.not_owned': 'This server does not belong to your account.',
   'server.relay_unavailable':
-    "This server is online but its secure relay tunnel isn't connected yet, so its libraries can't be loaded over the hub. It should reconnect automatically — try again in a moment.",
+    "This server is online but its secure relay tunnel isn’t connected yet, so its libraries can’t be loaded over the hub. It should reconnect automatically — try again in a moment.",
   'server.offline':
     'This server is offline, so its libraries can’t be loaded. It will be browsable again once it reconnects to the hub.',
   'server.no_tunnel':
-    "This server is online but its secure relay tunnel isn't connected yet, so its libraries can't be loaded over the hub. It should reconnect automatically — try again in a moment.",
+    "This server is online but its secure relay tunnel isn’t connected yet, so its libraries can’t be loaded over the hub. It should reconnect automatically — try again in a moment.",
   'server.key_invalid':
     'The server’s signing key failed validation during the claim. Try claiming again.',
 
