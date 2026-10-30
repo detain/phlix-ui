@@ -449,7 +449,9 @@ Deep-watched preference writes to `localStorage` are debounced (250 ms trailing 
 
 ## Component catalog
 
-Everything below is a named export from the package root (`import { Button } from '@phlix/ui'`).
+Everything below is a named export from the package root (`import { Button } from '@phlix/ui'`) — with
+one exception, flagged where it appears: the Player surface ships on the secondary entry
+`@phlix/ui/player` (`import { Player } from '@phlix/ui/player'`), never from the root.
 
 ### Primitives (`src/components/ui/`)
 
@@ -511,12 +513,19 @@ last, hides itself entirely when there is only one page, and drops the jump `<se
 pages rather than mint that many `<option>` nodes from a server-supplied `total`. Like the `MediaGrid`
 view-mode renderers it is an internal of these pages and deliberately **not** re-exported.
 
-### Player surface
+### Player surface (`@phlix/ui/player`)
+
+These are **not** root exports: the whole surface ships on the secondary entry
+`@phlix/ui/player` — `import { Player, MiniPlayer, Scrubber } from '@phlix/ui/player'`. The root barrel
+deliberately keeps them out so the main bundle stays lean, and the entry's CSS publishes as
+`@phlix/ui/player.css` — a strict subset of `@phlix/ui/style.css`; load one, not both.
 
 `Player` · `MiniPlayer` · `Scrubber` · `VolumeControl` · `SpeedMenu` · `QualityMenu` ·
-`CaptionsMenu` · `CaptionOverlay` · `AmbientCanvas` · `ResumePrompt` · `UpNext` · `TranscodeNotice` ·
-`ShortcutsHelp`. Pure helpers live alongside (`playback.ts`, `captions.ts`, `ambient.ts`,
-`shortcuts.ts`, `format-time.ts`, `quality.ts`). Direct play vs. server transcode is decided in
+`CaptionsMenu` · `CaptionOverlay` · `SubtitleSearch` · `AmbientCanvas` · `ResumePrompt` · `UpNext` ·
+`TranscodeNotice` · `TranscodePreparing` · `SkipButton` · `ShortcutsHelp`, plus the pure helpers that
+ship on the same entry (`playback.ts`, `captions.ts`, `ambient.ts`, `shortcuts.ts`, `format-time.ts`,
+`transcode.ts`, `hls-playback.ts`, and the `useHlsTranscode` / `usePlayerStore` seams). Direct play vs.
+server transcode is decided in
 `playback.ts`: `videoCodecFromStreams()` reads the source's video codec off the detail response's
 `streams[]`, `videoCodecPolicy()` classifies it against a decodable **allowlist**
 (`direct` / `probe` / `transcode`), and `needsTranscodeWithCapabilities()` combines that verdict with

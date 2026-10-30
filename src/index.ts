@@ -154,8 +154,9 @@ export { default as SourcePriorityEditor } from './components/SourcePriorityEdit
 // mounts them as lazy `() => import()` route chunks; a static re-export here would re-merge
 // them into the main bundle (Rollup INEFFECTIVE_DYNAMIC_IMPORT) and defeat the code-split.
 // The reusable *building blocks* (MediaCard/MediaGrid/MediaRow/MediaHomeRow/MediaDetail/
-// FilterBar above; Player + player/* parts and LoginForm/SignupForm below) ARE
-// exported — consumers compose pages from those, not from the page shells.
+// FilterBar above; LoginForm/SignupForm below) ARE exported — consumers compose pages from
+// those, not from the page shells. The Player surface is NOT here: it ships on the
+// `@phlix/ui/player` secondary entry (see the note at the bottom of this file).
 //
 // NOTE (S68/S69): the per-view-mode `#card`-slot renderers — `MediaListRow`,
 // `MediaBackdropRow`, and the table renderer S70 adds — are also NOT re-exported,

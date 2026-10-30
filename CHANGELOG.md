@@ -1,3 +1,23 @@
+
+## Unreleased — ui majors lane 2026-10-30 (M-UI-06): the README stops promising the Player surface on the package root
+
+- **The ask.** ui__docmaint M-UI-06: the Component catalog header says "Everything below
+  is a named export from the package root", yet the `### Player surface` section lists
+  `Player` · `MiniPlayer` · `Scrubber` … which `src/index.ts` explicitly moved to the
+  secondary entry (`@phlix/ui/player`, `src/player.ts`) and which `package.json#exports`
+  publishes only under `"./player"`. A consumer following the README writes a root import
+  and gets an unresolved name at build time. The stale parenthetical in the `src/index.ts`
+  building-blocks note ("Player + player/* parts … ARE exported") repeated the same lie.
+- **The cure.** The catalog header now declares its one exception; the Player section is
+  titled with its real entry point and shows the import form; the CSS seam is stated
+  honestly (`player.css` is a subset of `style.css`, load one not both); the component
+  list matches `src/player.ts` exactly (`SubtitleSearch`, `TranscodePreparing`,
+  `SkipButton` were missing) and the helper list names only what the entry actually
+  exports (`quality.ts` is internal; `transcode.ts`/`hls-playback.ts`/`useHlsTranscode`/
+  `usePlayerStore` ship on the entry). The `src/index.ts` comment tells the same truth.
+- **Evidence.** Docs/comment copy only; the committed barrel behavior is unchanged
+  (`dist:check` law holds at this commit).
+
 ## Unreleased — R-W6 riders lane 2026-10-30 (R-UI-06): the orphaned `syncplay.publicRooms` key is swept from all seven catalogs
 
 - **The ask.** Rider R-UI-06 (upstream report M-UI-14__r1 item 1): when M-UI-14
