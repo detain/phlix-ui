@@ -1,3 +1,29 @@
+## Unreleased — R-W2 riders lane 2026-10-30 (R-UI-02): the quota.exceeded copy stops claiming bandwidth it never gated
+
+- **The ask.** M-HUB-05's fix closeout filed rider R-UI-02 against this repo:
+  the `quota.exceeded` catalog rows were cut in the bandwidth-quota era and
+  read as if the code meant only monthly bandwidth exhaustion. The hub emits
+  the same code with three distinct meanings — collaborator cap on share/
+  invite redemption (`LibraryShareController.php:132`,
+  `InviteLinkController.php:296`, 409), per-account server cap on claim
+  (`ServerClaimController.php:286`, 409) and the monthly bandwidth refusal
+  (`ServerProxyController.php` `quotaRefusal()`, 429). Under the ratified
+  doctrine the server's English message is a DEBUG FALLBACK and the catalog
+  row is the primary member-visible string, so the umbrella copy must be
+  true for every emitter at once.
+- **The cure.** Rotated the seven locale rows (en/es/fr/de/it/pt-br/ja) in
+  `src/i18n/errors.ts` to neutral account-or-server quota wording that names
+  no specific quota kind. No wire change, no new codes; tests reference the
+  copy symbolically (`en[code]`) so zero pins rotated.
+- **Teeth.** Full serial suite green unchanged: 313 files, 6424 passed /
+  10 skipped — exact W1 floors, zero goldens moved. `npm run build`
+  re-emitted the shared-chunk cascade (entry artifacts plus the hash-renamed
+  page chunks that import the changed shared module) and `dist:check`
+  (S176 rebuild-and-compare) is green on the committed tree.
+- **Seam reported (owner-gated, NOT taken by this lane).** As with R-UI-01,
+  the fix is unreachable to consumers until the next ui tag wave (v0.99.12
+  reel entry); no tag or consumer cascade created here.
+
 ## Unreleased — R-W1 riders lane 2026-10-30 (R-UI-01): the AcceptInvitePage redeem fallback speaks the contracts catalog
 
 - **The ask.** M-HUB-05's closeout filed a residual against this repo

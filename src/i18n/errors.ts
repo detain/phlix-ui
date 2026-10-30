@@ -90,7 +90,7 @@ const EN: PhlixErrorCatalog = {
 
   // ── proxy / quota / stream / gateway — hub throttle & routing gates ──
   'proxy.scope_denied': 'Your access token does not have the scope for this request.',
-  'quota.exceeded': 'You have reached your bandwidth quota limit.',
+  'quota.exceeded': 'You have reached a quota limit for this account or server.',
   'stream.limit': 'You have reached the maximum number of simultaneous streams.',
   'stream.limit_exceeded':
     'You have reached this server’s limit on simultaneous streams. Stop one and try again.',
@@ -372,7 +372,7 @@ const ES: PhlixErrorCatalog = {
     'La clave de firma del servidor no superó la verificación durante el canje. Vuelve a intentarlo.',
   // ── proxy / quota / stream / gateway ──
   'proxy.scope_denied': 'Tu token de acceso no tiene el ámbito necesario para esta petición.',
-  'quota.exceeded': 'Has alcanzado el límite de tu cuota de ancho de banda.',
+  'quota.exceeded': 'Has alcanzado el límite de cuota de esta cuenta o servidor.',
   'stream.limit': 'Has alcanzado el número máximo de transmisiones simultáneas.',
   'stream.limit_exceeded':
     'Has alcanzado el límite de reproducciones simultáneas de este servidor. Detén una e inténtalo de nuevo.',
@@ -633,7 +633,7 @@ const FR: PhlixErrorCatalog = {
   'server.key_invalid':
     'La clé de signature du serveur n’a pas passé la vérification lors de la réclamation. Réessayez.',
   'proxy.scope_denied': 'Votre jeton d’accès ne possède pas le périmètre requis pour cette requête.',
-  'quota.exceeded': 'Vous avez atteint la limite de votre quota de bande passante.',
+  'quota.exceeded': 'Vous avez atteint la limite de quota de ce compte ou de ce serveur.',
   'stream.limit': 'Vous avez atteint le nombre maximal de lectures simultanées.',
   'stream.limit_exceeded':
     'Vous avez atteint la limite de lectures simultanées de ce serveur. Arrêtez-en une et réessayez.',
@@ -871,7 +871,7 @@ const DE: PhlixErrorCatalog = {
   'server.key_invalid':
     'Der Signaturschlüssel des Servers hat die Prüfung beim Registrieren nicht bestanden. Versuchen Sie es erneut.',
   'proxy.scope_denied': 'Ihr Zugriffstoken hat nicht die erforderliche Berechtigung für diese Anfrage.',
-  'quota.exceeded': 'Sie haben das Limit Ihres Bandbreitenkontingents erreicht.',
+  'quota.exceeded': 'Sie haben das Kontingentlimit dieses Kontos oder Servers erreicht.',
   'stream.limit': 'Sie haben die höchste zulässige Anzahl gleichzeitiger Wiedergaben erreicht.',
   'stream.limit_exceeded':
     'Sie haben das Limit gleichzeitiger Streams auf diesem Server erreicht. Beenden Sie einen und versuchen Sie es erneut.',
@@ -1105,7 +1105,7 @@ const IT: PhlixErrorCatalog = {
   'server.key_invalid':
     'La chiave di firma del server non ha superato la verifica durante l’attivazione. Riprova.',
   'proxy.scope_denied': 'Il tuo token di accesso non ha l’ambito necessario per questa richiesta.',
-  'quota.exceeded': 'Hai raggiunto il limite della tua quota di banda.',
+  'quota.exceeded': 'Hai raggiunto il limite di quota per questo account o server.',
   'stream.limit': 'Hai raggiunto il numero massimo di streaming simultanei.',
   'stream.limit_exceeded':
     'Hai raggiunto il limite di riproduzioni simultanee su questo server. Fermane una e riprova.',
@@ -1339,7 +1339,7 @@ const PT_BR: PhlixErrorCatalog = {
   'server.key_invalid':
     'A chave de assinatura do servidor não passou na validação durante o resgate. Tente de novo.',
   'proxy.scope_denied': 'Seu token de acesso não tem o escopo necessário para esta requisição.',
-  'quota.exceeded': 'Você atingiu o limite da sua cota de banda.',
+  'quota.exceeded': 'Você atingiu o limite de cota desta conta ou deste servidor.',
   'stream.limit': 'Você atingiu o número máximo de transmissões simultâneas.',
   'stream.limit_exceeded':
     'Você atingiu o limite de transmissões simultâneas deste servidor. Pare uma e tente de novo.',
@@ -1571,7 +1571,7 @@ const JA: PhlixErrorCatalog = {
     'このサーバーはオンラインですが、安全なリレー トンネルがまだ接続されていないため、ライブラリをハブ経由で読み込めません。自動的に再接続されるはずです — しばらくしてからもう一度お試しください。',
   'server.key_invalid': '引き換え中にサーバーの署名鍵の検証に失敗しました。もう一度お試しください。',
   'proxy.scope_denied': 'このリクエストに必要な権限スコープがアクセストークンに含まれていません。',
-  'quota.exceeded': '帯域割当量の上限に達しました。',
+  'quota.exceeded': 'このアカウントまたはサーバーの割当量の上限に達しました。',
   'stream.limit': '同時ストリーミングの上限数に達しました。',
   'stream.limit_exceeded': 'このサーバーの同時ストリームの上限に達しました。いずれかを停止して再度お試しください。',
   'access.scheduled': 'このプロフィールは設定された時間帯のみ利用できます。時間帯を改めてお試しください。',
