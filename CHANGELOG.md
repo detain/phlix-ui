@@ -1,3 +1,37 @@
+## Unreleased — R-W1 riders lane 2026-10-30 (R-UI-01): the AcceptInvitePage redeem fallback speaks the contracts catalog
+
+- **The ask.** M-HUB-05's closeout filed a residual against this repo
+  (rider R-UI-01): flip `extractError` precedence (message-first + non-empty)
+  and wire the errors.ts code catalog into AcceptInvitePage's raw-`errMessage`
+  fallback arm. Half one was ALREADY cured upstream — R12-06 reversed the
+  `ApiClient.extractError` precedence (message-first with non-empty guards +
+  the `isMachineToken` split-brain arm, re-pinned by name in
+  `src/pages/ProfilesPage.test.ts`); verified live at this lane's base
+  `fed7fa5a`, so the rider re-edits nothing there.
+- **The cure (half two).** The redeem catch's else-arm rendered the server's
+  raw text for every status outside {401, 404, 410} — the hub's bare-snake
+  invite codes (`invalid_invite`, `missing_token`, `invite_expired_or_exhausted`
+  …) never took the localized rail. The arm now mirrors the ratified W4
+  doctrine of LoginForm/SignupForm: a registered wire `code` (read off
+  `ApiError.body` at the boundary, non-empty string only) resolves through
+  `errorCodeMessage(code, config?.locale, …)`; an unregistered or absent code
+  degrades to the pre-cure `errMessage` arm VERBATIM as the fallback, which is
+  why the existing 'server exploded' / 'boom' pins stayed green untouched.
+  `phlixConfig` is injected (nullable; null locale → `en` by the resolver's
+  law).
+- **Teeth.** +2 tests in `src/pages/AcceptInvitePage.test.ts`: registered
+  `invalid_invite` renders catalog copy and never surfaces the raw token;
+  unregistered `not.registered.anywhere` keeps the server message (precedence
+  pin). Full serial suite green: 313 files, 6424 passed / 10 skipped (my +2;
+  zero other deltas, no goldens moved). eslint exit 0; `npm run build`
+  re-emitted the five affected bundle artifacts and `dist:check` (S176
+  rebuild-and-compare) is green in the same commit.
+- **Seam reported (owner-gated, NOT taken by this lane).** This lands on
+  master above the last PUBLISHED tag (`v0.99.10` on origin; the package
+  version is 0.99.11 with its tag still uncut). Consumers cannot receive the
+  cure until the next ui tag wave (v0.99.12 reel entry) — tag/cascade
+  deliberately not created here.
+
 ## Unreleased — theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M04): the faintest ink reaches AA and the high-contrast variant stops inheriting it
 
 - **Second golden rotation, same week.** Upstream raised `--text-faint`

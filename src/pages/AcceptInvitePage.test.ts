@@ -12,6 +12,7 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import AcceptInvitePage from './AcceptInvitePage.vue';
 import Button from '../components/ui/Button.vue';
 import { ApiError } from '../api/errors';
+import { errorCodeMessage } from '../i18n/errors';
 import type { ApiClient } from '../api/client';
 
 const TOKEN = 'abc123';
@@ -197,6 +198,39 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     await findBtnByText(w, 'Accept Invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('server exploded');
+    w.unmount();
+  });
+
+  it('a registered wire code localizes through the contracts catalog (R-UI-01 rider)', async () => {
+    // The redeem path emits bare-snake invite codes (`invalid_invite` is one
+    // of them, phlix-hub). Pre-cure the else-arm showed the raw server text
+    // for EVERY non-401/404/410 status; the W4 doctrine (mirrors
+    // LoginForm/SignupForm) now resolves the registered code to catalog copy,
+    // never surfacing the debug token.
+    const post = vi.fn().mockRejectedValue(
+      new ApiError('invalid_invite', 400, { error: 'invalid_invite', code: 'invalid_invite' }),
+    );
+    const { client } = makeClient(post);
+    const { w } = await mountPage({ loggedIn: true, client });
+    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).toContain(errorCodeMessage('invalid_invite', null, null));
+    expect(w.text()).not.toContain('invalid_invite');
+    w.unmount();
+  });
+
+  it('an UNREGISTERED wire code keeps the server-message fallback (precedence pin)', async () => {
+    // The catalog rail must not swallow unknown codes into generic copy: the
+    // errMessage arm stays the degradation path (this is what keeps the
+    // 'server exploded' and 'boom' pins green despite the wiring).
+    const post = vi.fn().mockRejectedValue(
+      new ApiError('a future phrase', 422, { error: 'a future phrase', code: 'not.registered.anywhere' }),
+    );
+    const { client } = makeClient(post);
+    const { w } = await mountPage({ loggedIn: true, client });
+    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await flushPromises();
+    expect(w.text()).toContain('a future phrase');
     w.unmount();
   });
 });

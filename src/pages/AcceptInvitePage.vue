@@ -27,12 +27,14 @@
  *
  * `client` is an injectable test seam; it defaults to the shared `api` singleton.
  */
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { api, ApiClient } from '../api/client';
 import { ApiError, errMessage } from '../api/errors';
+import { errorCodeMessage } from '../i18n/errors';
 import { useAuthStore } from '../stores/useAuthStore';
 import Button from '../components/ui/Button.vue';
+import type { PhlixAppConfig } from '../app/types';
 
 const props = defineProps<{
   /** The opaque invite token from the URL (may contain `/` — captured via `:token(.*)`). */
@@ -44,6 +46,7 @@ const props = defineProps<{
 const http = props.client ?? api;
 const auth = useAuthStore();
 const router = useRouter();
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 const isLoggedIn = computed(() => auth.isLoggedIn);
 
@@ -62,9 +65,10 @@ const signupTo = computed(() => ({
 }));
 
 /**
- * Redeem the invite. Mirrors the retired accept-invite.js error map exactly:
+ * Redeem the invite. Mirrors the retired accept-invite.js error map:
  * 401 → re-login (and hop back here), 404 → not found, 410 → expired/exhausted,
- * anything else → the server message or a generic fallback.
+ * anything else → the contracts-catalog copy for the wire `code` when
+ * registered (R-UI-01 rider), else the server message, else a generic fallback.
  */
 async function accept(): Promise<void> {
   if (!props.token) {
@@ -86,7 +90,23 @@ async function accept(): Promise<void> {
     } else if (status === 404) {
       error.value = 'This invite link was not found.';
     } else {
-      error.value = errMessage(e, 'Failed to accept invite.');
+      // W4 error-code doctrine (mirrors LoginForm/SignupForm; the rider the
+      // M-HUB-05 review owed this page): a REGISTERED wire `code` — the redeem
+      // path emits bare-snake invite codes like `invalid_invite` — localizes
+      // through the contracts catalog for the configured locale. An
+      // unregistered or absent code degrades to the server's message (the
+      // pre-cure arm, kept verbatim as the fallback), and only then to the
+      // generic label.
+      const body = e instanceof ApiError ? e.body : null;
+      const wireCode =
+        typeof body === 'object' && body !== null
+          ? (body as Record<string, unknown>)['code']
+          : null;
+      error.value = errorCodeMessage(
+        typeof wireCode === 'string' && wireCode !== '' ? wireCode : null,
+        config?.locale,
+        errMessage(e, 'Failed to accept invite.'),
+      );
     }
   } finally {
     submitting.value = false;

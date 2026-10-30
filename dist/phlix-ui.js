@@ -4454,63 +4454,69 @@ var Cs = {
 		client: {}
 	},
 	setup(e) {
-		let t = e, n = t.client ?? se, r = ye(), i = $(), a = I(() => r.isLoggedIn), o = q(!1), s = q(!1), c = q(null), l = I(() => ({
+		let t = e, n = t.client ?? se, r = ye(), i = $(), a = er("phlixConfig", null), o = I(() => r.isLoggedIn), s = q(!1), c = q(!1), l = q(null), u = I(() => ({
 			path: "/app/login",
 			query: { redirect: `/app/invite/${t.token}` }
-		})), u = I(() => ({
+		})), d = I(() => ({
 			path: "/app/signup",
 			query: { redirect: `/app/invite/${t.token}` }
 		}));
-		async function d() {
+		async function f() {
 			if (!t.token) {
-				c.value = "Invalid invite token.";
+				l.value = "Invalid invite token.";
 				return;
 			}
-			o.value = !0, c.value = null;
+			s.value = !0, l.value = null;
 			try {
-				await n.post(`/api/v1/me/invite-links/${encodeURIComponent(t.token)}/redeem`), s.value = !0;
+				await n.post(`/api/v1/me/invite-links/${encodeURIComponent(t.token)}/redeem`), c.value = !0;
 			} catch (e) {
 				let t = e instanceof ae ? e.status : 0;
-				t === 401 ? (c.value = "Session expired. Please log in again.", i.push(l.value)) : t === 410 ? c.value = "This invite link has expired or been exhausted." : t === 404 ? c.value = "This invite link was not found." : c.value = D(e, "Failed to accept invite.");
+				if (t === 401) l.value = "Session expired. Please log in again.", i.push(u.value);
+				else if (t === 410) l.value = "This invite link has expired or been exhausted.";
+				else if (t === 404) l.value = "This invite link was not found.";
+				else {
+					let t = e instanceof ae ? e.body : null, n = typeof t == "object" && t ? t.code : null;
+					l.value = fe(typeof n == "string" && n !== "" ? n : null, a?.locale, D(e, "Failed to accept invite."));
+				}
 			} finally {
-				o.value = !1;
+				s.value = !1;
 			}
 		}
-		function f() {
+		function p() {
 			i.push("/app/shared-with-me");
 		}
 		return (e, t) => (K(), z("section", id, [B("div", ad, [t[8] ||= B("h1", {
 			id: "accept-invite-heading",
 			class: "accept-invite__title"
-		}, "Accept Invite", -1), a.value ? (K(), z(F, { key: 0 }, [s.value ? (K(), z(F, { key: 0 }, [t[3] ||= B("div", {
+		}, "Accept Invite", -1), o.value ? (K(), z(F, { key: 0 }, [c.value ? (K(), z(F, { key: 0 }, [t[3] ||= B("div", {
 			class: "accept-invite__success",
 			role: "status"
 		}, [B("p", null, "You've been granted access to the library!")], -1), H(j, {
 			variant: "solid",
 			size: "lg",
 			block: "",
-			onClick: f
+			onClick: p
 		}, {
 			default: Q(() => [...t[2] ||= [V(" View Shared Libraries ", -1)]]),
 			_: 1
 		})], 64)) : (K(), z(F, { key: 1 }, [
 			t[4] ||= B("p", { class: "accept-invite__lead" }, "You've been invited to access a library.", -1),
-			c.value ? (K(), z("p", od, Y(c.value), 1)) : R("", !0),
+			l.value ? (K(), z("p", od, Y(l.value), 1)) : R("", !0),
 			H(j, {
 				variant: "solid",
 				size: "lg",
 				block: "",
-				loading: o.value,
-				onClick: d
+				loading: s.value,
+				onClick: f
 			}, {
-				default: Q(() => [V(Y(o.value ? "Accepting…" : "Accept Invite"), 1)]),
+				default: Q(() => [V(Y(s.value ? "Accepting…" : "Accept Invite"), 1)]),
 				_: 1
 			}, 8, ["loading"])
 		], 64))], 64)) : (K(), z(F, { key: 1 }, [t[7] ||= B("p", { class: "accept-invite__lead" }, " You've been invited to access a library. Log in or create an account to accept. ", -1), B("div", sd, [H(j, {
 			variant: "solid",
 			size: "lg",
 			block: "",
-			onClick: t[0] ||= (e) => X(i).push(l.value)
+			onClick: t[0] ||= (e) => X(i).push(u.value)
 		}, {
 			default: Q(() => [...t[5] ||= [V(" Log In ", -1)]]),
 			_: 1
@@ -4518,13 +4524,13 @@ var Cs = {
 			variant: "ghost",
 			size: "lg",
 			block: "",
-			onClick: t[1] ||= (e) => X(i).push(u.value)
+			onClick: t[1] ||= (e) => X(i).push(d.value)
 		}, {
 			default: Q(() => [...t[6] ||= [V(" Sign Up ", -1)]]),
 			_: 1
 		})])], 64))])]));
 	}
-}), [["__scopeId", "data-v-da79f6f6"]]), ld = { class: "album-page" }, ud = { class: "album-page__back-nav" }, dd = {
+}), [["__scopeId", "data-v-ffc08837"]]), ld = { class: "album-page" }, ud = { class: "album-page__back-nav" }, dd = {
 	key: 0,
 	class: "album-page__loading",
 	role: "status",
