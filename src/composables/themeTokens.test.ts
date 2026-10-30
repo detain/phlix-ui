@@ -6,7 +6,7 @@
  */
 
 /// <reference types="node" />
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -27,6 +27,11 @@ import {
   clearThemeTokens,
   readCachedTheme,
   writeCachedTheme,
+  FOCUS_RING_MIN_CONTRAST,
+  RING_GROUND_KEYS,
+  parseThemeColor,
+  compositedContrastOver,
+  focusRingLawViolation,
   type ServerTheme,
 } from './themeTokens';
 import type { ThemeName } from '../stores/usePreferencesStore';
@@ -545,5 +550,221 @@ describe('ThemeName is widened to string (S86)', () => {
     // `npm run test:run`: vitest transpiles via esbuild and type-checks nothing.
     const pluginThemeId: ThemeName = 'sample-dusk-high-contrast';
     expect(pluginThemeId).toBe('sample-dusk-high-contrast');
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * R-UI-05 — the composited focus-ring law.
+ *
+ * The jade incident this generalises (review theme-jade __r1, 3b): jade
+ * SHIPPED `--accent-ring: rgba(80, 200, 120, 0.45)`, which composites to
+ * 2.68:1 on its `--bg` and 2.71:1 on its `--surface` — below the 3:1
+ * WCAG 1.4.11 floor for the focus indicator, the ui's primary keyboard
+ * affordance. Only that theme's OWN TokenContrastTest caught it; every
+ * other theme repo guards its own pixels, and NOTHING guarded the seam a
+ * hostile or careless theme crosses at runtime. These pins make the law
+ * live on the client side of the contract, at the single place a theme
+ * value becomes CSS (applyThemeTokens).
+ * ------------------------------------------------------------------ */
+
+/** jade's pre-cure ring and its three graded grounds, verbatim off the shipped map. */
+const JADE_PRE_FIX = {
+  ring: 'rgba(80, 200, 120, 0.45)',
+  bg: '#050a07',
+  surface: '#0a1410',
+  surface2: '#101e18',
+};
+
+describe('focus-ring law — WCAG 1.4.11 floor and its graded grounds', () => {
+  it('pins the floor at 3:1 and the grounds at the opaque elevation stack', () => {
+    expect(FOCUS_RING_MIN_CONTRAST).toBe(3.0);
+    expect(RING_GROUND_KEYS).toEqual(['--bg', '--surface', '--surface-2']);
+  });
+
+  it('--surface-3 is deliberately NOT graded (transient ground; static lock scopes it)', () => {
+    // The src/tokens/contrast.test.ts graded set excludes surface-3 for the
+    // same reason, and sample-theme's ring sits at 2.93 on ITS s3 — binding
+    // s3 here would false-deny a theme that passes every real interaction
+    // ground. This pin exists so the exclusion is a decision, never an omission.
+    expect(RING_GROUND_KEYS).not.toContain('--surface-3');
+  });
+});
+
+describe('parseThemeColor', () => {
+  it('parses the 3-, 4-, 6- and 8-digit hex forms', () => {
+    expect(parseThemeColor('#fff')).toEqual({ rgb: [255, 255, 255], alpha: 1 });
+    expect(parseThemeColor('#fffe')).toEqual({ rgb: [255, 255, 255], alpha: 238 / 255 });
+    expect(parseThemeColor('#050a07')).toEqual({ rgb: [5, 10, 7], alpha: 1 });
+    expect(parseThemeColor('#050a0780')).toEqual({ rgb: [5, 10, 7], alpha: 128 / 255 });
+  });
+
+  it('parses rgb()/rgba() with comma or slash separators between arguments', () => {
+    expect(parseThemeColor('rgb(80, 200, 120)')).toEqual({ rgb: [80, 200, 120], alpha: 1 });
+    expect(parseThemeColor('rgba(80, 200, 120, 0.45)')).toEqual({ rgb: [80, 200, 120], alpha: 0.45 });
+    // The SPACE-separated modern form is already refused by isSafeThemeTokenValue
+    // (its grammar requires a comma or slash between arguments), so the parser
+    // deliberately does not grow a second, looser grammar: it returns null and
+    // the law treats null as unprovable — never as a violation.
+    expect(parseThemeColor('rgb(80 200 120 / 0.45)')).toBeNull();
+  });
+
+  it('returns null for forms the law cannot prove (hsl, keywords, percentages)', () => {
+    expect(parseThemeColor('hsl(140, 50%, 45%)')).toBeNull();
+    expect(parseThemeColor('hsla(140 50% 45% / 0.45)')).toBeNull();
+    expect(parseThemeColor('transparent')).toBeNull();
+    expect(parseThemeColor('currentcolor')).toBeNull();
+    expect(parseThemeColor('rgb(50%, 50%, 50%)')).toBeNull();
+    expect(parseThemeColor('#gg0000')).toBeNull();
+    expect(parseThemeColor('#12345')).toBeNull();
+    expect(parseThemeColor('')).toBeNull();
+  });
+});
+
+describe('compositedContrastOver — the jade math, pinned', () => {
+  it('reproduces the exact figures review theme-jade __r1 measured for the pre-cure ring', () => {
+    // These four toFixed(2) strings ARE the review's numbers; if the module's
+    // composite or luminance math drifts, one of them moves and this test reddens.
+    expect(compositedContrastOver(JADE_PRE_FIX.ring, JADE_PRE_FIX.bg)?.toFixed(2)).toBe('2.68');
+    expect(compositedContrastOver(JADE_PRE_FIX.ring, JADE_PRE_FIX.surface)?.toFixed(2)).toBe('2.71');
+    expect(compositedContrastOver(JADE_PRE_FIX.ring, JADE_PRE_FIX.surface2)?.toFixed(2)).toBe('2.70');
+  });
+
+  it('scores the CURED jade ring above the floor on every graded ground', () => {
+    // rgba(110, 232, 154, 0.55) is --accent-hover's own value; the jade cure
+    // lifted the ring to 4.42 / 4.42 / 4.28 (s3 4.03, unbound — see above).
+    const cured = 'rgba(110, 232, 154, 0.55)';
+    expect(compositedContrastOver(cured, JADE_PRE_FIX.bg)?.toFixed(2)).toBe('4.42');
+    expect(compositedContrastOver(cured, JADE_PRE_FIX.surface)?.toFixed(2)).toBe('4.42');
+    expect(compositedContrastOver(cured, JADE_PRE_FIX.surface2)?.toFixed(2)).toBe('4.28');
+  });
+
+  it('is a plain WCAG ratio when the ring is fully opaque (alpha 1 = no composite)', () => {
+    // #6ee89a is the same RGB the cured ring uses at 0.55 alpha; opaque on
+    // #050a07 it is 12.98, not the composited 4.42 — pinning the alpha=1 path.
+    expect(compositedContrastOver('#6ee89a', JADE_PRE_FIX.bg)?.toFixed(2)).toBe('12.98');
+  });
+
+  it('returns null (unprovable, NOT a violation) on any unparsable input', () => {
+    expect(compositedContrastOver('hsl(140, 50%, 45%)', JADE_PRE_FIX.bg)).toBeNull();
+    expect(compositedContrastOver(JADE_PRE_FIX.ring, 'currentcolor')).toBeNull();
+    expect(compositedContrastOver(JADE_PRE_FIX.ring, 'nonsense')).toBeNull();
+  });
+
+  it('returns null over a translucent ground (the composite ground is unknowable)', () => {
+    expect(compositedContrastOver(JADE_PRE_FIX.ring, '#050a0780')).toBeNull();
+    expect(compositedContrastOver(JADE_PRE_FIX.ring, 'rgba(5, 10, 7, 0.8)')).toBeNull();
+  });
+});
+
+describe('focusRingLawViolation', () => {
+  it('names the first failing ground with the measured ratio', () => {
+    const violation = focusRingLawViolation({
+      '--bg': JADE_PRE_FIX.bg,
+      '--surface': JADE_PRE_FIX.surface,
+      '--surface-2': JADE_PRE_FIX.surface2,
+      '--accent-ring': JADE_PRE_FIX.ring,
+    });
+    expect(violation).toContain('--accent-ring rgba(80, 200, 120, 0.45) composited to 2.68:1');
+    expect(violation).toContain('3:1 WCAG 1.4.11');
+  });
+
+  it('passes the cured jade map and the built-in sheets', () => {
+    expect(focusRingLawViolation({
+      '--bg': JADE_PRE_FIX.bg,
+      '--surface': JADE_PRE_FIX.surface,
+      '--surface-2': JADE_PRE_FIX.surface2,
+      '--accent-ring': 'rgba(110, 232, 154, 0.55)',
+    })).toBeNull();
+  });
+
+  it('is silent (null) when the map declares no ring, or no ground the law can check', () => {
+    expect(focusRingLawViolation({ '--text': '#e6ecf5' })).toBeNull();
+    // Ring without grounds: the cascade supplies the base theme's painted
+    // ground, which the base theme's own certification covered — nothing here
+    // to measure, nothing to deny.
+    expect(focusRingLawViolation({ '--accent-ring': JADE_PRE_FIX.ring })).toBeNull();
+    // Unparsable ring form: unprovable, and an unprovable ring is not a
+    // PROVEN violation — the law denies only what it can measure failing.
+    expect(focusRingLawViolation({ '--bg': JADE_PRE_FIX.bg, '--accent-ring': 'hsl(140, 50%, 45%)' })).toBeNull();
+    // Translucent ground: the real painted composite is unknowable — skip.
+    expect(focusRingLawViolation({ '--bg': '#050a0780', '--accent-ring': JADE_PRE_FIX.ring })).toBeNull();
+  });
+
+  it('checks every graded ground, not just the first', () => {
+    // The cured ring PASSES on the dark --bg (4.42) and FAILS on a light
+    // --surface (~1.4 — a bright ring on a bright ground is invisible). If the
+    // loop only sampled --bg this map would sail through, so the reported
+    // ground being --surface is what proves full-ground iteration.
+    const violation = focusRingLawViolation({
+      '--bg': JADE_PRE_FIX.bg,
+      '--surface': '#fafaf7',
+      '--accent-ring': 'rgba(110, 232, 154, 0.55)',
+    });
+    expect(violation).not.toBeNull();
+    expect(violation).toContain('on --surface (#fafaf7)');
+  });
+});
+
+describe('applyThemeTokens — the focus-ring law at the single CSS boundary', () => {
+  let el: HTMLElement;
+  let warn: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    el = document.createElement('div');
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    // Re-spying WITHOUT restoring accumulates one shared mock in this vitest
+    // config — call counts would leak across these five tests.
+    warn.mockRestore();
+  });
+
+  it('drops the pre-cure jade ring, sets every other token, and warns once with the measured ratio', () => {
+    applyThemeTokens(el, {
+      '--bg': JADE_PRE_FIX.bg,
+      '--surface': JADE_PRE_FIX.surface,
+      '--accent-ring': JADE_PRE_FIX.ring,
+      '--text': '#e6ecf5',
+    });
+    expect(el.style.getPropertyValue('--accent-ring')).toBe('');
+    expect(el.style.getPropertyValue('--bg')).toBe(JADE_PRE_FIX.bg);
+    expect(el.style.getPropertyValue('--text')).toBe('#e6ecf5');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toContain('2.68');
+    expect(warn.mock.calls[0]?.[0]).toContain("falling back to the base theme's ring");
+  });
+
+  it('applies the cured jade ring untouched and stays silent', () => {
+    applyThemeTokens(el, {
+      '--bg': JADE_PRE_FIX.bg,
+      '--surface': JADE_PRE_FIX.surface,
+      '--surface-2': JADE_PRE_FIX.surface2,
+      '--accent-ring': 'rgba(110, 232, 154, 0.55)',
+    });
+    expect(el.style.getPropertyValue('--accent-ring')).toBe('rgba(110, 232, 154, 0.55)');
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('applies a ring whose map declares no checkable ground (cascade fallback is certified)', () => {
+    applyThemeTokens(el, { '--accent-ring': JADE_PRE_FIX.ring });
+    expect(el.style.getPropertyValue('--accent-ring')).toBe(JADE_PRE_FIX.ring);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('applies an hsl ring it cannot measure — unprovable is not proven-failing', () => {
+    applyThemeTokens(el, { '--bg': JADE_PRE_FIX.bg, '--accent-ring': 'hsl(140, 50%, 45%)' });
+    expect(el.style.getPropertyValue('--accent-ring')).toBe('hsl(140, 50%, 45%)');
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('warns the SAME law for a hostile localStorage cache replay (readCachedTheme path)', () => {
+    // applyThemeTokens is the shared choke point for the boot-cache path too
+    // (useTheme feeds readCachedTheme().tokens through it); the law lives in
+    // the loop, so the replay path is covered by construction. Pinned:
+    applyThemeTokens(el, sanitizeThemeTokens({
+      '--bg': JADE_PRE_FIX.bg,
+      '--accent-ring': JADE_PRE_FIX.ring,
+    }));
+    expect(el.style.getPropertyValue('--accent-ring')).toBe('');
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });

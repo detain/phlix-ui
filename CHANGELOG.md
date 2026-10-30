@@ -1,3 +1,44 @@
+## Unreleased — R-W5 riders lane 2026-10-30 (R-UI-05): the focus-ring contrast law moves into the CSS boundary
+
+- **The ask.** Rider R-UI-05 (upstream report M-THEME-JADE__r1 item 3b): webux M2
+  measured jade's shipped `--accent-ring: rgba(80, 200, 120, 0.45)` compositing
+  to 2.68:1 on its own `--bg` and 2.71:1 on its `--surface` — under the 3:1
+  WCAG 1.4.11 floor for the focus indicator, the app's primary keyboard
+  affordance. Only that theme's bespoke TokenContrastTest caught it; every
+  theme repo guards its own pixels and nothing guarded the seam a hostile or
+  careless theme crosses at runtime. The rider: "a ui-side composited-ring
+  ≥3:1 law in applyThemeTokens would generalize webux M2 beyond per-theme
+  pinning."
+- **The cure.** The law now lives in `src/composables/themeTokens.ts`:
+  `FOCUS_RING_MIN_CONTRAST` (3.0), `RING_GROUND_KEYS` (`--bg`, `--surface`,
+  `--surface-2` — the same graded set the static token lock uses; `--surface-3`
+  is a transient hover ground and is scoped out by that existing decision),
+  `parseThemeColor`, `compositedContrastOver` (8-bit source-over composite +
+  0.04045-linearised WCAG ratio — deliberately its own implementation, score-
+  identical to every estate guard, NOT the 0.03928 ink heuristic in
+  `color.ts`), and `focusRingLawViolation`. `applyThemeTokens` — the single
+  place a theme value becomes CSS — computes the violation once and, for a
+  PROVEN failure, drops only the `--accent-ring` entry with a `console.warn`
+  naming the measured ratio and ground. Dropping is the module's existing
+  doctrine: the cascade paints the base theme's certified ring. Unmeasurable
+  forms (hsl, translucent grounds) are never denied — the law fires only on a
+  measurement, not a suspicion. The five law symbols and the parsed-colour
+  type are exported from `@phlix/ui` so theme-repo guards can converge on this
+  SSOT.
+- **Teeth.** Full serial suite (default reporter, `--no-file-parallelism`): baseline measured on the clean tip at be521ff5 = 313 files, 6424 passed / 10 skipped; after = 313 files, **6443 passed / 10 skipped** — +19 exactly, every one a new pin in `themeTokens.test.ts` (130→149 file tests); zero pre-existing goldens moved, skip count unchanged. `vue-tsc --noEmit` 0, eslint 0 on the changed files (prettier is not an adopted gate in this repo — bare `npx prettier --check` flags untouched files too). `npm run build` re-emitted the theming chain (main bundles + two page-chunk renames from the new export names, 22 dist entries) byte-reproducible x2, aggregate md5 `362d43b0fe44182fdf701c9f4e000949`; `dist:check` green on the committed tree, dist/ landed as its own commit under the riders dist law.
+- **Fleet check.** A pre-flight probe measured every shipped plugin theme
+  (11 repos × bg/surface/surface-2): the lowest passing composite is
+  sample-theme's 3.09 on its `--surface-2` (next spectral-dusk 3.12) — the
+  law drops NOTHING that ships today.
+- **Scope note + Seam.** The user-picked accent override
+  (`deriveAccentVars`, applied by `useTheme` directly via `setProperty`)
+  bypasses `applyThemeTokens` and is NOT law-gated — its derived ring is
+  computed from the user's own accent against the ACTIVE theme's ground by
+  the existing blend logic, and generalising the law over it is a separate
+  decision. Seam: rides the v0.99.12 tag-wave reel; no tag or consumer
+  cascade created here. Theme repos converge their bespoke guards on the
+  exported SSOT helpers at their own pace.
+
 ## Unreleased — R-W4 riders lane 2026-10-30 (R-UI-04): AuthField placeholders join the shared placeholder tier
 
 - **The ask.** Review theme-jade `__r1` observation 3a (endorsed cosmetic-but-

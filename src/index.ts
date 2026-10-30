@@ -536,8 +536,13 @@ export {
   clearThemeTokens,
   readCachedTheme,
   writeCachedTheme,
+  FOCUS_RING_MIN_CONTRAST,
+  RING_GROUND_KEYS,
+  parseThemeColor,
+  compositedContrastOver,
+  focusRingLawViolation,
 } from './composables/themeTokens';
-export type { BuiltInThemeId, ServerTheme, ActiveThemeStyle } from './composables/themeTokens';
+export type { BuiltInThemeId, ServerTheme, ActiveThemeStyle, ParsedThemeColor } from './composables/themeTokens';
 export { useThemesStore } from './stores/useThemesStore';
 export { fetchThemes } from './api/themes';
 export { useOnline } from './composables/useOnline';

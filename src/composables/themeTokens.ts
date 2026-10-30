@@ -443,6 +443,138 @@ export function activeThemeStyle(id: string, themes: readonly ServerTheme[]): Ac
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * The focus-ring law (R-UI-05) — WCAG 1.4.11 at the CSS boundary.
+ *
+ * Origin: review theme-jade `__r1` (3b). Jade shipped an `--accent-ring`
+ * that composites to 2.68:1 on its own `--bg` — under the 3:1 floor for
+ * the focus indicator, the app's primary keyboard affordance — and only
+ * that theme's bespoke guard noticed. Theme-repo guards certify each
+ * theme's OWN pixels; nothing guarded the seam at runtime. These helpers
+ * generalise the same measurement into the client half of the contract,
+ * and are exported so theme repos can converge their guards on this one
+ * implementation instead of each re-transcribing the math.
+ * ------------------------------------------------------------------ */
+
+/** WCAG 1.4.11 minimum contrast for a focus indicator against its ground. */
+export const FOCUS_RING_MIN_CONTRAST = 3.0;
+
+/**
+ * Grounds the ring is measured on: the opaque elevation stack a focus ring
+ * actually paints over. `--surface-3` is deliberately excluded — it is a
+ * transient hover ground and the static token lock
+ * (`src/tokens/contrast.test.ts`) scopes it out by the same decision;
+ * binding it here would false-deny shipped themes (sample-theme measures
+ * 2.93 on its own s3 while passing every real interaction ground).
+ */
+export const RING_GROUND_KEYS = ['--bg', '--surface', '--surface-2'] as const;
+
+/** An 8-bit sRGB colour with its coverage alpha (1 = opaque). */
+export interface ParsedThemeColor {
+  rgb: readonly [number, number, number];
+  alpha: number;
+}
+
+/**
+ * Parse the colour forms the ring law can MEASURE: hex (3/4/6/8 digit) and
+ * comma- or slash-separated `rgb()/rgba()` with plain numeric channels.
+ * Anything else — hsl/hsla, percentages, keywords, `currentcolor` — is
+ * returned as null, which every caller treats as UNPROVABLE, never as a
+ * violation: a colour this parser cannot reduce to sRGB pixels may well
+ * pass, and denying it would be superstition, not measurement. (The space-
+ * separated modern function syntax never reaches here either — the module's
+ * own value grammar already refuses it.)
+ */
+export function parseThemeColor(value: string): ParsedThemeColor | null {
+  const trimmed = value.trim();
+
+  const hex = trimmed.match(/^#([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/);
+  if (hex) {
+    let body = hex[1];
+    if (body.length === 3 || body.length === 4) body = body.split('').map((c) => c + c).join('');
+    const rgb = [parseInt(body.slice(0, 2), 16), parseInt(body.slice(2, 4), 16), parseInt(body.slice(4, 6), 16)] as const;
+    const alpha = body.length === 8 ? parseInt(body.slice(6, 8), 16) / 255 : 1;
+    return { rgb, alpha };
+  }
+
+  const fn = trimmed.match(/^rgba?\(([^)]+)\)$/i);
+  if (!fn) return null;
+  const parts = fn[1].split(/[,/]/).map((p) => p.trim());
+  if (parts.length < 3 || parts.length > 4) return null;
+  const channels = parts.slice(0, 3);
+  if (channels.some((c) => c.includes('%'))) return null;
+  const nums = channels.map(Number);
+  if (nums.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) return null;
+  const alpha = parts.length === 4 ? Number(parts[3]) : 1;
+  if (!Number.isFinite(alpha) || alpha < 0 || alpha > 1 || parts[3]?.includes('%')) return null;
+  const rgb: readonly [number, number, number] = [Math.round(nums[0]), Math.round(nums[1]), Math.round(nums[2])];
+  return { rgb, alpha };
+}
+
+/** sRGB-to-linear per WCAG 2.x — the 0.04045 threshold the estate's guards use. */
+function srgbLuminance(rgb: readonly [number, number, number]): number {
+  const channels = rgb.map((v) => {
+    const s = v / 255;
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+/** WCAG contrast ratio between two opaque sRGB triples. */
+function wcagRatio(a: readonly [number, number, number], b: readonly [number, number, number]): number {
+  const l1 = srgbLuminance(a);
+  const l2 = srgbLuminance(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+// NOTE for reviewers: `src/utils/color.ts` has a `luminance()` too — it is the
+// ink-choice heuristic (0.03928 threshold, a legacy WCAG 2.0 draft constant)
+// used to pick text-on-accent. This law deliberately does NOT share it: the
+// estate's certification guards (every TokenContrastTest, the static token
+// lock) all measure with 0.04045, and a law must score IDENTICALLY to the
+// guards that pre-certify its inputs, or the two disagree at the boundary.
+
+/**
+ * Contrast of a ring value COMPOSITED over a ground value, as the browser
+ * would paint it (alpha source-over in 8-bit sRGB, rounded per channel —
+ * the exact math of every theme repo's TokenContrastTest). Null when either
+ * side is unmeasurable or the ground is translucent (its own composite is
+ * unknowable from the token map alone).
+ */
+export function compositedContrastOver(ringValue: string, groundValue: string): number | null {
+  const ring = parseThemeColor(ringValue);
+  const ground = parseThemeColor(groundValue);
+  if (ring === null || ground === null || ground.alpha < 1) return null;
+
+  const mix = (i: 0 | 1 | 2) => Math.round(ring.alpha * ring.rgb[i] + (1 - ring.alpha) * ground.rgb[i]);
+  const composited: readonly [number, number, number] = [mix(0), mix(1), mix(2)];
+  return wcagRatio(composited, ground.rgb);
+}
+
+/**
+ * Why a token map's `--accent-ring` violates the focus-ring law, or null when
+ * the map declares no ring, nothing to measure it against, or a passing ring.
+ * The reason line names the measured ratio and the failing ground, phrased
+ * like the theme repos' guard failures so the same vocabulary travels from
+ * CI to console.
+ */
+export function focusRingLawViolation(tokens: Record<string, string>): string | null {
+  const ring = tokens['--accent-ring'];
+  if (ring === undefined) return null;
+
+  for (const groundKey of RING_GROUND_KEYS) {
+    const ground = tokens[groundKey];
+    if (ground === undefined) continue;
+    const ratio = compositedContrastOver(ring, ground);
+    if (ratio === null || ratio >= FOCUS_RING_MIN_CONTRAST) continue;
+    return (
+      `--accent-ring ${ring} composited to ${ratio.toFixed(2)}:1 on ${groundKey} (${ground}) ` +
+      `is below the ${FOCUS_RING_MIN_CONTRAST}:1 WCAG 1.4.11 floor for the focus indicator`
+    );
+  }
+  return null;
+}
+
 /**
  * Set a theme's tokens on an element via CSSOM.
  *
@@ -450,11 +582,24 @@ export function activeThemeStyle(id: string, themes: readonly ServerTheme[]): Ac
  * This is the single place a plugin-supplied string becomes CSS, so it is the
  * one place worth being redundant: any future caller that forgets to sanitise
  * still cannot set a property outside {@link THEME_TOKEN_ALLOWLIST}.
+ *
+ * The third check lives here for the same reason (R-UI-05): a theme whose
+ * `--accent-ring` composites below the WCAG 1.4.11 focus-indicator floor on
+ * the grounds its own map declares gets that ONE token dropped — the cascade
+ * then paints the base theme's certified ring, exactly like any other
+ * dropped token, and the author sees a console.warn naming the measurement.
+ * Unmeasurable rings (hsl, translucent grounds) are never denied: the law
+ * only fires on a PROVEN failure.
  */
 export function applyThemeTokens(el: HTMLElement, tokens: Record<string, string>): void {
+  const ringViolation = focusRingLawViolation(tokens);
   for (const [key, value] of Object.entries(tokens)) {
     if (!isAllowedThemeToken(key)) continue;
     if (!isSafeThemeTokenValue(value)) continue;
+    if (key === '--accent-ring' && ringViolation !== null) {
+      console.warn(`[phlix:theme] ${ringViolation}; falling back to the base theme's ring`);
+      continue;
+    }
     el.style.setProperty(key, value);
   }
 }
