@@ -173,6 +173,8 @@ export declare function mediaDirectBaseFor(app: 'server' | 'hub', currentServerU
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;
+        /** M-UI-23 — build stamp of the vendored bundle, written at boot. */
+        __PHLIX_UI_VERSION__?: string;
     }
 }
 /**

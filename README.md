@@ -662,6 +662,7 @@ npm install
 npm run dev          # Vite dev server (open src/dev/gallery.html for the primitive Gallery)
 npm run build        # vue-tsc typecheck + vite lib build + d.ts emit + copy fonts
 npm run dist:check   # fail if the committed dist/ drifted from src/ (CI gate step)
+npm run audit        # npm audit --audit-level=low on the full tree (CI gate step, static job)
 npm run test         # vitest (watch)
 npm run test:run     # vitest run (CI)
 npm run test:run -- --coverage  # same suite + coverage/lcov.info (what CI uploads)
@@ -706,6 +707,17 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
 
 - **Pre-1.0 semver** — `0.x` minor bumps may include breaking changes. Pin an exact tag; read the
   `CHANGELOG` before upgrading.
+- **Browser baseline** — the committed `dist/` is built at a pinned `build.target: 'es2021'`
+  (both Vite configs; guarded by `src/test/build-pins.test.ts`), so its JS needs Chrome/Edge 85+,
+  Firefox 79+, Safari 14+. The CSS raises the floor on its own: `style.css` uses `color-mix()`
+  with no `@supports` fallback, so the true baseline of the prebuilt bundle is ~Chrome/Edge 111+,
+  Firefox 113+, Safari 16.2+ (mid-2023). Direct browser consumers (`/app` on server/hub) and
+  bundle-vendoring clients (windows) meet that today; hosts that recompile from source choose
+  their own targets. Raising or widening this baseline is a deliberate act, not a Vite bump's
+  side effect — that silence is exactly what the pin prevents.
+- **Dependency audit** — `npm run audit` (full tree at `--audit-level=low`) gates in CI's
+  `static` job; this repo's dist is vendored estate-wide, so the toolchain that BUILDS it is
+  audited too. Neutering it is caught by `src/test/ci-audit-gate.test.ts`.
 - **Icons, never emoji** — all iconography is Lucide SVG via the type-checked `Icon` component.
 - **SSR-safe composables** — `usePreconnect`/`useOnline`/`useMessages`/`useTheme` guard `window`/
   `document` access.

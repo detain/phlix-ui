@@ -16,10 +16,19 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import Icons from 'unplugin-icons/vite';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+
+// See the M-UI-23 note in vite.config.ts — same stamp for the second entry.
+const PHLIX_UI_PKG_VERSION = (JSON.parse(
+    readFileSync(new URL('package.json', import.meta.url), 'utf8')
+) as { version: string }).version;
 
 export default defineConfig({
     plugins: [vue(), Icons({ compiler: 'vue3', scale: 1 })],
     build: {
+        // M-UI-22 — same explicit ES2021 floor as the main entry (see the full
+        // rationale there); this bundle ships to the same old-browser TVs.
+        target: 'es2021',
         assetsInlineLimit: 0,
         // This is the SECOND build in `npm run build` (main `vite build` runs
         // first). dist/ is inside root, so Vite's emptyOutDir defaults to true —
@@ -54,6 +63,10 @@ export default defineConfig({
             },
         },
         sourcemap: true,
+    },
+    define: {
+        // M-UI-23 — the player entry is vendored too; stamp it alike.
+        __PHLIX_UI_VERSION__: JSON.stringify(PHLIX_UI_PKG_VERSION),
     },
     resolve: {
         alias: {

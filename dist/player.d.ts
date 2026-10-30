@@ -22,6 +22,7 @@
  * @license MIT
  */
 export { default as Player } from './components/Player.vue';
+export { phlixUiVersion } from './version';
 export { default as MiniPlayer } from './components/MiniPlayer.vue';
 export { default as Scrubber } from './components/player/Scrubber.vue';
 export type { Chapter } from './components/player/Scrubber.vue';

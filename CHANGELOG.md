@@ -12,6 +12,50 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui minors lane 2026-10-30 (W-min189): the build floor gets pinned, the bundle gets a name tag, and the audit gate finally arrives
+
+- **M-UI-22 (fedev m2).** Both Vite configs now pin `build.target: 'es2021'`
+  explicitly. Until now the committed bundle's syntax floor silently tracked
+  Vite's rolling `baseline-widely-available` default — a Vite minor bump could
+  move what `/app` browsers must support with zero diff in this repo. The pin
+  matches the measured shipped reality (`||=` 281× in `dist/phlix-ui.js`) and
+  any newer syntax is now downlevelled at build time instead of raising the
+  floor. README "Compatibility & notes" gains the baseline statement — JS
+  ES2021, and the honest CSS truth on top: `style.css` uses `color-mix()` with
+  zero `@supports` blocks, so the true prebuilt floor is ~Chrome/Edge 111+,
+  Firefox 113+, Safari 16.2+. `src/test/build-pins.test.ts` pins the literal
+  `target: 'es2021',` line in both configs.
+- **M-UI-23 (fedev m3).** The bundle now carries its build version as a
+  literal: a `__PHLIX_UI_VERSION__` define (fed from `package.json` at config
+  load, both entries) surfaces as `phlixUiVersion` (exported from `@phlix/ui`
+  and `@phlix/ui/player`) and as `window.__PHLIX_UI_VERSION__`, stamped by
+  `createPhlixApp`. A vendored `/app` copy that drifted from its claimed tag —
+  the S176 class `dist:check` guards at build time — is now observable in the
+  field. `src/__tests__/dist-version-stamp.test.ts` proves the literal is
+  physically in the shipped JS (main graph + player entry).
+- **M-UI-27 (seceng MIN-3).** The S440 estate standard lands: `npm run audit`
+  (`npm audit --audit-level=low`, full tree) gates in CI's `static` job, with
+  `src/test/ci-audit-gate.test.ts` as the anti-neutering guard (byte-exact
+  script string, step run-line, no `continue-on-error` / `|| true` / `if:` —
+  mutation-proven: appending `|| true` reddens the guard). First measurement
+  at the base tip found the full tree NOT clean: one HIGH via vite 8.2.0
+  (launch-editor ×3 + Vite dev-server advisories, patched ≥8.2.3; 8.2.3 was
+  never published, so the bump is to 8.2.4). `vite` moves `^8.0.16 → ^8.2.4`
+  — the range floor IS the security statement — and the lock follows vite's
+  own requirements (rolldown ~1.2.4 family → 1.2.16, postcss ^8.5.26 →
+  8.5.32, @oxc-project/types + nanoid patch-follows, emnapi/napi-rs wasm
+  binding subtree pruned by rolldown 1.2.16, one new platform-binding node);
+  all dev-only nodes, production tree was already 0. Full-tree audit after
+  the bump: **0 vulnerabilities at `--audit-level=low`**. This repo's dist is
+  vendored by server/hub/tizen/windows/console/roku hosts — auditing the
+  build toolchain is the point of the gate, not an extra.
+- **Dist movement, disclosed.** `dist/` rebuilt (×2, deterministic — the
+  aggregate hash is in the W-min189 fixlog): vite 8.2.4's rolldown + the
+  ES2021 pin + the version literal all move bytes by design.
+- Verification: vue-tsc 0 errors; eslint 0; vitest full suite serial; build
+  determinism ×2; `dist:check` green on the clean tree; `npm run audit`
+  executed green.
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min188): the invite page joins the catalog, "registration" retires, and README's headline facts finally match the shipped library
 
 - **M-UI-34 (writer m3).** `AcceptInvitePage.vue` — a new member's first

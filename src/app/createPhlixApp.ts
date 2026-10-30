@@ -25,6 +25,7 @@ import NotFoundPage from './placeholder/NotFoundPage.vue';
 // split (Rollup's INEFFECTIVE_DYNAMIC_IMPORT warning).
 import { computed } from 'vue';
 import { setDefaultApiHeaders } from '../api/client';
+import { phlixUiVersion } from '../version';
 import { applyStoredThemeEarly } from '../composables/useTheme';
 import { installFocusable } from '../directives/focusable';
 import { usePreferencesStore, hasStoredPreferences } from '../stores/usePreferencesStore';
@@ -305,6 +306,8 @@ export function mediaDirectBaseFor(
 declare global {
     interface Window {
         __PHLIX__?: PhlixAppConfig;
+        /** M-UI-23 — build stamp of the vendored bundle, written at boot. */
+        __PHLIX_UI_VERSION__?: string;
     }
 }
 
@@ -504,6 +507,13 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
 }
 
 export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
+    // M-UI-23 — make the bundle's build version observable from the field
+    // (browser console on a live `/app`), not just via the module export.
+    // Written on every boot; idempotent.
+    if (typeof window !== 'undefined') {
+        window.__PHLIX_UI_VERSION__ = phlixUiVersion;
+    }
+
     const fullConfig: PhlixAppConfig = {
         ...readConfig(),
         ...config,

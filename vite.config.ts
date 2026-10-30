@@ -3,6 +3,15 @@ import { configDefaults } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 import Icons from 'unplugin-icons/vite';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+
+// Build-time package version (M-UI-23): read from package.json — the single
+// truth — and fed into `define` below so every emitted bundle carries a
+// literal stamp. Computed at CONFIG LOAD time (build start), so the two
+// `vite build` invocations of `npm run build` always agree.
+const PHLIX_UI_PKG_VERSION = (JSON.parse(
+    readFileSync(new URL('package.json', import.meta.url), 'utf8')
+) as { version: string }).version;
 
 export default defineConfig({
     // unplugin-icons resolves the `~icons/lucide/*` virtual modules that Icon.vue
@@ -10,6 +19,20 @@ export default defineConfig({
     // imported get bundled (tree-shaken); no runtime icon font/sprite.
     plugins: [vue(), Icons({ compiler: 'vue3', scale: 1 })],
     build: {
+        // M-UI-22 — explicit syntax floor. Vite's default target is the rolling
+        // `baseline-widely-available` preset, so a Vite minor-bump can move the
+        // committed bundle's syntax floor with ZERO diff in this repo — the
+        // opposite of the pin-everything doctrine (the S459 workflow-pin lesson,
+        // build side). 'es2021' matches the shipped reality measured at the time
+        // of writing (`||=` 281x in dist/phlix-ui.js): the bundle needs
+        // Chrome/Edge 85+, Firefox 79+, Safari 14+. Any newer syntax the source
+        // produces is DOWNLEVELLED by the build instead of silently raising the
+        // floor. CSS is NOT covered by this pin: style.css uses color-mix()
+        // (Chrome 111+/Safari 16.2+/Firefox 113+) and esbuild/lightningcss do
+        // not transpile it; the true browser baseline is stated in README
+        // "Compatibility & notes" and the gap is owned there, not hidden.
+        // Guard: src/test/build-pins.test.ts pins this line in BOTH configs.
+        target: 'es2021',
         // Emit fonts (and other binary assets) as separate hashed files in
         // dist/assets/ rather than base64-inlining them into style.css — keeps
         // CSS small and lets the self-hosted woff2 be cached + font-display:swap.
@@ -51,6 +74,12 @@ export default defineConfig({
             },
         },
         sourcemap: true,
+    },
+    // M-UI-23 — version stamp: `process.env`-free bare-identifier define so the
+    // substitution survives every emit path (esbuild/oxc define semantics).
+    // src/version.ts reads it; the fallback there covers non-Vite consumers.
+    define: {
+        __PHLIX_UI_VERSION__: JSON.stringify(PHLIX_UI_PKG_VERSION),
     },
     resolve: {
         alias: {

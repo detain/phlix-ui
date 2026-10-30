@@ -24,6 +24,7 @@
 
 // Player surface
 export { default as Player } from './components/Player.vue';
+export { phlixUiVersion } from './version';
 export { default as MiniPlayer } from './components/MiniPlayer.vue';
 
 // Player sub-components

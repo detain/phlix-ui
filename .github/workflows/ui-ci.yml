@@ -49,6 +49,11 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      # M-UI-27 (S440 estate standard): the tree that BUILDS this vendored dist is
+      # audited too — a compromised dev-toolchain ships poison into every consumer.
+      # Guard: src/test/ci-audit-gate.test.ts (text pins; keep strings in sync).
+      - name: Dependency audit
+        run: npm run audit
 
   # Deterministic gate: build + dist freshness + the full vitest suite, 2 shards in parallel.
   test:
