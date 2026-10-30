@@ -463,7 +463,7 @@ export const JA_MESSAGES = {
     captionBackground: '字幕の背景',
     captionEdge: '字幕の縁取り',
     resetAll: 'すべての環境設定をリセット',
-    resetConfirm: 'リセットを確定するにはもう一度クリックしてください',
+    resetConfirm: 'リセットを確定するにはもう一度押してください',
     resetDone: '環境設定を標準に戻しました。',
     preferences: '環境設定',
     title: '設定',

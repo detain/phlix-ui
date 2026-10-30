@@ -462,7 +462,7 @@ export const PT_BR_MESSAGES = {
     captionBackground: 'Fundo das legendas',
     captionEdge: 'Borda das legendas',
     resetAll: 'Redefinir todas as preferências',
-    resetConfirm: 'Clique de novo para confirmar a redefinição',
+    resetConfirm: 'Pressione de novo para confirmar a redefinição',
     resetDone: 'Preferências redefinidas para os padrões.',
     preferences: 'Preferências',
     title: 'Configurações',

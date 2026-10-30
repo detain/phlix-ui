@@ -464,7 +464,7 @@ export const ES_MESSAGES = {
     captionBackground: 'Fondo de subtítulos',
     captionEdge: 'Borde de subtítulos',
     resetAll: 'Restablecer todas las preferencias',
-    resetConfirm: 'Haz clic de nuevo para confirmar el restablecimiento',
+    resetConfirm: 'Pulsa de nuevo para confirmar el restablecimiento',
     resetDone: 'Las preferencias se restablecieron a los valores predeterminados.',
     preferences: 'Preferencias',
     title: 'Ajustes',

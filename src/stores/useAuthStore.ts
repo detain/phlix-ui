@@ -74,6 +74,19 @@ export const useAuthStore = defineStore('auth', () => {
     const isLoggedIn = computed(() => accessToken.value !== null);
     const isAdmin = computed(() => user.value?.is_admin === true);
 
+    // M-UI-26: a determinatively dead refresh is cleared at the client (token
+    // store + this event). Mirror it here so `isLoggedIn` goes false IMMEDIATELY
+    // — previously a mid-session refresh failure left the store logged-in on
+    // dead credentials until a page reload re-ran init(). No redirect and no
+    // error fields: the router guards/pages own the UX (fetchUser-clears-state
+    // precedent: the store owns the reactive vars, nothing louder).
+    if (typeof window !== 'undefined') {
+        window.addEventListener('phlix:auth-expired', () => {
+            accessToken.value = null;
+            user.value = null;
+        });
+    }
+
     /**
      * Adopt a freshly-minted token pair (login, signup, or the S81 profile
      * SWITCH response) into both the persistent store and the reactive mirror,

@@ -253,7 +253,7 @@ function onPlay(m: MediaItem): void {
   if (m.type === 'series') {
     const next = pickPlayableEpisode(seasons.value, player.resumeMap);
     if (next) go('player', next.id);
-    else toasts.info('No episodes to play yet.');
+    else toasts.info('Nothing to play yet.');
     return;
   }
   go('player', m.id);
@@ -268,7 +268,7 @@ function onPlay(m: MediaItem): void {
 function onPlaySeason(group: SeasonGroup): void {
   const next = pickSeasonPlayable(group, player.resumeMap);
   if (next) go('player', next.id);
-  else toasts.info('No episodes to play yet.');
+  else toasts.info('Nothing to play yet.');
 }
 // State-aware toast for the `watchlist` action. EVERY `watchlist` emitter that
 // reaches this handler has ALREADY toggled the favorite store + persisted the

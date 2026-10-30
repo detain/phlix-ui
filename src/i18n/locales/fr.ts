@@ -466,7 +466,7 @@ export const FR_MESSAGES = {
     captionBackground: 'Arrière-plan des sous-titres',
     captionEdge: 'Contour des sous-titres',
     resetAll: 'Réinitialiser toutes les préférences',
-    resetConfirm: 'Cliquez encore pour confirmer la réinitialisation',
+    resetConfirm: 'Appuyez encore pour confirmer la réinitialisation',
     resetDone: 'Préférences réinitialisées aux valeurs par défaut.',
     preferences: 'Préférences',
     title: 'Paramètres',

@@ -413,3 +413,25 @@ describe('useAuthStore.init — boot session validation', () => {
     expect(meCalls).toBe(1);
   });
 });
+
+describe('useAuthStore session death (M-UI-26)', () => {
+  it('a mid-session dead refresh logs the store out WITHOUT a page reload', async () => {
+    // Full review scenario: signed-in store; any later request 401s; the refresh
+    // is rejected server-side. Before M-UI-26 the tokens sat in localStorage and
+    // `isLoggedIn` stayed true until a reload re-ran init() — the store believed
+    // a session the client had proven dead.
+    routes['/api/v1/auth/login'] = () => jsonResponse({ access_token: 'AT', refresh_token: 'RT' });
+    routes['/api/v1/auth/me'] = () => jsonResponse({ user: { id: 1, email: 'a@b.c', is_admin: false } });
+    const s = useAuthStore();
+    expect(await s.login('a@b.c', 'pw')).toBe(true);
+    expect(s.isLoggedIn).toBe(true);
+
+    routes['/api/v1/media'] = () => jsonResponse({ message: 'expired' }, 401);
+    routes['/api/v1/auth/refresh'] = () => jsonResponse({ message: 'nope' }, 401);
+    await expect(s.client.get('/api/v1/media')).rejects.toBeInstanceOf(ApiError);
+    expect(s.isLoggedIn).toBe(false); // reactive mirror followed the cleared store
+    expect(s.user).toBeNull();
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
+  });
+});

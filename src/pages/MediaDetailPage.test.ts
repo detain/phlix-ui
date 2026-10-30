@@ -756,7 +756,7 @@ describe('MediaDetailPage — series season grid (U3)', () => {
     const push = vi.spyOn(router, 'push');
     w.findComponent(MediaDetail).vm.$emit('play', media({ id: 'sh1', type: 'series' }));
     expect(push).not.toHaveBeenCalled();
-    expect(toasts.toasts.some((t) => /no episodes to play/i.test(t.message))).toBe(true);
+    expect(toasts.toasts.some((t) => /nothing to play yet/i.test(t.message))).toBe(true);
   });
 
   it('flattens server-modeled season rows by fetching each season\'s episodes', async () => {

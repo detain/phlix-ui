@@ -294,12 +294,26 @@ export declare class ApiClient {
     private handleResponse;
     private extractError;
     /**
+     * The persisted token pair is provably dead — clear it (nothing downstream
+     * should re-send dead credentials) and let the app layer sync. Fires once
+     * per determinative failure, inside the single-flighted refresh body.
+     */
+    private expireSession;
+    /**
      * Refresh the access token, single-flighted per instance. Concurrent callers
      * (e.g. several requests that all hit a 401 at once) share ONE in-flight
      * refresh rather than each POSTing `/api/v1/auth/refresh` — see
      * {@link refreshPromise}. The promise is cleared in `.finally()` so a later
      * expiry starts a fresh refresh. Returns `true` on success / `false` on any
      * failure (no refresh token, non-2xx, network error, missing access_token).
+     *
+     * M-UI-26 (seceng: failed refresh kept the tokens): a DETERMINED failure —
+     * no refresh token to try, a non-2xx answer, or a payload that carries no
+     * access_token — means the persisted pair can never authenticate again, so
+     * {@link expireSession} clears the store and fires the `phlix:auth-expired`
+     * window event the auth store mirrors into its reactive state. A NETWORK
+     * error is deliberately NOT determinative: the pair may still be valid
+     * server-side, so tokens survive and the next attempt retries.
      */
     refreshToken(): Promise<boolean>;
     get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T>;

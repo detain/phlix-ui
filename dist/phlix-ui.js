@@ -1,26 +1,26 @@
-import { r as e } from "./AuthField-Dtzw7vnO.js";
+import { r as e } from "./AuthField-CDCdQLi5.js";
 import { t } from "./IconButton-Cp0n7kCc.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-FI3Uj9O8.js";
 import { n as c, t as l } from "./Icon-CIbfiPrs.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-DrDMAwjz.js";
-import { i as h, n as g, r as _, t as v } from "./useMessages-CFBuM1_w.js";
-import { t as y } from "./useAuthStore-D9S6HAT9.js";
-import { n as b, r as x, t as S } from "./useProfileStore-D3r-OY1H.js";
+import { i as h, n as g, r as _, t as v } from "./useMessages-DrceiftD.js";
+import { t as y } from "./useAuthStore-Du8LTnU5.js";
+import { n as b, r as x, t as S } from "./useProfileStore-DvluHzTu.js";
 import { i as C, n as w, r as T, t as E } from "./useImageSrc-CSM61b-l.js";
 import { i as ee, n as D, r as te, t as ne } from "./usePlayerStore-B7mnqLe3.js";
-import { n as re, t as ie } from "./ThumbRating-Dr5AbPBd.js";
+import { n as re, t as ie } from "./ThumbRating-Bi26fH2C.js";
 import { n as O, r as ae, t as oe } from "./useApiBase-DXTBY90j.js";
 import { i as se, o as ce, s as le } from "./shortcuts-CQXQp0In.js";
-import { t as ue } from "./NetworkHealthIndicator-BY3SGZMW.js";
+import { t as ue } from "./NetworkHealthIndicator-BMhY5CIo.js";
 import { t as de } from "./useToastStore-Bu-iYU7r.js";
-import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-Bm4nW8ay.js";
+import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-BhCcIbJG.js";
 import { i as Ie, n as Le, r as Re, t as ze } from "./Kbd-CqBBjLmt.js";
-import { a as Be, i as Ve, n as He, o as Ue, r as We, t as Ge } from "./useLibrariesStore-B_0XSAcs.js";
-import { n as Ke, t as qe } from "./HomeRow-rcKVmEsj.js";
+import { a as Be, i as Ve, n as He, o as Ue, r as We, t as Ge } from "./useLibrariesStore-D-EBLEvu.js";
+import { n as Ke, t as qe } from "./HomeRow-Dt-CWs4M.js";
 import { t as Je } from "./safeHref-CxjNgvYf.js";
 import { t as k } from "./EmptyState-BjOJ1k_A.js";
 import { t as A } from "./Button-1sKEdGjj.js";
-import { _ as Ye, a as Xe, b as Ze, c as Qe, d as $e, f as et, g as tt, h as nt, i as rt, l as it, m as at, n as ot, o as st, p as ct, r as lt, t as ut, u as dt, v as ft, x as pt, y as j } from "./client-pLl-rDdN.js";
+import { _ as Ye, a as Xe, b as Ze, c as Qe, d as $e, f as et, g as tt, h as nt, i as rt, l as it, m as at, n as ot, o as st, p as ct, r as lt, t as ut, u as dt, v as ft, x as pt, y as j } from "./client-CW4dUyY-.js";
 import { a as mt, c as ht, i as gt, l as _t, n as vt, o as yt, r as bt, s as xt, t as St, u as Ct } from "./useConnectionStore-AmsgQivX.js";
 import { t as wt } from "./socketHint-C0yqQROO.js";
 import { i as Tt, n as Et, r as Dt, t as Ot } from "./usePageTitle-j6j9gAmo.js";
@@ -28,49 +28,49 @@ import { t as M } from "./Badge-C6LNO9Kk.js";
 import { t as kt } from "./Slider-CjiPl8gE.js";
 import { t as At } from "./Switch-C1Wv5sN2.js";
 import { t as jt } from "./Chip-DC0SQtfn.js";
-import { t as Mt } from "./Select-CvK9Rhql.js";
-import { t as Nt } from "./Combobox-CJiAaAaT.js";
-import { t as Pt } from "./Modal-DZssaRh7.js";
-import { t as Ft } from "./ConfirmDialog-DsyMLgoH.js";
+import { t as Mt } from "./Select-ChFXd0gU.js";
+import { t as Nt } from "./Combobox-vklGqBID.js";
+import { t as Pt } from "./Modal-BU4hJGBA.js";
+import { t as Ft } from "./ConfirmDialog-CVLhzK8i.js";
 import { t as It } from "./Tooltip-Biea-2FR.js";
 import { t as N } from "./Skeleton-B2Mt2L00.js";
-import { t as Lt } from "./Spinner-B8wtViN3.js";
+import { t as Lt } from "./Spinner-zawWdcUT.js";
 import { t as Rt } from "./PageHint-BlhPmafC.js";
 import { t as zt } from "./Tabs-DkWwQI4r.js";
 import { t as Bt } from "./Menu-BKtnfxz4.js";
 import { t as Vt } from "./HelpText-CyBorC6S.js";
-import { o as Ht, t as Ut } from "./MediaCard-6xKmT954.js";
-import { t as Wt } from "./MediaGrid-D48yTfou.js";
-import { t as Gt } from "./MediaRow-doUp4LK6.js";
-import { n as Kt, t as qt } from "./metadata-sources-DQEHhxlC.js";
-import { n as Jt, t as Yt } from "./logs-bjhW44Nj.js";
-import { t as Xt } from "./dashboard-aQHunbIB.js";
-import { a as Zt, c as Qt, i as $t, l as en, n as tn, o as nn, r as rn, s as an, t as on } from "./users-CyyqrPJG.js";
-import { n as sn, r as cn, t as ln } from "./webhooks-BE7i9Fhc.js";
-import { t as un } from "./services-DkTv3P8y.js";
-import { t as dn } from "./integrations-qm3f56wM.js";
-import { t as fn } from "./backup-Yn8iu4T0.js";
-import { t as pn } from "./cast-cRG0CVKw.js";
-import { t as mn } from "./dlnaServer-BWTRbjk7.js";
-import { t as hn } from "./remoteAccess-DA7ww6Te.js";
-import { t as gn } from "./liveTv-D0bROo3I.js";
-import { t as _n } from "./collections-DCUo5zFS.js";
-import { t as vn } from "./history-B4XmOFjP.js";
-import { t as yn } from "./syncPlay-D6k6rdSC.js";
-import { n as bn, r as xn, t as Sn } from "./libraries-Bn3QT8O5.js";
-import { n as Cn, r as wn, t as Tn } from "./useSettingsPrefs-BVlUL3Ex.js";
-import { i as En, n as Dn, r as On, t as kn } from "./plugins-CQDiF8_3.js";
-import { n as An, r as jn, t as Mn } from "./maintenance-Bh5Ezt0l.js";
-import { t as Nn } from "./hubDashboard-9JTbRtvH.js";
+import { o as Ht, t as Ut } from "./MediaCard-DM99QreQ.js";
+import { t as Wt } from "./MediaGrid-BbMdyaUZ.js";
+import { t as Gt } from "./MediaRow-CNEGl9xy.js";
+import { n as Kt, t as qt } from "./metadata-sources-A3wtyEf1.js";
+import { n as Jt, t as Yt } from "./logs-BAg5z84v.js";
+import { t as Xt } from "./dashboard-Aedjunpw.js";
+import { a as Zt, c as Qt, i as $t, l as en, n as tn, o as nn, r as rn, s as an, t as on } from "./users-Br-ZUS76.js";
+import { n as sn, r as cn, t as ln } from "./webhooks-DQXQgbIv.js";
+import { t as un } from "./services-BDABgha7.js";
+import { t as dn } from "./integrations-MWOPBM6E.js";
+import { t as fn } from "./backup-D-HrJzix.js";
+import { t as pn } from "./cast-MzRPTPRa.js";
+import { t as mn } from "./dlnaServer-Dtphrfat.js";
+import { t as hn } from "./remoteAccess-DwqZfBKj.js";
+import { t as gn } from "./liveTv-D6s_iVAa.js";
+import { t as _n } from "./collections-_aYPFvf1.js";
+import { t as vn } from "./history-CzmuYJ-V.js";
+import { t as yn } from "./syncPlay-BWD8LsFZ.js";
+import { n as bn, r as xn, t as Sn } from "./libraries-DBEWv6Rx.js";
+import { n as Cn, r as wn, t as Tn } from "./useSettingsPrefs-DtQjIXeh.js";
+import { i as En, n as Dn, r as On, t as kn } from "./plugins-BA_jLPSK.js";
+import { n as An, r as jn, t as Mn } from "./maintenance-Bkw7ItEm.js";
+import { t as Nn } from "./hubDashboard-BJHVRTgo.js";
 import { n as Pn, t as Fn } from "./media-query-D7hrCu8r.js";
-import { t as In } from "./LoginForm-qAbuIl4Y.js";
-import { t as Ln } from "./SignupForm-CI1fXZ5T.js";
+import { t as In } from "./LoginForm-DyXABhFW.js";
+import { t as Ln } from "./SignupForm-BUUXBmV8.js";
 import { t as P } from "./hubHelpLinks-C396-WBg.js";
 import { a as Rn, i as zn, n as Bn, o as Vn, r as Hn, s as Un, t as Wn } from "./plural-B3O2rVPV.js";
 import { n as Gn, t as Kn } from "./debounce-BnRz-bwe.js";
 import { t as qn } from "./Input-hVCTPbto.js";
-import { i as Jn, n as Yn, r as Xn, t as Zn } from "./MusicAlbumCard-yPnzVYrZ.js";
-import { t as Qn } from "./useMediaStore-0UTOORKf.js";
+import { i as Jn, n as Yn, r as Xn, t as Zn } from "./MusicAlbumCard-DlD8UOWl.js";
+import { t as Qn } from "./useMediaStore-Dm2cFYhr.js";
 import { Fragment as F, Teleport as $n, Transition as er, TransitionGroup as tr, computed as I, createApp as nr, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as rr, createTextVNode as V, createVNode as H, defineAsyncComponent as ir, defineComponent as U, getCurrentScope as ar, inject as or, nextTick as sr, normalizeClass as W, normalizeStyle as cr, onBeforeUnmount as lr, onMounted as G, onScopeDispose as ur, onUnmounted as dr, openBlock as K, provide as fr, readonly as pr, ref as q, renderList as J, renderSlot as mr, resolveComponent as hr, resolveDynamicComponent as gr, toDisplayString as Y, toValue as _r, unref as X, useId as vr, vModelSelect as yr, vModelText as br, vShow as xr, watch as Z, watchEffect as Sr, withCtx as Q, withDirectives as Cr, withModifiers as wr } from "vue";
 import { createPinia as Tr, defineStore as Er } from "pinia";
 import { RouterLink as Dr, RouterView as Or, createRouter as kr, createWebHistory as Ar, useRoute as jr, useRouter as $ } from "vue-router";
@@ -901,7 +901,7 @@ var ua = ["src", "alt"], da = { class: "brand-wordmark" }, fa = {
 		$i();
 		let n = Ie(), r = $(), i = jr(), { t: a } = v(), o = ce(), s = I(() => i.meta?.fullBleed === !0 && o.theaterActive);
 		ea();
-		let c = ir(() => import("./CommandPalette-BEfhlV2U.js")), u = q(!1);
+		let c = ir(() => import("./CommandPalette-BpGbvDik.js")), u = q(!1);
 		Z(() => n.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1259,111 +1259,111 @@ function no(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-DGYSAMDz.js")
+			component: () => import("./BrowsePage-Or2a7tVA.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-DlA6AJyB.js")
+			component: () => import("./MediaDetailPage-BR4WLz7a.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-Ba9jTq5X.js")
+			component: () => import("./SeasonPage-Dg2t1c-a.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-B25pkaYy.js")
+			component: () => import("./LibraryPage-CJrIFnm3.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage--iMJWuE9.js")
+			component: () => import("./PlayerPage-BBL9ycAd.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-Cb3Z8qgp.js")
+			component: () => import("./LoginPage-DC7Ij62G.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-DVkIc2Qo.js")
+			component: () => import("./SignupPage-AOVubKFy.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-C6oyi2wX.js")
+			component: () => import("./ConnectPage-BMaICQ7m.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-MM9-2a9k.js")
+			component: () => import("./SettingsPage-DA4BiGmx.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-BmNuy0oF.js")
+			component: () => import("./ExplorePage-wKdCf1Er.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-BnCV9Vno.js")
+			component: () => import("./RecommendationsPage-DAhz-S-C.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-Bpue6KXq.js")
+			component: () => import("./WatchHistoryPage-Cb4ABeCU.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-BSpXuUwh.js")
+			component: () => import("./SyncPlayPage-DBOpzrG5.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-BPrvDFnM.js")
+			component: () => import("./MusicLibraryPage-CAhosLNE.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-H_aFgSjs.js")
+			component: () => import("./ParentalControlsPage-Bhn35w8s.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-DcJAMxfZ.js")
+			component: () => import("./ProfilesPage-d4-HzUql.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-CeYHRKYd.js")
+			component: () => import("./PlaylistsPage-CxLxA18j.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-CTiScx64.js")
+			component: () => import("./PlaylistDetailPage-LJF9vImU.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Ka}`,
 		name: Ga,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-DEBiOiFt.js")
+		component: () => import("./McpTokensPage-Q25aGK6z.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1638,145 +1638,145 @@ var io = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-BkB3K4OB.js")
+	component: () => import("./DashboardPage-CMYMhpNr.js")
 }, yo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-DJDOequA.js")
+	component: () => import("./UsersPage-qkdZHBMh.js")
 }, bo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-CssQ06Cs.js")
+	component: () => import("./LogsPage-BM75_iEG.js")
 }, xo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-BqJKN20I.js")
+	component: () => import("./WebhooksPage-C3OnmvLW.js")
 }, So = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-r6WqNmdF.js")
+	component: () => import("./ServicesPage-CZyPBVGz.js")
 }, Co = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-CVPi6m2M.js")
+	component: () => import("./IntegrationsPage-nUhOIxzw.js")
 }, wo = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-FefGUM1M.js")
+	component: () => import("./BackupPage-NtZ0hnmk.js")
 }, To = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-B5Nt8Vm9.js")
+	component: () => import("./CastDevicesPage-MVzUrLFe.js")
 }, Eo = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-C6IVwDld.js")
+	component: () => import("./DlnaServerPage-4FigQBdY.js")
 }, Do = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-CTlKAtDQ.js")
+	component: () => import("./RemoteAccessPage-DDfoJ1BU.js")
 }, Oo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-D39w1Btz.js")
+	component: () => import("./LiveTvPage-Cs-whSqn.js")
 }, ko = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-Cg61iwYg.js")
+	component: () => import("./CollectionsPage-CVS3o0Fl.js")
 }, Ao = {
 	name: "admin-history",
 	path: "history",
 	label: "Watch history",
 	icon: "film",
-	component: () => import("./HistoryPage-C6sYLrX3.js")
+	component: () => import("./HistoryPage-DKrEWFRr.js")
 }, jo = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-DGb8ryTn.js")
+	component: () => import("./SyncPlayPage-DvXWG6zQ.js")
 }, Mo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-BMsUOAhb.js")
+	component: () => import("./LibrariesPage-fXOyI3cN.js")
 }, No = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-D2PxEn5Z.js")
+	component: () => import("./DuplicatesPage-CzUDMWnQ.js")
 }, Po = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-D6YwSPMa.js")
+	component: () => import("./PluginsPage-CLBxJkWZ.js")
 }, Fo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-DeTGKxju.js")
+	component: () => import("./TasksPage-DGkUC1-9.js")
 }, Io = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-BZciFjr1.js")
+	component: () => import("./TranscodingSettingsPage-D9p2YpCM.js")
 }, Lo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-CrpQE22C.js")
+	component: () => import("./SettingsPage-BoDXPcoE.js")
 }, Ro = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-DBhUU2mf.js")
+	component: () => import("./HubDashboardPage-DW_6I8Ep.js")
 }, zo = {
 	name: "admin-metrics",
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-DQI2wbVa.js").then((e) => e.t)
+	component: () => import("./MetricsPage-IHrBgUel.js").then((e) => e.t)
 }, Bo = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
 	label: "Audit Logs",
 	icon: "eye",
-	component: () => import("./AuditLogsPage-Bh3n37CZ.js")
+	component: () => import("./AuditLogsPage-DfQF9L2W.js")
 }, Vo = {
 	name: "admin-requests",
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-Bpq4mEf6.js")
+	component: () => import("./RequestsPage-CD6zJPCb.js")
 }, Ho = [
 	vo,
 	zo,
@@ -1876,7 +1876,7 @@ function Xo(e = "/app", t = Jo) {
 	}), [{
 		path: n,
 		meta: { requiresAdmin: !0 },
-		component: () => import("./AdminLayout-n_MZVl6i.js"),
+		component: () => import("./AdminLayout-DtEL5_GX.js"),
 		props: {
 			base: e,
 			pages: t
@@ -7581,7 +7581,7 @@ var J_ = {
 		captionBackground: "Fondo de subtítulos",
 		captionEdge: "Borde de subtítulos",
 		resetAll: "Restablecer todas las preferencias",
-		resetConfirm: "Haz clic de nuevo para confirmar el restablecimiento",
+		resetConfirm: "Pulsa de nuevo para confirmar el restablecimiento",
 		resetDone: "Las preferencias se restablecieron a los valores predeterminados.",
 		preferences: "Preferencias",
 		title: "Ajustes",
@@ -8095,7 +8095,7 @@ var J_ = {
 		captionBackground: "Arrière-plan des sous-titres",
 		captionEdge: "Contour des sous-titres",
 		resetAll: "Réinitialiser toutes les préférences",
-		resetConfirm: "Cliquez encore pour confirmer la réinitialisation",
+		resetConfirm: "Appuyez encore pour confirmer la réinitialisation",
 		resetDone: "Préférences réinitialisées aux valeurs par défaut.",
 		preferences: "Préférences",
 		title: "Paramètres",
@@ -8609,7 +8609,7 @@ var J_ = {
 		captionBackground: "Untertitel-Hintergrund",
 		captionEdge: "Untertitel-Kontur",
 		resetAll: "Alle Einstellungen zurücksetzen",
-		resetConfirm: "Zum Bestätigen des Zurücksetzens erneut klicken",
+		resetConfirm: "Zum Bestätigen des Zurücksetzens erneut drücken",
 		resetDone: "Einstellungen auf Standardwerte zurückgesetzt.",
 		preferences: "Präferenzen",
 		title: "Einstellungen",
@@ -9123,7 +9123,7 @@ var J_ = {
 		captionBackground: "Sfondo sottotitoli",
 		captionEdge: "Bordo sottotitoli",
 		resetAll: "Ripristina tutte le preferenze",
-		resetConfirm: "Clicca di nuovo per confermare il ripristino",
+		resetConfirm: "Premi di nuovo per confermare il ripristino",
 		resetDone: "Preferenze ripristinate ai valori predefiniti.",
 		preferences: "Preferenze",
 		title: "Impostazioni",
@@ -9637,7 +9637,7 @@ var J_ = {
 		captionBackground: "Fundo das legendas",
 		captionEdge: "Borda das legendas",
 		resetAll: "Redefinir todas as preferências",
-		resetConfirm: "Clique de novo para confirmar a redefinição",
+		resetConfirm: "Pressione de novo para confirmar a redefinição",
 		resetDone: "Preferências redefinidas para os padrões.",
 		preferences: "Preferências",
 		title: "Configurações",
@@ -10151,7 +10151,7 @@ var J_ = {
 		captionBackground: "字幕の背景",
 		captionEdge: "字幕の縁取り",
 		resetAll: "すべての環境設定をリセット",
-		resetConfirm: "リセットを確定するにはもう一度クリックしてください",
+		resetConfirm: "リセットを確定するにはもう一度押してください",
 		resetDone: "環境設定を標準に戻しました。",
 		preferences: "環境設定",
 		title: "設定",
@@ -10249,7 +10249,7 @@ var J_ = {
 	it: Z_,
 	pt_BR: Q_,
 	ja: $_
-}, tv = ir(() => import("./MediaDetail-D3WQeb_7.js").then((e) => e.n)), nv = ir(() => import("./MetadataMatchModal-uR8ZXQFH.js").then((e) => e.n)), rv = ir(() => import("./FilterBar-BRmNnKX0.js").then((e) => e.n)), iv = ir(() => import("./SearchPage-CkfaMCAc.js"));
+}, tv = ir(() => import("./MediaDetail-C6HBqEnW.js").then((e) => e.n)), nv = ir(() => import("./MetadataMatchModal-CLVKratB.js").then((e) => e.n)), rv = ir(() => import("./FilterBar-Cky7kP_4.js").then((e) => e.n)), iv = ir(() => import("./SearchPage-Cs5SdW-0.js"));
 export { S as ACTIVE_PROFILE_KEY, Yt as ALL_LOGS, yd as AcceptInvitePage, fn as AdminBackupApi, pn as AdminCastApi, _n as AdminCollectionsApi, Xt as AdminDashboardApi, mn as AdminDlnaServerApi, vn as AdminHistoryApi, Nn as AdminHubDashboardApi, dn as AdminIntegrationsApi, Sn as AdminLibrariesApi, gn as AdminLiveTvApi, Jt as AdminLogsApi, Mn as AdminMaintenanceApi, qt as AdminMetadataSourcesApi, kn as AdminPluginsApi, hn as AdminRemoteAccessApi, un as AdminServicesApi, Cn as AdminSettingsApi, yn as AdminSyncPlayApi, on as AdminUsersApi, ln as AdminWebhooksApi, ut as ApiClient, tt as ApiError, e as AppBackdrop, qr as AppLayout, Ph as AudiobookDetailPage, mg as AudiobookPlayerPage, ih as AudiobooksPage, Se as BUILT_IN_THEME_IDS, M as Badge, Tm as BookDetailPage, Um as BookReaderPage, im as BooksPage, A as Button, St as CONNECTION_API_BASE_KEY, vt as CONNECTION_CONFIRMED_ORIGIN_KEY, _a as CURRENT_SERVER_ID_KEY, va as CURRENT_SERVER_NAME_KEY, jt as Chip, Nt as Combobox, Ft as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, tn as DEFAULT_THROTTLE_BPS, X_ as DE_MESSAGES, dt as ERROR_MESSAGES, $e as ERROR_TITLES, J_ as ES_MESSAGES, k as EmptyState, he as FOCUS_RING_MIN_CONTRAST, Y_ as FR_MESSAGES, ll as FederationPage, Ml as FederationSharesPage, rv as FilterBar, et as GENERIC_ERROR_MESSAGE, Ca as HUB_SYNC_PLAY_PORT, fo as HelpPopover, Vt as HelpText, Z_ as IT_MESSAGES, l as Icon, t as IconButton, ud as InviteLinksPage, $_ as JA_MESSAGES, ze as Kbd, bn as LIBRARY_TYPES, ev as LOCALE_MESSAGES, Cs as LibraryScanPage, it as LocalStorageTokenStore, In as LoginForm, An as MAINTENANCE_ENDPOINTS, jn as MAINTENANCE_TASK_NAMES, Ee as MAX_EXTENDS_DEPTH, Ga as MCP_TOKENS_ROUTE_NAME, Ka as MCP_TOKENS_ROUTE_PATH, ot as MUSIC_PAGE_SIZE, Hl as ManageSharesPage, Ut as MediaCard, tv as MediaDetail, Wt as MediaGrid, qe as MediaHomeRow, Gt as MediaRow, Bt as Menu, nv as MetadataMatchModal, Pt as Modal, Bd as MusicAlbumPage, Of as MusicArtistPage, of as MusicArtistsPage, Wp as MusicPlayerPage, pp as MusicTracksPage, Us as MyServersPage, Ye as NetworkError, Dn as PLUGIN_SECRET_MASK, Wn as PLURAL_CATEGORIES, rn as PROFILE_LAST_ERROR_CODE, $t as PROFILE_LAST_ERROR_TEXT, Q_ as PT_BR_MESSAGES, Rt as PageHint, ao as PageTransition, pa as PhlixApp, Xg as PhotoAlbumPage, Fg as PhotoAlbumsPage, P_ as PhotoSlideshowPage, y_ as PhotoViewPage, ds as ProfileImageSettings, Zt as RATING_LABELS, nn as RATING_MAX, an as RATING_OPTIONS, Kn as REQUEST_SEARCH_DEBOUNCE_MS, ne as RESUME_MAX_RATIO, D as RESUME_MIN_SECONDS, ke as RING_GROUND_KEYS, ho as RatingBadge, ju as RequestsPage, io as Reveal, xn as SCAN_JOB_TYPES, wn as SETTINGS_SECRET_MASK, Ve as SORT_TITLE_ARTICLES, sn as SUBSCRIBABLE_EVENTS, iv as SearchPage, Ae as SecuritySettingsPage, Mt as Select, Xc as ServerDetailPage, nu as SharedWithMePage, Lr as Sheet, Ln as SignupForm, N as Skeleton, kt as Slider, Kt as SourcePriorityEditor, Lt as Spinner, At as Switch, _e as THEME_CACHE_KEY, Ce as THEME_TOKEN_ALLOWLIST, Qt as THROTTLE_BPS_LEVELS, en as THROTTLE_BPS_OPTIONS, lt as TMDB_UNCONFIGURED_CODE, zt as Tabs, ie as ThumbRating, ft as TimeoutError, Vi as ToastHost, It as Tooltip, _o as UserRatingPicker, cn as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, je as activeThemeStyle, $o as adminMenu, Qi as applyStoredThemeEarly, ve as applyThemeTokens, V_ as bestCandidate, F_ as bindMediaStoreToRouter, Xo as buildAdminRoutes, Qo as buildHubAdminRoutes, Oa as buildHubRelayUrl, Fn as buildMediaQuery, Pn as buildMediaUrl, Zo as buildServerAdminRoutes, ye as clearThemeTokens, La as closeHubRelayConnection, Go as commonAdminPages, Be as compareByStrippedTitle, De as compositedContrastOver, ro as createPhlixApp, _ as createTranslator, Gn as debounce, Yi as deriveAccentVars, j as errMessage, ct as errorCodeMessage, at as errorCodeTitle, He as fetchLibraries, Oe as fetchThemes, we as focusRingLawViolation, o as focusable, r as focusableRegistry, Ot as formatPageTitle, Le as fuzzyScore, Xe as getDefaultApiHeaders, Ra as getHubRelaySocket, p as hasStoredPreferences, qo as hubAdminPages, n as installFocusable, bt as isAllowedBase, xe as isAllowedThemeToken, be as isBuiltInThemeId, Ze as isOffline, gt as isPlaintextPublic, Bn as isPluralTemplate, mt as isPrivateHost, nt as isRegisteredErrorCode, w as isRewritableImagePath, me as isSafeThemeTokenValue, st as isTmdbUnconfigured, Re as matchCommand, qa as mcpTokensMenuItem, h as mergeMessages, yt as normalizeBase, Me as normalizeServerTheme, Pa as openHubRelayConnection, xt as originOf, Ea as parsePendingCommandFrame, Fe as parseThemeColor, ga as phlixUiVersion, On as pluginErrorCode, En as pluginValidationErrors, Hn as plural, zn as pluralCategory, Rn as pluralCount, Vn as pluralize, ht as probeServer, ge as readCachedTheme, d as readStoredPreferences, I_ as rectCenter, T as resolveImageSrc, C as resolveImageSrcset, Pe as resolveThemeBase, pe as resolveThemeTokens, Je as safeHref, fe as sanitizeThemeTokens, Un as selectPluralTemplate, Ko as serverAdminPages, Et as setAppName, Qe as setDefaultApiHeaders, Dt as setPageTitle, We as sortLibraries, Ue as stripLeadingArticle, oe as useApiBase, y as useAuthStore, ea as useCommandPaletteHotkey, Ie as useCommandStore, _t as useConnectionStore, i as useFocusTrap, E as useImageSrc, Ge as useLibrariesStore, O as useMediaApiBase, Qn as useMediaStore, v as useMessages, q_ as useOnline, Tt as usePageTitle, ee as usePlayerStore, aa as usePreconnect, u as usePreferencesStore, Ht as usePrefetch, x as useProfileStore, la as useResumeReporter, Ke as useResumeSync, Sa as useServerStore, Tn as useSettingsPrefsStore, K_ as useSpatialNav, $i as useTheme, Te as useThemesStore, de as useToastStore, re as useUserItemDataStore, Ct as withScheme, Ne as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

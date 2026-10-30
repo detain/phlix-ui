@@ -58,7 +58,7 @@ const EN: PhlixErrorCatalog = {
   'auth.enrollment_expired':
     'This server’s enrollment token has expired. Enroll it with the hub again.',
   'auth.server_mismatch': 'The enrollment token does not match this server.',
-  'auth.missing_credentials': 'Enter your credentials to link this account.',
+  'auth.missing_credentials': 'Enter your password to link this account.',
   'auth.invalid_credentials': 'The credentials you entered are not correct.',
 
   // ── hub — server↔hub account-linking failures ──
@@ -141,7 +141,7 @@ const EN: PhlixErrorCatalog = {
   // ── tls / csrf / user ──
   'tls.acme_not_implemented': 'Automatic TLS certificate issuance is not available yet.',
   'csrf.invalid_origin': 'The request origin failed the CSRF check.',
-  'user.not_found': 'The user for this session could not be found.',
+  'user.not_found': 'Your account could not be found.',
 
   // ── plugin — server plugin admin/catalog surface ──
   'plugin.name.required': 'A plugin name is required.',
@@ -347,7 +347,7 @@ const ES: PhlixErrorCatalog = {
   'auth.enrollment_expired':
     'El token de registro de este servidor ha caducado. Vuelve a registrarlo en el hub.',
   'auth.server_mismatch': 'El token de registro no corresponde a este servidor.',
-  'auth.missing_credentials': 'Introduce tus credenciales para vincular esta cuenta.',
+  'auth.missing_credentials': 'Introduce tu contraseña para vincular esta cuenta.',
   'auth.invalid_credentials': 'Las credenciales introducidas no son correctas.',
   // ── hub ──
   'hub.not_enrolled': 'Este servidor aún no está registrado en el hub.',
@@ -422,7 +422,7 @@ const ES: PhlixErrorCatalog = {
   // ── tls / csrf / user ──
   'tls.acme_not_implemented': 'La emisión automática de certificados TLS aún no está disponible.',
   'csrf.invalid_origin': 'El origen de la petición no superó la comprobación CSRF.',
-  'user.not_found': 'No se pudo encontrar el usuario de esta sesión.',
+  'user.not_found': 'No se pudo encontrar tu cuenta.',
   // ── plugin ──
   'plugin.name.required': 'Se requiere un nombre de complemento.',
   'plugin.not_found': 'No se pudo encontrar ese complemento.',
@@ -612,7 +612,7 @@ const FR: PhlixErrorCatalog = {
   'auth.enrollment_expired':
     'Le jeton d’enregistrement de ce serveur a expiré. Enregistrez-le de nouveau auprès du hub.',
   'auth.server_mismatch': 'Le jeton d’enregistrement ne correspond pas à ce serveur.',
-  'auth.missing_credentials': 'Saisissez vos identifiants pour lier ce compte.',
+  'auth.missing_credentials': 'Saisissez votre mot de passe pour lier ce compte.',
   'auth.invalid_credentials': 'Les identifiants saisis ne sont pas corrects.',
   'hub.not_enrolled': 'Ce serveur n’est pas encore enregistré auprès du hub.',
   'hub.token_required': 'Un jeton d’accès au hub est requis pour cette action.',
@@ -677,7 +677,7 @@ const FR: PhlixErrorCatalog = {
     'L’horodatage de la requête Alexa était trop ancien. Vérifiez l’horloge du serveur.',
   'tls.acme_not_implemented': 'La délivrance automatique de certificats TLS n’est pas encore disponible.',
   'csrf.invalid_origin': 'L’origine de la requête a échoué au contrôle CSRF.',
-  'user.not_found': 'Impossible de trouver l’utilisateur de cette session.',
+  'user.not_found': 'Impossible de trouver votre compte.',
   'plugin.name.required': 'Le nom du plugin est requis.',
   'plugin.not_found': 'Impossible de trouver ce plugin.',
   'plugin.url.required': 'L’URL du plugin est requise.',
@@ -847,7 +847,7 @@ const DE: PhlixErrorCatalog = {
   'auth.enrollment_expired':
     'Das Registrierungs-Token dieses Servers ist abgelaufen. Registriere ihn erneut am Hub.',
   'auth.server_mismatch': 'Das Registrierungs-Token passt nicht zu diesem Server.',
-  'auth.missing_credentials': 'Gib deine Zugangsdaten ein, um dieses Konto zu verknüpfen.',
+  'auth.missing_credentials': 'Gib dein Passwort ein, um dieses Konto zu verknüpfen.',
   'auth.invalid_credentials': 'Die eingegebenen Zugangsdaten sind nicht korrekt.',
   'hub.not_enrolled': 'Dieser Server ist beim Hub noch nicht registriert.',
   'hub.token_required': 'Für diese Aktion ist ein Hub-Zugriffstoken erforderlich.',
@@ -915,7 +915,7 @@ const DE: PhlixErrorCatalog = {
     'Der Zeitstempel der Alexa-Anfrage war zu alt. Prüfe die Serveruhr.',
   'tls.acme_not_implemented': 'Die automatische TLS-Zertifikatsausstellung ist noch nicht verfügbar.',
   'csrf.invalid_origin': 'Die Anfrageherkunft hat die CSRF-Prüfung nicht bestanden.',
-  'user.not_found': 'Der Benutzer dieser Sitzung wurde nicht gefunden.',
+  'user.not_found': 'Dein Konto konnte nicht gefunden werden.',
   'plugin.name.required': 'Ein Plugin-Name ist erforderlich.',
   'plugin.not_found': 'Dieses Plugin wurde nicht gefunden.',
   'plugin.url.required': 'Eine Plugin-URL ist erforderlich.',
@@ -1084,7 +1084,7 @@ const IT: PhlixErrorCatalog = {
   'auth.enrollment_expired':
     'Il token di registrazione di questo server è scaduto. Registralo di nuovo presso l’hub.',
   'auth.server_mismatch': 'Il token di registrazione non corrisponde a questo server.',
-  'auth.missing_credentials': 'Inserisci le tue credenziali per collegare questo account.',
+  'auth.missing_credentials': 'Inserisci la tua password per collegare questo account.',
   'auth.invalid_credentials': 'Le credenziali inserite non sono corrette.',
   'hub.not_enrolled': 'Questo server non è ancora registrato presso l’hub.',
   'hub.token_required': 'Per questa azione è richiesto un token di accesso all’hub.',
@@ -1150,7 +1150,7 @@ const IT: PhlixErrorCatalog = {
     'La data-ora della richiesta Alexa era troppo vecchia. Verifica l’orologio del server.',
   'tls.acme_not_implemented': 'Il rilascio automatico dei certificati TLS non è ancora disponibile.',
   'csrf.invalid_origin': 'L’origine della richiesta non ha superato il controllo CSRF.',
-  'user.not_found': 'Impossibile trovare l’utente di questa sessione.',
+  'user.not_found': 'Impossibile trovare il tuo account.',
   'plugin.name.required': 'È richiesto il nome del plugin.',
   'plugin.not_found': 'Impossibile trovare questo plugin.',
   'plugin.url.required': 'È richiesto l’URL del plugin.',
@@ -1318,7 +1318,7 @@ const PT_BR: PhlixErrorCatalog = {
   'auth.enrollment_expired':
     'O token de inscrição deste servidor expirou. Inscreva-o novamente no hub.',
   'auth.server_mismatch': 'O token de inscrição não corresponde a este servidor.',
-  'auth.missing_credentials': 'Informe suas credenciais para vincular esta conta.',
+  'auth.missing_credentials': 'Informe sua senha para vincular esta conta.',
   'auth.invalid_credentials': 'As credenciais informadas não estão corretas.',
   'hub.not_enrolled': 'Este servidor ainda não está inscrito no hub.',
   'hub.token_required': 'Um token de acesso ao hub é necessário para esta ação.',
@@ -1384,7 +1384,7 @@ const PT_BR: PhlixErrorCatalog = {
     'A data e hora da solicitação da Alexa era antiga demais. Verifique o relógio do servidor.',
   'tls.acme_not_implemented': 'A emissão automática de certificados TLS ainda não está disponível.',
   'csrf.invalid_origin': 'A origem da requisição não passou na verificação CSRF.',
-  'user.not_found': 'Não foi possível encontrar o usuário desta sessão.',
+  'user.not_found': 'Não foi possível encontrar sua conta.',
   'plugin.name.required': 'Um nome de plugin é obrigatório.',
   'plugin.not_found': 'Não foi possível encontrar esse plugin.',
   'plugin.url.required': 'Uma URL de plugin é obrigatória.',
@@ -1551,7 +1551,7 @@ const JA: PhlixErrorCatalog = {
   'auth.unauthenticated': 'このサーバーを引き換える前にサインインしてください。',
   'auth.enrollment_expired': 'このサーバーの登録トークンは有効期限が切れています。ハブで再登録してください。',
   'auth.server_mismatch': '登録トークンがこのサーバーと一致しません。',
-  'auth.missing_credentials': 'このアカウントをリンクするには認証情報を入力してください。',
+  'auth.missing_credentials': 'このアカウントをリンクするにはパスワードを入力してください。',
   'auth.invalid_credentials': '入力された認証情報は正しくありません。',
   'hub.not_enrolled': 'このサーバーはまだハブに登録されていません。',
   'hub.token_required': 'この操作にはハブのアクセストークンが必要です。',
@@ -1606,7 +1606,7 @@ const JA: PhlixErrorCatalog = {
   'alexa.timestamp_stale': 'Alexaリクエストのタイムスタンプが古すぎます。サーバーの時計を確認してください。',
   'tls.acme_not_implemented': 'TLS証明書の自動発行はまだ利用できません。',
   'csrf.invalid_origin': 'リクエストの送信元がCSRFチェックを通過しませんでした。',
-  'user.not_found': 'このセッションのユーザーが見つかりませんでした。',
+  'user.not_found': 'アカウントが見つかりませんでした。',
   'plugin.name.required': 'プラグイン名は必須です。',
   'plugin.not_found': 'そのプラグインは見つかりませんでした。',
   'plugin.url.required': 'プラグインのURLは必須です。',

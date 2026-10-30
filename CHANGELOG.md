@@ -12,6 +12,34 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui minors lane 2026-10-30 (W-min191): remotes press buttons, dead tokens die honest
+
+- **Cross-device verb (M-UI-06):** `settings.resetConfirm` — all 7 registries — swaps the mouse-only
+  "Click" for "Press" ('Press again to confirm the reset'; es Pulsa / fr Appuyez / de drücken /
+  it Premi / ja 押して / pt_BR Pressione): the library ships to Tizen remotes and touch shells, and
+  a remote never clicks (AppearanceSettings.test's two pins rotate as follows).
+- **One voice for play-pressed-empty (M-UI-08):** MediaDetailPage's series/season shuffle toasts
+  ('No episodes to play yet.') joined the estate-wide 'Nothing to play yet.' — the review's own
+  context-variant carve-out keeps the legitimate siblings ('No missing episodes.', the
+  `season.noEpisodes` EmptyState description, query-scoped 'No results for …').
+- **Reader-facing error envelopes (M-UI-11):** `user.not_found` no longer speaks of "the user for
+  this session" in the third person about its reader → 'Your account could not be found.' (×7
+  locales, family grammar with 'That account no longer exists.'); `auth.missing_credentials` means
+  what it says → 'Enter your password to link this account.' (×7; es contraseña / fr mot de passe /
+  de Passwort / it password / ja パスワード / pt_BR senha). The `quota.exceeded` citation is
+  stale-on-arrival (c15b7163's R-UI-02 reword beat the review); `csrf.invalid_origin` stays
+  operator-terse per the review's own blessing.
+- **A dead session dies immediately (M-UI-26):** when a token refresh fails DEFINITIVELY — no
+  refresh token, a non-2xx answer, or a payload without an access_token — `ApiClient` now clears
+  the token store and fires a `phlix:auth-expired` window event, and `useAuthStore` mirrors it into
+  its reactive state: `isLoggedIn` drops the moment the back end proves the pair dead, not on the
+  next page reload (previously dead credentials sat in localStorage and the store kept rendering
+  logged-in). A network-level failure is unknown, not rejected — tokens survive for the next
+  retry (deliberate asymmetry, docblocked). Six new pins (client ×5, store ×1) cover both arms,
+  the event's once-per-failure cadence, and the full mid-session scenario.
+- Verification: vue-tsc 0, eslint 0, full vitest serial green (exact counts in fixlog W-min191),
+  build ×2 deterministic, dist:check clean (src touched → dist moves by design).
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min190): every toast ends like a sentence, the card menu joins the watched vocabulary, and the phantom tokens finally resolve
 
 - **Toast punctuation law (M-UI-01):** 67 inline `toasts.*()` copy strings across 16 components/pages

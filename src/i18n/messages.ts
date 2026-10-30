@@ -572,7 +572,7 @@ export const DEFAULT_MESSAGES = {
     captionEdge: 'Caption edge',
     // Reset control
     resetAll: 'Reset all preferences',
-    resetConfirm: 'Click again to confirm the reset',
+    resetConfirm: 'Press again to confirm the reset',
     resetDone: 'Preferences reset to defaults.',
     // SettingsPage chrome (page heading + tab strip)
     preferences: 'Preferences',

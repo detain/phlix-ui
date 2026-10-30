@@ -1533,3 +1533,72 @@ describe('ApiClient playlist create (server-contract shape)', () => {
         expect(calls[0]!.url).toBe('https://h/api/v1/collections/c-9/items/m-1');
     });
 });
+
+describe('dead token refresh clears the session (M-UI-26)', () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it('a server-rejected refresh clears BOTH stored tokens', async () => {
+        const tokens = new MemoryTokenStore({ access: 'A', refresh: 'R' });
+        const { fetch } = makeFetch([{ status: 401, body: { message: 'nope' } }]);
+        const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+        await expect(client.refreshToken()).resolves.toBe(false);
+        expect(tokens.getAccessToken()).toBeNull();
+        expect(tokens.getRefreshToken()).toBeNull();
+    });
+
+    it('a refresh-token-less access token is a dead end and gets cleared', async () => {
+        const tokens = new MemoryTokenStore({ access: 'A' });
+        const { fetch } = makeFetch([]);
+        const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+        await expect(client.refreshToken()).resolves.toBe(false);
+        expect(tokens.getAccessToken()).toBeNull();
+    });
+
+    it('a network-level refresh failure KEEPS the tokens (unknown is not rejected)', async () => {
+        const tokens = new MemoryTokenStore({ access: 'A', refresh: 'R' });
+        const throwing = vi.fn(() => Promise.reject(new TypeError('offline'))) as unknown as typeof fetch;
+        const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: throwing });
+        await expect(client.refreshToken()).resolves.toBe(false);
+        expect(tokens.getAccessToken()).toBe('A');
+        expect(tokens.getRefreshToken()).toBe('R');
+    });
+
+    it('a determinative failure dispatches phlix:auth-expired exactly once per refresh', async () => {
+        const tokens = new MemoryTokenStore({ access: 'A', refresh: 'R' });
+        const { fetch } = makeFetch([{ status: 401, body: { message: 'nope' } }]);
+        const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+        const seen: number[] = [];
+        const onExpire = (): void => void seen.push(1);
+        window.addEventListener('phlix:auth-expired', onExpire);
+        try {
+            await client.refreshToken();
+            // A second direct call after the store emptied: the absent-token arm
+            // is also determinative — the event fires again from THAT call, not
+            // as a replay of the first (single-flight memo already settled).
+            await client.refreshToken();
+        } finally {
+            window.removeEventListener('phlix:auth-expired', onExpire);
+        }
+        expect(seen).toEqual([1, 1]);
+    });
+
+    it('a successful refresh neither clears tokens nor fires the event', async () => {
+        const tokens = new MemoryTokenStore({ access: 'A', refresh: 'R' });
+        const { fetch } = makeFetch([{ status: 200, body: { access_token: 'A2' } }]);
+        const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+        let fired = 0;
+        const onExpire = (): void => {
+            fired += 1;
+        };
+        window.addEventListener('phlix:auth-expired', onExpire);
+        try {
+            await expect(client.refreshToken()).resolves.toBe(true);
+        } finally {
+            window.removeEventListener('phlix:auth-expired', onExpire);
+        }
+        expect(fired).toBe(0);
+        expect(tokens.getAccessToken()).toBe('A2');
+    });
+});

@@ -776,12 +776,32 @@ export class ApiClient {
     }
 
     /**
+     * The persisted token pair is provably dead — clear it (nothing downstream
+     * should re-send dead credentials) and let the app layer sync. Fires once
+     * per determinative failure, inside the single-flighted refresh body.
+     */
+    private expireSession(): void {
+        this.tokens.clear();
+        if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('phlix:auth-expired'));
+        }
+    }
+
+    /**
      * Refresh the access token, single-flighted per instance. Concurrent callers
      * (e.g. several requests that all hit a 401 at once) share ONE in-flight
      * refresh rather than each POSTing `/api/v1/auth/refresh` — see
      * {@link refreshPromise}. The promise is cleared in `.finally()` so a later
      * expiry starts a fresh refresh. Returns `true` on success / `false` on any
      * failure (no refresh token, non-2xx, network error, missing access_token).
+     *
+     * M-UI-26 (seceng: failed refresh kept the tokens): a DETERMINED failure —
+     * no refresh token to try, a non-2xx answer, or a payload that carries no
+     * access_token — means the persisted pair can never authenticate again, so
+     * {@link expireSession} clears the store and fires the `phlix:auth-expired`
+     * window event the auth store mirrors into its reactive state. A NETWORK
+     * error is deliberately NOT determinative: the pair may still be valid
+     * server-side, so tokens survive and the next attempt retries.
      */
     async refreshToken(): Promise<boolean> {
         if (this.refreshPromise !== null) {
@@ -790,6 +810,7 @@ export class ApiClient {
         this.refreshPromise = (async (): Promise<boolean> => {
             const refreshToken = this.tokens.getRefreshToken();
             if (!refreshToken) {
+                this.expireSession();
                 return false;
             }
             try {
@@ -800,6 +821,7 @@ export class ApiClient {
                     body: JSON.stringify({ refresh_token: refreshToken }),
                 });
                 if (!response.ok) {
+                    this.expireSession();
                     return false;
                 }
                 const data = (await response.json()) as {
@@ -807,6 +829,7 @@ export class ApiClient {
                     refresh_token?: string;
                 };
                 if (typeof data.access_token !== 'string') {
+                    this.expireSession();
                     return false;
                 }
                 this.tokens.setAccessToken(data.access_token);
@@ -815,6 +838,8 @@ export class ApiClient {
                 }
                 return true;
             } catch {
+                // Network-level failure is unknown, not rejected — tokens survive
+                // (see refreshToken docblock; M-UI-26 asymmetry is deliberate).
                 return false;
             }
         })().finally(() => {

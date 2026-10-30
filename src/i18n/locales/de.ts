@@ -462,7 +462,7 @@ export const DE_MESSAGES = {
     captionBackground: 'Untertitel-Hintergrund',
     captionEdge: 'Untertitel-Kontur',
     resetAll: 'Alle Einstellungen zurücksetzen',
-    resetConfirm: 'Zum Bestätigen des Zurücksetzens erneut klicken',
+    resetConfirm: 'Zum Bestätigen des Zurücksetzens erneut drücken',
     resetDone: 'Einstellungen auf Standardwerte zurückgesetzt.',
     preferences: 'Präferenzen',
     title: 'Einstellungen',
