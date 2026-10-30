@@ -12,11 +12,12 @@
  * PHP redirect had no matching Vue route (404). This restores parity with the
  * retired Smarty `home/accept-invite.tpl` + `accept-invite.js` flow:
  *
- *   - NOT logged in → generic "you've been invited" message + Log In / Sign Up
- *     buttons that carry a `?redirect=/app/invite/<token>` hop back here (honoured
- *     by LoginForm/SignupForm's safe-redirect guard) so the user returns to accept.
- *   - Logged in → an "Accept Invite" button → `POST /api/v1/me/invite-links/{token}/redeem`
- *     (auth-gated). On success a confirmation + a "View Shared Libraries" button
+ *   - NOT logged in → generic "you've been invited" message + Sign in / Create
+ *     account buttons that carry a `?redirect=/app/invite/<token>` hop back here
+ *     (honoured by LoginForm/SignupForm's safe-redirect guard) so the user
+ *     returns to accept.
+ *   - Logged in → an "Accept invite" button → `POST /api/v1/me/invite-links/{token}/redeem`
+ *     (auth-gated). On success a confirmation + a "View shared libraries" button
  *     to `/app/shared-with-me`. Errors map: 401 re-login, 404 not found, 410
  *     expired/exhausted, else generic.
  *
@@ -25,6 +26,10 @@
  * route skips `auth.init()`); a stale token simply surfaces as a 401 on redeem,
  * which routes the user to log in again — matching the Smarty behaviour.
  *
+ * All visible copy rides the `invite:` catalog group (review writer m3,
+ * W-min188) — this is a new member's first contact with the portal; it must
+ * localize like every other end-user surface.
+ *
  * `client` is an injectable test seam; it defaults to the shared `api` singleton.
  */
 import { ref, computed, inject } from 'vue';
@@ -32,6 +37,7 @@ import { useRouter } from 'vue-router';
 import { api, ApiClient } from '../api/client';
 import { ApiError, errMessage } from '../api/errors';
 import { errorCodeMessage } from '../i18n/errors';
+import { useMessages } from '../composables/useMessages';
 import { useAuthStore } from '../stores/useAuthStore';
 import Button from '../components/ui/Button.vue';
 import type { PhlixAppConfig } from '../app/types';
@@ -47,6 +53,7 @@ const http = props.client ?? api;
 const auth = useAuthStore();
 const router = useRouter();
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
+const { t } = useMessages();
 
 const isLoggedIn = computed(() => auth.isLoggedIn);
 
@@ -72,7 +79,7 @@ const signupTo = computed(() => ({
  */
 async function accept(): Promise<void> {
   if (!props.token) {
-    error.value = 'Invalid invite token.';
+    error.value = t('invite.invalidToken');
     return;
   }
   submitting.value = true;
@@ -83,12 +90,12 @@ async function accept(): Promise<void> {
   } catch (e) {
     const status = e instanceof ApiError ? e.status : 0;
     if (status === 401) {
-      error.value = 'Session expired. Please log in again.';
+      error.value = t('invite.sessionExpired');
       void router.push(loginTo.value);
     } else if (status === 410) {
-      error.value = 'This invite link has expired or been exhausted.';
+      error.value = t('invite.expired');
     } else if (status === 404) {
-      error.value = 'This invite link was not found.';
+      error.value = t('invite.notFound');
     } else {
       // W4 error-code doctrine (mirrors LoginForm/SignupForm; the rider the
       // M-HUB-05 review owed this page): a REGISTERED wire `code` — the redeem
@@ -105,7 +112,7 @@ async function accept(): Promise<void> {
       error.value = errorCodeMessage(
         typeof wireCode === 'string' && wireCode !== '' ? wireCode : null,
         config?.locale,
-        errMessage(e, 'Failed to accept invite.'),
+        errMessage(e, t('invite.failed')),
       );
     }
   } finally {
@@ -121,21 +128,21 @@ function viewShared(): void {
 <template>
   <section class="accept-invite" aria-labelledby="accept-invite-heading">
     <div class="accept-invite__card">
-      <h1 id="accept-invite-heading" class="accept-invite__title">Accept Invite</h1>
+      <h1 id="accept-invite-heading" class="accept-invite__title">{{ t('invite.title') }}</h1>
 
       <!-- Authenticated: accept flow -->
       <template v-if="isLoggedIn">
         <template v-if="accepted">
           <div class="accept-invite__success" role="status">
-            <p>You’ve been granted access to the library!</p>
+            <p>{{ t('invite.granted') }}</p>
           </div>
           <Button variant="solid" size="lg" block @click="viewShared">
-            View Shared Libraries
+            {{ t('invite.viewShared') }}
           </Button>
         </template>
 
         <template v-else>
-          <p class="accept-invite__lead">You’ve been invited to access a library.</p>
+          <p class="accept-invite__lead">{{ t('invite.lead') }}</p>
 
           <p v-if="error" class="accept-invite__error" role="alert">{{ error }}</p>
 
@@ -146,7 +153,7 @@ function viewShared(): void {
             :loading="submitting"
             @click="accept"
           >
-            {{ submitting ? 'Accepting…' : 'Accept Invite' }}
+            {{ submitting ? t('invite.accepting') : t('invite.title') }}
           </Button>
         </template>
       </template>
@@ -154,14 +161,14 @@ function viewShared(): void {
       <!-- Unauthenticated: log in / sign up to continue -->
       <template v-else>
         <p class="accept-invite__lead">
-          You’ve been invited to access a library. Log in or create an account to accept.
+          {{ t('invite.needAuth') }}
         </p>
         <div class="accept-invite__actions">
           <Button variant="solid" size="lg" block @click="router.push(loginTo)">
-            Log In
+            {{ t('auth.signIn') }}
           </Button>
           <Button variant="ghost" size="lg" block @click="router.push(signupTo)">
-            Sign Up
+            {{ t('auth.createAccount') }}
           </Button>
         </div>
       </template>

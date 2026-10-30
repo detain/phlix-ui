@@ -3080,7 +3080,7 @@ var Qt = {
 		passwordMinLength: "Password must be at least 8 characters.",
 		passwordMismatch: "Passwords do not match.",
 		signInFailed: "Sign in failed.",
-		signupFailed: "Registration failed."
+		signupFailed: "Couldn’t create your account. Please try again."
 	},
 	connect: {
 		eyebrow: "Get started",
@@ -3212,6 +3212,19 @@ var Qt = {
 		themeUnmute: "Unmute theme music",
 		themeStop: "Stop theme music",
 		skipControls: "Skip controls"
+	},
+	invite: {
+		title: "Accept invite",
+		accepting: "Accepting…",
+		granted: "You’ve been granted access to the library.",
+		viewShared: "View shared libraries",
+		lead: "You’ve been invited to access a library.",
+		needAuth: "You’ve been invited to access a library. Sign in or create an account to accept.",
+		notFound: "This invite link was not found.",
+		expired: "This invite link has expired or been exhausted.",
+		sessionExpired: "Session expired. Please sign in again.",
+		invalidToken: "Invalid invite token.",
+		failed: "Failed to accept invite."
 	},
 	itemActions: {
 		addFavorite: "Add to My List",

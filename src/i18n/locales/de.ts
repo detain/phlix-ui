@@ -146,7 +146,7 @@ export const DE_MESSAGES = {
     passwordMinLength: 'Das Passwort muss mindestens 8 Zeichen haben.',
     passwordMismatch: 'Die Passwörter stimmen nicht überein.',
     signInFailed: 'Anmeldung fehlgeschlagen.',
-    signupFailed: 'Registrierung fehlgeschlagen.',
+    signupFailed: 'Dein Konto konnte nicht erstellt werden. Bitte versuche es erneut.',
   },
   connect: {
     eyebrow: 'Erste Schritte',
@@ -283,6 +283,19 @@ export const DE_MESSAGES = {
     themeUnmute: 'Titelmusik aktivieren',
     themeStop: 'Titelmusik stoppen',
     skipControls: 'Skip-Steuerung',
+  },
+  invite: {
+    title: 'Einladung annehmen',
+    accepting: 'Wird angenommen…',
+    granted: 'Dir wurde Zugang zur Bibliothek gewährt.',
+    viewShared: 'Geteilte Bibliotheken ansehen',
+    lead: 'Du wurdest eingeladen, auf eine Bibliothek zuzugreifen.',
+    needAuth: 'Du wurdest eingeladen, auf eine Bibliothek zuzugreifen. Melde dich an oder erstelle ein Konto, um anzunehmen.',
+    notFound: 'Dieser Einladungslink wurde nicht gefunden.',
+    expired: 'Dieser Einladungslink ist abgelaufen oder wurde aufgebraucht.',
+    sessionExpired: 'Sitzung abgelaufen. Bitte melde dich erneut an.',
+    invalidToken: 'Ungültiger Einladungs-Token.',
+    failed: 'Die Einladung konnte nicht angenommen werden.',
   },
   itemActions: {
     addFavorite: 'Zu meiner Liste hinzufügen',

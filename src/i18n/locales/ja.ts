@@ -147,7 +147,7 @@ export const JA_MESSAGES = {
     passwordMinLength: 'パスワードは8文字以上で入力してください。',
     passwordMismatch: 'パスワードが一致しません。',
     signInFailed: 'サインインできませんでした。',
-    signupFailed: '登録できませんでした。',
+    signupFailed: 'アカウントを作成できませんでした。もう一度お試しください。',
   },
   connect: {
     eyebrow: 'はじめに',
@@ -284,6 +284,19 @@ export const JA_MESSAGES = {
     themeUnmute: 'テーマ曲のミュートを解除',
     themeStop: 'テーマ曲を停止',
     skipControls: 'スキップ操作',
+  },
+  invite: {
+    title: '招待を受け入れる',
+    accepting: '受け入れ中…',
+    granted: 'ライブラリへのアクセスが許可されました。',
+    viewShared: '共有ライブラリを表示',
+    lead: 'ライブラリへの招待が届いています。',
+    needAuth: 'ライブラリへの招待が届いています。受け入れるにはサインインするかアカウントを作成してください。',
+    notFound: 'この招待リンクは見つかりませんでした。',
+    expired: 'この招待リンクは期限切れか、使用済みです。',
+    sessionExpired: 'セッションが切れました。もう一度サインインしてください。',
+    invalidToken: '招待トークンが無効です。',
+    failed: '招待を受け入れられませんでした。',
   },
   itemActions: {
     addFavorite: 'マイリストに追加',

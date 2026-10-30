@@ -277,6 +277,19 @@ export declare const JA_MESSAGES: {
         themeStop: string;
         skipControls: string;
     };
+    invite: {
+        title: string;
+        accepting: string;
+        granted: string;
+        viewShared: string;
+        lead: string;
+        needAuth: string;
+        notFound: string;
+        expired: string;
+        sessionExpired: string;
+        invalidToken: string;
+        failed: string;
+    };
     itemActions: {
         addFavorite: string;
         removeFavorite: string;

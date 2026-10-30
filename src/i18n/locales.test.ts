@@ -442,4 +442,17 @@ describe('copy law tripwires (W-min187)', () => {
       ).toContain(`${measured}-key`);
     }
   });
+
+  it('the README locale-bundle claim matches the measured top-level group count (W-min188)', () => {
+    const groups = Object.keys(DEFAULT_MESSAGES).length;
+    // NB: the URL argument must stay a VARIABLE — Vite's asset-import rewrite
+    // only targets `new URL('<literal>', import.meta.url)` and would turn the
+    // file: base into a dev-server http: URL (red: "must be of scheme file").
+    const rel = '../../README.md';
+    const text = readFileSync(new URL(rel, import.meta.url), 'utf8');
+    expect(
+      text,
+      `README.md: no "same ${groups} groups" claim (measured count is ${groups}; rotate the prose)`,
+    ).toContain(`same ${groups} groups`);
+  });
 });

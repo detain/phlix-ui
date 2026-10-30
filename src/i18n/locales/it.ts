@@ -146,7 +146,7 @@ export const IT_MESSAGES = {
     passwordMinLength: 'La password deve avere almeno 8 caratteri.',
     passwordMismatch: 'Le password non corrispondono.',
     signInFailed: 'Accesso non riuscito.',
-    signupFailed: 'Registrazione non riuscita.',
+    signupFailed: 'Impossibile creare il tuo account. Riprova.',
   },
   connect: {
     eyebrow: 'Per iniziare',
@@ -283,6 +283,19 @@ export const IT_MESSAGES = {
     themeUnmute: 'Riattiva l’audio della sigla',
     themeStop: 'Ferma la sigla',
     skipControls: 'Controlli di salto',
+  },
+  invite: {
+    title: 'Accetta invito',
+    accepting: 'Accettazione…',
+    granted: 'Ti è stato concesso l’accesso alla libreria.',
+    viewShared: 'Vedi librerie condivise',
+    lead: 'Sei stato invitato ad accedere a una libreria.',
+    needAuth: 'Sei stato invitato ad accedere a una libreria. Accedi o crea un account per accettare.',
+    notFound: 'Il link di invito non è stato trovato.',
+    expired: 'Il link di invito è scaduto o esaurito.',
+    sessionExpired: 'Sessione scaduta. Accedi di nuovo.',
+    invalidToken: 'Token di invito non valido.',
+    failed: 'Impossibile accettare l’invito.',
   },
   itemActions: {
     addFavorite: 'Aggiungi alla mia lista',

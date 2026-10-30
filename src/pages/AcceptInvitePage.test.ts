@@ -67,21 +67,21 @@ afterEach(() => {
 });
 
 describe('AcceptInvitePage — logged out', () => {
-  it('shows Log In and Sign Up CTAs instead of the accept button', async () => {
+  it('shows Sign in and Create account CTAs instead of the accept button', async () => {
     const { client } = makeClient();
     const { w } = await mountPage({ loggedIn: false, client });
-    expect(findBtnByText(w, 'Log In')).toBeTruthy();
-    expect(findBtnByText(w, 'Sign Up')).toBeTruthy();
-    expect(findBtnByText(w, 'Accept Invite')).toBeFalsy();
+    expect(findBtnByText(w, 'Sign in')).toBeTruthy();
+    expect(findBtnByText(w, 'Create account')).toBeTruthy();
+    expect(findBtnByText(w, 'Accept invite')).toBeFalsy();
     expect(client.post).not.toHaveBeenCalled();
     w.unmount();
   });
 
-  it('Log In routes to /app/login carrying ?redirect back to this invite', async () => {
+  it('Sign in routes to /app/login carrying ?redirect back to this invite', async () => {
     const { client } = makeClient();
     const { w, router } = await mountPage({ loggedIn: false, client });
     const push = vi.spyOn(router, 'push');
-    await findBtnByText(w, 'Log In')!.trigger('click');
+    await findBtnByText(w, 'Sign in')!.trigger('click');
     expect(push).toHaveBeenCalledWith({
       path: '/app/login',
       query: { redirect: `/app/invite/${TOKEN}` },
@@ -89,11 +89,11 @@ describe('AcceptInvitePage — logged out', () => {
     w.unmount();
   });
 
-  it('Sign Up routes to /app/signup carrying ?redirect back to this invite', async () => {
+  it('Create account routes to /app/signup carrying ?redirect back to this invite', async () => {
     const { client } = makeClient();
     const { w, router } = await mountPage({ loggedIn: false, client });
     const push = vi.spyOn(router, 'push');
-    await findBtnByText(w, 'Sign Up')!.trigger('click');
+    await findBtnByText(w, 'Create account')!.trigger('click');
     expect(push).toHaveBeenCalledWith({
       path: '/app/signup',
       query: { redirect: `/app/invite/${TOKEN}` },
@@ -103,29 +103,29 @@ describe('AcceptInvitePage — logged out', () => {
 });
 
 describe('AcceptInvitePage — logged in (accept flow)', () => {
-  it('renders the Accept Invite button and no auth CTAs', async () => {
+  it('renders the Accept invite button and no auth CTAs', async () => {
     const { client } = makeClient();
     const { w } = await mountPage({ loggedIn: true, client });
-    expect(findBtnByText(w, 'Accept Invite')).toBeTruthy();
-    expect(findBtnByText(w, 'Log In')).toBeFalsy();
+    expect(findBtnByText(w, 'Accept invite')).toBeTruthy();
+    expect(findBtnByText(w, 'Sign in')).toBeFalsy();
     w.unmount();
   });
 
   it('Accept → POSTs the redeem endpoint (token URL-encoded), then shows success + View Shared Libraries', async () => {
     const { client, post } = makeClient();
     const { w } = await mountPage({ loggedIn: true, client });
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(post).toHaveBeenCalledWith(`/api/v1/me/invite-links/${TOKEN}/redeem`);
     expect(w.text()).toContain('granted access');
-    expect(findBtnByText(w, 'View Shared Libraries')).toBeTruthy();
+    expect(findBtnByText(w, 'View shared libraries')).toBeTruthy();
     w.unmount();
   });
 
   it('URL-encodes a token containing a slash', async () => {
     const { client, post } = makeClient();
     const { w } = await mountPage({ loggedIn: true, client, token: 'a/b' });
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(post).toHaveBeenCalledWith('/api/v1/me/invite-links/a%2Fb/redeem');
     w.unmount();
@@ -135,9 +135,9 @@ describe('AcceptInvitePage — logged in (accept flow)', () => {
     const { client } = makeClient();
     const { w, router } = await mountPage({ loggedIn: true, client });
     const push = vi.spyOn(router, 'push');
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
-    await findBtnByText(w, 'View Shared Libraries')!.trigger('click');
+    await findBtnByText(w, 'View shared libraries')!.trigger('click');
     expect(push).toHaveBeenCalledWith('/app/shared-with-me');
     w.unmount();
   });
@@ -149,7 +149,7 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     const { client } = makeClient(post);
     const { w, router } = await mountPage({ loggedIn: true, client });
     const push = vi.spyOn(router, 'push');
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('Session expired');
     expect(push).toHaveBeenCalledWith({
@@ -164,7 +164,7 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     const { client } = makeClient(post);
     const { w, router } = await mountPage({ loggedIn: true, client });
     const push = vi.spyOn(router, 'push');
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('expired or been exhausted');
     expect(push).not.toHaveBeenCalled();
@@ -175,7 +175,7 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     const post = vi.fn().mockRejectedValue(new ApiError('missing', 404));
     const { client } = makeClient(post);
     const { w } = await mountPage({ loggedIn: true, client });
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('was not found');
     w.unmount();
@@ -185,7 +185,7 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     const post = vi.fn().mockRejectedValue(new Error('boom'));
     const { client } = makeClient(post);
     const { w } = await mountPage({ loggedIn: true, client });
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('boom');
     w.unmount();
@@ -195,7 +195,7 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     const post = vi.fn().mockRejectedValue(new ApiError('server exploded', 500));
     const { client } = makeClient(post);
     const { w } = await mountPage({ loggedIn: true, client });
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('server exploded');
     w.unmount();
@@ -212,7 +212,7 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     );
     const { client } = makeClient(post);
     const { w } = await mountPage({ loggedIn: true, client });
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain(errorCodeMessage('invalid_invite', null, null));
     expect(w.text()).not.toContain('invalid_invite');
@@ -228,7 +228,7 @@ describe('AcceptInvitePage — redeem error mapping', () => {
     );
     const { client } = makeClient(post);
     const { w } = await mountPage({ loggedIn: true, client });
-    await findBtnByText(w, 'Accept Invite')!.trigger('click');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('a future phrase');
     w.unmount();

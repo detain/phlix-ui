@@ -148,7 +148,7 @@ export const ES_MESSAGES = {
     passwordMinLength: 'La contraseña debe tener al menos 8 caracteres.',
     passwordMismatch: 'Las contraseñas no coinciden.',
     signInFailed: 'Error al iniciar sesión.',
-    signupFailed: 'Error al registrarse.',
+    signupFailed: 'No se pudo crear tu cuenta. Inténtalo de nuevo.',
   },
   connect: {
     eyebrow: 'Primeros pasos',
@@ -285,6 +285,19 @@ export const ES_MESSAGES = {
     themeUnmute: 'Activar la música de sintonía',
     themeStop: 'Detener la música de sintonía',
     skipControls: 'Controles de salto',
+  },
+  invite: {
+    title: 'Aceptar invitación',
+    accepting: 'Aceptando…',
+    granted: 'Se te ha concedido acceso a la biblioteca.',
+    viewShared: 'Ver bibliotecas compartidas',
+    lead: 'Te han invitado a acceder a una biblioteca.',
+    needAuth: 'Te han invitado a acceder a una biblioteca. Inicia sesión o crea una cuenta para aceptar.',
+    notFound: 'No se encontró ese enlace de invitación.',
+    expired: 'Ese enlace de invitación ha caducado o se ha agotado.',
+    sessionExpired: 'La sesión caducó. Inicia sesión de nuevo.',
+    invalidToken: 'Token de invitación no válido.',
+    failed: 'No se pudo aceptar la invitación.',
   },
   itemActions: {
     addFavorite: 'Añadir a mi lista',

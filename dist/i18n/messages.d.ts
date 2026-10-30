@@ -19,7 +19,9 @@
  * fallbacks, the app shell, the command palette + built-ins, auth (incl.
  * validation), and the Player surface. Lower-traffic settings/Browse copy and the
  * operator-facing admin pages keep their inline English and can adopt this same
- * seam incrementally later — every key here is backed by a real adoption site.
+ * seam incrementally later — every key here is backed by a real adoption site,
+ * except keys explicitly marked `@deprecated` (kept only so the locale bundles'
+ * `satisfies` key identity stays whole; they render nothing).
  *
  * COPY LAW (review writer m4/m5 + copywriter m4, W-min187):
  *  1. Capitalization — sentence case everywhere, in the catalog and in inline
@@ -293,6 +295,19 @@ export declare const DEFAULT_MESSAGES: {
      * `season` group keeps its own copies for season-row context; these are the
      * canonical generic strings (audit L3).
      */
+    invite: {
+        title: string;
+        accepting: string;
+        granted: string;
+        viewShared: string;
+        lead: string;
+        needAuth: string;
+        notFound: string;
+        expired: string;
+        sessionExpired: string;
+        invalidToken: string;
+        failed: string;
+    };
     itemActions: {
         addFavorite: string;
         removeFavorite: string;

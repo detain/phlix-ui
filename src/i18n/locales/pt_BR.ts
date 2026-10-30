@@ -146,7 +146,7 @@ export const PT_BR_MESSAGES = {
     passwordMinLength: 'A senha deve ter pelo menos 8 caracteres.',
     passwordMismatch: 'As senhas não coincidem.',
     signInFailed: 'Falha ao entrar.',
-    signupFailed: 'Falha no cadastro.',
+    signupFailed: 'Não foi possível criar sua conta. Tente novamente.',
   },
   connect: {
     eyebrow: 'Comece agora',
@@ -283,6 +283,19 @@ export const PT_BR_MESSAGES = {
     themeUnmute: 'Reativar música de abertura',
     themeStop: 'Parar música de abertura',
     skipControls: 'Controles para pular',
+  },
+  invite: {
+    title: 'Aceitar convite',
+    accepting: 'Aceitando…',
+    granted: 'Você recebeu acesso à biblioteca.',
+    viewShared: 'Ver bibliotecas compartilhadas',
+    lead: 'Você foi convidado para acessar uma biblioteca.',
+    needAuth: 'Você foi convidado para acessar uma biblioteca. Entre ou crie uma conta para aceitar.',
+    notFound: 'Esse link de convite não foi encontrado.',
+    expired: 'Esse link de convite expirou ou foi esgotado.',
+    sessionExpired: 'Sessão expirada. Entre novamente.',
+    invalidToken: 'Token de convite inválido.',
+    failed: 'Falha ao aceitar o convite.',
   },
   itemActions: {
     addFavorite: 'Adicionar à minha lista',

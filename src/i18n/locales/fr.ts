@@ -150,7 +150,7 @@ export const FR_MESSAGES = {
     passwordMinLength: 'Le mot de passe doit comporter au moins 8 caractères.',
     passwordMismatch: 'Les mots de passe ne correspondent pas.',
     signInFailed: 'Échec de la connexion.',
-    signupFailed: 'Échec de l’inscription.',
+    signupFailed: 'Impossible de créer votre compte. Veuillez réessayer.',
   },
   connect: {
     eyebrow: 'Pour commencer',
@@ -287,6 +287,19 @@ export const FR_MESSAGES = {
     themeUnmute: 'Réactiver la musique du générique',
     themeStop: 'Arrêter la musique du générique',
     skipControls: 'Contrôles de saut',
+  },
+  invite: {
+    title: 'Accepter l’invitation',
+    accepting: 'Acceptation…',
+    granted: 'L’accès à la bibliothèque vous a été accordé.',
+    viewShared: 'Voir les bibliothèques partagées',
+    lead: 'Vous avez été invité à accéder à une bibliothèque.',
+    needAuth: 'Vous avez été invité à accéder à une bibliothèque. Connectez-vous ou créez un compte pour accepter.',
+    notFound: 'Ce lien d’invitation est introuvable.',
+    expired: 'Ce lien d’invitation a expiré ou a été épuisé.',
+    sessionExpired: 'Session expirée. Veuillez vous reconnecter.',
+    invalidToken: 'Jeton d’invitation invalide.',
+    failed: 'Échec de l’acceptation de l’invitation.',
   },
   itemActions: {
     addFavorite: 'Ajouter à ma liste',

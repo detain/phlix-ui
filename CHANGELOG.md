@@ -12,6 +12,61 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui minors lane 2026-10-30 (W-min188): the invite page joins the catalog, "registration" retires, and README's headline facts finally match the shipped library
+
+- **M-UI-34 (writer m3).** `AcceptInvitePage.vue` — a new member's first
+  contact with the portal — shipped its ENTIRE copy English-inline, bypassing
+  `DEFAULT_MESSAGES` on a fully localized surface. All eleven strings now ride
+  a new `invite:` catalog group across the seven registries (11 keys × 7 =
+  77 values): `title` (h1 and accept button unified — one concept, one key),
+  `accepting`, `granted` (exclamation dropped per the W-min185 period/
+  exclamation law), `viewShared`, `lead`, `needAuth`, `notFound`, `expired`,
+  `sessionExpired`, `invalidToken`, `failed` (the redeem-path fallbacks, the
+  same M-UI-10 last-resort-lane class). The two auth CTAs stop minting
+  synonyms — `Log In`/`Sign Up` (Title Case, third-noun) become the estate
+  `auth.signIn` 'Sign in' and `auth.createAccount` 'Create account'. Test
+  button-lookup names rotated to follow; the prose substrings the tests
+  assert ('granted access', 'Session expired', 'was not found', 'expired or
+  been exhausted') still match unchanged.
+- **M-UI-39 (writer m8).** `auth.signupFailed` said 'Registration failed.' —
+  a third noun for the act the screen calls 'Create your account'. Reworded
+  'Couldn’t create your account. Please try again.' (typographic set + the
+  house 'Please try again.' error-close), mirrored in all six bundles with
+  each locale's own account-creation vocabulary (es cuenta / votre compte /
+  Konto / account / アカウント / conta) instead of translating "registration".
+  `SignupForm.test.ts` pin rotated to follow.
+- **M-UI-15 (docmaint m2).** README's locale-bundle section claimed 'same 16
+  groups'; `DEFAULT_MESSAGES` measures 23 (incl. the new `invite:`). Rotated
+  to the measured number AND pinned: a second copy-law tripwire in
+  `locales.test.ts` now derives the group count from the catalog itself and
+  reddens README prose that drifts — the M-UI-12 key-count mechanism,
+  extended. The leaf-count claims the M-UI-12 tripwire owns rotated 466→477
+  (the eleven invite keys; errors.ts / errors.test.ts / README).
+- **M-UI-40 (writer m9, group).** Of the five stale headline facts the review
+  counted, three were already cured in-lane at this point: '~57 kB' entry
+  bundle → honest 371 kB raw / 91 kB gzip (M-UI-18, W-min185), 'four Pinia
+  stores' → thirteen (M-UI-14, W-min185), 'exact 412-key' → measured and
+  tripwired (M-UI-12, W-min187). This stroke cures the fourth: 'Node ≥ 18 is
+  required to build' contradicted the README's own Vite 8 toolchain line —
+  now 'Node ≥ 20.19 (or ≥ 22.12)', the engine floor Vite 8 ships. The fifth
+  (`Status: v0.99.10` + install pin `#v0.99.10`) is ORIGIN-truth — the
+  v0.99.11 tag remains owner-push-gated (majors M-UI-04/05 precedent) and
+  README rotates with the push wave, deliberately left.
+- **M-UI-43 (writer m12).** Two catalog-internal doc claims contradicted
+  their own file: the header asserted 'every key here is backed by a real
+  adoption site' three lines above documented dead weight — now qualified
+  ('…except keys explicitly marked `@deprecated`… they render nothing'); and
+  the admin note claimed server-settings labels come from the schema 'not
+  from this catalogue at all' while `admin.transcoding.*` renders four labels
+  on `TranscodingSettingsPage.vue` — scoped to 'the server-SETTINGS page's
+  labels' with the transcoding page's own chrome named as the exception that
+  motivated the check.
+
+Gates: vue-tsc 0, eslint 0, vitest 316 files / 6472 passed / 10 skipped
+(baseline 6471 +1 = the new group-count tripwire, exact), build
+determinism ×2 (aggregate dist md5 moves with the catalog by design),
+dist:check clean.
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min187): the copy law gets its teeth — one typographic set across every catalog and every inline title, the last-resort error lanes finally speak catalog, and "the 412-key catalog" is now a number that cannot rot
 
 - **M-UI-04 / M-UI-36 (copywriter m4, writer m5).** The apostrophe split is

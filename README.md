@@ -78,7 +78,8 @@ You must provide compatible copies of Vue, Pinia, and Vue Router:
 | `pinia` | `^3.0.0` |
 | `vue-router` | `^5.0.0` |
 
-Node **≥ 18** is required to build.
+Node **≥ 20.19** (or **≥ 22.12**) is required to build — the engine floor of the
+Vite 8 toolchain named below.
 
 ---
 
@@ -308,7 +309,7 @@ Both rules are enforced at lint time by the local plugin in `eslint-rules/`:
 
 The package ships **complete** translations of the whole English catalog for six
 locales: `es`, `fr`, `de`, `it`, `pt_BR`, `ja`. Each is a `satisfies PhlixMessages`
-object (same 16 groups, same key set), so the compiler rejects any missing or extra
+object (same 23 groups, same key set), so the compiler rejects any missing or extra
 key against `DEFAULT_MESSAGES`. They ride the existing config-time seam unchanged —
 a bundle is just a full `PhlixMessages` passed as `PhlixAppConfig.messages`:
 
@@ -368,7 +369,7 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-466-key identity and downstream clients (tizen, windows) pin bundle↔installed
+477-key identity and downstream clients (tizen, windows) pin bundle↔installed
 equality at tag `v0.99.5` — ~150 registry strings would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
 DERIVED from contracts (`Record<ErrorCode, string>` makes adding/removing a

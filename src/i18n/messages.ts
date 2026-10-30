@@ -22,7 +22,9 @@ import { isPluralTemplate, selectPluralTemplate } from '../utils/plural';
  * fallbacks, the app shell, the command palette + built-ins, auth (incl.
  * validation), and the Player surface. Lower-traffic settings/Browse copy and the
  * operator-facing admin pages keep their inline English and can adopt this same
- * seam incrementally later — every key here is backed by a real adoption site.
+ * seam incrementally later — every key here is backed by a real adoption site,
+ * except keys explicitly marked `@deprecated` (kept only so the locale bundles'
+ * `satisfies` key identity stays whole; they render nothing).
  *
  * COPY LAW (review writer m4/m5 + copywriter m4, W-min187):
  *  1. Capitalization — sentence case everywhere, in the catalog and in inline
@@ -164,7 +166,7 @@ export const DEFAULT_MESSAGES = {
     passwordMinLength: 'Password must be at least 8 characters.',
     passwordMismatch: 'Passwords do not match.',
     signInFailed: 'Sign in failed.',
-    signupFailed: 'Registration failed.',
+    signupFailed: 'Couldn’t create your account. Please try again.',
   },
   connect: {
     // First-run "point this app at your server" screen (native clients)
@@ -336,6 +338,19 @@ export const DEFAULT_MESSAGES = {
    * `season` group keeps its own copies for season-row context; these are the
    * canonical generic strings (audit L3).
    */
+  invite: {
+    title: 'Accept invite',
+    accepting: 'Accepting…',
+    granted: 'You’ve been granted access to the library.',
+    viewShared: 'View shared libraries',
+    lead: 'You’ve been invited to access a library.',
+    needAuth: 'You’ve been invited to access a library. Sign in or create an account to accept.',
+    notFound: 'This invite link was not found.',
+    expired: 'This invite link has expired or been exhausted.',
+    sessionExpired: 'Session expired. Please sign in again.',
+    invalidToken: 'Invalid invite token.',
+    failed: 'Failed to accept invite.',
+  },
   itemActions: {
     addFavorite: 'Add to My List',
     removeFavorite: 'Remove from My List',
@@ -579,8 +594,10 @@ export const DEFAULT_MESSAGES = {
     // NOTE: the appearance option *enum* labels (theme/accent/density/grid/motion/
     // quality/subtitle-language names) deliberately stay inline-English —
     // operator/technical copy, matching the R6.5c decision to keep enum + admin
-    // labels English. Admin server-settings labels now come from the server's
-    // schema `meta` block, not from this catalogue at all.
+    // labels English. The server-SETTINGS page's labels now come from the
+    // server's schema `meta` block, not from this catalogue; the admin.*
+    // keys above are the transcoding page's own chrome, which this catalog
+    // does render (TranscodingSettingsPage.vue).
   },
   explore: {
     title: 'Explore similar titles',
