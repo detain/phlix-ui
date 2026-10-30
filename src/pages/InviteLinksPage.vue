@@ -204,9 +204,9 @@ async function createLink(): Promise<void> {
     // Auto-copy the URL as a safety net in case the user closes without copying.
     try {
       await navigator.clipboard.writeText(result.url);
-      toasts.success('Invite link created and copied to clipboard!');
+      toasts.success('Invite link created and copied to clipboard.');
     } catch {
-      toasts.success('Invite link created!');
+      toasts.success('Invite link created.');
     }
     await loadLinks();
   } catch (e) {
@@ -237,7 +237,7 @@ async function copyLinkUrl(link: InviteLink): Promise<void> {
   copyingId.value = link.id;
   try {
     await navigator.clipboard.writeText(link.url);
-    toasts.success('Link copied to clipboard!');
+    toasts.success('Link copied to clipboard.');
   } catch {
     toasts.error('Failed to copy link.');
   } finally {
@@ -251,7 +251,7 @@ async function copyCreatedUrl(): Promise<void> {
   copyingResult.value = 'url';
   try {
     await navigator.clipboard.writeText(createdLink.value.url);
-    toasts.success('Invite URL copied to clipboard!');
+    toasts.success('Invite URL copied to clipboard.');
   } catch {
     toasts.error('Failed to copy URL.');
   } finally {
@@ -266,7 +266,7 @@ async function copyCreatedToken(): Promise<void> {
   copyingResult.value = 'token';
   try {
     await navigator.clipboard.writeText(token);
-    toasts.success('Invite token copied to clipboard!');
+    toasts.success('Invite token copied to clipboard.');
   } catch {
     toasts.error('Failed to copy token.');
   } finally {

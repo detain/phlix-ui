@@ -186,7 +186,11 @@ watch(selectedId, (id) => {
 <template>
   <div class="explore-page">
     <div class="explore-header">
-      <h1 class="explore-title">Explore Similar</h1>
+      <!-- M-UI-13: this heading rides the same `explore.title` key the document
+           title resolver uses (createPhlixApp meta) — one seam renames both the
+           tab and the page; a hardcoded h1 let a consumer override move one
+           without the other. -->
+      <h1 class="explore-title">{{ t('explore.title') }}</h1>
     </div>
 
     <Spinner v-if="loading && items.length === 0" label="Loading similar items" />

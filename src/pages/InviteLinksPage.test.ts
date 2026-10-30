@@ -270,7 +270,7 @@ describe('InviteLinksPage — create modal', () => {
     expect(writeText).toHaveBeenNthCalledWith(1, 'https://hub/invite/new');
     expect(writeText).toHaveBeenNthCalledWith(2, NEW_TOKEN);
     expect(
-      useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Invite token copied to clipboard!'),
+      useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Invite token copied to clipboard.'),
     ).toBe(true);
     w.unmount();
   });
@@ -301,7 +301,7 @@ describe('InviteLinksPage — copy + revoke', () => {
     await findBtnByText(w, 'Copy URL')!.trigger('click');
     await flushPromises();
     expect(writeText).toHaveBeenCalledWith('https://hub/invite/tok-1');
-    expect(useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Link copied to clipboard!')).toBe(true);
+    expect(useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Link copied to clipboard.')).toBe(true);
     w.unmount();
   });
 

@@ -753,12 +753,12 @@ describe('PhlixApp — toast host (review ui__webux C1)', () => {
     // store API previously lacked.
     expect(document.body.querySelector('.phlix-toasts')).not.toBeNull();
     // And a pushed toast renders through it, tone class and message included.
-    useToastStore().success('Invite link created and copied to clipboard!');
+    useToastStore().success('Invite link created and copied to clipboard.');
     await nextTick();
     const toast = document.body.querySelector('.phlix-toast--success');
     expect(toast).not.toBeNull();
     expect(toast?.querySelector('.phlix-toast__message')?.textContent).toBe(
-      'Invite link created and copied to clipboard!',
+      'Invite link created and copied to clipboard.',
     );
   });
 });

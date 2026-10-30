@@ -87,6 +87,32 @@ function getClient(): ApiClient {
 
 type Tab = 'existing' | 'new';
 const tab = ref<Tab>('existing');
+
+// M-UI-30: the existing/new switcher used to be a half-implemented tablist
+// (role=tablist/tab + aria-selected, but no tabpanels, no aria-controls, no
+// roving tabindex). What it actually is: a two-option choice that swaps the
+// fields below — a radiogroup. Arrow keys move BOTH selection and focus,
+// exactly like native radio semantics; the unselected option leaves the tab
+// order. This mirrors the sibling SyncPlayModal's L1 cure of the same defect.
+const existingOptionEl = ref<HTMLElement | null>(null);
+const newOptionEl = ref<HTMLElement | null>(null);
+
+function onTabKeydown(e: KeyboardEvent): void {
+  switch (e.key) {
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      e.preventDefault();
+      tab.value = 'existing';
+      existingOptionEl.value?.focus();
+      break;
+    case 'ArrowRight':
+    case 'ArrowDown':
+      e.preventDefault();
+      tab.value = 'new';
+      newOptionEl.value?.focus();
+      break;
+  }
+}
 const playlists = ref<PlaylistSummary[]>([]);
 const loading = ref(false);
 const loadError = ref<string | null>(null);
@@ -232,23 +258,33 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
         {{ item.name }}
       </p>
 
-      <div class="playlist-picker__tabs" role="tablist" aria-label="Playlist choice">
+      <!-- Mode choice (radiogroup — see M-UI-30 note in script) -->
+      <div
+        class="playlist-picker__tabs"
+        role="radiogroup"
+        aria-label="Playlist choice"
+        @keydown="onTabKeydown"
+      >
         <button
+          ref="existingOptionEl"
           type="button"
-          role="tab"
+          role="radio"
           class="playlist-picker__tab"
           :class="{ 'playlist-picker__tab--active': tab === 'existing' }"
-          :aria-selected="tab === 'existing'"
+          :aria-checked="tab === 'existing'"
+          :tabindex="tab === 'existing' ? 0 : -1"
           @click="tab = 'existing'"
         >
           Existing playlist
         </button>
         <button
+          ref="newOptionEl"
           type="button"
-          role="tab"
+          role="radio"
           class="playlist-picker__tab"
           :class="{ 'playlist-picker__tab--active': tab === 'new' }"
-          :aria-selected="tab === 'new'"
+          :aria-checked="tab === 'new'"
+          :tabindex="tab === 'new' ? 0 : -1"
           @click="tab = 'new'"
         >
           New playlist

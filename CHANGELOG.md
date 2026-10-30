@@ -1,3 +1,35 @@
+> **On the plan-document anchors below.** Many entries cite `plan_updates.md` / `updates.md` and
+> `S<number>` identifiers. Those plan docs are the estate update program's wave ledgers; they were
+> never files in this repo and now live in the docs site's archive: `phlix-docs/docs/old/`
+> (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
+> numbers are estate-wide and shared with phlix-server / phlix-hub.
+
+## Unreleased — ui minors lane 2026-10-30 (W-min185): copy/ARIA/doc-inventory cluster — the InviteLinks exclamations join the period law, the Explore heading rides its catalog key, the picker switcher becomes a real radiogroup, and the README finally counts its stores, routes, admin pages, and bundle honestly
+
+- **M-UI-02 (copywriter).** `InviteLinksPage.vue` carried the product's last five
+  exclamation-mark toasts (`Invite link created!` …) while every sibling clipboard
+  surface (MCP tokens, redirect URLs, admin password, update command) states the same
+  fact with a period. All five move to the period law; the four test literals pinning
+  them rotate with the strings (disclosed re-pins).
+- **M-UI-13 (copywriter).** `ExplorePage.vue` hardcoded its `<h1>Explore Similar</h1>`
+  even though `explore.title` exists and is the key the document-title resolver already
+  uses — a consumer override renamed the browser tab but not the page. The heading now
+  renders `t('explore.title')`: one seam, one name, both surfaces.
+- **M-UI-30 (webux).** The picker's Existing/New switcher was a half-implemented tablist
+  (`role=tablist` + `aria-selected`, no tabpanels, no `aria-controls`, no roving
+  tabindex) — the exact defect class the sibling `SyncPlayModal` documented as L1 and
+  cured. The switcher is now the same honest radiogroup: `role=radio`, `aria-checked`,
+  roving tabindex, arrow keys moving selection AND focus. Three test selectors re-pinned
+  from `[role="tab"]` to `[role="radio"]` (disclosed re-pins — they encoded the defect).
+- **M-UI-14/16/17/18 (docmaint).** The README's inventories had drifted wholesale: it
+  claimed "four Pinia stores" while the root exports thirteen (the table now covers all
+  thirteen with honest responsibilities), omitted `Tasks` from the 21-page admin
+  enumeration, listed 6 mounted routes when `createPhlixApp` mounts nineteen named
+  routes + a 404 catch-all (the playlists/explore/recommendations/history/syncplay/
+  music/parental/profiles/connect/MCP waves all post-date the sentence), and repeated a
+  "~57 kB" entry-bundle claim against a committed artifact that is measured here in raw
+  + gzipped bytes.
+
 ## Unreleased — ui majors lane 2026-10-30 (M-UI-10): media-scoped calls finally ride the mediaApiBase — the app-own-base and raw-singleton violations are gone
 
 - **The ask.** ui__fedev M-UI-10: the repo states its own law (`useApiBase.ts`):

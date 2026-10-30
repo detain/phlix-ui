@@ -13,7 +13,7 @@ once and it ships to both.
 
 `@phlix/ui` is a self-contained kit: a 3-theme **"Nocturne" cinema-after-dark** token system, ~20
 accessible primitives, a media-browsing + video-player surface, auth/settings forms, a ⌘K command
-palette, four Pinia stores, and a `createPhlixApp()` factory that wires it all into a ready-to-mount
+palette, thirteen Pinia stores, and a `createPhlixApp()` factory that wires it all into a ready-to-mount
 Vue app.
 
 - 🎨 **Three built-in themes** (`nocturne` dark · `daylight` light · `midnight` OLED) with live
@@ -22,8 +22,8 @@ Vue app.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
-- ⚡ **Code-split + lazy-routed** — the entry bundle is ~57 kB; routes, the player, and the palette
-  load on demand.
+- ⚡ **Code-split + lazy-routed** — the entry bundle is ~371 kB raw (~91 kB gzipped); routes, the
+  player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme, full keyboard support, honored
   reduced-motion, an i18n-readiness seam.
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
@@ -99,10 +99,14 @@ createPhlixApp({
 ```
 
 That single call mounts the whole experience under `/app` (Vue Router history base, configurable):
-Browse (`/app`), a per-library page (`/app/library/:id`), media detail (`/app/media/:id`), player
-(`/app/player/:id`), login/signup (`/app/login`, `/app/signup`), and settings (`/app/settings`). The
-built-in route pages, the player surface, and the command palette are lazy chunks — they load only
-when first reached.
+Browse (`/app`), a per-library page (`/app/library/:id`), media detail (`/app/media/:id`) and its
+season drill-down (`/app/media/:id/season/:season`), player (`/app/player/:id`), login/signup/connect
+(`/app/login`, `/app/signup`, `/app/connect`), settings (`/app/settings`), explore similar
+(`/app/explore`), recommendations (`/app/recommendations`), watch history (`/app/history`), SyncPlay
+(`/app/syncplay`), music (`/app/music`), parental controls (`/app/parental`), profiles
+(`/app/profiles`), playlists (`/app/playlists` and `/app/playlists/:id`), and MCP tokens
+(`/app/mcp-tokens`) — nineteen named routes, plus a 404 catch-all. The built-in route pages, the
+player surface, and the command palette are lazy chunks — they load only when first reached.
 
 **Browse is organized per library.** The Browse home renders a "Continue Watching" rail, any configured
 `homeRows`, then **one rail per library** ("Movies", "TV", "Anime", …) read from `GET /api/v1/libraries`.
@@ -223,8 +227,9 @@ prefs.reset();            // back to DEFAULT_PREFERENCES
 
 ## Stores & composables
 
-Four Pinia stores plus auth/toast carry all app state. Import the composables directly; they expect to
-run inside an app created by `createPhlixApp` (which provides `apiBase`).
+Thirteen Pinia stores carry all app state — every one of them is exported from the package root.
+Import the composables directly; they expect to run inside an app created by `createPhlixApp` (which
+provides `apiBase`).
 
 | Store | Responsibility | Key methods |
 | --- | --- | --- |
@@ -234,6 +239,13 @@ run inside an app created by `createPhlixApp` (which provides `apiBase`).
 | `useCommandStore` | ⌘K registry + palette state, persisted recents | `register` (→ disposer), `togglePalette`, `runId` |
 | `useAuthStore` | Auth state over `ApiClient` + `LocalStorageTokenStore` | `login`, `signup`, `fetchUser`, `logout` |
 | `useToastStore` | Transient notifications (rendered by `<ToastHost>`) | `success`, `error`, `warning`, `info`, `dismiss` |
+| `useUserItemDataStore` | Per-item favorite/watched/like flags, cached by media id and re-scoped per active profile (S82) | `isFavorite`, `isWatched`, `likeLevel`, `hydrate`, `toggleFavorite`, `toggleWatched`, `setLike`, `reset` |
+| `useProfileStore` | S82 self-service profiles — the single source of truth for "which profile this session acts as", with the real re-minting switch handshake | `load`, `switchTo`, `createProfile`, `rename`, `removeProfile`, `hasMultipleProfiles`, `activeProfile`, `retry` |
+| `useLibrariesStore` | Tiny shared cache of the viewer's libraries (dedupes the many components that need the list) | `load`, `byId`, `items`, `error`, `errorCode` |
+| `useServerStore` | The persisted "current server" selection (id/name/url) for hub-style multi-server clients | `setCurrent`, `clear`, `hasCurrent`, `currentServerId`, `currentServerName`, `currentServerUrl` |
+| `useConnectionStore` | The API base a native client (no baked-in origin) points at, chosen on the Connect screen, + the origin whose Bearer handoff the user confirmed | `configure`, `setApiBase`, `confirmOrigin`, `isNewOrigin`, `isConnected`, `clear` |
+| `useSettingsPrefsStore` | Persisted settings-screen UI state (the "advanced mode" toggle), independent of server-backed prefs | `advancedMode`, `toggleAdvancedMode` |
+| `useThemesStore` | The theme list (built-in + plugin-provided) and the per-theme CSS custom-property payloads | `load`, `byId`, `styleFor`, `pluginThemes` |
 
 ### Standalone composables
 
@@ -558,10 +570,12 @@ Music surfaces above.
 > would merge it back into the main bundle (Rollup `INEFFECTIVE_DYNAMIC_IMPORT`) and defeat the
 > code-split.
 
-> The six built-in **route** pages (Browse/Detail/Player/Login/Signup/Settings) and every admin page
-> are intentionally **not** re-exported — they are lazy chunks mounted by `createPhlixApp` /
-> `buildAdminRoutes`. Compose your own pages from the building blocks above, or let the factory mount
-> the built-ins.
+> The built-in **route** pages (the ones `createPhlixApp` mounts under `/app` — Browse, media detail,
+> season, library, player, login, signup, connect, settings, explore, recommendations, history,
+> SyncPlay, music, parental, profiles, playlists + playlist detail, MCP tokens, the 404 catch-all) and
+> every admin page are intentionally **not** re-exported — they are lazy chunks mounted by
+> `createPhlixApp` / `buildAdminRoutes`. Compose your own pages from the building blocks above, or let
+> the factory mount the built-ins.
 
 ---
 
@@ -591,7 +605,7 @@ const dispose = commands.register({
 
 The server admin pages — Dashboard, Server Traffic, Users, Logs, Webhooks, Services, Integrations,
 Backup, Cast Devices, DLNA Server, Remote Access, Live TV / DVR, Collections, Watch History,
-SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Settings — are produced as lazy routes, with
+SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Tasks, Settings — are produced as lazy routes, with
 no static JS in the entry. `defaultAdminPages` in `src/app/admin.ts` is the source of truth for that
 list and its sidebar order; `buildHubAdminRoutes` mounts the smaller hub set instead.
 
@@ -668,7 +682,7 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
 
 | Output | Notes |
 | --- | --- |
-| `dist/phlix-ui.js` | ESM entry (~57 kB; routes/player/palette split into lazy chunks). |
+| `dist/phlix-ui.js` | ESM entry (~371 kB raw / ~91 kB gzipped; routes/player/palette split into lazy chunks). |
 | `dist/phlix-ui.umd.cjs` | UMD/CJS build for `require()`. |
 | `dist/style.css` | Tokens + component styles. |
 | `dist/fonts/` | `fonts.css` + three variable `.woff2` files. |

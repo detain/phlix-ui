@@ -135,7 +135,7 @@ describe('PlaylistPickerModal', () => {
     const success = vi.spyOn(useToastStore(), 'success');
 
     // Switch to the New tab and type a name.
-    const newTab = Array.from(document.querySelectorAll('[role="tab"]')).find(
+    const newTab = Array.from(document.querySelectorAll('[role="radio"]')).find(
       (b) => b.textContent?.trim() === 'New playlist',
     );
     (newTab as HTMLElement).click();
@@ -161,7 +161,7 @@ describe('PlaylistPickerModal', () => {
     mountPicker(client);
     await flushPromises();
 
-    const newTab = Array.from(document.querySelectorAll('[role="tab"]')).find(
+    const newTab = Array.from(document.querySelectorAll('[role="radio"]')).find(
       (b) => b.textContent?.trim() === 'New playlist',
     );
     (newTab as HTMLElement).click();
@@ -195,7 +195,7 @@ describe('PlaylistPickerModal', () => {
     mountPicker(client, target({ library_id: null }));
     await flushPromises();
 
-    const newTab = Array.from(document.querySelectorAll('[role="tab"]')).find(
+    const newTab = Array.from(document.querySelectorAll('[role="radio"]')).find(
       (b) => b.textContent?.trim() === 'New playlist',
     );
     (newTab as HTMLElement).click();
@@ -328,6 +328,35 @@ describe('PlaylistPickerModal', () => {
     expect(link).not.toBeNull();
     expect(link?.textContent?.trim()).toBe('Manage playlists →');
     expect(link?.getAttribute('href')).toBe('/app/playlists');
+  });
+
+  it('M-UI-30: the Existing/New switcher is a real radiogroup — aria-checked tracks the choice, the tabindex roves, and arrow keys move selection AND focus', async () => {
+    const client = fakeClient();
+    mountPicker(client);
+    await flushPromises();
+
+    const group = document.querySelector('[role="radiogroup"]') as HTMLElement | null;
+    expect(group, 'radiogroup container').not.toBeNull();
+    const radios = Array.from(group!.querySelectorAll('[role="radio"]')) as HTMLElement[];
+    expect(radios).toHaveLength(2);
+    const [existing, newOption] = radios;
+
+    expect(existing.getAttribute('aria-checked')).toBe('true');
+    expect(newOption.getAttribute('aria-checked')).toBe('false');
+    expect(existing.tabIndex).toBe(0);
+    expect(newOption.tabIndex).toBe(-1);
+
+    // ArrowRight moves BOTH selection and focus (the native-radio promise the
+    // half-implemented tablist used to break).
+    group!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await flushPromises();
+    expect(existing.getAttribute('aria-checked')).toBe('false');
+    expect(newOption.getAttribute('aria-checked')).toBe('true');
+    expect(newOption.tabIndex).toBe(0);
+    expect(document.activeElement).toBe(newOption);
+
+    // The defect class is gone, not decorated: no tablist/tab artifacts remain.
+    expect(document.querySelector('[role="tablist"], [role="tab"], [role="tabpanel"]')).toBeNull();
   });
 
 });
