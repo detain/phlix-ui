@@ -41,7 +41,7 @@ export const DE_MESSAGES = {
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
-    title: 'Sind Sie sicher?',
+    title: 'Bist du sicher?',
     cancel: 'Abbrechen',
     confirm: 'Bestätigen',
   },
@@ -532,12 +532,12 @@ export const DE_MESSAGES = {
     'transcoding.toneMapMode': 'Ton-Mapping-Modus',
     settingsRejected: 'Der Server hat diese Einstellungen abgelehnt – nichts wurde gespeichert.',
     settingsRejectAllMethods:
-      'Mindestens eine Anmelde-Methode muss aktiv bleiben. Lassen Sie mindestens eine aktiviert und speichern Sie erneut.',
+      'Mindestens eine Anmelde-Methode muss aktiv bleiben. Lass mindestens eine aktiviert und speichere erneut.',
     settingsRejectAdminLockout:
-      'Diese Änderung würde einen aktiven Administrator ohne nutzbare Anmelde-Methode aussperren. Aktivieren Sie zuerst für ihn eine weitere Anmelde-Methode und speichern Sie erneut.',
+      'Diese Änderung würde einen aktiven Administrator ohne nutzbare Anmelde-Methode aussperren. Aktiviere zuerst für ihn eine weitere Anmelde-Methode und speichere erneut.',
     settingsForbidden:
-      'Sie haben keine Berechtigung mehr, Server-Einstellungen zu ändern. Melden Sie sich erneut als Administrator an und versuchen Sie es erneut.',
+      'Du hast keine Berechtigung mehr, Server-Einstellungen zu ändern. Melde dich erneut als Administrator an und versuche es erneut.',
     settingsConflict:
-      'Der Server konnte diese Einstellungen im aktuellen Zustand nicht anwenden. Laden Sie die Einstellungen neu und versuchen Sie es erneut.',
+      'Der Server konnte diese Einstellungen im aktuellen Zustand nicht anwenden. Lade die Einstellungen neu und versuche es erneut.',
   },
 } satisfies PhlixMessages;

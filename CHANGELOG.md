@@ -1,3 +1,27 @@
+## Unreleased — ui majors lane 2026-10-30 (M-UI-03): German now speaks Du everywhere — the error catalog's formal-Sie island is gone
+
+- **The ask.** ui__copywriter M-UI-03: `locales/de.ts` runs a consistent informal-Du
+  policy (27 Du forms measured in the review), but the ConfirmDialog default said
+  `Sind Sie sicher?` and the SEPARATE error-catalog layer (`src/i18n/errors.ts`,
+  `const DE`) answered every failure in formal Sie — 42 lines measured in the review,
+  45 lines (50 Sie/Ihr-family forms) re-measured at this tip, since the M-UI-13 lane
+  had added four more. On a German TV: the app greets you with "dein Kino", the dialog
+  addresses you formally, every toast reverts to Sie. Verified DE-only (ES tú / FR
+  vous / IT tu / pt_BR você / JA polite all hold one register).
+- **The cure.** All 45 DE error-catalog lines and the 5 `de.ts` Sie lines converted to
+  the established Du register (`Versuche es erneut`, `Melde dich … an`, `Du hast …`,
+  `dein/deine` possessives; `Sind Sie sicher?` → `Bist du sicher?`). The `const DE`
+  docblock that claimed "formal Sie address, matching de.ts" — false prose about both
+  files — now states the Du policy it actually matches.
+- **The guard.** New `src/i18n/deRegister.test.ts` walks the REAL data structures
+  (`DE_MESSAGES`, `ERROR_MESSAGES.de`, `ERROR_TITLES.de`, `GENERIC_ERROR_MESSAGE.de`)
+  and fails on any capitalized Sie/Ihr/Ihnen-family word, with a hostile-fixture leg
+  proving the walker bites — the sweep cannot silently re-pollute.
+- **Evidence.** Zero tests re-pinned (no test asserted a German Sie string — grepped);
+  the M-UI-15 semantic pins hold untouched; i18n suites 139 green; full battery +
+  dist determinism disclosed in the fixlog.
+
+
 ## Unreleased — ui majors lane 2026-10-30 (M-UI-08): the README PhlixAppConfig table now covers all 23 shipped fields
 
 - **The ask.** ui__docmaint M-UI-08: the `Configuration — PhlixAppConfig` table
