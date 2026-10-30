@@ -333,7 +333,6 @@ export const PT_BR_MESSAGES = {
     title: 'SyncPlay',
     roomNamePlaceholder: 'Digite o nome da sala',
     roomIdPlaceholder: 'Digite o ID da sala',
-    publicRooms: 'Salas públicas',
     waitingForMembers: 'Aguardando membros…',
     rewind: 'Retroceder',
     fastForward: 'Avanço rápido',

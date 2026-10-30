@@ -1,3 +1,38 @@
+## Unreleased — R-W6 riders lane 2026-10-30 (R-UI-06): the orphaned `syncplay.publicRooms` key is swept from all seven catalogs
+
+- **The ask.** Rider R-UI-06 (upstream report M-UI-14__r1 item 1): when M-UI-14
+  renamed the join-listing heading to `syncplay.availableRooms` (locked rooms now
+  ride the listing, so "Public rooms" would lie), the old `publicRooms` entry
+  stayed behind in `DEFAULT_MESSAGES` and every locale mirror — dead catalog
+  weight carried by seven files and the shipped bundles, with no reader left.
+- **Orphan proof.** At tip 2929206d a token scan for `publicRooms` across
+  `src/ e2e/ scripts/ eslint-rules/` found exactly three shapes: the seven
+  catalog lines themselves, the historical comment at
+  `SyncPlayModal.vue:117` (kept — it narrates why the filter died), and
+  `syncplay.routes.test.ts` uses of the *API method* `listPublicRooms()` — a
+  wire-contract name, not a catalog lookup. No `t('syncplay.publicRooms')` /
+  `syncplay.publicRooms` read path exists anywhere: dead, not dormant.
+- **The cure.** Deleted the single `publicRooms:` line from all seven catalogs —
+  `src/i18n/messages.ts` plus the es/fr/de/it/ja/pt_BR mirrors — atomically, so
+  the `satisfies PhlixMessages` compile-time key identity and the
+  `locales.test.ts` runtime key-set-parity law stay true by construction. The
+  `availableRooms` docblock at messages.ts keeps its "Public rooms" prose
+  (narrative about the rename, not a reference to the key).
+- **Evidence.** Zero tests moved — the full serial vitest battery held the
+  golden era exactly (313 files / 6443 passed / 10 skipped), because no count
+  literal or golden ever pinned this key; vue-tsc and eslint exit 0; the i18n
+  suite (4 files / 139 tests) is green on the new key set. `dist/` was rebuilt
+  deterministically (two consecutive builds, aggregate md5
+  `b48cf8a5616cfee0f936441d7b150e99`), and a baseline rebuild of untouched
+  2929206d in a scratch worktree reproduced the previously committed dist
+  byte-for-byte (aggregate `362d43b0fe44182fdf701c9f4e000949`), so every one of
+  the 244 hash-chain renames in this diff is attributable to the i18n payload
+  shift alone — leaf chunks show only the rotated `useMessages-*.js` import URL.
+  `publicRooms` appears zero times in the rebuilt entry bundles.
+- **Scope note.** Copy/catalog hygiene only: no wire surface, no behavior, no
+  new error codes; contracts fixtures untouched. Rider R-UI-03 (webauthn tab)
+  stays parked for the owner tag-wave — this sweep never touches SettingsPage.
+
 ## Unreleased — R-W5 riders lane 2026-10-30 (R-UI-05): the focus-ring contrast law moves into the CSS boundary
 
 - **The ask.** Rider R-UI-05 (upstream report M-THEME-JADE__r1 item 3b): webux M2

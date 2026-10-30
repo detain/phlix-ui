@@ -5406,7 +5406,6 @@ var zo = {
 		title: "SyncPlay",
 		roomNamePlaceholder: "Enter room name",
 		roomIdPlaceholder: "Enter room ID",
-		publicRooms: "Public rooms",
 		waitingForMembers: "Waiting for members…",
 		rewind: "Rewind",
 		fastForward: "Fast forward",

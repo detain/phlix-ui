@@ -334,7 +334,6 @@ export declare const DEFAULT_MESSAGES: {
         title: string;
         roomNamePlaceholder: string;
         roomIdPlaceholder: string;
-        publicRooms: string;
         waitingForMembers: string;
         rewind: string;
         fastForward: string;

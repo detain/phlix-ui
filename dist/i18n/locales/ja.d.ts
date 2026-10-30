@@ -326,7 +326,6 @@ export declare const JA_MESSAGES: {
         title: string;
         roomNamePlaceholder: string;
         roomIdPlaceholder: string;
-        publicRooms: string;
         waitingForMembers: string;
         rewind: string;
         fastForward: string;

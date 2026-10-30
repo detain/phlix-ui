@@ -334,7 +334,6 @@ export const JA_MESSAGES = {
     title: 'SyncPlay',
     roomNamePlaceholder: 'ルーム名を入力',
     roomIdPlaceholder: 'ルームIDを入力',
-    publicRooms: '公開ルーム',
     waitingForMembers: 'メンバーを待っています…',
     rewind: '戻し再生',
     fastForward: '早送り再生',

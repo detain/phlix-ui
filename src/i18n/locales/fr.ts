@@ -337,7 +337,6 @@ export const FR_MESSAGES = {
     title: 'SyncPlay',
     roomNamePlaceholder: 'Saisissez le nom du salon',
     roomIdPlaceholder: 'Saisissez l’ID du salon',
-    publicRooms: 'Salons publics',
     waitingForMembers: 'En attente des membres…',
     rewind: 'Rembobiner',
     fastForward: 'Avance rapide',

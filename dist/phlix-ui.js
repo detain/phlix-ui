@@ -1,10 +1,10 @@
-import { r as e } from "./AuthField-D1BjkcxS.js";
+import { r as e } from "./AuthField-BIE6hn4P.js";
 import { n as t, t as n } from "./Icon-CIwTuFLd.js";
 import { t as r } from "./IconButton-y6A8Bq4D.js";
 import { a as i, i as a, n as o, o as s, r as c, t as l } from "./useFocusTrap-rrmOWOBy.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-CFPikE8Z.js";
 import { a as h, i as g, n as _, o as v, r as y, s as b, t as x } from "./plural-DMM7pLFA.js";
-import { i as S, n as C, r as w, t as T } from "./useMessages-CiSCI5Ag.js";
+import { i as S, n as C, r as w, t as T } from "./useMessages-_RNJP-px.js";
 import { _ as ee, a as E, b as te, c as ne, d as re, f as ie, g as ae, h as oe, i as se, l as ce, m as le, n as ue, o as de, p as fe, r as pe, t as me, u as he, v as ge, y as D } from "./client-BUSsKK6G.js";
 import { n as O, r as _e, t as ve } from "./useApiBase-CV_r-Kk4.js";
 import { t as ye } from "./useAuthStore-DVJ7E4Ri.js";
@@ -16,12 +16,12 @@ import { t as ze } from "./useToastStore-BDoKlU6N.js";
 import { n as Be, t as Ve } from "./ThumbRating-CAJtPr7h.js";
 import { i as He, o as Ue, s as We } from "./shortcuts-Ck2yBFUB.js";
 import { t as Ge } from "./Tooltip-D_txjC1i.js";
-import { t as Ke } from "./Spinner-B9LmySj4.js";
-import { t as qe } from "./NetworkHealthIndicator-Bt9aFKiJ.js";
-import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-DMcXCmty.js";
+import { t as Ke } from "./Spinner-DFw4BJdj.js";
+import { t as qe } from "./NetworkHealthIndicator-DCzA7f55.js";
+import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-CSJ_9dnk.js";
 import { i as vt, n as yt, r as bt, t as xt } from "./Kbd-DdcgRPIx.js";
 import { a as St, i as Ct, n as wt, o as Tt, r as Et, t as Dt } from "./useLibrariesStore-DB3apD7v.js";
-import { n as Ot, t as kt } from "./HomeRow-cwCCI6hD.js";
+import { n as Ot, t as kt } from "./HomeRow-DdxKBiPu.js";
 import { t as At } from "./safeHref-C9H0Sqte.js";
 import { t as A } from "./EmptyState-BAyOxAcK.js";
 import { t as j } from "./Button-BuG0GvCa.js";
@@ -32,20 +32,20 @@ import { t as M } from "./Badge-A88fI41k.js";
 import { t as Kt } from "./Slider-DqFxiMp4.js";
 import { t as qt } from "./Switch-ibkXiiN-.js";
 import { t as Jt } from "./Chip-CYhlmz6l.js";
-import { t as Yt } from "./Select-Bh_MmT-v.js";
-import { t as Xt } from "./Combobox-Ck1OCwEt.js";
-import { t as Zt } from "./Modal-BDkw7NP1.js";
-import { t as Qt } from "./ConfirmDialog-QgGYmnA5.js";
+import { t as Yt } from "./Select-D5WM74_-.js";
+import { t as Xt } from "./Combobox-BEPuTDWZ.js";
+import { t as Zt } from "./Modal-eRq9Rw_4.js";
+import { t as Qt } from "./ConfirmDialog-D_kXRdOx.js";
 import { t as N } from "./Skeleton-rHw-IJtl.js";
 import { t as $t } from "./PageHint-BGYg6qRJ.js";
 import { t as en } from "./Tabs-7t3yuCWn.js";
 import { t as tn } from "./Menu-Dm56tG4N.js";
 import { t as nn } from "./HelpText-aA3EQtU4.js";
-import { o as rn, t as an } from "./MediaCard-B-f7KTHE.js";
-import { t as on } from "./MediaGrid-C1PlreZ8.js";
-import { t as sn } from "./MediaRow-BmPNWgGy.js";
+import { o as rn, t as an } from "./MediaCard-Cyyng_rh.js";
+import { t as on } from "./MediaGrid-BzI5xd6T.js";
+import { t as sn } from "./MediaRow-C7H1qKyp.js";
 import { n as cn, t as ln } from "./media-query-DKjhlX8r.js";
-import { n as un, t as dn } from "./metadata-sources-BjSBqxoJ.js";
+import { n as un, t as dn } from "./metadata-sources-PxbEQOwF.js";
 import { n as fn, t as pn } from "./logs-DadTfaTq.js";
 import { t as mn } from "./dashboard-BTCOCTHQ.js";
 import { n as hn, r as gn, t as _n } from "./webhooks-aMh0Jywf.js";
@@ -64,12 +64,12 @@ import { n as jn, r as Mn, t as Nn } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as Pn, n as Fn, r as In, t as Ln } from "./plugins-DjIeCRMB.js";
 import { n as Rn, r as zn, t as Bn } from "./maintenance-CETCLHzL.js";
 import { t as Vn } from "./hubDashboard-BhOaaDD-.js";
-import { t as Hn } from "./LoginForm-C7HumuSd.js";
-import { t as Un } from "./SignupForm-xqCKyrjY.js";
+import { t as Hn } from "./LoginForm-CZZk216S.js";
+import { t as Un } from "./SignupForm-DcSadOGm.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as Wn, t as Gn } from "./debounce-BkSsZiXZ.js";
 import { t as Kn } from "./Input-DOj6fN8q.js";
-import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-8R7IZBtL.js";
+import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-CGYGr3x5.js";
 import { t as Zn } from "./useMediaStore-Dyq1gWGp.js";
 import { Fragment as F, Teleport as Qn, Transition as $n, TransitionGroup as er, computed as I, createApp as tr, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as nr, createTextVNode as V, createVNode as H, defineAsyncComponent as rr, defineComponent as U, getCurrentScope as ir, inject as ar, nextTick as or, normalizeClass as W, normalizeStyle as sr, onBeforeUnmount as cr, onMounted as G, onScopeDispose as lr, onUnmounted as ur, openBlock as K, provide as dr, readonly as fr, ref as q, renderList as J, renderSlot as pr, resolveComponent as mr, resolveDynamicComponent as hr, toDisplayString as Y, toValue as gr, unref as X, useId as _r, vModelSelect as vr, vModelText as yr, vShow as br, watch as Z, watchEffect as xr, withCtx as Q, withDirectives as Sr, withModifiers as Cr } from "vue";
 import { createPinia as wr, defineStore as Tr } from "pinia";
@@ -918,7 +918,7 @@ var la = ["src", "alt"], ua = { class: "brand-wordmark" }, da = {
 		Qi();
 		let t = vt(), i = $(), a = Ar(), { t: o } = T(), s = Ue(), c = I(() => a.meta?.fullBleed === !0 && s.theaterActive);
 		$i();
-		let l = rr(() => import("./CommandPalette-CnzuitaX.js")), u = q(!1);
+		let l = rr(() => import("./CommandPalette-BxLqAzpE.js")), u = q(!1);
 		Z(() => t.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1279,111 +1279,111 @@ function eo(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-g7zzAqHB.js")
+			component: () => import("./BrowsePage--kY3CDEb.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-BS4m1-l6.js")
+			component: () => import("./MediaDetailPage-vhDWVTmj.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-C2SNW3zZ.js")
+			component: () => import("./SeasonPage-BjoCl8yi.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CoolZIlS.js")
+			component: () => import("./LibraryPage-BfHcRicL.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-C1qpDSsj.js")
+			component: () => import("./PlayerPage-cJQwVgZx.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DbwGfWko.js")
+			component: () => import("./LoginPage-vqekuRnu.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-BXhkrJ06.js")
+			component: () => import("./SignupPage-BAbGQj6u.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-3ymyPnfM.js")
+			component: () => import("./ConnectPage-DHBzfCQH.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-BalUO1p5.js")
+			component: () => import("./SettingsPage-BHRlkjC3.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-BXYsreNf.js")
+			component: () => import("./ExplorePage-DWDxXxIv.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-EpnJsGGo.js")
+			component: () => import("./RecommendationsPage-_PUa8QCr.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-Ce-gcBP-.js")
+			component: () => import("./WatchHistoryPage-BisXut_8.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-CxrEtRIA.js")
+			component: () => import("./SyncPlayPage-qX58gM1a.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-CQoQKbrQ.js")
+			component: () => import("./MusicLibraryPage-COY1pCgl.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-ByInp7EE.js")
+			component: () => import("./ParentalControlsPage-QIBeeqJE.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-DTLBwbzr.js")
+			component: () => import("./ProfilesPage-B-McuiW-.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-D8iVZcXD.js")
+			component: () => import("./PlaylistsPage-ZGU27Bze.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-Brqi0Nhu.js")
+			component: () => import("./PlaylistDetailPage-DJc5McLR.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Wa}`,
 		name: Ua,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-BzcAWeVc.js")
+		component: () => import("./McpTokensPage-BnQobNZi.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1658,25 +1658,25 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-DePyBGjW.js")
+	component: () => import("./DashboardPage-ZGLCpXs_.js")
 }, _o = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-Btl-br-a.js")
+	component: () => import("./UsersPage-SGhnM-Ju.js")
 }, vo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-D_OO1UMQ.js")
+	component: () => import("./LogsPage-Dav2viyc.js")
 }, yo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-IRv2RVjI.js")
+	component: () => import("./WebhooksPage-BaP0ZTkm.js")
 }, bo = {
 	name: "admin-services",
 	path: "services",
@@ -1688,13 +1688,13 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-DabKk_u7.js")
+	component: () => import("./IntegrationsPage-DiOe5s6j.js")
 }, So = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage--T12QpsC.js")
+	component: () => import("./BackupPage-CicVCChk.js")
 }, Co = {
 	name: "admin-cast",
 	path: "cast-devices",
@@ -1712,19 +1712,19 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-BQfB9uN2.js")
+	component: () => import("./RemoteAccessPage-9n_V4XiV.js")
 }, Eo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-DOZQ5YWQ.js")
+	component: () => import("./LiveTvPage-eFoGU_jP.js")
 }, Do = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-JK4XBX7K.js")
+	component: () => import("./CollectionsPage-dv8plQTm.js")
 }, Oo = {
 	name: "admin-history",
 	path: "history",
@@ -1736,43 +1736,43 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-DWk8QZlE.js")
+	component: () => import("./SyncPlayPage-CjkYYykY.js")
 }, Ao = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-CGUdv3qL.js")
+	component: () => import("./LibrariesPage-BN23vwy3.js")
 }, jo = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-7pt-mi5N.js")
+	component: () => import("./DuplicatesPage-Da--FjwA.js")
 }, Mo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-Cskp6-MG.js")
+	component: () => import("./PluginsPage-AxCrw3vu.js")
 }, No = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-CCq1ngqG.js")
+	component: () => import("./TasksPage-CNhzDq4x.js")
 }, Po = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-Du1cAYgi.js")
+	component: () => import("./TranscodingSettingsPage-BWtY0kPf.js")
 }, Fo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-Ct68DrUD.js")
+	component: () => import("./SettingsPage-DxHU15wI.js")
 }, Io = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1784,7 +1784,7 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-BtPnZMud.js")
+	component: () => import("./MetricsPage-CSHhxbAJ.js")
 }, Ro = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -7525,7 +7525,6 @@ var H_ = {
 		title: "SyncPlay",
 		roomNamePlaceholder: "Escribe el nombre de la sala",
 		roomIdPlaceholder: "Escribe el ID de la sala",
-		publicRooms: "Salas públicas",
 		waitingForMembers: "Esperando a los miembros…",
 		rewind: "Retroceder",
 		fastForward: "Avanzar rápido",
@@ -8020,7 +8019,6 @@ var H_ = {
 		title: "SyncPlay",
 		roomNamePlaceholder: "Saisissez le nom du salon",
 		roomIdPlaceholder: "Saisissez l’ID du salon",
-		publicRooms: "Salons publics",
 		waitingForMembers: "En attente des membres…",
 		rewind: "Rembobiner",
 		fastForward: "Avance rapide",
@@ -8515,7 +8513,6 @@ var H_ = {
 		title: "SyncPlay",
 		roomNamePlaceholder: "Raumnamen eingeben",
 		roomIdPlaceholder: "Raum-ID eingeben",
-		publicRooms: "Öffentliche Räume",
 		waitingForMembers: "Warten auf Mitglieder…",
 		rewind: "Zurückspulen",
 		fastForward: "Vorspulen",
@@ -9010,7 +9007,6 @@ var H_ = {
 		title: "SyncPlay",
 		roomNamePlaceholder: "Inserisci il nome della sala",
 		roomIdPlaceholder: "Inserisci l’ID della sala",
-		publicRooms: "Sale pubbliche",
 		waitingForMembers: "In attesa dei membri…",
 		rewind: "Riavvolgi",
 		fastForward: "Avanza velocemente",
@@ -9505,7 +9501,6 @@ var H_ = {
 		title: "SyncPlay",
 		roomNamePlaceholder: "Digite o nome da sala",
 		roomIdPlaceholder: "Digite o ID da sala",
-		publicRooms: "Salas públicas",
 		waitingForMembers: "Aguardando membros…",
 		rewind: "Retroceder",
 		fastForward: "Avanço rápido",
@@ -10000,7 +9995,6 @@ var H_ = {
 		title: "SyncPlay",
 		roomNamePlaceholder: "ルーム名を入力",
 		roomIdPlaceholder: "ルームIDを入力",
-		publicRooms: "公開ルーム",
 		waitingForMembers: "メンバーを待っています…",
 		rewind: "戻し再生",
 		fastForward: "早送り再生",
@@ -10205,7 +10199,7 @@ var H_ = {
 	it: G_,
 	pt_BR: K_,
 	ja: q_
-}, Y_ = rr(() => import("./MediaDetail-3yyIUlJJ.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-CqqfYxdv.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-BNxYLPF8.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-D99BjoLL.js"));
+}, Y_ = rr(() => import("./MediaDetail-BofZss8b.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-DP4-_8DS.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-D9hDW3wt.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-MeNuQFdG.js"));
 //#endregion
 export { je as ACTIVE_PROFILE_KEY, pn as ALL_LOGS, pd as AcceptInvitePage, bn as AdminBackupApi, xn as AdminCastApi, Tn as AdminCollectionsApi, mn as AdminDashboardApi, Sn as AdminDlnaServerApi, En as AdminHistoryApi, Vn as AdminHubDashboardApi, yn as AdminIntegrationsApi, An as AdminLibrariesApi, wn as AdminLiveTvApi, fn as AdminLogsApi, Bn as AdminMaintenanceApi, dn as AdminMetadataSourcesApi, Ln as AdminPluginsApi, Cn as AdminRemoteAccessApi, vn as AdminServicesApi, jn as AdminSettingsApi, Dn as AdminSyncPlayApi, Oe as AdminUsersApi, _n as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Kr as AppLayout, Oh as AudiobookDetailPage, cg as AudiobookPlayerPage, Qm as AudiobooksPage, it as BUILT_IN_THEME_IDS, M as Badge, ym as BookDetailPage, Lm as BookReaderPage, Qp as BooksPage, j as Button, zt as CONNECTION_API_BASE_KEY, Ft as CONNECTION_CONFIRMED_ORIGIN_KEY, ha as CURRENT_SERVER_ID_KEY, ga as CURRENT_SERVER_NAME_KEY, Jt as Chip, Xt as Combobox, Qt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, W_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, H_ as ES_MESSAGES, A as EmptyState, Ze as FOCUS_RING_MIN_CONTRAST, U_ as FR_MESSAGES, sl as FederationPage, Al as FederationSharesPage, Z_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, xa as HUB_SYNC_PLAY_PORT, lo as HelpPopover, nn as HelpText, G_ as IT_MESSAGES, n as Icon, r as IconButton, cd as InviteLinksPage, q_ as JA_MESSAGES, xt as Kbd, On as LIBRARY_TYPES, J_ as LOCALE_MESSAGES, xs as LibraryScanPage, ce as LocalStorageTokenStore, Hn as LoginForm, Rn as MAINTENANCE_ENDPOINTS, zn as MAINTENANCE_TASK_NAMES, ct as MAX_EXTENDS_DEPTH, Ua as MCP_TOKENS_ROUTE_NAME, Wa as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Bl as ManageSharesPage, an as MediaCard, Y_ as MediaDetail, on as MediaGrid, kt as MediaHomeRow, sn as MediaRow, tn as Menu, X_ as MetadataMatchModal, Zt as Modal, Pd as MusicAlbumPage, Sf as MusicArtistPage, $d as MusicArtistsPage, Rp as MusicPlayerPage, sp as MusicTracksPage, Vs as MyServersPage, ee as NetworkError, Fn as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, K_ as PT_BR_MESSAGES, $t as PageHint, ro as PageTransition, fa as PhlixApp, Wg as PhotoAlbumPage, kg as PhotoAlbumsPage, O_ as PhotoSlideshowPage, p_ as PhotoViewPage, ls as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, Gn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, dt as RING_GROUND_KEYS, po as RatingBadge, ku as RequestsPage, no as Reveal, kn as SCAN_JOB_TYPES, Mn as SETTINGS_SECRET_MASK, Ct as SORT_TITLE_ARTICLES, hn as SUBSCRIBABLE_EVENTS, Q_ as SearchPage, ft as SecuritySettingsPage, Yt as Select, Jc as ServerDetailPage, eu as SharedWithMePage, Ir as Sheet, Un as SignupForm, N as Skeleton, Kt as Slider, un as SourcePriorityEditor, Ke as Spinner, qt as Switch, $e as THEME_CACHE_KEY, at as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, en as Tabs, Ve as ThumbRating, ge as TimeoutError, Bi as ToastHost, Ge as Tooltip, ho as UserRatingPicker, gn as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, pt as activeThemeStyle, Zo as adminMenu, Zi as applyStoredThemeEarly, et as applyThemeTokens, F_ as bestCandidate, k_ as bindMediaStoreToRouter, Jo as buildAdminRoutes, Xo as buildHubAdminRoutes, Ea as buildHubRelayUrl, ln as buildMediaQuery, cn as buildMediaUrl, Yo as buildServerAdminRoutes, tt as clearThemeTokens, Fa as closeHubRelayConnection, Uo as commonAdminPages, St as compareByStrippedTitle, lt as compositedContrastOver, to as createPhlixApp, w as createTranslator, Wn as debounce, Ji as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, wt as fetchLibraries, ut as fetchThemes, ot as focusRingLawViolation, c as focusable, a as focusableRegistry, Gt as formatPageTitle, yt as fuzzyScore, E as getDefaultApiHeaders, Ia as getHubRelaySocket, p as hasStoredPreferences, Go as hubAdminPages, i as installFocusable, Lt as isAllowedBase, rt as isAllowedThemeToken, nt as isBuiltInThemeId, te as isOffline, Nt as isPlaintextPublic, _ as isPluralTemplate, jt as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, Xe as isSafeThemeTokenValue, de as isTmdbUnconfigured, bt as matchCommand, Ga as mcpTokensMenuItem, S as mergeMessages, It as normalizeBase, mt as normalizeServerTheme, Ma as openHubRelayConnection, Rt as originOf, wa as parsePendingCommandFrame, _t as parseThemeColor, In as pluginErrorCode, Pn as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Mt as probeServer, Qe as readCachedTheme, d as readStoredPreferences, A_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, gt as resolveThemeBase, Ye as resolveThemeTokens, At as safeHref, Je as sanitizeThemeTokens, b as selectPluralTemplate, Wo as serverAdminPages, Ut as setAppName, ne as setDefaultApiHeaders, Wt as setPageTitle, Et as sortLibraries, Tt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, $i as useCommandPaletteHotkey, vt as useCommandStore, Pt as useConnectionStore, o as useFocusTrap, k as useImageSrc, Dt as useLibrariesStore, O as useMediaApiBase, Zn as useMediaStore, T as useMessages, V_ as useOnline, Ht as usePageTitle, Fe as usePlayerStore, ia as usePreconnect, u as usePreferencesStore, rn as usePrefetch, Ae as useProfileStore, ca as useResumeReporter, Ot as useResumeSync, ba as useServerStore, Nn as useSettingsPrefsStore, B_ as useSpatialNav, Qi as useTheme, st as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Bt as withScheme, ht as writeCachedTheme };
 
