@@ -33,7 +33,7 @@ import Chip from './ui/Chip.vue';
 import MediaRow from './MediaRow.vue';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
-import { api } from '../api/client';
+import { ApiClient } from '../api/client';
 import { pluralCount } from '../utils/plural';
 import { safeHref } from '../utils/safeHref';
 import { useMessages } from '../composables/useMessages';
@@ -91,9 +91,9 @@ const emit = defineEmits<{
 // Per-user favorite/rating/love state (Feature 17). The hero "Watchlist"/favorite
 // control flips this store optimistically (the SAME contract as MediaCard's
 // `onFavorite`, Step 17.3) and persists once; the host page's `watchlist` handler
-// still runs for back-compat but does NOT toggle again. `apiBase` is read from the
-// app config exactly like MediaCard/Player.vue (`inject('phlixConfig')`) — NOT a
-// new source — and threaded into the store's `toggleFavorite(id, apiBase)` (the
+// still runs for back-compat but does NOT toggle again. The base threaded into the
+// store's `toggleFavorite(id, apiBase)` is the MEDIA-scoped one (M-UI-10) —
+// server-scoped user-item data rides the same base as the media it annotates (the
 // store keeps no global apiBase).
 const userItemData = useUserItemDataStore();
 const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
@@ -110,7 +110,7 @@ const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
  * page handler (which never toggles) reads the correct post-toggle state.
  */
 function onFavorite(): void {
-  void userItemData.toggleFavorite(props.item.id, phlixConfig?.apiBase ?? '');
+  void userItemData.toggleFavorite(props.item.id, mediaApiBase.value);
   emit('watchlist', props.item);
 }
 
@@ -130,7 +130,7 @@ const isWatched = computed(() => userItemData.isWatched(props.item.id));
  * ⋯ menu's Mark watched/unwatched item.
  */
 function onWatched(): void {
-  void userItemData.toggleWatched(props.item.id, phlixConfig?.apiBase ?? '');
+  void userItemData.toggleWatched(props.item.id, mediaApiBase.value);
   emit('mark-watched', props.item);
 }
 
@@ -219,7 +219,7 @@ function onMenuSelect(menuItem: { label: string }): void {
     }
     case L.download:
       toasts.info('Preparing download\u2026');
-      api
+      mediaScopedClient()
         .getDownloadUrl(props.item.id)
         .then(({ url }) => {
           // M-UI-11 [review ui__seceng]: the download URL is server-supplied
@@ -241,7 +241,7 @@ function onMenuSelect(menuItem: { label: string }): void {
       break;
     case L.missingEpisodes:
       toasts.info('Loading\u2026');
-      api
+      mediaScopedClient()
         .getMissingEpisodes(props.item.id)
         .then((report) => {
           // Envelope { total_expected, total_existing, missing_episodes:[...] } \u2014
@@ -260,7 +260,7 @@ function onMenuSelect(menuItem: { label: string }): void {
         });
       break;
     case L.shuffle:
-      api
+      mediaScopedClient()
         .shufflePlay(props.item.id)
         .then(() => toasts.success('Shuffle play started'))
         .catch((err) => {
@@ -298,7 +298,7 @@ function onMenuSelect(menuItem: { label: string }): void {
  * already-computed NEXT level on the −2..2 axis.
  */
 function onLove(next: number): void {
-  void userItemData.setLike(props.item.id, next, phlixConfig?.apiBase ?? '');
+  void userItemData.setLike(props.item.id, next, mediaApiBase.value);
 }
 
 const fallbackIcon = computed(() => mediaTypeIcon(props.item.type));
@@ -475,6 +475,17 @@ watch(logoUrl, () => {
 // through). Injected the same way SeriesDetail does; safe empty-string defaults
 // so the component still mounts in tests that don't provide the media bases.
 const mediaApiBase = useMediaApiBase();
+
+// Media-scoped menu calls (download / missing-episodes / shuffle) go through a
+// re-based client (M-UI-10) instead of the raw `api` singleton — same reasoning as
+// MediaCard: on a hub-hosted mount the media paths exist only behind the relay-proxy
+// base that `mediaApiBase` tracks, never on the hub's own origin.
+let mediaClient: ApiClient | null = null;
+function mediaScopedClient(): ApiClient {
+  if (!mediaClient) mediaClient = new ApiClient({ baseUrl: mediaApiBase.value });
+  else mediaClient.setBaseUrl(mediaApiBase.value);
+  return mediaClient;
+}
 /** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
  *  them against the same (possibly relay-proxied) base the payload came from. */
 const { imgSrc, imgSrcset } = useImageSrc();
@@ -943,7 +954,6 @@ onBeforeUnmount(() => {
       v-if="playlistPickerOpen"
       :model-value="true"
       :item="item"
-      :client="api"
       @update:model-value="playlistPickerOpen = false"
     />
   </article>

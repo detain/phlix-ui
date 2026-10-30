@@ -1,3 +1,41 @@
+## Unreleased — ui majors lane 2026-10-30 (M-UI-10): media-scoped calls finally ride the mediaApiBase — the app-own-base and raw-singleton violations are gone
+
+- **The ask.** ui__fedev M-UI-10: the repo states its own law (`useApiBase.ts`):
+  `apiBase` is for the app's OWN endpoints and "must NEVER be proxied to a paired
+  server", while `mediaApiBase` re-points every media fetch when the hub selects a
+  different server. Yet exported components broke it twice over: MediaCard/MediaDetail
+  ran `getDownloadUrl`/`getMissingEpisodes`/`shufflePlay` through the raw `api`
+  singleton (baseUrl `''`, never re-based → hub-hosted mounts hit the hub origin where
+  `/api/v1/media/{id}/…` isn't registered), and seven user-item store writes
+  (MediaCard×3, MediaDetail×3, MiniPlayer) + Player's `apiBaseForUserData()` threaded
+  the APP-OWN base — server-scoped per-profile state mislabeled as host state.
+  Both bases coincide on the server SPA, so everything was green while the hub path
+  was silently wrong (optimistic flips rolling back against 404s).
+- **The cure.** `useMediaApiBase()` becomes the single source for all of it: a
+  re-based `mediaScopedClient()` (BrowsePage's favoritesClient idiom) replaces the
+  singleton in both menu paths; every store write threads `mediaApiBase.value`;
+  SeriesSeasons' manual `${props.apiBase}/api/v1/…` singleton prefix becomes a
+  per-fetch `new ApiClient({ baseUrl: props.apiBase || mediaApiBase.value })` (explicit
+  consumer prop still wins); UserRatingPicker's setup-time app-own-base client (POST
+  `/api/v1/media/{id}/ratings` — a MEDIA root) becomes a per-submit media-scoped one;
+  and the two `:client="api"` injections into PlaylistPickerModal (MediaCard,
+  MediaDetail) are dropped so the modal's own compliant `useMediaApiBase()` fallback
+  actually runs. Beyond the review's enumerated sites (disclosed class-sweep additions):
+  Player's userData writes, UserRatingPicker, and the modal-client overrides.
+- **Test law moved (permanent re-pins, disclosed).** `vi.spyOn(api, method)` became
+  `vi.spyOn(ApiClient.prototype, method)` ×14 (MediaCard 12 + MediaDetail 2 — the
+  component now calls instances, not the singleton); the SeriesSeasons `api`-singleton
+  module mock became a constructible `ApiClient` class stub with a shared `get` spy
+  (probed honestly: `vi.fn().mockImplementation(arrow)` is NOT new-able); and the
+  store-write mounts mirror the REAL production provide surface (createPhlixApp
+  provides both `phlixConfig` and the `apiBase` key — MediaCard×4, MediaDetail×1,
+  MiniPlayer helper×1) so the '/api-host' argument pins keep their meaning.
+- **Behavior delta:** none on server-hosted mounts (bases coincide there by
+  construction); hub-hosted mounts move from hub-origin 404/rollback to the relay-proxy
+  base the law prescribes. fedev's optional "delete the raw singleton's media reach"
+  is NOT done — architectural, owner-scheduled.
+
+
 ## Unreleased — ui majors lane 2026-10-30 (M-UI-02): the saved-items feature finally has ONE name — My List (all 7 catalogs)
 
 - **The ask.** ui__copywriter M-UI-02: one feature, three names. The Browse rail

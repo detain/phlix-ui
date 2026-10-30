@@ -242,7 +242,7 @@ describe('MiniPlayer — favorite toggle (Feature 16.2)', () => {
     store.showMiniPlayer();
     const w = mount(MiniPlayer, {
       attachTo: document.body,
-      global: { stubs: { transition: true }, provide: { phlixConfig: { apiBase } } },
+      global: { stubs: { transition: true }, provide: { phlixConfig: { apiBase }, apiBase } },
     });
     mounted.push(w);
     stubVideo(w.find('video').element as HTMLVideoElement);

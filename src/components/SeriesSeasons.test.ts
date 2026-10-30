@@ -11,11 +11,17 @@ import { nextTick } from 'vue';
 import SeriesSeasons from './SeriesSeasons.vue';
 import { groupEpisodesBySeason } from './series-grouping';
 import type { MediaItem } from '../types/media-item';
-import { api } from '../api/client';
+// M-UI-10 re-pin: the component now fetches episode detail through a
+// media-scoped `new ApiClient({ baseUrl })` instead of the raw `api` singleton —
+// the mock follows it (per-instance `get` backed by one shared spy).
+const { mediaGet } = vi.hoisted(() => ({ mediaGet: vi.fn() }));
 
 vi.mock('../api/client', () => ({
-  api: {
-    get: vi.fn(),
+  // Real constructible stub: `new ApiClient({...))` is how the component builds it
+  // (vi.fn().mockImplementation(arrow) is NOT new-able — proven, not guessed).
+  ApiClient: class {
+    get = mediaGet;
+    constructor(_opts?: unknown) {}
   },
 }));
 
@@ -142,7 +148,7 @@ describe('SeriesSeasons', () => {
     });
 
     it('shows loading state when files button is clicked', async () => {
-      vi.mocked(api.get).mockReturnValue(new Promise(() => {}));
+      mediaGet.mockReturnValue(new Promise(() => {}));
       const w = mountAdmin();
       await w.find('.series-seasons__files-btn').trigger('click');
       expect(w.find('.series-seasons__files-detail').exists()).toBe(true);
@@ -151,7 +157,7 @@ describe('SeriesSeasons', () => {
 
     it('shows file info after successful fetch', async () => {
       vi.useFakeTimers();
-      vi.mocked(api.get).mockResolvedValue({
+      mediaGet.mockResolvedValue({
         id: 's1e1',
         name: 'Pilot',
         type: 'episode',
@@ -173,7 +179,7 @@ describe('SeriesSeasons', () => {
 
     it('shows "No files" when episode has no files', async () => {
       vi.useFakeTimers();
-      vi.mocked(api.get).mockResolvedValue({ id: 's1e1', name: 'Pilot', type: 'episode', files: [] } as unknown as MediaItem);
+      mediaGet.mockResolvedValue({ id: 's1e1', name: 'Pilot', type: 'episode', files: [] } as unknown as MediaItem);
       const w = mountAdmin();
       await w.find('.series-seasons__files-btn').trigger('click');
       await vi.advanceTimersByTime(0);
@@ -185,7 +191,7 @@ describe('SeriesSeasons', () => {
 
     it('shows "No files" when fetch fails', async () => {
       vi.useFakeTimers();
-      vi.mocked(api.get).mockRejectedValue(new Error('Network error'));
+      mediaGet.mockRejectedValue(new Error('Network error'));
       const w = mountAdmin();
       await w.find('.series-seasons__files-btn').trigger('click');
       await vi.advanceTimersByTime(0);
@@ -197,7 +203,7 @@ describe('SeriesSeasons', () => {
 
     it('button title changes to "Collapse files" when expanded', async () => {
       vi.useFakeTimers();
-      vi.mocked(api.get).mockResolvedValue({ id: 's1e1', name: 'Pilot', type: 'episode', files: [] } as unknown as MediaItem);
+      mediaGet.mockResolvedValue({ id: 's1e1', name: 'Pilot', type: 'episode', files: [] } as unknown as MediaItem);
       const w = mountAdmin();
       await w.find('.series-seasons__files-btn').trigger('click');
       await vi.advanceTimersByTime(0);

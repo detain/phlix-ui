@@ -51,6 +51,7 @@ import ThumbRating from './ThumbRating.vue';
 import Scrubber, { type Chapter } from './player/Scrubber.vue';
 import { formatTime } from './player/format-time';
 import { useMessages } from '../composables/useMessages';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { useHlsTranscode } from '../composables/useHlsTranscode';
 import { useTrickplay } from '../composables/useTrickplay';
 import type { UseResumeReporter } from '../composables/useResumeReporter';
@@ -193,8 +194,8 @@ const syncPlay = useSyncPlayStore();
 // Per-user favorite/love state (Feature 16). The favorite toggle + 4-state Love
 // controls in the player chrome flip this store optimistically (one PUT each),
 // mirroring MediaCard's wiring. The store keeps no global apiBase — every action
-// is threaded `apiBase` from the app config (same `inject('phlixConfig')` source
-// used below for the transcode endpoints + by MediaCard). `props.media` may be a
+// is threaded the MEDIA-scoped base (M-UI-10, `useMediaApiBase()` — same law as the
+// re-based MediaCard/MediaDetail/MiniPlayer). `props.media` may be a
 // MediaListItem or a MediaDetail; `hydrate` tolerates an absent `user_data` and a
 // null/undefined item, so the controls seed from server state when the player
 // opens / the media changes.
@@ -372,6 +373,7 @@ watch(
  *  per-app hls.js overrides (`playerHlsConfig`, e.g. a TV's RAM tuning) into the
  *  transcode controller. Absent in standalone/test mounts → defaults apply. */
 const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+const mediaApiBase = useMediaApiBase();
 
 /** The shell-mounted resume reporter (provided by `PhlixApp`). Used at end of
  *  playback to send an explicit finish signal on the SAME server session the
@@ -384,11 +386,12 @@ const resumeReporter = inject<UseResumeReporter | null>('resumeReporter', null);
 let finishSignaled = false;
 
 /** API base for the favorite/love writes (Feature 16). Read from the app config
- *  exactly like MediaCard (`inject('phlixConfig')?.apiBase ?? ''`) — NOT a new
- *  source. Empty-string fallback for standalone/test mounts; the store flips
- *  optimistically and the network call uses its lazily-built client. */
+ *  (M-UI-10): server-scoped user-item data rides the same base as the media it
+ *  annotates — the relay-proxy base on hub mounts, the app-own base on the server.
+ *  Empty-string fallback for standalone/test mounts; the store flips optimistically
+ *  and the network call uses its lazily-built client. */
 function apiBaseForUserData(): string {
-  return phlixConfig?.apiBase ?? '';
+  return mediaApiBase.value;
 }
 
 /** HLS transcode-to-play controller: starts the server job, polls readiness, and

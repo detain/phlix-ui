@@ -21,7 +21,7 @@ import { t as qe } from "./NetworkHealthIndicator-BkfPE7iw.js";
 import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-DvCf2CdR.js";
 import { i as vt, n as yt, r as bt, t as xt } from "./Kbd-DdcgRPIx.js";
 import { a as St, i as Ct, n as wt, o as Tt, r as Et, t as Dt } from "./useLibrariesStore-5icSJdQF.js";
-import { n as Ot, t as kt } from "./HomeRow-B5MRhbmy.js";
+import { n as Ot, t as kt } from "./HomeRow-BxwDHltH.js";
 import { t as At } from "./safeHref-C9H0Sqte.js";
 import { t as A } from "./EmptyState-BAyOxAcK.js";
 import { t as j } from "./Button-BuG0GvCa.js";
@@ -41,9 +41,9 @@ import { t as $t } from "./PageHint-BGYg6qRJ.js";
 import { t as en } from "./Tabs-7t3yuCWn.js";
 import { t as tn } from "./Menu-Dm56tG4N.js";
 import { t as nn } from "./HelpText-aA3EQtU4.js";
-import { o as rn, t as an } from "./MediaCard-CT1dSDzK.js";
-import { t as on } from "./MediaGrid-C-hydGqX.js";
-import { t as sn } from "./MediaRow-BpWZGlBq.js";
+import { o as rn, t as an } from "./MediaCard-CB7RAbls.js";
+import { t as on } from "./MediaGrid-c7Rwn48x.js";
+import { t as sn } from "./MediaRow-aLMBl44r.js";
 import { n as cn, t as ln } from "./media-query-DKjhlX8r.js";
 import { n as un, t as dn } from "./metadata-sources-DOrPr-47.js";
 import { n as fn, t as pn } from "./logs-DadTfaTq.js";
@@ -490,10 +490,10 @@ var Yr = ["aria-label", "aria-expanded"], Xr = {
 	__name: "MiniPlayer",
 	emits: ["expand"],
 	setup(e, { emit: t }) {
-		let { imgSrc: r } = k(), i = t, a = Fe(), { t: o } = T(), s = q(null), c = q(null), l = ar("resumeReporter", null), u = !1, d = Be(), f = ar("phlixConfig", null), p = I(() => a.current ? d.isFavorite(a.current.id) : !1);
+		let { imgSrc: r } = k(), i = t, a = Fe(), { t: o } = T(), s = q(null), c = q(null), l = ar("resumeReporter", null), u = !1, d = Be(), f = O(), p = I(() => a.current ? d.isFavorite(a.current.id) : !1);
 		function m() {
 			let e = a.current?.id;
-			e && d.toggleFavorite(e, f?.apiBase ?? "");
+			e && d.toggleFavorite(e, f.value);
 		}
 		let h = I(() => a.miniPlayer && !!a.current && (!!a.streamUrl || !!a.hlsMasterUrl)), g = I(() => a.current?.name ?? ""), _ = I(() => Math.max(0, Math.min(1, a.progress)));
 		function v() {
@@ -620,7 +620,7 @@ var Yr = ["aria-label", "aria-expanded"], Xr = {
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-6721ee35"]]), Ni = ["aria-label"], Pi = ["role"], Fi = { class: "phlix-toast__content" }, Ii = {
+}), [["__scopeId", "data-v-48e27919"]]), Ni = ["aria-label"], Pi = ["role"], Fi = { class: "phlix-toast__content" }, Ii = {
 	key: 0,
 	class: "phlix-toast__title"
 }, Li = { class: "phlix-toast__message" }, Ri = ["onClick"], zi = 0, Bi = /*#__PURE__*/ t(/* @__PURE__ */ U({
@@ -1279,28 +1279,28 @@ function eo(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-YN4ISn9x.js")
+			component: () => import("./BrowsePage-C3QjwPst.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-D8Jmn48f.js")
+			component: () => import("./MediaDetailPage-BbuZXWZS.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-DJRNoES-.js")
+			component: () => import("./SeasonPage-CglVUh_6.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-D1laJeP8.js")
+			component: () => import("./LibraryPage-CzRTxfr2.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-DPRMFHBN.js")
+			component: () => import("./PlayerPage-pG4dolBP.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1330,13 +1330,13 @@ function eo(e) {
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-De0w1UaL.js")
+			component: () => import("./ExplorePage-DMlZVzYk.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-ClIjZ4B4.js")
+			component: () => import("./RecommendationsPage-CIgOIQKG.js")
 		},
 		{
 			path: `${t}/history`,
@@ -1376,7 +1376,7 @@ function eo(e) {
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-CyzVM_b7.js")
+			component: () => import("./PlaylistDetailPage-X51Tacdz.js")
 		}
 	];
 	return e.app === "hub" && n.push({
@@ -1604,22 +1604,26 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	},
 	emits: ["update:modelValue"],
 	setup(e, { emit: t }) {
-		let r = e, i = t, a = ye(), o = ze(), s = ar("phlixConfig", null), c = q(null), l = q(!1), u = new me({
-			baseUrl: s?.apiBase ?? "",
-			tokenStore: new ce()
-		}), d = I(() => !l.value || c.value === null ? r.modelValue : c.value / r.size * 10), f = I(() => d.value === null ? 0 : Math.round(d.value / 10 * r.size)), p = I(() => a.isLoggedIn), m = q(!1);
+		let r = e, i = t, a = ye(), o = ze(), s = q(null), c = q(!1), l = O();
+		function u() {
+			return new me({
+				baseUrl: l.value,
+				tokenStore: new ce()
+			});
+		}
+		let d = I(() => !c.value || s.value === null ? r.modelValue : s.value / r.size * 10), f = I(() => d.value === null ? 0 : Math.round(d.value / 10 * r.size)), p = I(() => a.isLoggedIn), m = q(!1);
 		function h(e) {
-			r.readonly || !p.value || (l.value = !0, c.value = e);
+			r.readonly || !p.value || (c.value = !0, s.value = e);
 		}
 		function g() {
-			l.value = !1, c.value = null;
+			c.value = !1, s.value = null;
 		}
 		async function _(e) {
 			if (r.readonly || !p.value || m.value) return;
 			let t = Math.round(e / r.size * 10 * 10) / 10;
 			m.value = !0;
 			try {
-				await u.post(`/api/v1/media/${encodeURIComponent(r.mediaId)}/ratings`, {
+				await u().post(`/api/v1/media/${encodeURIComponent(r.mediaId)}/ratings`, {
 					source: "user",
 					type: "user",
 					score: t
@@ -1627,7 +1631,7 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 			} catch {
 				o.error("Failed to save rating");
 			} finally {
-				m.value = !1, l.value = !1, c.value = null;
+				m.value = !1, c.value = !1, s.value = null;
 			}
 		}
 		return (t, r) => (K(), z("div", {
@@ -1638,7 +1642,7 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 			type: "button",
 			class: W(["user-rating-picker__star", {
 				"is-filled": t <= f.value,
-				"is-hovered": l.value && t <= c.value
+				"is-hovered": c.value && t <= s.value
 			}]),
 			disabled: e.readonly || m.value,
 			"aria-label": `Rate ${t} out of ${e.size} stars`,
@@ -1653,7 +1657,7 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 			class: "user-rating-picker__lock"
 		}), r[0] ||= B("span", { class: "user-rating-picker__signin" }, "Sign in to rate", -1)], 64))], 34));
 	}
-}), [["__scopeId", "data-v-fa31027a"]]), go = {
+}), [["__scopeId", "data-v-097aaa59"]]), go = {
 	name: "admin-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
@@ -10211,7 +10215,7 @@ var H_ = {
 	it: G_,
 	pt_BR: K_,
 	ja: q_
-}, Y_ = rr(() => import("./MediaDetail-BGEv-Sr1.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-BqXZFpiN.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-8_h9en-H.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-CFJUohdo.js"));
+}, Y_ = rr(() => import("./MediaDetail-Bxr-DswR.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-BqXZFpiN.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-8_h9en-H.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-DkZB7_V8.js"));
 //#endregion
 export { je as ACTIVE_PROFILE_KEY, pn as ALL_LOGS, pd as AcceptInvitePage, bn as AdminBackupApi, xn as AdminCastApi, Tn as AdminCollectionsApi, mn as AdminDashboardApi, Sn as AdminDlnaServerApi, En as AdminHistoryApi, Vn as AdminHubDashboardApi, yn as AdminIntegrationsApi, An as AdminLibrariesApi, wn as AdminLiveTvApi, fn as AdminLogsApi, Bn as AdminMaintenanceApi, dn as AdminMetadataSourcesApi, Ln as AdminPluginsApi, Cn as AdminRemoteAccessApi, vn as AdminServicesApi, jn as AdminSettingsApi, Dn as AdminSyncPlayApi, Oe as AdminUsersApi, _n as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Kr as AppLayout, Oh as AudiobookDetailPage, cg as AudiobookPlayerPage, Qm as AudiobooksPage, it as BUILT_IN_THEME_IDS, M as Badge, ym as BookDetailPage, Lm as BookReaderPage, Qp as BooksPage, j as Button, zt as CONNECTION_API_BASE_KEY, Ft as CONNECTION_CONFIRMED_ORIGIN_KEY, ha as CURRENT_SERVER_ID_KEY, ga as CURRENT_SERVER_NAME_KEY, Jt as Chip, Xt as Combobox, Qt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, W_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, H_ as ES_MESSAGES, A as EmptyState, Ze as FOCUS_RING_MIN_CONTRAST, U_ as FR_MESSAGES, sl as FederationPage, Al as FederationSharesPage, Z_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, xa as HUB_SYNC_PLAY_PORT, lo as HelpPopover, nn as HelpText, G_ as IT_MESSAGES, n as Icon, r as IconButton, cd as InviteLinksPage, q_ as JA_MESSAGES, xt as Kbd, On as LIBRARY_TYPES, J_ as LOCALE_MESSAGES, xs as LibraryScanPage, ce as LocalStorageTokenStore, Hn as LoginForm, Rn as MAINTENANCE_ENDPOINTS, zn as MAINTENANCE_TASK_NAMES, ct as MAX_EXTENDS_DEPTH, Ua as MCP_TOKENS_ROUTE_NAME, Wa as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Bl as ManageSharesPage, an as MediaCard, Y_ as MediaDetail, on as MediaGrid, kt as MediaHomeRow, sn as MediaRow, tn as Menu, X_ as MetadataMatchModal, Zt as Modal, Pd as MusicAlbumPage, Sf as MusicArtistPage, $d as MusicArtistsPage, Rp as MusicPlayerPage, sp as MusicTracksPage, Vs as MyServersPage, ee as NetworkError, Fn as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, K_ as PT_BR_MESSAGES, $t as PageHint, ro as PageTransition, fa as PhlixApp, Wg as PhotoAlbumPage, kg as PhotoAlbumsPage, O_ as PhotoSlideshowPage, p_ as PhotoViewPage, ls as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, Gn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, dt as RING_GROUND_KEYS, po as RatingBadge, ku as RequestsPage, no as Reveal, kn as SCAN_JOB_TYPES, Mn as SETTINGS_SECRET_MASK, Ct as SORT_TITLE_ARTICLES, hn as SUBSCRIBABLE_EVENTS, Q_ as SearchPage, ft as SecuritySettingsPage, Yt as Select, Jc as ServerDetailPage, eu as SharedWithMePage, Ir as Sheet, Un as SignupForm, N as Skeleton, Kt as Slider, un as SourcePriorityEditor, Ke as Spinner, qt as Switch, $e as THEME_CACHE_KEY, at as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, en as Tabs, Ve as ThumbRating, ge as TimeoutError, Bi as ToastHost, Ge as Tooltip, ho as UserRatingPicker, gn as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, pt as activeThemeStyle, Zo as adminMenu, Zi as applyStoredThemeEarly, et as applyThemeTokens, F_ as bestCandidate, k_ as bindMediaStoreToRouter, Jo as buildAdminRoutes, Xo as buildHubAdminRoutes, Ea as buildHubRelayUrl, ln as buildMediaQuery, cn as buildMediaUrl, Yo as buildServerAdminRoutes, tt as clearThemeTokens, Fa as closeHubRelayConnection, Uo as commonAdminPages, St as compareByStrippedTitle, lt as compositedContrastOver, to as createPhlixApp, w as createTranslator, Wn as debounce, Ji as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, wt as fetchLibraries, ut as fetchThemes, ot as focusRingLawViolation, c as focusable, a as focusableRegistry, Gt as formatPageTitle, yt as fuzzyScore, E as getDefaultApiHeaders, Ia as getHubRelaySocket, p as hasStoredPreferences, Go as hubAdminPages, i as installFocusable, Lt as isAllowedBase, rt as isAllowedThemeToken, nt as isBuiltInThemeId, te as isOffline, Nt as isPlaintextPublic, _ as isPluralTemplate, jt as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, Xe as isSafeThemeTokenValue, de as isTmdbUnconfigured, bt as matchCommand, Ga as mcpTokensMenuItem, S as mergeMessages, It as normalizeBase, mt as normalizeServerTheme, Ma as openHubRelayConnection, Rt as originOf, wa as parsePendingCommandFrame, _t as parseThemeColor, In as pluginErrorCode, Pn as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Mt as probeServer, Qe as readCachedTheme, d as readStoredPreferences, A_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, gt as resolveThemeBase, Ye as resolveThemeTokens, At as safeHref, Je as sanitizeThemeTokens, b as selectPluralTemplate, Wo as serverAdminPages, Ut as setAppName, ne as setDefaultApiHeaders, Wt as setPageTitle, Et as sortLibraries, Tt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, $i as useCommandPaletteHotkey, vt as useCommandStore, Pt as useConnectionStore, o as useFocusTrap, k as useImageSrc, Dt as useLibrariesStore, O as useMediaApiBase, Zn as useMediaStore, T as useMessages, V_ as useOnline, Ht as usePageTitle, Fe as usePlayerStore, ia as usePreconnect, u as usePreferencesStore, rn as usePrefetch, Ae as useProfileStore, ca as useResumeReporter, Ot as useResumeSync, ba as useServerStore, Nn as useSettingsPrefsStore, B_ as useSpatialNav, Qi as useTheme, st as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Bt as withScheme, ht as writeCachedTheme };
 

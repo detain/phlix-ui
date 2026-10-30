@@ -25,13 +25,13 @@
  * Emits:
  *   update:modelValue — when user confirms a rating
  */
-import { ref, computed, inject } from 'vue';
+import { ref, computed } from 'vue';
 import Icon from './Icon.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { ApiClient } from '../api/client';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { LocalStorageTokenStore } from '../api/tokenStore';
-import type { PhlixAppConfig } from '../app/types';
 
 const props = withDefaults(
   defineProps<{
@@ -53,7 +53,6 @@ const emit = defineEmits<{
 
 const auth = useAuthStore();
 const toast = useToastStore();
-const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 /** Temporary hover rating (null means show current rating) */
 const hoverRating = ref<number | null>(null);
@@ -61,11 +60,17 @@ const hoverRating = ref<number | null>(null);
 /** Whether the user is currently hovering */
 const isHovering = ref(false);
 
-/** API client for rating submissions */
-const ratingClient = new ApiClient({
-  baseUrl: phlixConfig?.apiBase ?? '',
-  tokenStore: new LocalStorageTokenStore(),
-});
+/** API client for rating submissions — built per submit on the MEDIA-scoped base
+ *  (M-UI-10): POST /api/v1/media/{id}/ratings is a media endpoint, so it must ride
+ *  the relay-proxy base on hub mounts (and re-point when the selected server
+ *  changes) rather than the app-own base captured at setup time. */
+const mediaApiBase = useMediaApiBase();
+function ratingClient(): ApiClient {
+  return new ApiClient({
+    baseUrl: mediaApiBase.value,
+    tokenStore: new LocalStorageTokenStore(),
+  });
+}
 
 /**
  * The rating to display:
@@ -121,7 +126,7 @@ async function onStarClick(starIndex: number): Promise<void> {
 
   isSubmitting.value = true;
   try {
-    await ratingClient.post(`/api/v1/media/${encodeURIComponent(props.mediaId)}/ratings`, {
+    await ratingClient().post(`/api/v1/media/${encodeURIComponent(props.mediaId)}/ratings`, {
       source: 'user',
       type: 'user',
       score: rating,

@@ -21,10 +21,10 @@
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
-import type { PhlixAppConfig } from '../app/types';
 import type { UseResumeReporter } from '../composables/useResumeReporter';
 import Icon from './Icon.vue';
 import { useMessages } from '../composables/useMessages';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { attachHls } from './player/hls-playback';
 import type { HlsHandle } from './player/hls-playback';
 import { useImageSrc } from '../composables/useImageSrc';
@@ -55,14 +55,15 @@ let finishSignaled = false;
 
 // Per-user favorite state (Feature 16.2). A SINGLE compact favorite toggle in the
 // dock (NOT the ThumbRating widget — the dock stays compact) bound to the current
-// item. The store keeps no global apiBase, so each call is threaded `apiBase` from
-// the app config via the same `inject('phlixConfig')` source MediaCard/Player use.
+// item. The store keeps no global apiBase, so each call is threaded the MEDIA-scoped
+// base (M-UI-10) — server-scoped user-item data rides the same base as the media it
+// annotates, which on hub-hosted mounts is the relay-proxy base, not the app-own one.
 //
 // No hydrate here: the item shown in the dock is the one the full Player/PlayerPage
 // already set + hydrated into the store (Player.vue onMounted/watch + PlayerPage),
 // so reading `store.isFavorite(id)` reflects that without a redundant double-fetch.
 const userItemData = useUserItemDataStore();
-const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+const mediaApiBase = useMediaApiBase();
 
 /** Favorited state of the current dock item per the store (false when unknown). */
 const isFavorited = computed(() => (player.current ? userItemData.isFavorite(player.current.id) : false));
@@ -71,7 +72,7 @@ const isFavorited = computed(() => (player.current ? userItemData.isFavorite(pla
 function toggleFavorite(): void {
   const id = player.current?.id;
   if (!id) return;
-  void userItemData.toggleFavorite(id, phlixConfig?.apiBase ?? '');
+  void userItemData.toggleFavorite(id, mediaApiBase.value);
 }
 
 const visible = computed(() => player.miniPlayer && !!player.current && (!!player.streamUrl || !!player.hlsMasterUrl));

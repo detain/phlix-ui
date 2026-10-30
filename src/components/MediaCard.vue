@@ -27,10 +27,10 @@ import ThumbRating from './ThumbRating.vue';
 import Menu from './ui/Menu.vue';
 import Tooltip from './ui/Tooltip.vue';
 import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
-import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useMessages } from '../composables/useMessages';
+import { useMediaApiBase } from '../composables/useApiBase';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { usePrefetch } from '../composables/usePrefetch';
@@ -38,7 +38,7 @@ import { resolvePosterSources } from './media-poster';
 import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
-import { api } from '../api/client';
+import { ApiClient } from '../api/client';
 import { pluralCount } from '../utils/plural';
 import { safeHref } from '../utils/safeHref';
 import { useImageSrc } from '../composables/useImageSrc';
@@ -198,11 +198,23 @@ const auth = useAuthStore();
 
 // Per-user favorite/rating/love state (Feature 17). The bookmark/favorite button
 // flips this store optimistically; the host page's `watchlist` handler still runs
-// for back-compat. `apiBase` is read from the app config exactly like Player.vue
-// (`inject('phlixConfig')`) — NOT a new source — and threaded into the store's
-// `toggleFavorite(id, apiBase)` (the store keeps no global apiBase).
+// for back-compat. The base threaded into the store's `toggleFavorite(id, apiBase)`
+// is the MEDIA-scoped one (M-UI-10): server-scoped user-item data rides the same
+// base as the media it annotates (the store keeps no global apiBase).
 const userItemData = useUserItemDataStore();
-const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
+const mediaApiBase = useMediaApiBase();
+
+// Media-scoped menu calls (download / missing-episodes / shuffle) go through a
+// re-based client (M-UI-10) instead of the raw `api` singleton — the singleton's
+// baseUrl is '' and never re-based, so on a hub-hosted mount these media paths
+// would hit the hub origin, where they are only reachable through the
+// `/api/v1/servers/{id}/proxy` prefix the media base tracks.
+let mediaClient: ApiClient | null = null;
+function mediaScopedClient(): ApiClient {
+  if (!mediaClient) mediaClient = new ApiClient({ baseUrl: mediaApiBase.value });
+  else mediaClient.setBaseUrl(mediaApiBase.value);
+  return mediaClient;
+}
 
 // Router instance for SPA navigation (null when router unavailable, e.g. standalone mounts).
 const router = inject(routerKey, null);
@@ -262,7 +274,7 @@ function onMenuSelect(menuItem: { label: string }): void {
     }
     case L.download:
       toasts.info('Preparing download\u2026');
-      api
+      mediaScopedClient()
         .getDownloadUrl(props.item.id)
         .then(({ url }) => {
           // M-UI-11 [review ui__seceng]: the download URL is server-supplied
@@ -284,7 +296,7 @@ function onMenuSelect(menuItem: { label: string }): void {
       break;
     case L.missingEpisodes:
       toasts.info('Loading\u2026');
-      api
+      mediaScopedClient()
         .getMissingEpisodes(props.item.id)
         .then((report) => {
           // The server returns an envelope { total_expected, total_existing,
@@ -308,7 +320,7 @@ function onMenuSelect(menuItem: { label: string }): void {
         });
       break;
     case L.shuffle:
-      api
+      mediaScopedClient()
         .shufflePlay(props.item.id)
         .then(() => toasts.success('Shuffle play started'))
         .catch((err) => {
@@ -347,7 +359,7 @@ function onMenuSelect(menuItem: { label: string }): void {
  * us the already-computed NEXT level on the −2..2 axis.
  */
 function onLove(next: number): void {
-  void userItemData.setLike(props.item.id, next, phlixConfig?.apiBase ?? '');
+  void userItemData.setLike(props.item.id, next, mediaApiBase.value);
 }
 
 /**
@@ -356,7 +368,7 @@ function onLove(next: number): void {
  * (BrowsePage/MediaDetailPage) keeps working — the store wiring is additive.
  */
 function onFavorite(): void {
-  void userItemData.toggleFavorite(props.item.id, phlixConfig?.apiBase ?? '');
+  void userItemData.toggleFavorite(props.item.id, mediaApiBase.value);
   emit('watchlist', props.item);
 }
 
@@ -368,7 +380,7 @@ function onFavorite(): void {
  * resulting state. Also invoked by the ⋯ menu's Mark watched/unwatched item.
  */
 function onWatched(): void {
-  void userItemData.toggleWatched(props.item.id, phlixConfig?.apiBase ?? '');
+  void userItemData.toggleWatched(props.item.id, mediaApiBase.value);
   emit('mark-watched', props.item);
 }
 
@@ -694,7 +706,6 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
       v-if="playlistPickerOpen"
       :model-value="true"
       :item="item"
-      :client="api"
       @update:model-value="playlistPickerOpen = false"
     />
   </article>

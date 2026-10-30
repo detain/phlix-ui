@@ -15,7 +15,8 @@
 import { ref, computed, inject } from 'vue';
 import type { MediaItem, MediaFile } from '../types/media-item';
 import type { SeasonGroup } from './series-grouping';
-import { api } from '../api/client';
+import { ApiClient } from '../api/client';
+import { useMediaApiBase } from '../composables/useApiBase';
 import Icon from './Icon.vue';
 import { pluralize } from '../utils/plural';
 
@@ -39,6 +40,12 @@ const emit = defineEmits<{
 
 const auth = inject('auth', { isAdmin: false } as { isAdmin: boolean }) as { isAdmin: boolean };
 
+// M-UI-10 — the episode-detail fetch is a MEDIA endpoint; an explicit `apiBase`
+// prop still wins (consumer override), but the default follows the media-scoped
+// base (relay-proxy on hub mounts, app-own base on the server) instead of riding
+// the un-based `api` singleton with a manually prefixed path.
+const mediaApiBase = useMediaApiBase();
+
 const episodeFiles = ref<Record<string, MediaFile[]>>({});
 const expandedEpisodes = ref<Set<string>>(new Set());
 
@@ -53,9 +60,9 @@ function isExpanded(episodeId: string): boolean {
 async function fetchEpisodeFiles(episodeId: string): Promise<void> {
     if (episodeFiles.value[episodeId] !== undefined) return;
     try {
-        const detail = await api.get<MediaItem>(
-            `${props.apiBase}/api/v1/media/${encodeURIComponent(episodeId)}`,
-        );
+        const detail = await new ApiClient({
+            baseUrl: props.apiBase || mediaApiBase.value,
+        }).get<MediaItem>(`/api/v1/media/${encodeURIComponent(episodeId)}`);
         episodeFiles.value[episodeId] = detail.files ?? [];
     } catch {
         episodeFiles.value[episodeId] = [];

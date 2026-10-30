@@ -20,7 +20,7 @@ import IconButton from './ui/IconButton.vue';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
-import { api } from '../api/client';
+import { ApiClient } from '../api/client';
 import { MENU_LABELS } from './mediaItemMenu';
 import type { MediaItem } from '../types/media-item';
 
@@ -132,7 +132,7 @@ function sfcDecl(selector: string, property: string): string {
 describe('MediaDetail — missing-episodes toast pluralisation (S134)', () => {
   async function runMissingEpisodes(count: number): Promise<ReturnType<typeof vi.spyOn>> {
     useAuthStore().user = { id: 'admin1', is_admin: true };
-    vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+    vi.spyOn(ApiClient.prototype, 'getMissingEpisodes').mockResolvedValue({
       total_expected: 10,
       total_existing: 10 - count,
       missing_episodes: Array.from({ length: count }, (_, i) => ({ episode_number: i + 1 })),
@@ -949,7 +949,7 @@ describe('MediaDetail — watched (eye) button', () => {
     const toggle = vi.spyOn(store, 'toggleWatched').mockResolvedValue(undefined);
     const w = mount(MediaDetail, {
       props: { item: media() },
-      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' }, apiBase: '/api-host' } },
     });
     const btn = w.find('[aria-label="Mark as watched"]');
     expect(btn.exists()).toBe(true);
@@ -1321,7 +1321,7 @@ describe('MediaDetail — hostile wire urls (M-UI-11)', () => {
   });
 
   it('a Download url of javascript: opens no tab and errors instead of the success toast', async () => {
-    const dl = vi.spyOn(api, 'getDownloadUrl').mockResolvedValue({ url: 'java\tscript:alert(1)' });
+    const dl = vi.spyOn(ApiClient.prototype, 'getDownloadUrl').mockResolvedValue({ url: 'java\tscript:alert(1)' });
     const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
     const w = mount(MediaDetail, { props: { item: media() }, attachTo: document.body });
     const success = vi.spyOn(useToastStore(), 'success');

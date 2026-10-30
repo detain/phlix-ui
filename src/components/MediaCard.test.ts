@@ -22,7 +22,7 @@ import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
 import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
-import { api } from '../api/client';
+import { ApiClient } from '../api/client';
 
 // UI-2.5 [U-R2]: wrap buildMediaItemMenu in a spy (delegating to the real impl)
 // so we can assert the ⋯ menu MODEL is only built on first open — never for the
@@ -378,7 +378,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
       });
     const w = mount(MediaCard, {
       props: { item: media() },
-      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' }, apiBase: '/api-host' } },
     });
     await reveal(w);
     expect(w.find('[aria-label="Add to My List"]').attributes('aria-pressed')).toBe('false');
@@ -462,7 +462,7 @@ describe('MediaCard — watched (eye) toggle', () => {
     const w = mount(MediaCard, {
       props: { item: media() },
       attrs: { onClick: onCardClick },
-      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' }, apiBase: '/api-host' } },
     });
     await reveal(w);
     await w.find('[aria-label="Mark as watched"]').trigger('click');
@@ -622,7 +622,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
     const setLike = vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
     const w = mount(MediaCard, {
       props: { item: media() },
-      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' }, apiBase: '/api-host' } },
     });
 
     await reveal(w);
@@ -639,7 +639,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
     const setLike = vi.spyOn(store, 'setLike').mockResolvedValue(undefined);
     const w = mount(MediaCard, {
       props: { item: media() },
-      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
+      global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' }, apiBase: '/api-host' } },
     });
 
     await reveal(w);
@@ -963,9 +963,9 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
   // semantics, the no-library_id fail-loud and the leg-2 undo moved WITH the
   // behavior into PlaylistPickerModal.test.ts, which pins them at their new home.
   it('Add to playlist → opens the PlaylistPickerModal and fires no request itself', async () => {
-    const playlists = vi.spyOn(api, 'getPlaylists').mockResolvedValue([]);
-    const create = vi.spyOn(api, 'createPlaylist');
-    const add = vi.spyOn(api, 'addToPlaylist');
+    const playlists = vi.spyOn(ApiClient.prototype, 'getPlaylists').mockResolvedValue([]);
+    const create = vi.spyOn(ApiClient.prototype, 'createPlaylist');
+    const add = vi.spyOn(ApiClient.prototype, 'addToPlaylist');
     const promptSpy = vi.spyOn(window, 'prompt');
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
 
@@ -982,8 +982,8 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
   });
 
   it('Add to playlist → an item without a library_id still opens the picker (existing playlists remain addable)', async () => {
-    const playlists = vi.spyOn(api, 'getPlaylists').mockResolvedValue([]);
-    const create = vi.spyOn(api, 'createPlaylist');
+    const playlists = vi.spyOn(ApiClient.prototype, 'getPlaylists').mockResolvedValue([]);
+    const create = vi.spyOn(ApiClient.prototype, 'createPlaylist');
     const w = mount(MediaCard, { props: { item: media({ library_id: null }) }, attachTo: document.body });
 
     await selectMenuItem(w, MENU_LABELS.addToPlaylist);
@@ -998,8 +998,8 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     w.unmount();
   });
 
-  it('Download → api.getDownloadUrl(itemId), opens the URL + success toast', async () => {
-    const dl = vi.spyOn(api, 'getDownloadUrl').mockResolvedValue({ url: 'https://dl/dune.mp4' });
+  it('Download → ApiClient.getDownloadUrl(itemId), opens the URL + success toast', async () => {
+    const dl = vi.spyOn(ApiClient.prototype, 'getDownloadUrl').mockResolvedValue({ url: 'https://dl/dune.mp4' });
     const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
     const success = vi.spyOn(useToastStore(), 'success');
@@ -1014,8 +1014,8 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     w.unmount();
   });
 
-  it('Shuffle → api.shufflePlay(itemId) + success toast', async () => {
-    const shuffle = vi.spyOn(api, 'shufflePlay').mockResolvedValue({ message: 'ok' });
+  it('Shuffle → ApiClient.shufflePlay(itemId) + success toast', async () => {
+    const shuffle = vi.spyOn(ApiClient.prototype, 'shufflePlay').mockResolvedValue({ message: 'ok' });
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
     const success = vi.spyOn(useToastStore(), 'success');
 
@@ -1073,9 +1073,9 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     w.unmount();
   });
 
-  describe('View missing episodes → api.getMissingEpisodes + correct count (envelope contract)', () => {
+  describe('View missing episodes → ApiClient.getMissingEpisodes + correct count (envelope contract)', () => {
     it('reports the real count from missing_episodes.length (plural)', async () => {
-      const getMissing = vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+      const getMissing = vi.spyOn(ApiClient.prototype, 'getMissingEpisodes').mockResolvedValue({
         total_expected: 10,
         total_existing: 8,
         missing_episodes: [{ episode_number: 3 }, { episode_number: 7 }],
@@ -1096,7 +1096,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     });
 
     it('reports singular when exactly one episode is missing', async () => {
-      vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+      vi.spyOn(ApiClient.prototype, 'getMissingEpisodes').mockResolvedValue({
         total_expected: 10,
         total_existing: 9,
         missing_episodes: [{ episode_number: 4 }],
@@ -1114,7 +1114,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     });
 
     it('fires the zero-missing branch when missing_episodes is empty', async () => {
-      vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({
+      vi.spyOn(ApiClient.prototype, 'getMissingEpisodes').mockResolvedValue({
         total_expected: 10,
         total_existing: 10,
         missing_episodes: [],
@@ -1136,7 +1136,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     });
 
     it('degraded envelope (only missing_episodes, no totals) still counts correctly', async () => {
-      vi.spyOn(api, 'getMissingEpisodes').mockResolvedValue({ missing_episodes: [] });
+      vi.spyOn(ApiClient.prototype, 'getMissingEpisodes').mockResolvedValue({ missing_episodes: [] });
       const w = mount(MediaCard, {
         props: { item: media({ id: 's1', type: 'series' }) },
         attachTo: document.body,
@@ -1451,7 +1451,7 @@ describe('MediaCard — tooltip reveal, 300ms delay and row width math (S20 AC)'
 // success toast must not lie about a download that never started.
 describe('MediaCard — hostile download url (M-UI-11)', () => {
   it('Download with a javascript: url opens no tab and errors instead of the success toast', async () => {
-    vi.spyOn(api, 'getDownloadUrl').mockResolvedValue({ url: 'javascript:alert(document.cookie)' });
+    vi.spyOn(ApiClient.prototype, 'getDownloadUrl').mockResolvedValue({ url: 'javascript:alert(document.cookie)' });
     const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
     const success = vi.spyOn(useToastStore(), 'success');
