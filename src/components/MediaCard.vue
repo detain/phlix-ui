@@ -260,8 +260,8 @@ function onMenuSelect(menuItem: { label: string }): void {
   const L = MENU_LABELS;
   const toasts = useToastStore();
   switch (menuItem.label) {
-    case L.markPlayed:
-    case L.markUnplayed:
+    case L.markWatched:
+    case L.markUnwatched:
       onWatched();
       break;
     case L.addToPlaylist: {
@@ -282,14 +282,14 @@ function onMenuSelect(menuItem: { label: string }): void {
           // destination. Fail loud instead of lying with 'Download started'.
           const safe = safeHref(url);
           if (!safe) {
-            toasts.error('Download blocked — unsafe link');
+            toasts.error('Download blocked — unsafe link.');
             return;
           }
           window.open(safe, '_blank', 'noopener');
-          toasts.success('Download started');
+          toasts.success('Download started.');
         })
         .catch((err) => {
-          toasts.error('Download failed', {
+          toasts.error('Download failed.', {
             message: err instanceof Error ? err.message : String(err),
           });
         });
@@ -308,13 +308,13 @@ function onMenuSelect(menuItem: { label: string }): void {
           // fired (the toast read "undefined episodes missing").
           const count = report.missing_episodes.length;
           if (count === 0) {
-            toasts.success('No missing episodes');
+            toasts.success('No missing episodes.');
           } else {
-            toasts.warning(`${pluralCount(count, 'episode', 'episodes')} missing`);
+            toasts.warning(`${pluralCount(count, 'episode', 'episodes')} missing.`);
           }
         })
         .catch((err) => {
-          toasts.error('Failed to load missing episodes', {
+          toasts.error('Failed to load missing episodes.', {
             message: err instanceof Error ? err.message : String(err),
           });
         });
@@ -322,9 +322,9 @@ function onMenuSelect(menuItem: { label: string }): void {
     case L.shuffle:
       mediaScopedClient()
         .shufflePlay(props.item.id)
-        .then(() => toasts.success('Shuffle play started'))
+        .then(() => toasts.success('Shuffle play started.'))
         .catch((err) => {
-          toasts.error('Shuffle play failed', {
+          toasts.error('Shuffle play failed.', {
             message: err instanceof Error ? err.message : String(err),
           });
         });
@@ -348,7 +348,7 @@ function onMenuSelect(menuItem: { label: string }): void {
       emit('remove', props.item);
       break;
     default:
-      toasts.info(`${menuItem.label} isn’t available yet`);
+      toasts.info(`${menuItem.label} isn’t available yet.`);
   }
 }
 

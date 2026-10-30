@@ -195,7 +195,7 @@ function onMatchApplied(): void {
 
 function onPosterApplied(updated: MediaItem): void {
   store.items = store.items.map((i) => (i.id === updated.id ? updated : i));
-  toasts.success(`Updated poster for “${updated.name}”`);
+  toasts.success(`Updated poster for “${updated.name}”.`);
 }
 
 const libraryId = computed(() => {
@@ -341,13 +341,13 @@ async function onPlay(item: MediaItem): Promise<void> {
     );
     if (stale()) return;
     if (!resolved) {
-      toasts.info('Nothing to play yet');
+      toasts.info('Nothing to play yet.');
       return;
     }
     go('player', resolved.id);
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.info('Nothing to play yet');
+    toasts.info('Nothing to play yet.');
   }
 }
 function onWatchlist(): void {
@@ -363,9 +363,9 @@ function onInfo(item: MediaItem): void {
 // `onWatchlist`).
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked “${item.name}” as watched`);
+    toasts.success(`Marked “${item.name}” as watched.`);
   } else {
-    toasts.info(`Marked “${item.name}” as unwatched`);
+    toasts.info(`Marked “${item.name}” as unwatched.`);
   }
 }
 
@@ -398,7 +398,7 @@ async function confirmRemove(): Promise<void> {
     await client.deleteMediaItem(item.id);
     if (stale()) return;
     store.items = store.items.filter((i) => i.id !== item.id);
-    toasts.success(`Removed “${item.name}”`);
+    toasts.success(`Removed “${item.name}”.`);
   } catch (e) {
     if (stale() || isAbort(e)) return;
     toasts.error(`Failed to remove “${item.name}”.`, {

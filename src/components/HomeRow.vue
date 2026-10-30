@@ -101,7 +101,7 @@ async function load(): Promise<void> {
   } catch (e) {
     if (disposed || isAbort(e)) return; // superseded / torn down — stay quiet
     error.value = e instanceof Error ? e.message : 'Failed to load';
-    toasts.error(`Couldn’t load “${props.row.title}”`);
+    toasts.error(`Couldn’t load “${props.row.title}”.`);
   } finally {
     if (!disposed) loading.value = false;
   }

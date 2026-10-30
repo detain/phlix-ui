@@ -20,8 +20,8 @@ export interface MediaItemMenuContext {
  */
 export declare const MENU_LABELS: {
     readonly addToPlaylist: "Add to playlist";
-    readonly markPlayed: "Mark played";
-    readonly markUnplayed: "Mark unplayed";
+    readonly markWatched: "Mark watched";
+    readonly markUnwatched: "Mark unwatched";
     readonly download: "Download";
     readonly missingEpisodes: "View missing episodes";
     readonly shuffle: "Shuffle";
@@ -33,7 +33,7 @@ export declare const MENU_LABELS: {
 };
 /**
  * Build the ⋯ action menu for a media item. Everyone gets the playback/library
- * actions (playlist, played, download, shuffle, and — for series/season cards —
+ * actions (playlist, watched, download, shuffle, and — for series/season cards —
  * missing episodes); admins additionally get the metadata / image / debug /
  * remove actions.
  *

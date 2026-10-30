@@ -344,7 +344,7 @@ async function pingRelay(): Promise<void> {
     const result = await api.relayPing();
     relayPing.value = result;
     if (result.latencyMs != null) {
-      toasts.success(`Relay latency: ${result.latencyMs}ms`);
+      toasts.success(`Relay latency: ${result.latencyMs}ms.`);
     } else {
       // latencyMs stays null until S40's heartbeat writes land — be honest.
       toasts.info('Relay connected; latency not measured yet.');

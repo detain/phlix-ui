@@ -967,7 +967,7 @@ describe('Admin PluginsPage — configure', () => {
     const banner = modalPanel().querySelector('.admin-plugins__config-error')!;
     expect(banner).toBeTruthy();
     expect(banner.getAttribute('role')).toBe('alert');
-    expect(banner.textContent).toContain('fix the errors below');
+    expect(banner.textContent).toContain('Fix the errors below');
     w.unmount();
   });
 

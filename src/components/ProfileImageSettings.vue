@@ -60,7 +60,7 @@ function onFileChange(event: Event): void {
 
   // Validate type
   if (!ALLOWED_TYPES.includes(file.type)) {
-    toasts.error('Please select a PNG, JPEG, or WEBP image.');
+    toasts.error('Select a PNG, JPEG, or WEBP image.');
     resetFileInput();
     return;
   }

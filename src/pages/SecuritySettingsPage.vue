@@ -173,7 +173,7 @@ async function confirmDelete(): Promise<void> {
         const client = getClient();
         await client.delete(`/api/v1/me/webauthn/credentials/${encodeURIComponent(credentialId)}`);
         forgetMeta(credentialId);
-        toasts.success('Passkey deleted successfully');
+        toasts.success('Passkey deleted successfully.');
         await loadCredentials();
     } catch (e) {
         toasts.error(e instanceof Error ? e.message : 'Failed to delete passkey');
@@ -276,7 +276,7 @@ async function handleRegister(): Promise<void> {
         nickname.value = '';
 
         statusLine.value = 'Passkey registered successfully';
-        toasts.success('Passkey registered successfully');
+        toasts.success('Passkey registered successfully.');
         await loadCredentials();
     } catch (e) {
         if (e instanceof Error && e.name === 'NotAllowedError') {

@@ -1009,7 +1009,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     expect(dl).toHaveBeenCalledTimes(1);
     expect(dl).toHaveBeenCalledWith('m1');
     expect(openSpy).toHaveBeenCalledWith('https://dl/dune.mp4', '_blank', 'noopener');
-    expect(success).toHaveBeenCalledWith('Download started');
+    expect(success).toHaveBeenCalledWith('Download started.');
     openSpy.mockRestore();
     w.unmount();
   });
@@ -1023,7 +1023,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
 
     expect(shuffle).toHaveBeenCalledTimes(1);
     expect(shuffle).toHaveBeenCalledWith('m1');
-    expect(success).toHaveBeenCalledWith('Shuffle play started');
+    expect(success).toHaveBeenCalledWith('Shuffle play started.');
     w.unmount();
   });
 
@@ -1091,7 +1091,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
       expect(getMissing).toHaveBeenCalledWith('s1');
       // Regression guard: the pre-fix code read `.length` off the ENVELOPE object
       // → `undefined` → "undefined episodes missing". Must be the real count.
-      expect(warning).toHaveBeenCalledWith('2 episodes missing');
+      expect(warning).toHaveBeenCalledWith('2 episodes missing.');
       w.unmount();
     });
 
@@ -1109,7 +1109,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
 
       await selectMenuItem(w, MENU_LABELS.missingEpisodes);
 
-      expect(warning).toHaveBeenCalledWith('1 episode missing');
+      expect(warning).toHaveBeenCalledWith('1 episode missing.');
       w.unmount();
     });
 
@@ -1130,7 +1130,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
       await selectMenuItem(w, MENU_LABELS.missingEpisodes);
 
       // The zero branch must fire (it never did when `.length` was undefined).
-      expect(success).toHaveBeenCalledWith('No missing episodes');
+      expect(success).toHaveBeenCalledWith('No missing episodes.');
       expect(warning).not.toHaveBeenCalled();
       w.unmount();
     });
@@ -1145,7 +1145,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
 
       await selectMenuItem(w, MENU_LABELS.missingEpisodes);
 
-      expect(success).toHaveBeenCalledWith('No missing episodes');
+      expect(success).toHaveBeenCalledWith('No missing episodes.');
       w.unmount();
     });
   });
@@ -1471,7 +1471,7 @@ describe('MediaCard — hostile download url (M-UI-11)', () => {
 
     expect(openSpy).not.toHaveBeenCalled();
     expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link');
+    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link.');
     openSpy.mockRestore();
     w.unmount();
     document.body.innerHTML = '';

@@ -148,19 +148,19 @@ async function onPlay(item: MediaItem): Promise<void> {
       player.resumeMap,
     );
     if (!resolved) {
-      toasts.info('Nothing to play yet');
+      toasts.info('Nothing to play yet.');
       return;
     }
     go('player', resolved.id);
   } catch (e) {
     if (isAbort(e)) return;
-    toasts.info('Nothing to play yet');
+    toasts.info('Nothing to play yet.');
   }
 }
 
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
-  else toasts.info(`Details for “${item.name}” are coming soon`);
+  else toasts.info(`Details for “${item.name}” are coming soon.`);
 }
 
 function retry(): void {

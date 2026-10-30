@@ -159,9 +159,9 @@ async function removeItem(item: MediaItem): Promise<void> {
   try {
     await getClient().removeFromPlaylist(playlist.id, item.id);
     items.value = items.value.filter((i) => i.id !== item.id);
-    toasts.success(`Removed “${item.name}” from the playlist`);
+    toasts.success(`Removed “${item.name}” from the playlist.`);
   } catch (e) {
-    toasts.error('Failed to remove from playlist', { message: errMessage(e) });
+    toasts.error('Failed to remove from playlist.', { message: errMessage(e) });
   } finally {
     const next = new Set(removingIds.value);
     next.delete(item.id);
@@ -175,11 +175,11 @@ async function confirmDeletePlaylist(): Promise<void> {
   deleting.value = true;
   try {
     await getClient().deletePlaylist(playlist.id);
-    toasts.success(`Playlist “${playlist.name}” deleted`);
+    toasts.success(`Playlist “${playlist.name}” deleted.`);
     deleteOpen.value = false;
     if (router?.hasRoute('playlists')) void router.replace({ name: 'playlists' });
   } catch (e) {
-    toasts.error('Failed to delete playlist', { message: errMessage(e) });
+    toasts.error('Failed to delete playlist.', { message: errMessage(e) });
   } finally {
     deleting.value = false;
   }

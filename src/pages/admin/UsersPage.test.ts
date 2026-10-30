@@ -275,7 +275,7 @@ describe('Admin UsersPage — create / edit / delete', () => {
     // generic summary. (Old law: the detail was toast-only.)
     expect(fieldErrorTexts().some((t) => t.includes('at least 8'))).toBe(true);
     expect(inputs[2].getAttribute('aria-invalid')).toBe('true');
-    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
+    expect(toasts.toasts.some((t) => t.message.includes('Fix the highlighted'))).toBe(true);
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -293,7 +293,7 @@ describe('Admin UsersPage — create / edit / delete', () => {
     const errors = fieldErrorTexts();
     expect(errors).toContain('Username is required.');
     expect(errors).toContain('Email is required.');
-    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
+    expect(toasts.toasts.some((t) => t.message.includes('Fix the highlighted'))).toBe(true);
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -715,7 +715,7 @@ describe('Admin UsersPage — profiles modal', () => {
     // R13-09: inline error under the PIN field + generic summary toast.
     expect(fieldErrorTexts(subform)).toContain('PIN must be 4 or 6 digits.');
     expect(pinInput.getAttribute('aria-invalid')).toBe('true');
-    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
+    expect(toasts.toasts.some((t) => t.message.includes('Fix the highlighted'))).toBe(true);
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -945,7 +945,7 @@ describe('Admin UsersPage — profile mutation error & branch paths', () => {
     const toasts = useToastStore();
     // R13-09: inline error under the Name field + generic summary toast.
     expect(fieldErrorTexts(subform)).toContain('Profile name is required.');
-    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
+    expect(toasts.toasts.some((t) => t.message.includes('Fix the highlighted'))).toBe(true);
     expect(post).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -1424,7 +1424,7 @@ describe('Admin UsersPage — relay limits (hub-only)', () => {
     // constraints cannot express) + generic summary toast.
     expect(fieldErrorTexts().some((t) => t.includes('Non-negative GiB'))).toBe(true);
     expect(down.getAttribute('aria-invalid')).toBe('true');
-    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
+    expect(toasts.toasts.some((t) => t.message.includes('Fix the highlighted'))).toBe(true);
     w.unmount();
   });
 
@@ -1446,7 +1446,7 @@ describe('Admin UsersPage — relay limits (hub-only)', () => {
     // R13-09: inline per-field error + summary toast (old law: toast-only).
     expect(fieldErrorTexts().some((t) => t.includes('whole number 0–1000'))).toBe(true);
     expect(streams.getAttribute('aria-invalid')).toBe('true');
-    expect(toasts.toasts.some((t) => t.message.includes('fix the highlighted'))).toBe(true);
+    expect(toasts.toasts.some((t) => t.message.includes('Fix the highlighted'))).toBe(true);
     w.unmount();
   });
 

@@ -186,7 +186,7 @@ async function loadLibraries(serverId: string): Promise<void> {
 
 async function createLink(): Promise<void> {
   if (!formServerId.value) {
-    toasts.error('Please select a server.');
+    toasts.error('Select a server.');
     return;
   }
   creating.value = true;

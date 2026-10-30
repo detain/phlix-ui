@@ -155,19 +155,19 @@ describe('MediaDetail — missing-episodes toast pluralisation (S134)', () => {
     return count === 0 ? success : warning;
   }
 
-  it('says "1 episode missing" for exactly one', async () => {
+  it('says "1 episode missing." for exactly one', async () => {
     const warning = await runMissingEpisodes(1);
-    expect(warning).toHaveBeenCalledWith('1 episode missing');
+    expect(warning).toHaveBeenCalledWith('1 episode missing.');
   });
 
-  it('says "3 episodes missing" for more than one', async () => {
+  it('says "3 episodes missing." for more than one', async () => {
     const warning = await runMissingEpisodes(3);
-    expect(warning).toHaveBeenCalledWith('3 episodes missing');
+    expect(warning).toHaveBeenCalledWith('3 episodes missing.');
   });
 
-  it('keeps the zero case as its own message, not "0 episodes missing"', async () => {
+  it('keeps the zero case as its own message, not "0 episodes missing."', async () => {
     const success = await runMissingEpisodes(0);
-    expect(success).toHaveBeenCalledWith('No missing episodes');
+    expect(success).toHaveBeenCalledWith('No missing episodes.');
   });
 });
 
@@ -1339,7 +1339,7 @@ describe('MediaDetail — hostile wire urls (M-UI-11)', () => {
     expect(dl).toHaveBeenCalledTimes(1);
     expect(openSpy).not.toHaveBeenCalled();
     expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link');
+    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link.');
     openSpy.mockRestore();
     w.unmount();
     document.body.innerHTML = '';

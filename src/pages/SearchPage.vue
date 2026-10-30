@@ -145,7 +145,7 @@ function onMatch(item: MediaItem): void {
 }
 function onMatchApplied(updated: MediaItem): void {
   items.value = items.value.map((i) => (i.id === updated.id ? updated : i));
-  toasts.success(`Updated metadata for “${updated.name}”`);
+  toasts.success(`Updated metadata for “${updated.name}”.`);
 }
 </script>
 

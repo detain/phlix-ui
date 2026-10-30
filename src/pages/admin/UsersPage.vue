@@ -253,7 +253,7 @@ function closeUserForm(): void {
 
 async function submitUserForm(): Promise<void> {
   if (!validateUserForm()) {
-    toasts.error('Please fix the highlighted values before saving.');
+    toasts.error('Fix the highlighted values before saving.');
     return;
   }
   const existing = editingUser.value;
@@ -440,7 +440,7 @@ async function submitProfileForm(): Promise<void> {
   if (!profileName.value.trim()) {
     // R13-09: inline per-field error, same Enter/click path.
     profileNameError.value = 'Profile name is required.';
-    toasts.error('Please fix the highlighted values before saving.');
+    toasts.error('Fix the highlighted values before saving.');
     return;
   }
   profileSubmitting.value = true;
@@ -511,7 +511,7 @@ async function submitSetPin(): Promise<void> {
   if (!/^\d{4}$/.test(pinValue.value) && !/^\d{6}$/.test(pinValue.value)) {
     // R13-09: inline per-field error, same Enter/click path.
     pinError.value = 'PIN must be 4 or 6 digits.';
-    toasts.error('Please fix the highlighted values before saving.');
+    toasts.error('Fix the highlighted values before saving.');
     return;
   }
   pinSubmitting.value = true;
@@ -669,7 +669,7 @@ async function submitRelay(): Promise<void> {
   streamsError.value =
     streams === null ? 'A whole number 0–1000 (0 = unlimited).' : null;
   if (bytesIn === null || bytesOut === null || streams === null) {
-    toasts.error('Please fix the highlighted values before saving.');
+    toasts.error('Fix the highlighted values before saving.');
     return;
   }
 

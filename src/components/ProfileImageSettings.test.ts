@@ -174,7 +174,7 @@ describe('ProfileImageSettings — file selection and validation', () => {
     await selectFile(w, file('anim.gif', 'image/gif', 100));
 
     expect(useToastStore().toasts.map((t) => [t.tone, t.message])).toEqual([
-      ['error', 'Please select a PNG, JPEG, or WEBP image.'],
+      ['error', 'Select a PNG, JPEG, or WEBP image.'],
     ]);
     expect(w.find('.pis__pending').exists()).toBe(false);
     expect(created).toHaveLength(0);

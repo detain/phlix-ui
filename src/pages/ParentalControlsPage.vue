@@ -1000,7 +1000,7 @@ function askDeleteTag(tag: ProfileTag): void {
 
 .parental-section__item-meta {
   font-size: var(--text-xs);
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .parental-section__item-actions {
@@ -1028,7 +1028,7 @@ function askDeleteTag(tag: ProfileTag): void {
 
 .parental-section__limits-label {
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .parental-section__limits-value {
@@ -1067,7 +1067,7 @@ function askDeleteTag(tag: ProfileTag): void {
 .parental-form__label {
   font-size: var(--text-xs);
   font-weight: var(--fw-medium, 500);
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .parental-form__day-buttons {

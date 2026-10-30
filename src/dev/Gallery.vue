@@ -158,8 +158,8 @@ const iconNames = [
         <Button @click="modalOpen = true">Open Modal</Button>
         <Button variant="outline" @click="sheetOpen = true">Open Sheet</Button>
         <Tooltip text="Add to watchlist"><IconButton name="plus" label="Add" variant="outline" /></Tooltip>
-        <Button variant="subtle" @click="toasts.success('Saved to your library', { action: { label: 'Undo', onClick: () => {} } })">Toast: success</Button>
-        <Button variant="subtle" @click="toasts.error('Failed to load library')">Toast: error</Button>
+        <Button variant="subtle" @click="toasts.success('Saved to your library.', { action: { label: 'Undo', onClick: () => {} } })">Toast: success</Button>
+        <Button variant="subtle" @click="toasts.error('Failed to load library.')">Toast: error</Button>
       </div>
       <Modal v-model="modalOpen" title="Confirm deletion">
         <p class="g-muted">This removes the item from your library. This cannot be undone.</p>

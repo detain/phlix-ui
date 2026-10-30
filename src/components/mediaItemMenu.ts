@@ -23,8 +23,8 @@ export interface MediaItemMenuContext {
  */
 export const MENU_LABELS = {
   addToPlaylist: 'Add to playlist',
-  markPlayed: 'Mark played',
-  markUnplayed: 'Mark unplayed',
+  markWatched: 'Mark watched',
+  markUnwatched: 'Mark unwatched',
   download: 'Download',
   missingEpisodes: 'View missing episodes',
   shuffle: 'Shuffle',
@@ -40,7 +40,7 @@ export const MENU_LABELS = {
 
 /**
  * Build the ⋯ action menu for a media item. Everyone gets the playback/library
- * actions (playlist, played, download, shuffle, and — for series/season cards —
+ * actions (playlist, watched, download, shuffle, and — for series/season cards —
  * missing episodes); admins additionally get the metadata / image / debug /
  * remove actions.
  *
@@ -52,7 +52,7 @@ export function buildMediaItemMenu(item: MediaItem, ctx: MediaItemMenuContext): 
   const L = MENU_LABELS;
   const items: MenuItem[] = [
     { label: L.addToPlaylist },
-    { label: ctx.isWatched ? L.markUnplayed : L.markPlayed },
+    { label: ctx.isWatched ? L.markUnwatched : L.markWatched },
     { label: L.download },
   ];
 

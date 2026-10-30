@@ -78,19 +78,19 @@ async function onPlay(item: MediaItem): Promise<void> {
       player.resumeMap,
     );
     if (!resolved) {
-      toasts.info('Nothing to play yet');
+      toasts.info('Nothing to play yet.');
       return;
     }
     go('player', resolved.id);
   } catch (e) {
     if (isAbort(e)) return;
-    toasts.info('Nothing to play yet');
+    toasts.info('Nothing to play yet.');
   }
 }
 
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
-  else toasts.info(`Details for “${item.name}” are coming soon`);
+  else toasts.info(`Details for “${item.name}” are coming soon.`);
 }
 
 function onWatchlist(item: MediaItem): void {
@@ -103,9 +103,9 @@ function onWatchlist(item: MediaItem): void {
 
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked “${item.name}” as watched`);
+    toasts.success(`Marked “${item.name}” as watched.`);
   } else {
-    toasts.info(`Marked “${item.name}” as unwatched`);
+    toasts.info(`Marked “${item.name}” as unwatched.`);
   }
 }
 
@@ -123,7 +123,7 @@ function onMatch(item: MediaItem): void {
 }
 function onMatchApplied(updated: MediaItem): void {
   items.value = items.value.map((i) => (i.id === updated.id ? updated : i));
-  toasts.success(`Updated metadata for “${updated.name}”`);
+  toasts.success(`Updated metadata for “${updated.name}”.`);
 }
 
 function retry(): void {

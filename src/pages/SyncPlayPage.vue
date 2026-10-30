@@ -245,7 +245,7 @@ function onJoined(room: SyncPlayRoom): void {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   margin: 0;
 }
 
@@ -258,7 +258,7 @@ function onJoined(room: SyncPlayRoom): void {
 .syncplay-page__section-title {
   font-size: var(--text-lg);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   margin: 0;
 }
 
@@ -274,7 +274,7 @@ function onJoined(room: SyncPlayRoom): void {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-6);
-  background: var(--color-destructive-subtle);
+  background: var(--error-bg);
   border-radius: var(--radius-lg);
   text-align: center;
 }
@@ -316,13 +316,13 @@ function onJoined(room: SyncPlayRoom): void {
 
 .syncplay-page__room-name {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   margin: 0;
 }
 
 .syncplay-page__room-meta {
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
@@ -366,7 +366,7 @@ function onJoined(room: SyncPlayRoom): void {
 .syncplay-page__members-title {
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   margin: 0 0 var(--space-3) 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -409,7 +409,7 @@ function onJoined(room: SyncPlayRoom): void {
 .syncplay-page__member-name {
   flex: 1;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .syncplay-page__member-role {
@@ -438,12 +438,12 @@ function onJoined(room: SyncPlayRoom): void {
 .syncplay-page__empty-text {
   font-size: var(--text-lg);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text);
   margin: 0;
 }
 
 .syncplay-page__empty-hint {
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   margin: 0;
   max-width: 300px;
 }

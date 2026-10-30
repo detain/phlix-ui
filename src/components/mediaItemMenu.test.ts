@@ -39,7 +39,7 @@ describe('buildMediaItemMenu', () => {
   it('everyone gets the core actions (playlist, played, download, shuffle)', () => {
     const labels = buildMediaItemMenu(makeItem(), ctx()).map((m) => m.label);
     expect(labels).toContain(MENU_LABELS.addToPlaylist);
-    expect(labels).toContain(MENU_LABELS.markPlayed);
+    expect(labels).toContain(MENU_LABELS.markWatched);
     expect(labels).toContain(MENU_LABELS.download);
     expect(labels).toContain(MENU_LABELS.shuffle);
   });
@@ -56,13 +56,13 @@ describe('buildMediaItemMenu', () => {
     expect(MENU_LABELS).not.toHaveProperty('dislike');
   });
 
-  it('shows "Mark played" when not watched and "Mark unplayed" when watched', () => {
+  it('shows "Mark watched" when not watched and "Mark unwatched" when watched', () => {
     expect(buildMediaItemMenu(makeItem(), ctx({ isWatched: false })).map((m) => m.label)).toContain(
-      MENU_LABELS.markPlayed,
+      MENU_LABELS.markWatched,
     );
     const watched = buildMediaItemMenu(makeItem(), ctx({ isWatched: true })).map((m) => m.label);
-    expect(watched).toContain(MENU_LABELS.markUnplayed);
-    expect(watched).not.toContain(MENU_LABELS.markPlayed);
+    expect(watched).toContain(MENU_LABELS.markUnwatched);
+    expect(watched).not.toContain(MENU_LABELS.markWatched);
   });
 
   it('only series/season items get "View missing episodes"', () => {

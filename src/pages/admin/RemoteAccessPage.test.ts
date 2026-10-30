@@ -641,7 +641,7 @@ describe('Admin RemoteAccessPage — relay tunnel (S39 honest reframe)', () => {
     expect(w.text()).toContain('42ms latency'); // summary
     expect(w.find('#remote-relay-body').text()).toContain('last recorded heartbeat');
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message === 'Relay latency: 42ms')).toBe(true);
+    expect(toasts.toasts.some((t) => t.message === 'Relay latency: 42ms.')).toBe(true);
     w.unmount();
   });
 

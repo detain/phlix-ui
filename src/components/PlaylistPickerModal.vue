@@ -202,10 +202,10 @@ async function addToExisting(
   if (!target || !isManageable(target)) return;
   try {
     await getClient().addToPlaylist(playlistId, item.id);
-    toasts.success(`Added to playlist “${target.name}”`);
+    toasts.success(`Added to playlist “${target.name}”.`);
     close();
   } catch (e) {
-    toasts.error('Failed to add to playlist', { message: errMessage(e) });
+    toasts.error('Failed to add to playlist.', { message: errMessage(e) });
   }
 }
 
@@ -220,12 +220,12 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
   try {
     created = await api.createPlaylist(name, item.library_id as string);
   } catch (e) {
-    toasts.error('Failed to create playlist', { message: errMessage(e) });
+    toasts.error('Failed to create playlist.', { message: errMessage(e) });
     return;
   }
   try {
     await api.addToPlaylist(created.id, item.id);
-    toasts.success(`Added to playlist “${created.name}”`);
+    toasts.success(`Added to playlist “${created.name}”.`);
     close();
   } catch (e) {
     const message = errMessage(e);
@@ -237,7 +237,7 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
         onClick: () => {
           api
             .deletePlaylist(created.id)
-            .then(() => toasts.success('Empty playlist deleted'))
+            .then(() => toasts.success('Empty playlist deleted.'))
             .catch((cleanupError) =>
               toasts.error('Failed to delete the empty playlist.', {
                 message: errMessage(cleanupError),

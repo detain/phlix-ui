@@ -12,6 +12,37 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui minors lane 2026-10-30 (W-min190): every toast ends like a sentence, the card menu joins the watched vocabulary, and the phantom tokens finally resolve
+
+- **Toast punctuation law (M-UI-01):** 67 inline `toasts.*()` copy strings across 16 components/pages
+  gained the terminal period that the catalog and `errors.ts` already kept — measured at tip, the
+  split was 35 static-literal offenders plus 32 interpolated-template ones (the review-era figure of
+  "21 of 133" predated the wave's surfaces). Ellipsis endings (`Preparing download…`) already comply;
+  one `${reason}`-terminated string cannot take a static period and is disclosed-skipped; a trailing
+  space in the admin restart-timeout message was trimmed. Catalog half: `player.subtitleAdded` /
+  `subtitleAddedGeneric` perioded in all 7 registries (ja gains `。`). EmptyState **titles** stay
+  bare per the title/label role law (M-UI-35 family). All ~25 golden-toast assertions across 10 test
+  files rotated as mechanical follows — permanent disclosed re-pins.
+- **Validation register unified (M-UI-03):** the 9 imperative form-validation toasts dropped
+  "Please " to join the dominant bare-imperative voice ('Fix the highlighted values before saving.',
+  'Select a server.', …). Retry guidance ('… Please try again.') and catalog session copy keep the
+  courteous form deliberately — the law bans interleaving within one form, not the word.
+- **One vocabulary for the watched state (M-UI-07):** `mediaItemMenu.ts` `markPlayed`/`markUnplayed`
+  renamed (keys + values) to `markWatched: 'Mark watched'` / `markUnwatched: 'Mark unwatched'`,
+  matching the catalog (`itemActions.markWatched`), the `Marked “…” as watched` toasts and the
+  Continue-Watching rail — the menu is label-dispatched, the switch cases follow in MediaCard and
+  MediaDetail.
+- **Phantom design tokens cured (M-UI-29):** the three fallback-less CSS variables that render as
+  transparent inheritance (`--text-primary` ×7, `--text-secondary` ×8, `--color-destructive-subtle`
+  ×1 — defs=0 in the shipped bundle) replaced with the real names `--text`, `--color-text-secondary`
+  (the tokens alias the review pointed at) and `--error-bg` across SyncPlayPage, ParentalControlsPage
+  and admin/UpdateAvailableBanner. New tripwire `src/test/phantom-tokens.test.ts` keeps the names
+  from returning and proves the replacements are defined in `dist/style.css`. A generic census found
+  a further ~24 fallback-less var names (plausibly theme/runtime-injected palette vars) — logged as
+  an unadjudicated rider for a theme-contract pass, not touched here.
+- Verification: vue-tsc 0, eslint 0, full vitest serial green (see fixlog W-min190 for exact counts),
+  build ×2 deterministic, dist:check clean (dist moves: catalog values, inlined page styles).
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min189): the build floor gets pinned, the bundle gets a name tag, and the audit gate finally arrives
 
 - **M-UI-22 (fedev m2).** Both Vite configs now pin `build.target: 'es2021'`

@@ -242,12 +242,12 @@ onMounted(() => {
 .update-banner--update {
   border-color: var(--accent);
   background: var(--accent-bg, var(--surface-glass));
-  color: var(--text-primary);
+  color: var(--text);
 }
 .update-banner--warning {
   border-color: var(--warning);
   background: var(--warning-bg, var(--surface-glass));
-  color: var(--text-primary);
+  color: var(--text);
 }
 .update-banner__icon {
   flex: 0 0 auto;
@@ -267,7 +267,7 @@ onMounted(() => {
 .update-banner__error {
   margin: var(--space-1) 0 0;
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 .update-banner__error {
   color: var(--warning);
@@ -286,7 +286,7 @@ onMounted(() => {
 .update-banner__announcement {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 .update-banner__announcement:empty {
   display: none;

@@ -129,7 +129,7 @@ describe('InviteLinksPage — create modal', () => {
   // Discriminating regression test: the page typed the servers response as
   // {id, server_name} while the hub sends camelCase {serverId, serverName}, so every
   // option was {value: undefined, label: undefined} and createLink() always failed
-  // with "Please select a server."
+  // with "Select a server."
   it('builds selectable server options with DEFINED values from the camelCase payload', async () => {
     const { client } = makeClient();
     const w = mountPage(client);

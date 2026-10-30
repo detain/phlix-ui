@@ -209,7 +209,7 @@ describe('SecuritySettingsPage', () => {
     );
     expect(deleteCall).toBeTruthy();
     expect(isRoute(deleteCall![0], credentialPath('toDelete-abcdefghijklmnop'))).toBe(true);
-    expect(successSpy).toHaveBeenCalledWith('Passkey deleted successfully');
+    expect(successSpy).toHaveBeenCalledWith('Passkey deleted successfully.');
     w.unmount();
   });
 
@@ -245,7 +245,7 @@ describe('SecuritySettingsPage', () => {
     expect(urls.some((u) => isRoute(u, REGISTER_OPTIONS_PATH))).toBe(true);
     expect(createMock).toHaveBeenCalledTimes(1);
     expect(urls.some((u) => isRoute(u, REGISTER_VERIFY_PATH))).toBe(true);
-    expect(successSpy).toHaveBeenCalledWith('Passkey registered successfully');
+    expect(successSpy).toHaveBeenCalledWith('Passkey registered successfully.');
     w.unmount();
   });
 

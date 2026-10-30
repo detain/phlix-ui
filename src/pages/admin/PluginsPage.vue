@@ -916,7 +916,7 @@ async function submitConfigure(): Promise<void> {
       fieldErrors.value = errors;
       // A banner as well as the toast: the offending field may be scrolled well
       // out of view in a long schema, and a toast is gone before it is found.
-      configError.value = 'Please fix the errors below and try again.';
+      configError.value = 'Fix the errors below and try again.';
       toasts.error('Some settings could not be saved — check the highlighted fields.');
     } else {
       configError.value = errMessage(e, 'Failed to save settings.');

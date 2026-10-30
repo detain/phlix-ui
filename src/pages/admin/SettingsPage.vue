@@ -825,7 +825,7 @@ async function handleSubmit(): Promise<void> {
   const numericErrors = validateNumericFields();
   if (Object.keys(numericErrors).length > 0) {
     fieldErrors.value = numericErrors;
-    toasts.error('Please fix the highlighted values before saving.');
+    toasts.error('Fix the highlighted values before saving.');
     return;
   }
 
@@ -886,7 +886,7 @@ async function handleSubmit(): Promise<void> {
       const body = e.body as { errors?: Record<string, string> } | undefined;
       if (body?.errors && Object.keys(body.errors).length > 0) {
         fieldErrors.value = body.errors;
-        toasts.error('Please fix the validation errors.');
+        toasts.error('Fix the validation errors.');
       } else {
         // A 400 without a per-field map is still a rejection the operator
         // deserves a localized account of, not the raw wire sentence (M-UI-13).

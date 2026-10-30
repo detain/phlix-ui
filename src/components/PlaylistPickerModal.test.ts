@@ -105,7 +105,7 @@ describe('PlaylistPickerModal', () => {
 
     expect(client.createPlaylist).not.toHaveBeenCalled();
     expect(client.addToPlaylist).toHaveBeenCalledWith('pl1', 'm1');
-    expect(success).toHaveBeenCalledWith('Added to playlist “Faves”');
+    expect(success).toHaveBeenCalledWith('Added to playlist “Faves”.');
     expect(w.emitted('update:modelValue')?.at(-1)).toEqual([false]);
   });
 
@@ -122,7 +122,7 @@ describe('PlaylistPickerModal', () => {
     (addBtn as HTMLButtonElement).click();
     await flushPromises();
 
-    expect(error).toHaveBeenCalledWith('Failed to add to playlist', {
+    expect(error).toHaveBeenCalledWith('Failed to add to playlist.', {
       message: 'collection.items failed',
     });
     expect(w.emitted('update:modelValue')).toBeUndefined();
@@ -151,7 +151,7 @@ describe('PlaylistPickerModal', () => {
     expect(client.createPlaylist).toHaveBeenCalledTimes(1);
     expect(client.createPlaylist).toHaveBeenCalledWith('Fresh', 'lib-1');
     expect(client.addToPlaylist).toHaveBeenCalledWith('pl-new', 'm1');
-    expect(success).toHaveBeenCalledWith('Added to playlist “Fresh”');
+    expect(success).toHaveBeenCalledWith('Added to playlist “Fresh”.');
     expect(w.emitted('update:modelValue')?.at(-1)).toEqual([false]);
   });
 
@@ -187,7 +187,7 @@ describe('PlaylistPickerModal', () => {
     opts.action!.onClick();
     await flushPromises();
     expect(client.deletePlaylist).toHaveBeenCalledWith('pl-new');
-    expect(success).toHaveBeenCalledWith('Empty playlist deleted');
+    expect(success).toHaveBeenCalledWith('Empty playlist deleted.');
   });
 
   it('new tab → an item without a library_id shows the fail-loud note and sends no request', async () => {
