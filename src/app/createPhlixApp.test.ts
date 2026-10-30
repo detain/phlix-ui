@@ -205,7 +205,7 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     // L4: the title travels as an i18n key (resolveRouteTitle translates it);
     // pin BOTH the key and what the catalog resolves it to.
     expect(route!.meta?.title).toBe('mcpTokens.title');
-    expect(DEFAULT_MESSAGES.mcpTokens.title).toBe('MCP Tokens');
+    expect(DEFAULT_MESSAGES.mcpTokens.title).toBe('MCP tokens');
 
     expect(
       server.some((r) => r.name === MCP_TOKENS_ROUTE_NAME),
@@ -248,7 +248,7 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
       );
       expect(item.to).toBe(route?.path);
       expect(item.id).toBe(MCP_TOKENS_ROUTE_NAME);
-      expect(item.label).toBe('MCP Tokens');
+      expect(item.label).toBe('MCP tokens');
     }
     // Default base matches the default `routerBase`.
     expect(mcpTokensMenuItem().to).toBe('/app/mcp-tokens');

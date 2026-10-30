@@ -2678,32 +2678,35 @@ var It = z("phlix-toast", () => {
 	function a() {
 		t.forEach((e) => clearTimeout(e)), t.clear(), e.value = [];
 	}
+	function o(e, t, n) {
+		if (t === void 0) return {
+			...n,
+			message: e
+		};
+		let { message: r, ...i } = t;
+		return r === void 0 ? {
+			...n,
+			...i,
+			message: e
+		} : {
+			...n,
+			title: i.title ?? e,
+			...i,
+			message: r
+		};
+	}
 	return {
 		toasts: e,
 		show: i,
 		dismiss: r,
 		clear: a,
-		success: (e, t) => i({
-			message: e,
-			tone: "success",
-			...t
-		}),
-		error: (e, t) => i({
-			message: e,
+		success: (e, t) => i(o(e, t, { tone: "success" })),
+		error: (e, t) => i(o(e, t, {
 			tone: "error",
-			duration: 8e3,
-			...t
-		}),
-		warning: (e, t) => i({
-			message: e,
-			tone: "warning",
-			...t
-		}),
-		info: (e, t) => i({
-			message: e,
-			tone: "info",
-			...t
-		})
+			duration: 8e3
+		})),
+		warning: (e, t) => i(o(e, t, { tone: "warning" })),
+		info: (e, t) => i(o(e, t, { tone: "info" }))
 	};
 });
 //#endregion
@@ -5327,7 +5330,7 @@ var zo = {
 		subtitleAddError: "Couldn’t add that subtitle. Please try again.",
 		subtitleAddNotFound: "That subtitle is no longer available.",
 		subtitleQuota: "Subtitle download limit reached.",
-		subtitleQuotaRemaining: "Your subtitle quota has {count} download left this period | Your subtitle quota has {count} downloads left this period.",
+		subtitleQuotaRemaining: "Your subtitle quota has {count} download left this period. | Your subtitle quota has {count} downloads left this period.",
 		subtitleQuotaReset: "Subtitle download limit reached. Resets at {time}.",
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Hearing impaired",
@@ -5378,7 +5381,7 @@ var zo = {
 		sepiaMode: "Sepia mode",
 		darkMode: "Dark mode"
 	},
-	mcpTokens: { title: "MCP Tokens" },
+	mcpTokens: { title: "MCP tokens" },
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "In SyncPlay room",
@@ -5398,13 +5401,17 @@ var zo = {
 		cancel: "Cancel",
 		loading: "Loading…",
 		noRooms: "No public rooms available",
-		errorCreate: "Failed to create the room",
-		errorJoin: "Failed to join the room",
+		errorCreate: "Failed to create the room.",
+		errorJoin: "Failed to join the room.",
 		errorLeave: "Failed to leave the room",
 		yourRole: "You are {role}",
 		roleOwner: "Owner",
-		roleModerator: "Moderator",
 		roleMember: "Member",
+		roleEditor: "Editor",
+		roleContributor: "Contributor",
+		currentRoom: "Current room",
+		notInRoom: "You're not in a SyncPlay room.",
+		notInRoomHint: "Create or join a room to watch together with others.",
 		title: "SyncPlay",
 		roomNamePlaceholder: "Enter room name",
 		roomIdPlaceholder: "Enter room ID",
@@ -5422,6 +5429,7 @@ var zo = {
 		lockedRoom: "Password-protected",
 		availableRooms: "Rooms"
 	},
+	playlist: { loadError: "Couldn’t load this playlist." },
 	music: {
 		title: "Music Library",
 		nav: "Music",
@@ -5452,9 +5460,9 @@ var zo = {
 		qualityMedium: "Medium",
 		qualityHigh: "High",
 		qualityLossless: "Lossless",
-		allTracks: "All Tracks",
+		allTracks: "All tracks",
 		searchTracks: "Search tracks…",
-		playAll: "Play All",
+		playAll: "Play all",
 		matching: "matching",
 		noTracksMatch: "No tracks match your search.",
 		selectTrack: "Select a track to play",
@@ -5526,8 +5534,8 @@ var zo = {
 		unsaved: "Unsaved",
 		saveGroup: "Save {name}",
 		groupSaved: "{name} settings saved.",
-		groupSaveError: "Failed to save {name} settings",
-		loadFailed: "Failed to load settings",
+		groupSaveError: "Failed to save {name} settings.",
+		loadFailed: "Failed to load settings.",
 		loadErrorTitle: "Couldn't load settings"
 	},
 	explore: { title: "Explore Similar" },
@@ -5545,7 +5553,7 @@ var zo = {
 		markUnwatchedAria: "Mark as unwatched",
 		noEpisodes: "No episodes to play yet",
 		loadingAria: "Loading season",
-		loadError: "Couldn't load this season",
+		loadError: "Couldn't load this season.",
 		backToSeries: "Back to series",
 		episodes: "Episodes",
 		notFound: "Season not found",
@@ -5555,9 +5563,9 @@ var zo = {
 		title: "Parental Controls",
 		schedules: "Schedules",
 		tags: "Tags",
-		streamLimits: "Stream Limits",
-		createSchedule: "Create Schedule",
-		editSchedule: "Edit Schedule",
+		streamLimits: "Stream limits",
+		createSchedule: "Create schedule",
+		editSchedule: "Edit schedule",
 		scheduleName: "Name",
 		scheduleNamePlaceholder: "e.g. Weekday Evenings",
 		startTime: "Start time",
@@ -5565,13 +5573,13 @@ var zo = {
 		days: "Days",
 		active: "Active",
 		inactive: "Inactive",
-		addTag: "Add Tag",
+		addTag: "Add tag",
 		tagName: "Tag name",
 		tagNamePlaceholder: "e.g. kids, restricted, work",
 		tagType: "Tag type",
 		tagBlocked: "Blocked",
 		tagAllowed: "Allowed",
-		updateLimits: "Update Limits",
+		updateLimits: "Update limits",
 		maxConcurrentStreams: "Max concurrent streams",
 		maxBandwidth: "Max total bandwidth (Kbps)",
 		maxBandwidthPlaceholder: "Leave empty for no limit",
@@ -5589,16 +5597,16 @@ var zo = {
 		streamLimitsUpdated: "Stream limits updated.",
 		deleteScheduleConfirm: "Delete schedule {name}?",
 		removeTagConfirm: "Remove tag {tag}?",
-		loadErrorSchedules: "Couldn't load schedules",
+		loadErrorSchedules: "Couldn't load schedules.",
 		loadErrorTags: "Couldn't load tags",
 		loadErrorStreamLimits: "Couldn't load stream limits",
 		retry: "Retry"
 	},
 	admin: {
 		"transcoding.title": "Transcoding",
-		"transcoding.preferredAccelerator": "Preferred Accelerator",
-		"transcoding.hdrOutput": "HDR Output",
-		"transcoding.toneMapMode": "Tone Map Mode",
+		"transcoding.preferredAccelerator": "Preferred accelerator",
+		"transcoding.hdrOutput": "HDR output",
+		"transcoding.toneMapMode": "Tone map mode",
 		settingsRejected: "The server rejected these settings — nothing was saved.",
 		settingsRejectAllMethods: "At least one sign-in method must stay enabled. Keep at least one turned on and save again.",
 		settingsRejectAdminLockout: "This change would leave an active administrator with no usable way to sign in. Enable another sign-in method for them first, then save again.",

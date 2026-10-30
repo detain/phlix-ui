@@ -1,10 +1,10 @@
-import { r as e } from "./AuthField-B7b9Ju6g.js";
+import { r as e } from "./AuthField-D9JecZ2P.js";
 import { n as t, t as n } from "./Icon-CIwTuFLd.js";
 import { t as r } from "./IconButton-y6A8Bq4D.js";
 import { a as i, i as a, n as o, o as s, r as c, t as l } from "./useFocusTrap-rrmOWOBy.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-CFPikE8Z.js";
 import { a as h, i as g, n as _, o as v, r as y, s as b, t as x } from "./plural-DMM7pLFA.js";
-import { i as S, n as C, r as w, t as T } from "./useMessages-M5VcrfIX.js";
+import { i as S, n as C, r as w, t as T } from "./useMessages-OTo-5xOb.js";
 import { _ as ee, a as E, b as te, c as ne, d as re, f as ie, g as ae, h as oe, i as se, l as ce, m as le, n as ue, o as de, p as fe, r as pe, t as me, u as he, v as ge, y as D } from "./client-DdVqCKVh.js";
 import { n as O, r as _e, t as ve } from "./useApiBase-CV_r-Kk4.js";
 import { t as ye } from "./useAuthStore-Bi1-VYV4.js";
@@ -12,16 +12,16 @@ import { a as be, c as xe, i as Se, l as Ce, n as we, o as Te, r as Ee, s as De,
 import { n as ke, r as Ae, t as je } from "./useProfileStore-2NN98uqT.js";
 import { i as Me, n as Ne, r as Pe, t as k } from "./useImageSrc-KnN1T9Ga.js";
 import { i as Fe, n as Ie, r as Le, t as Re } from "./usePlayerStore-D8A_gb_c.js";
-import { t as ze } from "./useToastStore-BDoKlU6N.js";
-import { n as Be, t as Ve } from "./ThumbRating-B5EFc49E.js";
+import { t as ze } from "./useToastStore-DIWpaCOl.js";
+import { n as Be, t as Ve } from "./ThumbRating-CXlGmbKm.js";
 import { i as He, o as Ue, s as We } from "./shortcuts-Ck2yBFUB.js";
 import { t as Ge } from "./Tooltip-D_txjC1i.js";
-import { t as Ke } from "./Spinner-CcXHI0nh.js";
-import { t as qe } from "./NetworkHealthIndicator-BkfPE7iw.js";
-import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-DvCf2CdR.js";
+import { t as Ke } from "./Spinner-DNw3jstB.js";
+import { t as qe } from "./NetworkHealthIndicator-BtXLI5LJ.js";
+import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-CeDPjX6h.js";
 import { i as vt, n as yt, r as bt, t as xt } from "./Kbd-DdcgRPIx.js";
 import { a as St, i as Ct, n as wt, o as Tt, r as Et, t as Dt } from "./useLibrariesStore-5icSJdQF.js";
-import { n as Ot, t as kt } from "./HomeRow-CDngL2E9.js";
+import { n as Ot, t as kt } from "./HomeRow-BGevIwX8.js";
 import { t as At } from "./safeHref-C9H0Sqte.js";
 import { t as A } from "./EmptyState-BAyOxAcK.js";
 import { t as j } from "./Button-BuG0GvCa.js";
@@ -32,20 +32,20 @@ import { t as M } from "./Badge-A88fI41k.js";
 import { t as Kt } from "./Slider-DqFxiMp4.js";
 import { t as qt } from "./Switch-ibkXiiN-.js";
 import { t as Jt } from "./Chip-CYhlmz6l.js";
-import { t as Yt } from "./Select-CUH5f-z1.js";
-import { t as Xt } from "./Combobox-DmL52a_p.js";
-import { t as Zt } from "./Modal-9IqluoNm.js";
-import { t as Qt } from "./ConfirmDialog-CusF0Ku-.js";
+import { t as Yt } from "./Select-Cb4gljeK.js";
+import { t as Xt } from "./Combobox-BozhhY7p.js";
+import { t as Zt } from "./Modal-2Qr50B3R.js";
+import { t as Qt } from "./ConfirmDialog-wsq8_uS0.js";
 import { t as N } from "./Skeleton-rHw-IJtl.js";
 import { t as $t } from "./PageHint-BGYg6qRJ.js";
 import { t as en } from "./Tabs-7t3yuCWn.js";
 import { t as tn } from "./Menu-Dm56tG4N.js";
 import { t as nn } from "./HelpText-aA3EQtU4.js";
-import { o as rn, t as an } from "./MediaCard-r-S1rP4Q.js";
-import { t as on } from "./MediaGrid-CKXRxhY1.js";
-import { t as sn } from "./MediaRow-iy9YTY0U.js";
+import { o as rn, t as an } from "./MediaCard-DTXMqpVg.js";
+import { t as on } from "./MediaGrid-Cp1ECrqw.js";
+import { t as sn } from "./MediaRow-Du8t4M9v.js";
 import { n as cn, t as ln } from "./media-query-DKjhlX8r.js";
-import { n as un, t as dn } from "./metadata-sources-DOrPr-47.js";
+import { n as un, t as dn } from "./metadata-sources-B64y_6Mh.js";
 import { n as fn, t as pn } from "./logs-DadTfaTq.js";
 import { t as mn } from "./dashboard-BTCOCTHQ.js";
 import { n as hn, r as gn, t as _n } from "./webhooks-aMh0Jywf.js";
@@ -64,13 +64,13 @@ import { n as jn, r as Mn, t as Nn } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as Pn, n as Fn, r as In, t as Ln } from "./plugins-Dj2gQeBS.js";
 import { n as Rn, r as zn, t as Bn } from "./maintenance-CETCLHzL.js";
 import { t as Vn } from "./hubDashboard-BhOaaDD-.js";
-import { t as Hn } from "./LoginForm-D2EZshgq.js";
-import { t as Un } from "./SignupForm-B125wJKo.js";
+import { t as Hn } from "./LoginForm-D7RYjNCc.js";
+import { t as Un } from "./SignupForm-mE0GzX88.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as Wn, t as Gn } from "./debounce-BkSsZiXZ.js";
 import { t as Kn } from "./Input-DOj6fN8q.js";
-import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-Beyt1vJj.js";
-import { t as Zn } from "./useMediaStore-Bam6M9Oo.js";
+import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-DxeYbjpG.js";
+import { t as Zn } from "./useMediaStore-ULPg9CCv.js";
 import { Fragment as F, Teleport as Qn, Transition as $n, TransitionGroup as er, computed as I, createApp as tr, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as nr, createTextVNode as V, createVNode as H, defineAsyncComponent as rr, defineComponent as U, getCurrentScope as ir, inject as ar, nextTick as or, normalizeClass as W, normalizeStyle as sr, onBeforeUnmount as cr, onMounted as G, onScopeDispose as lr, onUnmounted as ur, openBlock as K, provide as dr, readonly as fr, ref as q, renderList as J, renderSlot as pr, resolveComponent as mr, resolveDynamicComponent as hr, toDisplayString as Y, toValue as gr, unref as X, useId as _r, vModelSelect as vr, vModelText as yr, vShow as br, watch as Z, watchEffect as xr, withCtx as Q, withDirectives as Sr, withModifiers as Cr } from "vue";
 import { createPinia as wr, defineStore as Tr } from "pinia";
 import { RouterLink as Er, RouterView as Dr, createRouter as Or, createWebHistory as kr, useRoute as Ar, useRouter as $ } from "vue-router";
@@ -918,7 +918,7 @@ var la = ["src", "alt"], ua = { class: "brand-wordmark" }, da = {
 		Qi();
 		let t = vt(), i = $(), a = Ar(), { t: o } = T(), s = Ue(), c = I(() => a.meta?.fullBleed === !0 && s.theaterActive);
 		$i();
-		let l = rr(() => import("./CommandPalette-BsBSMAjl.js")), u = q(!1);
+		let l = rr(() => import("./CommandPalette-B8sWtPUX.js")), u = q(!1);
 		Z(() => t.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1241,7 +1241,7 @@ var Ua = "mcp-tokens", Wa = "mcp-tokens";
 function Ga(e = "/app") {
 	return {
 		id: Ua,
-		label: "MCP Tokens",
+		label: "MCP tokens",
 		icon: "key",
 		to: `${e}/${Wa}`
 	};
@@ -1279,111 +1279,111 @@ function eo(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-CuiuBsfr.js")
+			component: () => import("./BrowsePage-D5XS1kpy.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-DkXaY_bk.js")
+			component: () => import("./MediaDetailPage-DNXN8D3f.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-CglVUh_6.js")
+			component: () => import("./SeasonPage-Bd0pBMVa.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-DkIYUyrg.js")
+			component: () => import("./LibraryPage-5oYiAiSA.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-pG4dolBP.js")
+			component: () => import("./PlayerPage-C51NUiHi.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-1JJa5ZL1.js")
+			component: () => import("./LoginPage-DNrL2pR4.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-C-TLRBL0.js")
+			component: () => import("./SignupPage-Dg2c9M9f.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-_hHQJmti.js")
+			component: () => import("./ConnectPage-DzP5eBL1.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-CETADyvM.js")
+			component: () => import("./SettingsPage-CSn4cKB5.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-DFa7Gasc.js")
+			component: () => import("./ExplorePage-qcdrliUi.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-OhDnYU5z.js")
+			component: () => import("./RecommendationsPage-DldZPCYl.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-CoNKJa9W.js")
+			component: () => import("./WatchHistoryPage-CVmhVyye.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-O4Wydo3u.js")
+			component: () => import("./SyncPlayPage-BxyAg_zX.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-BQRVMG1C.js")
+			component: () => import("./MusicLibraryPage-DwheVLKt.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-BvCrXYJm.js")
+			component: () => import("./ParentalControlsPage-DQxrWifz.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-DGgc_x77.js")
+			component: () => import("./ProfilesPage-DPPiWbnk.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-DZdOy7WB.js")
+			component: () => import("./PlaylistsPage-D0i0XSno.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-SH3YV9zT.js")
+			component: () => import("./PlaylistDetailPage-Dyo-If57.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Wa}`,
 		name: Ua,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-BYVyPyza.js")
+		component: () => import("./McpTokensPage-L3XwVdJG.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1627,9 +1627,9 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 					source: "user",
 					type: "user",
 					score: t
-				}), i("update:modelValue", t), o.success("Rating saved");
+				}), i("update:modelValue", t), o.success("Rating saved.");
 			} catch {
-				o.error("Failed to save rating");
+				o.error("Failed to save rating.");
 			} finally {
 				m.value = !1, c.value = !1, s.value = null;
 			}
@@ -1657,150 +1657,150 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 			class: "user-rating-picker__lock"
 		}), r[0] ||= B("span", { class: "user-rating-picker__signin" }, "Sign in to rate", -1)], 64))], 34));
 	}
-}), [["__scopeId", "data-v-097aaa59"]]), go = {
+}), [["__scopeId", "data-v-91112c2e"]]), go = {
 	name: "admin-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-DzQfmB33.js")
+	component: () => import("./DashboardPage-PJyZO0dU.js")
 }, _o = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-BGvXkWXq.js")
+	component: () => import("./UsersPage-BVYlvg0D.js")
 }, vo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-CIYq05kk.js")
+	component: () => import("./LogsPage-BfowtWAD.js")
 }, yo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-CXpKNvEl.js")
+	component: () => import("./WebhooksPage-kKKg9YLE.js")
 }, bo = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-B5j0taw1.js")
+	component: () => import("./ServicesPage-EQx3R_w7.js")
 }, xo = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-CFLbueRd.js")
+	component: () => import("./IntegrationsPage-Cle27PUW.js")
 }, So = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-ChqJHF7o.js")
+	component: () => import("./BackupPage-CSuA7XCo.js")
 }, Co = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-CJXtg4Ua.js")
+	component: () => import("./CastDevicesPage-9AVB43mM.js")
 }, wo = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-BkWgHuMY.js")
+	component: () => import("./DlnaServerPage-lRSWOR28.js")
 }, To = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-DEXQdJgk.js")
+	component: () => import("./RemoteAccessPage-Bb9pufry.js")
 }, Eo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-CEkF21ff.js")
+	component: () => import("./LiveTvPage-V3WEjSvx.js")
 }, Do = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-_CxeFJZb.js")
+	component: () => import("./CollectionsPage-Dru54Zkw.js")
 }, Oo = {
 	name: "admin-history",
 	path: "history",
 	label: "Watch History",
 	icon: "film",
-	component: () => import("./HistoryPage-Dfhj7Jry.js")
+	component: () => import("./HistoryPage-B25AhyIb.js")
 }, ko = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-BNKgHeir.js")
+	component: () => import("./SyncPlayPage-Bb8OdIzH.js")
 }, Ao = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-DvQbAxLZ.js")
+	component: () => import("./LibrariesPage-D3kQty5x.js")
 }, jo = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-BHo-MPTM.js")
+	component: () => import("./DuplicatesPage-DN9vqr3L.js")
 }, Mo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-ClYNDWwq.js")
+	component: () => import("./PluginsPage-3hPBEqeI.js")
 }, No = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-C9YxTspV.js")
+	component: () => import("./TasksPage-Cs5C-kjW.js")
 }, Po = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-Bw7j-OuK.js")
+	component: () => import("./TranscodingSettingsPage-RmRAQhLP.js")
 }, Fo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-upP4fW_B.js")
+	component: () => import("./SettingsPage-CSJHQnWc.js")
 }, Io = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-DBvXEens.js")
+	component: () => import("./HubDashboardPage-B1T9o2xN.js")
 }, Lo = {
 	name: "admin-metrics",
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-ChetagHB.js")
+	component: () => import("./MetricsPage-BzQzEV5f.js")
 }, Ro = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
 	label: "Audit Logs",
 	icon: "eye",
-	component: () => import("./AuditLogsPage-Bwpv2BFR.js")
+	component: () => import("./AuditLogsPage-CVbkJ_3W.js")
 }, zo = {
 	name: "admin-requests",
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-BWE3qAeu.js")
+	component: () => import("./RequestsPage-oATUnnal.js")
 }, Bo = [
 	go,
 	Lo,
@@ -6446,14 +6446,14 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		})) : !u.value && v.value.length === 0 ? (K(), L(A, {
 			key: 3,
 			icon: "image",
-			title: "No Photo Libraries"
+			title: "No photo libraries"
 		}, {
 			default: Q(() => [...t[4] ||= [B("p", null, "You don't have any photo libraries configured.", -1)]]),
 			_: 1
 		})) : !u.value && l.value.length === 0 ? (K(), L(A, {
 			key: 4,
 			icon: "image",
-			title: "No Albums Yet"
+			title: "No albums yet"
 		}, {
 			default: Q(() => [...t[5] ||= [B("p", null, "This library has no photos.", -1)]]),
 			_: 1
@@ -6471,7 +6471,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 			loading: "lazy"
 		}, null, 8, wg)) : (K(), z("div", Tg, [H(n, { name: "image" })]))]), B("div", Eg, [B("h3", Dg, Y(X(ug)(e)), 1), B("p", Og, Y(g(e.photo_count)), 1)])], 8, Sg))), 128))])]))), 128))]))]));
 	}
-}), [["__scopeId", "data-v-3c7f41b2"]]), Ag = { class: "photo-album-page" }, jg = { class: "page-header" }, Mg = { class: "header-content" }, Ng = { class: "title-section" }, Pg = { class: "page-title" }, Fg = {
+}), [["__scopeId", "data-v-1a2629cf"]]), Ag = { class: "photo-album-page" }, jg = { class: "page-header" }, Mg = { class: "header-content" }, Ng = { class: "title-section" }, Pg = { class: "page-title" }, Fg = {
 	key: 0,
 	class: "photo-count"
 }, Ig = {
@@ -6573,7 +6573,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		}, 8, ["title"])) : s.value ? c.value ? c.value.photos.length === 0 ? (K(), L(A, {
 			key: 4,
 			icon: "image",
-			title: "No Photos"
+			title: "No photos"
 		}, {
 			default: Q(() => [...t[8] ||= [B("p", null, "This album is empty.", -1)]]),
 			_: 1
@@ -6606,7 +6606,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		})) : (K(), L(A, {
 			key: 2,
 			icon: "image",
-			title: "No Library Selected"
+			title: "No library selected"
 		}, {
 			default: Q(() => [t[5] ||= B("p", null, "This album requires a library context. Please access it from the albums listing.", -1), H(j, {
 				variant: "subtle",
@@ -6618,7 +6618,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-17dd4a8b"]]), Gg = { class: "photo-view-page" }, Kg = { class: "page-header" }, qg = { class: "header-content" }, Jg = {
+}), [["__scopeId", "data-v-7a6615ce"]]), Gg = { class: "photo-view-page" }, Kg = { class: "page-header" }, qg = { class: "header-content" }, Jg = {
 	key: 0,
 	class: "photo-name"
 }, Yg = { class: "header-actions" }, Xg = ["href"], Zg = {
@@ -6792,7 +6792,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		])])) : (K(), L(A, {
 			key: 3,
 			icon: "image",
-			title: "Photo Not Found"
+			title: "Photo not found"
 		}, {
 			default: Q(() => [t[11] ||= B("p", null, "This photo could not be found.", -1), H(j, {
 				variant: "subtle",
@@ -6804,7 +6804,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-791d672e"]]), m_ = { class: "photo-slideshow-page" }, h_ = {
+}), [["__scopeId", "data-v-3bc132aa"]]), m_ = { class: "photo-slideshow-page" }, h_ = {
 	key: 0,
 	class: "loading-state"
 }, g_ = {
@@ -6965,7 +6965,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		}, 8, ["title"])) : o.value ? u.value.length === 0 ? (K(), L(A, {
 			key: 3,
 			icon: "image",
-			title: "No Photos"
+			title: "No photos"
 		}, {
 			default: Q(() => [t[6] ||= B("p", null, "This slideshow has no photos.", -1), H(j, {
 				variant: "subtle",
@@ -7043,7 +7043,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 		])])) : (K(), L(A, {
 			key: 2,
 			icon: "image",
-			title: "No Library Selected"
+			title: "No library selected"
 		}, {
 			default: Q(() => [t[4] ||= B("p", null, "Please access the slideshow from an album.", -1), H(j, {
 				variant: "subtle",
@@ -7055,7 +7055,7 @@ var fg = { class: "photo-albums-page" }, pg = { class: "page-header" }, mg = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-6620901f"]]);
+}), [["__scopeId", "data-v-684564bd"]]);
 //#endregion
 //#region src/composables/useMediaUrlSync.ts
 function k_(e, t) {
@@ -7450,7 +7450,7 @@ var H_ = {
 		subtitleAddError: "No se pudo añadir ese subtítulo. Inténtalo de nuevo.",
 		subtitleAddNotFound: "Ese subtítulo ya no está disponible.",
 		subtitleQuota: "Se alcanzó el límite de descargas de subtítulos.",
-		subtitleQuotaRemaining: "Tu cuota de subtítulos tiene {count} descarga restante en este período | Tu cuota de subtítulos tiene {count} descargas restantes en este período.",
+		subtitleQuotaRemaining: "Tu cuota de subtítulos tiene {count} descarga restante en este período. | Tu cuota de subtítulos tiene {count} descargas restantes en este período.",
 		subtitleQuotaReset: "Se alcanzó el límite de descargas de subtítulos. Se reinicia a las {time}.",
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Discapacidad auditiva",
@@ -7521,13 +7521,17 @@ var H_ = {
 		cancel: "Cancelar",
 		loading: "Cargando…",
 		noRooms: "No hay salas públicas disponibles",
-		errorCreate: "No se pudo crear la sala",
-		errorJoin: "No se pudo unir a la sala",
+		errorCreate: "No se pudo crear la sala.",
+		errorJoin: "No se pudo unir a la sala.",
 		errorLeave: "No se pudo salir de la sala",
 		yourRole: "Eres {role}",
 		roleOwner: "Propietario",
-		roleModerator: "Moderador",
 		roleMember: "Miembro",
+		roleEditor: "Editor",
+		roleContributor: "Colaborador",
+		currentRoom: "Sala actual",
+		notInRoom: "No estás en una sala de SyncPlay.",
+		notInRoomHint: "Crea o únete a una sala para ver con otras personas.",
 		title: "SyncPlay",
 		roomNamePlaceholder: "Escribe el nombre de la sala",
 		roomIdPlaceholder: "Escribe el ID de la sala",
@@ -7545,6 +7549,7 @@ var H_ = {
 		lockedRoom: "Protegida con contraseña",
 		availableRooms: "Salas"
 	},
+	playlist: { loadError: "No se pudo cargar esta lista de reproducción." },
 	music: {
 		title: "Biblioteca de música",
 		nav: "Música",
@@ -7649,8 +7654,8 @@ var H_ = {
 		unsaved: "Sin guardar",
 		saveGroup: "Guardar {name}",
 		groupSaved: "Ajustes de {name} guardados.",
-		groupSaveError: "No se pudieron guardar los ajustes de {name}",
-		loadFailed: "No se pudieron cargar los ajustes",
+		groupSaveError: "No se pudieron guardar los ajustes de {name}.",
+		loadFailed: "No se pudieron cargar los ajustes.",
 		loadErrorTitle: "No se pudieron cargar los ajustes"
 	},
 	explore: { title: "Explorar similares" },
@@ -7668,7 +7673,7 @@ var H_ = {
 		markUnwatchedAria: "Marcar como no visto",
 		noEpisodes: "Todavía no hay episodios para reproducir",
 		loadingAria: "Cargando temporada",
-		loadError: "No se pudo cargar esta temporada",
+		loadError: "No se pudo cargar esta temporada.",
 		backToSeries: "Volver a la serie",
 		episodes: "Episodios",
 		notFound: "Temporada no encontrada",
@@ -7712,7 +7717,7 @@ var H_ = {
 		streamLimitsUpdated: "Límites de stream actualizados.",
 		deleteScheduleConfirm: "¿Eliminar el horario {name}?",
 		removeTagConfirm: "¿Quitar la etiqueta {tag}?",
-		loadErrorSchedules: "No se pudieron cargar los horarios",
+		loadErrorSchedules: "No se pudieron cargar los horarios.",
 		loadErrorTags: "No se pudieron cargar las etiquetas",
 		loadErrorStreamLimits: "No se pudieron cargar los límites de stream",
 		retry: "Reintentar"
@@ -7946,7 +7951,7 @@ var H_ = {
 		subtitleAddError: "Impossible d’ajouter ce sous-titre. Veuillez réessayer.",
 		subtitleAddNotFound: "Ce sous-titre n’est plus disponible.",
 		subtitleQuota: "Limite de téléchargement de sous-titres atteinte.",
-		subtitleQuotaRemaining: "Votre quota de sous-titres dispose encore de {count} téléchargement pour cette période | Votre quota de sous-titres dispose encore de {count} téléchargements pour cette période.",
+		subtitleQuotaRemaining: "Votre quota de sous-titres dispose encore de {count} téléchargement pour cette période. | Votre quota de sous-titres dispose encore de {count} téléchargements pour cette période.",
 		subtitleQuotaReset: "Limite de téléchargement de sous-titres atteinte. Réinitialisation à {time}.",
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Malentendants",
@@ -8017,13 +8022,17 @@ var H_ = {
 		cancel: "Annuler",
 		loading: "Chargement…",
 		noRooms: "Aucun salon public disponible",
-		errorCreate: "Impossible de créer le salon",
-		errorJoin: "Impossible de rejoindre le salon",
+		errorCreate: "Impossible de créer le salon.",
+		errorJoin: "Impossible de rejoindre le salon.",
 		errorLeave: "Impossible de quitter le salon",
 		yourRole: "Vous êtes {role}",
 		roleOwner: "Propriétaire",
-		roleModerator: "Modérateur",
 		roleMember: "Membre",
+		roleEditor: "Éditeur",
+		roleContributor: "Contributeur",
+		currentRoom: "Salon actuel",
+		notInRoom: "Vous n’êtes pas dans un salon SyncPlay.",
+		notInRoomHint: "Créez ou rejoignez un salon pour regarder avec d’autres.",
 		title: "SyncPlay",
 		roomNamePlaceholder: "Saisissez le nom du salon",
 		roomIdPlaceholder: "Saisissez l’ID du salon",
@@ -8041,6 +8050,7 @@ var H_ = {
 		lockedRoom: "Protégé par mot de passe",
 		availableRooms: "Salons"
 	},
+	playlist: { loadError: "Impossible de charger cette playlist." },
 	music: {
 		title: "Bibliothèque musicale",
 		nav: "Musique",
@@ -8145,8 +8155,8 @@ var H_ = {
 		unsaved: "Non enregistrées",
 		saveGroup: "Enregistrer {name}",
 		groupSaved: "Paramètres {name} enregistrés.",
-		groupSaveError: "Échec de l’enregistrement des paramètres {name}",
-		loadFailed: "Échec du chargement des paramètres",
+		groupSaveError: "Échec de l’enregistrement des paramètres {name}.",
+		loadFailed: "Échec du chargement des paramètres.",
 		loadErrorTitle: "Impossible de charger les paramètres"
 	},
 	explore: { title: "Titres similaires" },
@@ -8164,7 +8174,7 @@ var H_ = {
 		markUnwatchedAria: "Marquer comme non vu",
 		noEpisodes: "Aucun épisode à lire pour le moment",
 		loadingAria: "Chargement de la saison",
-		loadError: "Impossible de charger cette saison",
+		loadError: "Impossible de charger cette saison.",
 		backToSeries: "Retour à la série",
 		episodes: "Épisodes",
 		notFound: "Saison introuvable",
@@ -8208,7 +8218,7 @@ var H_ = {
 		streamLimitsUpdated: "Limites de stream mises à jour.",
 		deleteScheduleConfirm: "Supprimer l’horaire {name} ?",
 		removeTagConfirm: "Retirer l’étiquette {tag} ?",
-		loadErrorSchedules: "Impossible de charger les horaires",
+		loadErrorSchedules: "Impossible de charger les horaires.",
 		loadErrorTags: "Impossible de charger les étiquettes",
 		loadErrorStreamLimits: "Impossible de charger les limites de stream",
 		retry: "Réessayer"
@@ -8442,7 +8452,7 @@ var H_ = {
 		subtitleAddError: "Dieser Untertitel konnte nicht hinzugefügt werden. Bitte erneut versuchen.",
 		subtitleAddNotFound: "Dieser Untertitel ist nicht mehr verfügbar.",
 		subtitleQuota: "Download-Limit für Untertitel erreicht.",
-		subtitleQuotaRemaining: "Dein Untertitel-Kontingent hat in diesem Zeitraum noch {count} Download | Dein Untertitel-Kontingent hat in diesem Zeitraum noch {count} Downloads.",
+		subtitleQuotaRemaining: "Dein Untertitel-Kontingent hat in diesem Zeitraum noch {count} Download. | Dein Untertitel-Kontingent hat in diesem Zeitraum noch {count} Downloads.",
 		subtitleQuotaReset: "Download-Limit für Untertitel erreicht. Zurücksetzung um {time}.",
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Für Hörgeschädigte",
@@ -8513,13 +8523,17 @@ var H_ = {
 		cancel: "Abbrechen",
 		loading: "Wird geladen…",
 		noRooms: "Keine öffentlichen Räume verfügbar",
-		errorCreate: "Raum konnte nicht erstellt werden",
-		errorJoin: "Raum konnte nicht beigetreten werden",
+		errorCreate: "Raum konnte nicht erstellt werden.",
+		errorJoin: "Raum konnte nicht beigetreten werden.",
 		errorLeave: "Raum konnte nicht verlassen werden",
 		yourRole: "Du bist {role}",
 		roleOwner: "Eigentümer",
-		roleModerator: "Moderator",
 		roleMember: "Mitglied",
+		roleEditor: "Redakteur",
+		roleContributor: "Mitwirkender",
+		currentRoom: "Aktueller Raum",
+		notInRoom: "Du bist in keinem SyncPlay-Raum.",
+		notInRoomHint: "Erstelle oder betrete einen Raum, um gemeinsam mit anderen zu sehen.",
 		title: "SyncPlay",
 		roomNamePlaceholder: "Raumnamen eingeben",
 		roomIdPlaceholder: "Raum-ID eingeben",
@@ -8537,6 +8551,7 @@ var H_ = {
 		lockedRoom: "Passwortgeschützt",
 		availableRooms: "Räume"
 	},
+	playlist: { loadError: "Die Playlist konnte nicht geladen werden." },
 	music: {
 		title: "Musikbibliothek",
 		nav: "Musik",
@@ -8641,8 +8656,8 @@ var H_ = {
 		unsaved: "Nicht gespeichert",
 		saveGroup: "{name} speichern",
 		groupSaved: "{name}-Einstellungen gespeichert.",
-		groupSaveError: "{name}-Einstellungen konnten nicht gespeichert werden",
-		loadFailed: "Einstellungen konnten nicht geladen werden",
+		groupSaveError: "{name}-Einstellungen konnten nicht gespeichert werden.",
+		loadFailed: "Einstellungen konnten nicht geladen werden.",
 		loadErrorTitle: "Einstellungen konnten nicht geladen werden"
 	},
 	explore: { title: "Ähnliches entdecken" },
@@ -8660,7 +8675,7 @@ var H_ = {
 		markUnwatchedAria: "Als ungesehen markieren",
 		noEpisodes: "Noch keine Folgen abspielbar",
 		loadingAria: "Staffel wird geladen",
-		loadError: "Diese Staffel konnte nicht geladen werden",
+		loadError: "Diese Staffel konnte nicht geladen werden.",
 		backToSeries: "Zurück zur Serie",
 		episodes: "Episoden",
 		notFound: "Staffel nicht gefunden",
@@ -8704,7 +8719,7 @@ var H_ = {
 		streamLimitsUpdated: "Stream-Limits aktualisiert.",
 		deleteScheduleConfirm: "Zeitplan {name} löschen?",
 		removeTagConfirm: "Tag {tag} entfernen?",
-		loadErrorSchedules: "Zeitpläne konnten nicht geladen werden",
+		loadErrorSchedules: "Zeitpläne konnten nicht geladen werden.",
 		loadErrorTags: "Tags konnten nicht geladen werden",
 		loadErrorStreamLimits: "Stream-Limits konnten nicht geladen werden",
 		retry: "Erneut versuchen"
@@ -8938,7 +8953,7 @@ var H_ = {
 		subtitleAddError: "Impossibile aggiungere quel sottotitolo. Riprova.",
 		subtitleAddNotFound: "Quel sottotitolo non è più disponibile.",
 		subtitleQuota: "Limite di download dei sottotitoli raggiunto.",
-		subtitleQuotaRemaining: "La tua quota sottotitoli consente ancora {count} download in questo periodo | La tua quota sottotitoli consente ancora {count} download in questo periodo.",
+		subtitleQuotaRemaining: "La tua quota sottotitoli consente ancora {count} download in questo periodo. | La tua quota sottotitoli consente ancora {count} download in questo periodo.",
 		subtitleQuotaReset: "Limite di download dei sottotitoli raggiunto. Si reimposta alle {time}.",
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Non udenti",
@@ -9009,13 +9024,17 @@ var H_ = {
 		cancel: "Annulla",
 		loading: "Caricamento…",
 		noRooms: "Nessuna sala pubblica disponibile",
-		errorCreate: "Impossibile creare la sala",
-		errorJoin: "Impossibile unirsi alla sala",
+		errorCreate: "Impossibile creare la sala.",
+		errorJoin: "Impossibile unirsi alla sala.",
 		errorLeave: "Impossibile uscire dalla sala",
 		yourRole: "Sei {role}",
 		roleOwner: "Proprietario",
-		roleModerator: "Moderatore",
 		roleMember: "Membro",
+		roleEditor: "Editore",
+		roleContributor: "Collaboratore",
+		currentRoom: "Stanza attuale",
+		notInRoom: "Non sei in una stanza SyncPlay.",
+		notInRoomHint: "Crea o unisciti a una stanza per guardare con altri.",
 		title: "SyncPlay",
 		roomNamePlaceholder: "Inserisci il nome della sala",
 		roomIdPlaceholder: "Inserisci l’ID della sala",
@@ -9033,6 +9052,7 @@ var H_ = {
 		lockedRoom: "Protetta da password",
 		availableRooms: "Sale"
 	},
+	playlist: { loadError: "Impossibile caricare questa playlist." },
 	music: {
 		title: "Libreria musicale",
 		nav: "Musica",
@@ -9137,8 +9157,8 @@ var H_ = {
 		unsaved: "Non salvate",
 		saveGroup: "Salva {name}",
 		groupSaved: "Impostazioni di {name} salvate.",
-		groupSaveError: "Impossibile salvare le impostazioni di {name}",
-		loadFailed: "Impossibile caricare le impostazioni",
+		groupSaveError: "Impossibile salvare le impostazioni di {name}.",
+		loadFailed: "Impossibile caricare le impostazioni.",
 		loadErrorTitle: "Impossibile caricare le impostazioni"
 	},
 	explore: { title: "Esplora simili" },
@@ -9156,7 +9176,7 @@ var H_ = {
 		markUnwatchedAria: "Segna come non visto",
 		noEpisodes: "Ancora nessun episodio da riprodurre",
 		loadingAria: "Caricamento stagione",
-		loadError: "Impossibile caricare questa stagione",
+		loadError: "Impossibile caricare questa stagione.",
 		backToSeries: "Torna alla serie",
 		episodes: "Episodi",
 		notFound: "Stagione non trovata",
@@ -9200,7 +9220,7 @@ var H_ = {
 		streamLimitsUpdated: "Limiti di stream aggiornati.",
 		deleteScheduleConfirm: "Eliminare l’orario {name}?",
 		removeTagConfirm: "Rimuovere il tag {tag}?",
-		loadErrorSchedules: "Impossibile caricare gli orari",
+		loadErrorSchedules: "Impossibile caricare gli orari.",
 		loadErrorTags: "Impossibile caricare i tag",
 		loadErrorStreamLimits: "Impossibile caricare i limiti di stream",
 		retry: "Riprova"
@@ -9434,7 +9454,7 @@ var H_ = {
 		subtitleAddError: "Não foi possível adicionar essa legenda. Tente novamente.",
 		subtitleAddNotFound: "Essa legenda não está mais disponível.",
 		subtitleQuota: "Limite de downloads de legendas atingido.",
-		subtitleQuotaRemaining: "Sua cota de legendas tem mais {count} download neste período | Sua cota de legendas tem mais {count} downloads neste período.",
+		subtitleQuotaRemaining: "Sua cota de legendas tem mais {count} download neste período. | Sua cota de legendas tem mais {count} downloads neste período.",
 		subtitleQuotaReset: "Limite de downloads de legendas atingido. Reinicia às {time}.",
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Deficiência auditiva",
@@ -9505,13 +9525,17 @@ var H_ = {
 		cancel: "Cancelar",
 		loading: "Carregando…",
 		noRooms: "Nenhuma sala pública disponível",
-		errorCreate: "Falha ao criar a sala",
-		errorJoin: "Falha ao entrar na sala",
+		errorCreate: "Falha ao criar a sala.",
+		errorJoin: "Falha ao entrar na sala.",
 		errorLeave: "Falha ao sair da sala",
 		yourRole: "Você é {role}",
 		roleOwner: "Proprietário",
-		roleModerator: "Moderador",
 		roleMember: "Membro",
+		roleEditor: "Editor",
+		roleContributor: "Colaborador",
+		currentRoom: "Sala atual",
+		notInRoom: "Você não está em uma sala do SyncPlay.",
+		notInRoomHint: "Crie ou entre em uma sala para assistir com outras pessoas.",
 		title: "SyncPlay",
 		roomNamePlaceholder: "Digite o nome da sala",
 		roomIdPlaceholder: "Digite o ID da sala",
@@ -9529,6 +9553,7 @@ var H_ = {
 		lockedRoom: "Protegida por senha",
 		availableRooms: "Salas"
 	},
+	playlist: { loadError: "Não foi possível carregar esta playlist." },
 	music: {
 		title: "Biblioteca de música",
 		nav: "Música",
@@ -9633,8 +9658,8 @@ var H_ = {
 		unsaved: "Não salvas",
 		saveGroup: "Salvar {name}",
 		groupSaved: "Configurações de {name} salvas.",
-		groupSaveError: "Falha ao salvar as configurações de {name}",
-		loadFailed: "Falha ao carregar as configurações",
+		groupSaveError: "Falha ao salvar as configurações de {name}.",
+		loadFailed: "Falha ao carregar as configurações.",
 		loadErrorTitle: "Não foi possível carregar as configurações"
 	},
 	explore: { title: "Explorar semelhantes" },
@@ -9652,7 +9677,7 @@ var H_ = {
 		markUnwatchedAria: "Marcar como não assistido",
 		noEpisodes: "Ainda não há episódios para reproduzir",
 		loadingAria: "Carregando temporada",
-		loadError: "Não foi possível carregar esta temporada",
+		loadError: "Não foi possível carregar esta temporada.",
 		backToSeries: "Voltar à série",
 		episodes: "Episódios",
 		notFound: "Temporada não encontrada",
@@ -9696,7 +9721,7 @@ var H_ = {
 		streamLimitsUpdated: "Limites de stream atualizados.",
 		deleteScheduleConfirm: "Excluir o horário {name}?",
 		removeTagConfirm: "Remover a tag {tag}?",
-		loadErrorSchedules: "Não foi possível carregar os horários",
+		loadErrorSchedules: "Não foi possível carregar os horários.",
 		loadErrorTags: "Não foi possível carregar as tags",
 		loadErrorStreamLimits: "Não foi possível carregar os limites de stream",
 		retry: "Tentar novamente"
@@ -10001,13 +10026,17 @@ var H_ = {
 		cancel: "キャンセル",
 		loading: "読み込み中…",
 		noRooms: "公開ルームはありません",
-		errorCreate: "ルームを作成できませんでした",
-		errorJoin: "ルームに参加できませんでした",
+		errorCreate: "ルームを作成できませんでした。",
+		errorJoin: "ルームに参加できませんでした。",
 		errorLeave: "ルームから退出できませんでした",
 		yourRole: "あなたの役割：{role}",
 		roleOwner: "オーナー",
-		roleModerator: "モデレーター",
 		roleMember: "メンバー",
+		roleEditor: "編集者",
+		roleContributor: "投稿者",
+		currentRoom: "現在のルーム",
+		notInRoom: "SyncPlay ルームに所属していません。",
+		notInRoomHint: "ルームを作成または参加して、他の人と一緒に視聴しましょう。",
 		title: "SyncPlay",
 		roomNamePlaceholder: "ルーム名を入力",
 		roomIdPlaceholder: "ルームIDを入力",
@@ -10025,6 +10054,7 @@ var H_ = {
 		lockedRoom: "パスワード保護",
 		availableRooms: "ルーム"
 	},
+	playlist: { loadError: "このプレイリストを読み込めませんでした。" },
 	music: {
 		title: "ミュージックライブラリ",
 		nav: "音楽",
@@ -10129,8 +10159,8 @@ var H_ = {
 		unsaved: "未保存",
 		saveGroup: "{name}を保存",
 		groupSaved: "{name}の設定を保存しました。",
-		groupSaveError: "{name}の設定を保存できませんでした",
-		loadFailed: "設定を読み込めませんでした",
+		groupSaveError: "{name}の設定を保存できませんでした。",
+		loadFailed: "設定を読み込めませんでした。",
 		loadErrorTitle: "設定を読み込めませんでした"
 	},
 	explore: { title: "類似作品を探す" },
@@ -10148,7 +10178,7 @@ var H_ = {
 		markUnwatchedAria: "未視聴としてマーク",
 		noEpisodes: "再生できるエピソードはまだありません",
 		loadingAria: "シーズンを読み込み中",
-		loadError: "このシーズンを読み込めませんでした",
+		loadError: "このシーズンを読み込めませんでした。",
 		backToSeries: "シリーズに戻る",
 		episodes: "エピソード",
 		notFound: "シーズンが見つかりません",
@@ -10192,7 +10222,7 @@ var H_ = {
 		streamLimitsUpdated: "配信制限を更新しました。",
 		deleteScheduleConfirm: "スケジュール「{name}」を削除しますか？",
 		removeTagConfirm: "タグ「{tag}」を削除しますか？",
-		loadErrorSchedules: "スケジュールを読み込めませんでした",
+		loadErrorSchedules: "スケジュールを読み込めませんでした。",
 		loadErrorTags: "タグを読み込めませんでした",
 		loadErrorStreamLimits: "配信制限を読み込めませんでした",
 		retry: "再試行"
@@ -10215,7 +10245,7 @@ var H_ = {
 	it: G_,
 	pt_BR: K_,
 	ja: q_
-}, Y_ = rr(() => import("./MediaDetail-BAuw1JlX.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-BqXZFpiN.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-8_h9en-H.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-Ba4wHIew.js"));
+}, Y_ = rr(() => import("./MediaDetail-6xQiEzVc.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-BEYz1frQ.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-BRV0bIqM.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-pDy_ZkkA.js"));
 //#endregion
 export { je as ACTIVE_PROFILE_KEY, pn as ALL_LOGS, pd as AcceptInvitePage, bn as AdminBackupApi, xn as AdminCastApi, Tn as AdminCollectionsApi, mn as AdminDashboardApi, Sn as AdminDlnaServerApi, En as AdminHistoryApi, Vn as AdminHubDashboardApi, yn as AdminIntegrationsApi, An as AdminLibrariesApi, wn as AdminLiveTvApi, fn as AdminLogsApi, Bn as AdminMaintenanceApi, dn as AdminMetadataSourcesApi, Ln as AdminPluginsApi, Cn as AdminRemoteAccessApi, vn as AdminServicesApi, jn as AdminSettingsApi, Dn as AdminSyncPlayApi, Oe as AdminUsersApi, _n as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Kr as AppLayout, Oh as AudiobookDetailPage, cg as AudiobookPlayerPage, Qm as AudiobooksPage, it as BUILT_IN_THEME_IDS, M as Badge, ym as BookDetailPage, Lm as BookReaderPage, Qp as BooksPage, j as Button, zt as CONNECTION_API_BASE_KEY, Ft as CONNECTION_CONFIRMED_ORIGIN_KEY, ha as CURRENT_SERVER_ID_KEY, ga as CURRENT_SERVER_NAME_KEY, Jt as Chip, Xt as Combobox, Qt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, W_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, H_ as ES_MESSAGES, A as EmptyState, Ze as FOCUS_RING_MIN_CONTRAST, U_ as FR_MESSAGES, sl as FederationPage, Al as FederationSharesPage, Z_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, xa as HUB_SYNC_PLAY_PORT, lo as HelpPopover, nn as HelpText, G_ as IT_MESSAGES, n as Icon, r as IconButton, cd as InviteLinksPage, q_ as JA_MESSAGES, xt as Kbd, On as LIBRARY_TYPES, J_ as LOCALE_MESSAGES, xs as LibraryScanPage, ce as LocalStorageTokenStore, Hn as LoginForm, Rn as MAINTENANCE_ENDPOINTS, zn as MAINTENANCE_TASK_NAMES, ct as MAX_EXTENDS_DEPTH, Ua as MCP_TOKENS_ROUTE_NAME, Wa as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Bl as ManageSharesPage, an as MediaCard, Y_ as MediaDetail, on as MediaGrid, kt as MediaHomeRow, sn as MediaRow, tn as Menu, X_ as MetadataMatchModal, Zt as Modal, Pd as MusicAlbumPage, Sf as MusicArtistPage, $d as MusicArtistsPage, Rp as MusicPlayerPage, sp as MusicTracksPage, Vs as MyServersPage, ee as NetworkError, Fn as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, K_ as PT_BR_MESSAGES, $t as PageHint, ro as PageTransition, fa as PhlixApp, Wg as PhotoAlbumPage, kg as PhotoAlbumsPage, O_ as PhotoSlideshowPage, p_ as PhotoViewPage, ls as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, Gn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, dt as RING_GROUND_KEYS, po as RatingBadge, ku as RequestsPage, no as Reveal, kn as SCAN_JOB_TYPES, Mn as SETTINGS_SECRET_MASK, Ct as SORT_TITLE_ARTICLES, hn as SUBSCRIBABLE_EVENTS, Q_ as SearchPage, ft as SecuritySettingsPage, Yt as Select, Jc as ServerDetailPage, eu as SharedWithMePage, Ir as Sheet, Un as SignupForm, N as Skeleton, Kt as Slider, un as SourcePriorityEditor, Ke as Spinner, qt as Switch, $e as THEME_CACHE_KEY, at as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, en as Tabs, Ve as ThumbRating, ge as TimeoutError, Bi as ToastHost, Ge as Tooltip, ho as UserRatingPicker, gn as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, pt as activeThemeStyle, Zo as adminMenu, Zi as applyStoredThemeEarly, et as applyThemeTokens, F_ as bestCandidate, k_ as bindMediaStoreToRouter, Jo as buildAdminRoutes, Xo as buildHubAdminRoutes, Ea as buildHubRelayUrl, ln as buildMediaQuery, cn as buildMediaUrl, Yo as buildServerAdminRoutes, tt as clearThemeTokens, Fa as closeHubRelayConnection, Uo as commonAdminPages, St as compareByStrippedTitle, lt as compositedContrastOver, to as createPhlixApp, w as createTranslator, Wn as debounce, Ji as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, wt as fetchLibraries, ut as fetchThemes, ot as focusRingLawViolation, c as focusable, a as focusableRegistry, Gt as formatPageTitle, yt as fuzzyScore, E as getDefaultApiHeaders, Ia as getHubRelaySocket, p as hasStoredPreferences, Go as hubAdminPages, i as installFocusable, Lt as isAllowedBase, rt as isAllowedThemeToken, nt as isBuiltInThemeId, te as isOffline, Nt as isPlaintextPublic, _ as isPluralTemplate, jt as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, Xe as isSafeThemeTokenValue, de as isTmdbUnconfigured, bt as matchCommand, Ga as mcpTokensMenuItem, S as mergeMessages, It as normalizeBase, mt as normalizeServerTheme, Ma as openHubRelayConnection, Rt as originOf, wa as parsePendingCommandFrame, _t as parseThemeColor, In as pluginErrorCode, Pn as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Mt as probeServer, Qe as readCachedTheme, d as readStoredPreferences, A_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, gt as resolveThemeBase, Ye as resolveThemeTokens, At as safeHref, Je as sanitizeThemeTokens, b as selectPluralTemplate, Wo as serverAdminPages, Ut as setAppName, ne as setDefaultApiHeaders, Wt as setPageTitle, Et as sortLibraries, Tt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, $i as useCommandPaletteHotkey, vt as useCommandStore, Pt as useConnectionStore, o as useFocusTrap, k as useImageSrc, Dt as useLibrariesStore, O as useMediaApiBase, Zn as useMediaStore, T as useMessages, V_ as useOnline, Ht as usePageTitle, Fe as usePlayerStore, ia as usePreconnect, u as usePreferencesStore, rn as usePrefetch, Ae as useProfileStore, ca as useResumeReporter, Ot as useResumeSync, ba as useServerStore, Nn as useSettingsPrefsStore, B_ as useSpatialNav, Qi as useTheme, st as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Bt as withScheme, ht as writeCachedTheme };
 

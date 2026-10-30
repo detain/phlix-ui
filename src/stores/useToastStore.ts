@@ -69,10 +69,30 @@ export const useToastStore = defineStore('phlix-toast', () => {
     toasts.value = [];
   }
 
-  const success = (message: string, opts?: Partial<ToastInput>) => show({ message, tone: 'success', ...opts });
-  const error = (message: string, opts?: Partial<ToastInput>) => show({ message, tone: 'error', duration: 8000, ...opts });
-  const warning = (message: string, opts?: Partial<ToastInput>) => show({ message, tone: 'warning', ...opts });
-  const info = (message: string, opts?: Partial<ToastInput>) => show({ message, tone: 'info', ...opts });
+  /**
+   * M-UI-28: the helpers used to spread `opts` after the positional message, so
+   * `error('Download failed', { message: raw })` silently DROPPED the label —
+   * only the raw error string ever rendered. Ten call sites had written exactly
+   * that shape, because it is what the caller MEANS: a contextual title over a
+   * body. The shape is now parsed as the intent it expresses: when `opts`
+   * carries its own `message`, the positional becomes the `title` (an explicit
+   * `opts.title` still wins); otherwise the positional is the message, as
+   * always. Nothing a caller passes is ever discarded on the way in.
+   */
+  function withLabel(message: string, opts: Partial<ToastInput> | undefined, base: Partial<ToastInput>): ToastInput {
+    if (opts === undefined) return { ...base, message };
+    const { message: body, ...rest } = opts;
+    if (body !== undefined) {
+      // An explicit opts.title always wins over the positional label.
+      return { ...base, title: rest.title ?? message, ...rest, message: body };
+    }
+    return { ...base, ...rest, message };
+  }
+
+  const success = (message: string, opts?: Partial<ToastInput>) => show(withLabel(message, opts, { tone: 'success' }));
+  const error = (message: string, opts?: Partial<ToastInput>) => show(withLabel(message, opts, { tone: 'error', duration: 8000 }));
+  const warning = (message: string, opts?: Partial<ToastInput>) => show(withLabel(message, opts, { tone: 'warning' }));
+  const info = (message: string, opts?: Partial<ToastInput>) => show(withLabel(message, opts, { tone: 'info' }));
 
   return { toasts, show, dismiss, clear, success, error, warning, info };
 });

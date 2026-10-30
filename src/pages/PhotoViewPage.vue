@@ -323,7 +323,7 @@ watch(() => props.id, () => {
         </div>
 
         <!-- Photo not found -->
-        <EmptyState v-else icon="image" title="Photo Not Found">
+        <EmptyState v-else icon="image" title="Photo not found">
             <p>This photo could not be found.</p>
             <Button variant="subtle" @click="goBack">Go Back</Button>
         </EmptyState>

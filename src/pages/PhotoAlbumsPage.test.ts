@@ -144,7 +144,7 @@ describe('PhotoAlbumsPage', () => {
     stubFetch({ albums: [] });
     const w = mountPage(makeRouter());
     await flushPromises();
-    expect(w.text()).toContain('No Albums Yet');
+    expect(w.text()).toContain('No albums yet');
     expect(w.find('.album-card').exists()).toBe(false);
     w.unmount();
   });

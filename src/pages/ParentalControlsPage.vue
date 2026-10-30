@@ -10,7 +10,7 @@
  * Three tabbed sections mirroring the console client's ParentalControlsScreen:
  *   - Schedules: access time windows (create / edit / delete)
  *   - Tags: content rating tags (blocked / allowed)
- *   - Stream Limits: max concurrent streams and bandwidth
+ *   - Stream limits: max concurrent streams and bandwidth
  *
  * The profile is selected via route query `?profile=<id>`. When opened from
  * the admin users list the parent component should navigate with that query.
@@ -173,7 +173,7 @@ type TabValue = 'schedules' | 'tags' | 'streamLimits';
 const TABS: TabItem[] = [
   { value: 'schedules', label: 'Schedules', icon: 'calendar' },
   { value: 'tags', label: 'Tags', icon: 'bookmark' },
-  { value: 'streamLimits', label: 'Stream Limits', icon: 'play' },
+  { value: 'streamLimits', label: 'Stream limits', icon: 'play' },
 ];
 
 const activeTab = ref<TabValue>('schedules');
@@ -429,7 +429,7 @@ async function confirmDeleteTag(tag: ProfileTag): Promise<void> {
   }
 }
 
-// ── Stream Limits ──────────────────────────────────────────────────────────────
+// ── Stream limits ──────────────────────────────────────────────────────────────
 const streamLimits = ref<ProfileStreamLimit | null>(null);
 const loadingStreamLimits = ref(false);
 const streamLimitsError = ref<string | null>(null);
@@ -593,7 +593,7 @@ function askDeleteTag(tag: ProfileTag): void {
                 <kbd>c</kbd> create &nbsp; <kbd>E</kbd> edit &nbsp; <kbd>x</kbd> delete &nbsp; <kbd>r</kbd> refresh
               </p>
               <Button variant="solid" size="sm" left-icon="plus" @click="openScheduleCreate">
-                Create Schedule
+                Create schedule
               </Button>
             </div>
 
@@ -653,7 +653,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <div class="parental-section__toolbar">
               <p class="parental-section__hint"><kbd>c</kbd> create &nbsp; <kbd>x</kbd> delete &nbsp; <kbd>r</kbd> refresh</p>
               <Button variant="solid" size="sm" left-icon="plus" @click="openTagCreate">
-                Add Tag
+                Add tag
               </Button>
             </div>
 
@@ -707,7 +707,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <div class="parental-section__toolbar">
               <p class="parental-section__hint"><kbd>u</kbd> update limits &nbsp; <kbd>r</kbd> refresh</p>
               <Button variant="solid" size="sm" left-icon="settings" @click="openStreamLimitsEdit">
-                Update Limits
+                Update limits
               </Button>
             </div>
 
@@ -746,7 +746,7 @@ function askDeleteTag(tag: ProfileTag): void {
     </template>
 
     <!-- Schedule form modal -->
-    <Modal v-model="showScheduleForm" :title="editingSchedule ? 'Edit Schedule' : 'Create Schedule'" size="sm">
+    <Modal v-model="showScheduleForm" :title="editingSchedule ? 'Edit schedule' : 'Create schedule'" size="sm">
       <form class="parental-form" @submit.prevent="submitScheduleForm">
         <p v-if="formError" class="parental-form__error">{{ formError }}</p>
 
@@ -794,7 +794,7 @@ function askDeleteTag(tag: ProfileTag): void {
     </Modal>
 
     <!-- Tag form modal -->
-    <Modal v-model="showTagForm" title="Add Tag" size="sm">
+    <Modal v-model="showTagForm" title="Add tag" size="sm">
       <form class="parental-form" @submit.prevent="submitTagForm">
         <p v-if="tagFormError" class="parental-form__error">{{ tagFormError }}</p>
 
@@ -812,13 +812,13 @@ function askDeleteTag(tag: ProfileTag): void {
 
         <div class="parental-form__actions">
           <Button variant="ghost" type="button" @click="showTagForm = false">Cancel</Button>
-          <Button variant="solid" type="submit">Add Tag</Button>
+          <Button variant="solid" type="submit">Add tag</Button>
         </div>
       </form>
     </Modal>
 
     <!-- Stream limits form modal -->
-    <Modal v-model="showStreamLimitsForm" title="Update Stream Limits" size="sm">
+    <Modal v-model="showStreamLimitsForm" title="Update stream limits" size="sm">
       <form class="parental-form" @submit.prevent="submitStreamLimitsForm">
         <p v-if="streamLimitsFormError" class="parental-form__error">{{ streamLimitsFormError }}</p>
 

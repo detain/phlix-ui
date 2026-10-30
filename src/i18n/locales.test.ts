@@ -112,6 +112,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'player.subtitleHearingImpaired',
     'syncplay.syncPlay',
     'syncplay.title',
+    'syncplay.roleEditor',
   ],
   fr: [
     'auth.emailPlaceholder',
@@ -159,7 +160,6 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'settings.crossfade',
     'settings.tabServer',
     'settings.theme',
-    'syncplay.roleModerator',
     'syncplay.syncPlay',
     'syncplay.title',
   ],
@@ -201,6 +201,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'shell.menu',
     'syncplay.syncPlay',
     'syncplay.title',
+    'syncplay.roleEditor',
   ],
   ja: [
     'auth.emailPlaceholder',

@@ -11,14 +11,14 @@ Both Phlix products — **phlix-server** (the media server) and **phlix-hub** (t
 mount this one package to render their entire `/app/*` single-page experience. Build a feature here
 once and it ships to both.
 
-`@phlix/ui` is a self-contained kit: a 3-theme **"Nocturne" cinema-after-dark** token system, ~20
+`@phlix/ui` is a self-contained kit: a 3-theme **"Nocturne" cinema-after-dark** token system, 26
 accessible primitives, a media-browsing + video-player surface, auth/settings forms, a ⌘K command
 palette, thirteen Pinia stores, and a `createPhlixApp()` factory that wires it all into a ready-to-mount
 Vue app.
 
 - 🎨 **Three built-in themes** (`nocturne` dark · `daylight` light · `midnight` OLED) with live
   user controls for accent color, density, card size, and motion.
-- 🧩 **~20 token-driven, accessible primitives** + higher-level media/player/auth surfaces.
+- 🧩 **26 token-driven, accessible primitives** + higher-level media/player/auth surfaces.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
@@ -480,10 +480,20 @@ one exception, flagged where it appears: the Player surface ships on the seconda
 
 `Button` · `IconButton` · `Badge` · `Slider` · `Switch` · `Chip` · `Select` · `Combobox` · `Modal` ·
 `Sheet` · `Tooltip` · `ToastHost` · `Skeleton` · `Spinner` · `EmptyState` · `Tabs` · `Kbd` ·
-`Reveal` · `PageTransition` — all token-driven, theme-aware, keyboard-accessible. Plus `Icon`
+`Reveal` · `PageTransition` · `ConfirmDialog` · `Menu` · `HelpPopover` · `HelpText` ·
+`PageHint` — all token-driven, theme-aware, keyboard-accessible. Plus `Icon`
 (Lucide via `unplugin-icons`; type-checked `IconName`, with every registered name in
 `src/components/icon-registry.ts` — the single source of truth `Icon.test.ts` iterates) and
 `AppBackdrop` (the atmosphere layer).
+
+### Components (`src/components/`, `src/app/`)
+
+`ThumbRating` (like/dislike — the widget the built-in pages use) · `RatingBadge` (0–10 star display)
+· `UserRatingPicker` (star submission, posts to `POST /api/v1/media/{id}/ratings`) — the S263 rating
+trio · `ProfileImageSettings` (avatar upload/delete) · `SourcePriorityEditor` (metadata-source
+ordering; consumed by the admin Libraries page) · `MetadataMatchModal` (the ⋯-menu "Edit metadata"
+host — a lazy `defineAsyncComponent` factory, like `SearchPage`) · `AppLayout` (`src/app/AppLayout.vue`,
+the header/nav/content shell with hide-on-scroll header).
 
 ### Media surfaces
 

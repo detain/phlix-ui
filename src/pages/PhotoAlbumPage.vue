@@ -137,7 +137,7 @@ watch([() => props.id, libraryId], () => {
         </EmptyState>
 
         <!-- No library selected -->
-        <EmptyState v-else-if="!libraryId" icon="image" title="No Library Selected">
+        <EmptyState v-else-if="!libraryId" icon="image" title="No library selected">
             <p>This album requires a library context. Please access it from the albums listing.</p>
             <Button variant="subtle" @click="goBack">Go to Albums</Button>
         </EmptyState>
@@ -149,7 +149,7 @@ watch([() => props.id, libraryId], () => {
         </EmptyState>
 
         <!-- No photos in album -->
-        <EmptyState v-else-if="album.photos.length === 0" icon="image" title="No Photos">
+        <EmptyState v-else-if="album.photos.length === 0" icon="image" title="No photos">
             <p>This album is empty.</p>
         </EmptyState>
 

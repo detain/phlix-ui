@@ -210,7 +210,7 @@ describe('UserRatingPicker — submitting a rating', () => {
     await flushPromises();
 
     expect(useToastStore().toasts.map((t) => [t.tone, t.message])).toEqual([
-      ['success', 'Rating saved'],
+      ['success', 'Rating saved.'],
     ]);
     // isHovering/hoverRating reset in `finally`, so the preview classes are gone
     // even though the parent has not yet echoed the new modelValue back down.
@@ -224,7 +224,7 @@ describe('UserRatingPicker — submitting a rating', () => {
     await flushPromises();
 
     expect(useToastStore().toasts.map((t) => [t.tone, t.message])).toEqual([
-      ['error', 'Failed to save rating'],
+      ['error', 'Failed to save rating.'],
     ]);
     expect(w.emitted('update:modelValue')).toBeUndefined();
   });

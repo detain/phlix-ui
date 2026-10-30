@@ -43,9 +43,9 @@ function getRoleLabel(role: SyncPlayRole): string {
     case 'owner':
       return t('syncplay.roleOwner');
     case 'editor':
-      return t('syncplay.roleModerator');
+      return t('syncplay.roleEditor');
     case 'contributor':
-      return t('syncplay.roleMember');
+      return t('syncplay.roleContributor');
     case 'none':
       return t('syncplay.roleMember');
     default:
@@ -157,7 +157,7 @@ function onJoined(room: SyncPlayRoom): void {
 
     <!-- Active room -->
     <section v-else-if="syncPlay.isInRoom" class="syncplay-page__section">
-      <h2 class="syncplay-page__section-title">Current Room</h2>
+      <h2 class="syncplay-page__section-title">{{ t('syncplay.currentRoom') }}</h2>
       <Card class="syncplay-page__room-card" :padding="false">
         <div class="syncplay-page__room">
           <div class="syncplay-page__room-info">
@@ -208,8 +208,8 @@ function onJoined(room: SyncPlayRoom): void {
     <!-- No active room -->
     <div v-else class="syncplay-page__empty">
       <Icon name="user" class="syncplay-page__empty-icon" />
-      <p class="syncplay-page__empty-text">You're not in a SyncPlay room</p>
-      <p class="syncplay-page__empty-hint">Create or join a room to watch together with others.</p>
+      <p class="syncplay-page__empty-text">{{ t('syncplay.notInRoom') }}</p>
+      <p class="syncplay-page__empty-hint">{{ t('syncplay.notInRoomHint') }}</p>
       <div class="syncplay-page__empty-actions">
         <Button variant="solid" @click="showModal = true">
           <Icon name="plus" />

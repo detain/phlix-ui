@@ -323,8 +323,12 @@ export declare const IT_MESSAGES: {
         errorLeave: string;
         yourRole: string;
         roleOwner: string;
-        roleModerator: string;
         roleMember: string;
+        roleEditor: string;
+        roleContributor: string;
+        currentRoom: string;
+        notInRoom: string;
+        notInRoomHint: string;
         title: string;
         roomNamePlaceholder: string;
         roomIdPlaceholder: string;
@@ -341,6 +345,9 @@ export declare const IT_MESSAGES: {
         lockedRoomHint: string;
         lockedRoom: string;
         availableRooms: string;
+    };
+    playlist: {
+        loadError: string;
     };
     music: {
         title: string;

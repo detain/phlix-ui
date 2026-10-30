@@ -332,8 +332,12 @@ export declare const DEFAULT_MESSAGES: {
         errorLeave: string;
         yourRole: string;
         roleOwner: string;
-        roleModerator: string;
         roleMember: string;
+        roleEditor: string;
+        roleContributor: string;
+        currentRoom: string;
+        notInRoom: string;
+        notInRoomHint: string;
         title: string;
         roomNamePlaceholder: string;
         roomIdPlaceholder: string;
@@ -358,6 +362,9 @@ export declare const DEFAULT_MESSAGES: {
         lockedRoom: string;
         /** M-UI-14: heading of the join listing — since M-UI-14 it carries locked rooms too, so the old "Public rooms" name would lie. */
         availableRooms: string;
+    };
+    playlist: {
+        loadError: string;
     };
     music: {
         title: string;

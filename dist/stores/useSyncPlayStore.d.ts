@@ -285,7 +285,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     updateLocalPosition: (position: number) => void;
     applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
     consumePendingPlayMedia: () => void;
-}, "error" | "members" | "currentSession" | "currentRoom" | "isLoading" | "localPlaybackPosition" | "pendingPlayMedia">, Pick<{
+}, "error" | "members" | "currentRoom" | "currentSession" | "isLoading" | "localPlaybackPosition" | "pendingPlayMedia">, Pick<{
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;

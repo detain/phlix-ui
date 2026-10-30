@@ -132,9 +132,9 @@ async function onStarClick(starIndex: number): Promise<void> {
       score: rating,
     });
     emit('update:modelValue', rating);
-    toast.success('Rating saved');
+    toast.success('Rating saved.');
   } catch {
-    toast.error('Failed to save rating');
+    toast.error('Failed to save rating.');
   } finally {
     isSubmitting.value = false;
     isHovering.value = false;

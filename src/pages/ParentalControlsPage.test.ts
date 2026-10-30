@@ -288,9 +288,9 @@ describe('ParentalControlsPage — the profile gate (fail closed)', () => {
     expect(w.findComponent(EmptyState).text()).toContain('No profile selected');
     // The whole control surface is absent, not merely hidden.
     expect(w.findAll('[role="tab"]').length).toBe(0);
-    expect(findBtn(w, 'Create Schedule')).toBeUndefined();
-    expect(findBtn(w, 'Add Tag')).toBeUndefined();
-    expect(findBtn(w, 'Update Limits')).toBeUndefined();
+    expect(findBtn(w, 'Create schedule')).toBeUndefined();
+    expect(findBtn(w, 'Add tag')).toBeUndefined();
+    expect(findBtn(w, 'Update limits')).toBeUndefined();
     // And no request of ANY verb was issued.
     expect(get).not.toHaveBeenCalled();
     expect(post).not.toHaveBeenCalled();
@@ -400,7 +400,7 @@ describe('ParentalControlsPage — the profile gate (fail closed)', () => {
     expect(w.findAll('[role="tab"]').map((t) => t.text().trim())).toEqual([
       'Schedules',
       'Tags',
-      'Stream Limits',
+      'Stream limits',
     ]);
     // Scoped to THIS profile — and to nothing else.
     expect(get).toHaveBeenCalledWith(SCHEDULES_URL);
@@ -553,7 +553,7 @@ describe('ParentalControlsPage — schedules list', () => {
 
 describe('ParentalControlsPage — schedule validation blocks the write', () => {
   async function openCreate(w: VueWrapper): Promise<void> {
-    await findBtn(w, 'Create Schedule')!.trigger('click');
+    await findBtn(w, 'Create schedule')!.trigger('click');
     await flushPromises();
   }
 
@@ -565,7 +565,7 @@ describe('ParentalControlsPage — schedule validation blocks the write', () => 
     expect(inputs[0]!.value).toBe('');
     expect(inputs[1]!.value).toBe('08:00');
     expect(inputs[2]!.value).toBe('22:00');
-    expect(modalPanel().textContent).toContain('Create Schedule');
+    expect(modalPanel().textContent).toContain('Create schedule');
   });
 
   it('refuses an unnamed schedule', async () => {
@@ -700,7 +700,7 @@ describe('ParentalControlsPage — creating and editing a schedule', () => {
     const w = await mountPage(client);
     const before = get.mock.calls.filter((c) => c[0] === SCHEDULES_URL).length;
 
-    await findBtn(w, 'Create Schedule')!.trigger('click');
+    await findBtn(w, 'Create schedule')!.trigger('click');
     await flushPromises();
     await setInput(0, '  Bedtime  ');
     await setInput(1, '19:30');
@@ -722,7 +722,7 @@ describe('ParentalControlsPage — creating and editing a schedule', () => {
   it('honours the Active switch being turned off', async () => {
     const { client, post } = makeClient();
     const w = await mountPage(client);
-    await findBtn(w, 'Create Schedule')!.trigger('click');
+    await findBtn(w, 'Create schedule')!.trigger('click');
     await flushPromises();
     await setInput(0, 'Paused rule');
     const sw = modalPanel().querySelector<HTMLButtonElement>('.phlix-switch__control')!;
@@ -737,7 +737,7 @@ describe('ParentalControlsPage — creating and editing a schedule', () => {
     const { client, post } = makeClient();
     post.mockRejectedValueOnce(new Error('create boom'));
     const w = await mountPage(client);
-    await findBtn(w, 'Create Schedule')!.trigger('click');
+    await findBtn(w, 'Create schedule')!.trigger('click');
     await flushPromises();
     await setInput(0, 'Bedtime');
     await submitForm();
@@ -749,14 +749,14 @@ describe('ParentalControlsPage — creating and editing a schedule', () => {
     const { client, post } = makeClient();
     post.mockRejectedValueOnce({});
     const w = await mountPage(client);
-    await findBtn(w, 'Create Schedule')!.trigger('click');
+    await findBtn(w, 'Create schedule')!.trigger('click');
     await flushPromises();
     await setInput(0, 'Bedtime');
     await submitForm();
     expect(formError()).toBe('Failed to save schedule.');
   });
 
-  it('prefills the edit form from the row and titles the modal Edit Schedule', async () => {
+  it('prefills the edit form from the row and titles the modal Edit schedule', async () => {
     const { client } = makeClient();
     const w = await mountPage(client);
     await findBtn(w, 'Edit')!.trigger('click');
@@ -766,14 +766,14 @@ describe('ParentalControlsPage — creating and editing a schedule', () => {
     // HH:MM:SS from the wire is trimmed to HH:MM for the form.
     expect(inputs[1]!.value).toBe('18:00');
     expect(inputs[2]!.value).toBe('20:30');
-    expect(modalPanel().textContent).toContain('Edit Schedule');
+    expect(modalPanel().textContent).toContain('Edit schedule');
     expect(findBtnIn(w, modalPanel(), 'Update')).toBeTruthy();
   });
 
   it('cancels the form without writing anything', async () => {
     const { client, post, del } = makeClient();
     const w = await mountPage(client);
-    await findBtn(w, 'Create Schedule')!.trigger('click');
+    await findBtn(w, 'Create schedule')!.trigger('click');
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
     await flushPromises();
@@ -1001,7 +1001,7 @@ describe('ParentalControlsPage — tags', () => {
     const { client, post } = makeClient();
     const w = await mountPage(client);
     await goToTags(w);
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await submitForm();
     expect(formError()).toBe('Tag name is required.');
@@ -1012,7 +1012,7 @@ describe('ParentalControlsPage — tags', () => {
     const { client, post } = makeClient();
     const w = await mountPage(client);
     await goToTags(w);
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, '   ');
     await submitForm();
@@ -1024,7 +1024,7 @@ describe('ParentalControlsPage — tags', () => {
     const { client, post } = makeClient();
     const w = await mountPage(client);
     await goToTags(w);
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, 'y'.repeat(101));
     await submitForm();
@@ -1037,7 +1037,7 @@ describe('ParentalControlsPage — tags', () => {
     const w = await mountPage(client);
     await goToTags(w);
     const before = get.mock.calls.filter((c) => c[0] === TAGS_URL).length;
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, '  gore  ');
     await submitForm();
@@ -1053,7 +1053,7 @@ describe('ParentalControlsPage — tags', () => {
     const { client, post } = makeClient();
     const w = await mountPage(client);
     await goToTags(w);
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, 'documentary');
     modalPanel().querySelector<HTMLElement>('.phlix-select__trigger')!.click();
@@ -1070,7 +1070,7 @@ describe('ParentalControlsPage — tags', () => {
     post.mockRejectedValueOnce(new Error('tag boom'));
     const w = await mountPage(client);
     await goToTags(w);
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, 'gore');
     await submitForm();
@@ -1083,7 +1083,7 @@ describe('ParentalControlsPage — tags', () => {
     post.mockRejectedValueOnce({});
     const w = await mountPage(client);
     await goToTags(w);
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, 'gore');
     await submitForm();
@@ -1167,7 +1167,7 @@ describe('ParentalControlsPage — tags', () => {
 
 describe('ParentalControlsPage — stream limits', () => {
   async function goToLimits(w: VueWrapper): Promise<void> {
-    await clickTab(w, 'Stream Limits');
+    await clickTab(w, 'Stream limits');
   }
 
   it('loads limits only when the tab is opened and renders both values', async () => {
@@ -1219,7 +1219,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     const inputs = modalPanel().querySelectorAll<HTMLInputElement>('.phlix-input__field');
     expect(inputs[0]!.value).toBe('2');
@@ -1234,7 +1234,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     const inputs = modalPanel().querySelectorAll<HTMLInputElement>('.phlix-input__field');
     expect(inputs[0]!.value).toBe('1');
@@ -1250,7 +1250,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(0, value);
     await submitForm();
@@ -1265,7 +1265,7 @@ describe('ParentalControlsPage — stream limits', () => {
     });
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(0, '1');
     await submitForm();
@@ -1281,7 +1281,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const w = await mountPage(client);
     await goToLimits(w);
     const before = get.mock.calls.filter((c) => c[0] === LIMITS_URL).length;
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(0, '3');
     await submitForm();
@@ -1324,7 +1324,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(1, typed);
     await submitForm();
@@ -1343,7 +1343,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(1, '4096');
     // Read the live model, not the DOM: `Input.vue` coerces for `type="number"`,
@@ -1363,7 +1363,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(0, '5');
     await setInput(1, '900');
@@ -1382,7 +1382,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     const vm = w.vm as unknown as {
       streamLimitsForm: { maxTotalBandwidthKbps: string | number };
@@ -1413,7 +1413,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(0, streamsValue);
     await setInput(1, bwValue);
@@ -1431,7 +1431,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(1, '1500.75');
     await submitForm();
@@ -1445,7 +1445,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(1, '-500');
     await submitForm();
@@ -1460,7 +1460,7 @@ describe('ParentalControlsPage — stream limits', () => {
     put.mockRejectedValueOnce(new Error('limits boom'));
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await submitForm();
     expect(formError()).toBe('limits boom');
@@ -1472,7 +1472,7 @@ describe('ParentalControlsPage — stream limits', () => {
     put.mockRejectedValueOnce({});
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await submitForm();
     expect(formError()).toBe('Failed to update stream limits.');
@@ -1482,7 +1482,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
     await goToLimits(w);
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
     await flushPromises();
@@ -1505,7 +1505,7 @@ describe('ParentalControlsPage — tab switching loads the matching section', ()
     expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL]);
     await clickTab(w, 'Tags');
     expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL, TAGS_URL]);
-    await clickTab(w, 'Stream Limits');
+    await clickTab(w, 'Stream limits');
     expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL, TAGS_URL, LIMITS_URL]);
     await clickTab(w, 'Schedules');
     expect(urls()).toEqual([PROFILE_URL, SCHEDULES_URL, TAGS_URL, LIMITS_URL, SCHEDULES_URL]);
@@ -1515,11 +1515,11 @@ describe('ParentalControlsPage — tab switching loads the matching section', ()
     const { client } = makeClient();
     const w = await mountPage(client);
     expect(w.text()).toContain('create');
-    expect(findBtn(w, 'Create Schedule')).toBeTruthy();
-    expect(findBtn(w, 'Add Tag')).toBeUndefined();
+    expect(findBtn(w, 'Create schedule')).toBeTruthy();
+    expect(findBtn(w, 'Add tag')).toBeUndefined();
     await clickTab(w, 'Tags');
-    expect(findBtn(w, 'Create Schedule')).toBeUndefined();
-    expect(findBtn(w, 'Add Tag')).toBeTruthy();
+    expect(findBtn(w, 'Create schedule')).toBeUndefined();
+    expect(findBtn(w, 'Add tag')).toBeTruthy();
   });
 });
 
@@ -1580,7 +1580,7 @@ describe('ParentalControlsPage — dismissing a confirmation via the modal close
   it('closes the schedule form via the modal close control without writing', async () => {
     const { client, post, del } = makeClient();
     const w = await mountPage(client);
-    await findBtn(w, 'Create Schedule')!.trigger('click');
+    await findBtn(w, 'Create schedule')!.trigger('click');
     await flushPromises();
     await setInput(0, 'Half-typed');
     modalPanel().querySelector<HTMLButtonElement>('.phlix-modal__close')!.click();
@@ -1594,7 +1594,7 @@ describe('ParentalControlsPage — dismissing a confirmation via the modal close
     const { client, post } = makeClient();
     const w = await mountPage(client);
     await clickTab(w, 'Tags');
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, 'half-typed');
     modalPanel().querySelector<HTMLButtonElement>('.phlix-modal__close')!.click();
@@ -1607,7 +1607,7 @@ describe('ParentalControlsPage — dismissing a confirmation via the modal close
     const { client, post } = makeClient();
     const w = await mountPage(client);
     await clickTab(w, 'Tags');
-    await findBtn(w, 'Add Tag')!.trigger('click');
+    await findBtn(w, 'Add tag')!.trigger('click');
     await flushPromises();
     await setInput(0, 'half-typed');
     await findBtnIn(w, modalPanel(), 'Cancel')!.trigger('click');
@@ -1619,8 +1619,8 @@ describe('ParentalControlsPage — dismissing a confirmation via the modal close
   it('closes the stream-limits form via the modal close control without writing', async () => {
     const { client, put } = makeClient();
     const w = await mountPage(client);
-    await clickTab(w, 'Stream Limits');
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await clickTab(w, 'Stream limits');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     modalPanel().querySelector<HTMLButtonElement>('.phlix-modal__close')!.click();
     await flushPromises();
@@ -1792,8 +1792,8 @@ describe('ParentalControlsPage — profile identity badge', () => {
     const { client, put } = makeClient({ profile: null });
     const w = await mountPage(client);
     expect(w.findAll('[role="tab"]').length).toBe(3);
-    await clickTab(w, 'Stream Limits');
-    await findBtn(w, 'Update Limits')!.trigger('click');
+    await clickTab(w, 'Stream limits');
+    await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await setInput(0, '3');
     await submitForm();

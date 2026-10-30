@@ -142,7 +142,7 @@ export const MCP_TOKENS_ROUTE_PATH = 'mcp-tokens';
 export function mcpTokensMenuItem(base = '/app'): MenuItem {
     return {
         id: MCP_TOKENS_ROUTE_NAME,
-        label: 'MCP Tokens',
+        label: 'MCP tokens',
         icon: 'key',
         to: `${base}/${MCP_TOKENS_ROUTE_PATH}`,
     };

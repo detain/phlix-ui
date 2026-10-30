@@ -503,10 +503,13 @@ describe('SyncPlayPage — active room', () => {
     expect(rows[1]!.find('.syncplay-page__member-avatar').text()).toBe('G');
   });
 
+  // M-UI-31 (W-min186): these rows encoded the old lossy mapping (editor shown as
+  // 'Moderator', contributor indistinguishable from 'none'). The law now is wire
+  // truth: every SyncPlayRole gets its own honest label.
   it.each([
     ['owner', 'Owner'],
-    ['editor', 'Moderator'],
-    ['contributor', 'Member'],
+    ['editor', 'Editor'],
+    ['contributor', 'Contributor'],
     ['none', 'Member'],
   ] as const)('maps the %s role to the label %s', async (role, label) => {
     const { w } = await mountPage({

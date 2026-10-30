@@ -179,6 +179,35 @@ describe('useToastStore', () => {
 
             expect(store.toasts[0]!.duration).toBe(3000);
         });
+
+        // M-UI-28 law: the positional + `{ message }` shape (ten call sites)
+        // expressed a title-over-body intent the old spread silently destroyed.
+        // The helpers now parse that intent; these pins are the contract.
+        it('error(label, { message }) keeps BOTH: the label becomes the title', () => {
+            const store = useToastStore();
+            store.error('Download failed', { message: 'socket hang up' });
+
+            expect(store.toasts[0]!.title).toBe('Download failed');
+            expect(store.toasts[0]!.message).toBe('socket hang up');
+            expect(store.toasts[0]!.tone).toBe('error');
+            expect(store.toasts[0]!.duration).toBe(8000);
+        });
+
+        it('an explicit opts.title still wins over the positional label', () => {
+            const store = useToastStore();
+            store.warning('positional', { title: 'explicit', message: 'body' });
+
+            expect(store.toasts[0]!.title).toBe('explicit');
+            expect(store.toasts[0]!.message).toBe('body');
+        });
+
+        it('without opts.message the positional stays the message and no phantom title appears', () => {
+            const store = useToastStore();
+            store.info('plain', { duration: 1000 });
+
+            expect(store.toasts[0]!.message).toBe('plain');
+            expect(store.toasts[0]!.title).toBeUndefined();
+        });
     });
 
     describe('auto-dismiss behavior', () => {

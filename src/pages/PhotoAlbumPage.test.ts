@@ -126,7 +126,7 @@ describe('PhotoAlbumPage', () => {
     stubFetch({ album: album({ photos: [], photo_count: 0 }) });
     const w = await mountPage(makeRouter());
     await flushPromises();
-    expect(w.text()).toContain('No Photos');
+    expect(w.text()).toContain('No photos');
     w.unmount();
   });
 

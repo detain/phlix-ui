@@ -175,12 +175,12 @@ function selectLibrary(id: string): void {
         </EmptyState>
 
         <!-- No photo libraries -->
-        <EmptyState v-else-if="!loading && photoLibraries.length === 0" icon="image" title="No Photo Libraries">
+        <EmptyState v-else-if="!loading && photoLibraries.length === 0" icon="image" title="No photo libraries">
             <p>You don't have any photo libraries configured.</p>
         </EmptyState>
 
         <!-- No albums -->
-        <EmptyState v-else-if="!loading && albums.length === 0" icon="image" title="No Albums Yet">
+        <EmptyState v-else-if="!loading && albums.length === 0" icon="image" title="No albums yet">
             <p>This library has no photos.</p>
         </EmptyState>
 

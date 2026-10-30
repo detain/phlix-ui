@@ -1,8 +1,85 @@
+# Changelog
+
+All notable changes to `@phlix/ui` are documented in this file. Sections are newest-first:
+released versions use `## <x.y.z> - <YYYY-MM-DD>` (Keep a Changelog grouping), and pre-release
+work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that the next release
+folds into a version section. Historical entries are never rewritten — corrections and
+re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
+
 > **On the plan-document anchors below.** Many entries cite `plan_updates.md` / `updates.md` and
 > `S<number>` identifiers. Those plan docs are the estate update program's wave ledgers; they were
 > never files in this repo and now live in the docs site's archive: `phlix-docs/docs/old/`
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
+
+## Unreleased — ui minors lane 2026-10-30 (W-min186): the copy-law cluster — toasts stop swallowing their labels, SyncPlay roles speak wire truth, the Title Case islands sentence-case, status/error lines close their sentences in all seven locales, and the CHANGELOG gets its H1, its format law, and its honest headers
+
+- **M-UI-28 (webux).** `toasts.error(label, { message })` — the shape ten call
+  sites naturally reached for — silently DROPPED the positional label: the helpers
+  spread `opts` after `message`, so only the raw error string ever rendered. The
+  four convenience helpers now parse the intent: when `opts` carries its own
+  `message`, the positional becomes the `title` (an explicit `opts.title` still
+  wins); nothing a caller passes is discarded. Three store-level pins ship with
+  the law; the ten call sites stay untouched — their intent now survives.
+- **M-UI-05 (copywriter).** The Title Case label island is closed: eleven catalog
+  values (`parental.createSchedule/editSchedule/addTag/updateLimits/streamLimits`,
+  `music.allTracks/playAll`, `mcpTokens.title`, the three
+  `admin.transcoding.*` labels) and the eight photo-page EmptyState titles move to
+  the estate's sentence-case law; the orphan-inline duplicates in
+  `ParentalControlsPage.vue` and the `mcpTokensMenuItem` nav label flip with them
+  (both pages render inline copy today — wiring them onto their catalog keys is
+  the m10-class program, noted). Locales keep their own casing law (German nouns
+  stay nominal). Disclosed re-pins: `ParentalControlsPage.test.ts` (label
+  lookups + prose), `createPhlixApp.test.ts` ×2, two photo test literals.
+- **M-UI-31 (webux).** `SyncPlayPage` hardcoded English left its own `t()`-using
+  page: `Current Room`, `You're not in a SyncPlay room`, and the create/join hint
+  are catalogized (`syncplay.currentRoom/notInRoom/notInRoomHint`, seven locales).
+  `getRoleLabel` misrepresented the wire vocabulary — `editor` rendered as
+  'Moderator' and `contributor` was indistinguishable from `none` (both 'Member');
+  every `SyncPlayRole` now carries its own honest label (`roleEditor`,
+  `roleContributor` — the orphaned `roleModerator` key is retired from all seven
+  catalogs and the de English-echo allow-list). The four-row it.each dataset that
+  encoded the lossy mapping is a disclosed permanent re-pin. `PlaylistDetailPage`'s
+  bare `Couldn't load this playlist` headline rides the new `playlist.loadError`
+  group (first playlist key — the page gains its `useMessages` import). The
+  composed delete-confirm markup and the picker's documented inline-copy opt-out
+  stay (policy islands named in the review). 'room' wording follows the existing
+  catalog (owner room-vs-watch-group ruling pending — values rename in one sweep).
+- **M-UI-37 (writer).** The end-punctuation law closes its sentences in one
+  voice: six status/error keys (`syncplay.errorCreate/errorJoin`,
+  `settings.groupSaveError/loadFailed`, `season.loadError`,
+  `parental.loadErrorSchedules`) gain their period in ALL seven catalogs (ja gets
+  `。` per its own peers' precedent — the mirrors' perioded siblings prove the law
+  carries per-locale), the plural-branch split (`subtitleQuotaRemaining`: singular
+  branch bare, plural perioded, en plus five locales inherit it) closes with
+  one-branch-one-period, and UserRatingPicker's `Rating saved`/`Failed to save
+  rating` toasts finish their sentences. Disclosed re-pins: two dataset rows in
+  `UserRatingPicker.test.ts`; substring pins (`SeasonPage`,
+  `useSyncPlayStore` fallback literals) verified to absorb the delta unchanged.
+- **M-UI-19 (docmaint).** The primitives catalog is whole: `ConfirmDialog`,
+  `Menu`, `HelpPopover`, `HelpText`, `PageHint` join the README list and the
+  under-counted `~20` becomes the measured 26 (24 `src/components/ui/` + `Icon`
+  + `AppBackdrop`).
+- **M-UI-20 (docmaint).** The page-family half went stale at the majors wave
+  (M-UI-07's enumeration completed it — re-measured at this tip, all cited pages
+  are covered); the true residual was the component families: new
+  `### Components` section documents `ThumbRating`/`RatingBadge`/`UserRatingPicker`
+  (the S263 trio), `ProfileImageSettings`, `SourcePriorityEditor`,
+  `MetadataMatchModal`, `AppLayout` — the seven root exports the README named zero
+  of.
+- **M-UI-41 (writer).** Partial, disclosed: the file gets its `# Changelog` H1 +
+  a format law at top; the mid-file bare `## Unreleased` (shipped 0.99.2–0.99.6
+  work) gets an honest era header + bisect instructions instead of fabricated
+  per-tag bullet attribution (the verbatim-history law forbids rewriting shipped
+  entries); the duplicate `### Fixed` under `0.99.1` merges; and a stray embedded
+  `# Changelog` + boilerplate template found mid-file at the 0.80.x region is
+  removed (pre-existing artifact, zero changelog content lost). Section-order
+  variance in the ancient 0.98.x entries stays as history.
+- Gates: vue-tsc 0, eslint 0, vitest 316 files / 6 469 passed / 10 skipped
+  (= baseline 6 466 + 3 new toast pins, every other delta absorbed); `dist/`
+  rebuilt committed; `dist:check` green. M-UI-09 stays parked: the
+  `window.confirm` survivor is a documented adjudication (cae2a41ae, review #3,
+  2026-10-15) — conversion needs an async route-leave bridge, owner-reel row.
 
 ## Unreleased — ui minors lane 2026-10-30 (W-min185): copy/ARIA/doc-inventory cluster — the InviteLinks exclamations join the period law, the Explore heading rides its catalog key, the picker switcher becomes a real radiogroup, and the README finally counts its stores, routes, admin pages, and bundle honestly
 
@@ -901,7 +978,13 @@
   the hub S181 ui-pin grader report the four `@phlix/ui` pinners (server, hub,
   tizen, windows) STALE-1; their re-pins ride a separate lane.
 
-## Unreleased
+## v0.99.2 – v0.99.6 era — collected under a bare `## Unreleased` (W-min186 header correction)
+
+_Bullets below are verbatim; they shipped across tags v0.99.2…v0.99.6 (the section sits between the
+`0.99.1` and `0.99.7` entries and opens with the v0.99.4 release note). Per-tag attribution was NOT
+reconstructed — the verbatim-history law forbids rewriting shipped entries; bisecting integrators map
+bullets with `git log v0.99.1..v0.99.6` and the per-tag steps `v0.99.1..v0.99.2` … `v0.99.5..v0.99.6`._
+
 - Release @phlix/ui v0.99.4 — version bump + rebuilt committed artifacts
 
 ### Added
@@ -1055,8 +1138,6 @@
 - **The hub relay's `pending_command` now has a real consumer: "Alexa, play X" can reach an open app (S298).** New `src/api/hubRelay.ts` opens a socket to the hub's SyncPlay relay (`ws(s)://<hub>:8804/syncplay/{server_id}`) with the token on the `Sec-WebSocket-Protocol: bearer, <token>` subprotocol — the only carrier a browser WebSocket can present (S237 removed the query-string carrier the old sockets relied on). The socket opens at app boot (via `PhlixAppConfig.hubRelay`), NOT inside a SyncPlay room join — the hub delivers to an authenticated (user, server) socket regardless of room membership, which is the primary "no room open" case. It survives with a capped reconnect ladder that re-reads the token each attempt (relay tokens expire hourly) and rebinds cleanly when the app switches servers. Only `pending_command` / `play_media` frames are consumed (`parsePendingCommandFrame` at the boundary); every other relay frame is ignored.
 - **`SyncPlaySession.currentMediaId` is now carried through `groupToSession()` and has a caller (S298).** The mapper previously discarded the wire's `current_media_id`; it now maps to `currentMediaId` (`null` when absent). The store's new `applyPendingPlayMedia()` — the hub-consumer path — writes the delivered media id into a live session, and Player.vue's load path consumes it, so the field is produced and read by real code. (The server-side `GroupState::setCurrentMedia()` zero-production-caller gap is a phlix-server item; the wire value maps faithfully until a server lane wires it.)
 - **Player.vue gained a load-a-new-title path (S298).** The SyncPlay watcher was transport-control-only (play/pause/seek on an already-loaded element). A delivered `pending_command` now resolves its media id through the new `resolvePendingMedia` prop, `setCurrent()` loads the title, `play()` starts it, and the store slot is consumed; without a resolver the command is surfaced once via the new `pending-media` event for the host to route. A stale resolution (a newer command landing while the first is still resolving) is discarded, and a rejecting resolver falls back to the event.
-
-### Fixed
 
 - **SyncPlay positions are now converted to MILLISECONDS — the wire unit per `phlix-syncplay/SPEC.md:91` — at the phlix-ui send boundaries (S293).** The ui previously forwarded its internal SECONDS value untouched (`localPlaybackPosition` → `reportPosition`; `sendCommand()` → `sendPlay`/`sendPause`/`sendSeek`/`reportPosition`), while Roku — the only spec-compliant client — sends milliseconds, so in a mixed room a ui host's 300 s seek read as 0.3 s on Roku and a Roku host's 300000 ms read as 300000 s here. The seconds→ms conversion now happens at exactly the two send boundaries in `useSyncPlayStore.ts` (`reportLocalPosition()` and `sendCommand()`), each asserted with a 1000×-sensitive value and mutation-proved (removing the conversion reds a named test). The receive side is untouched — inbound wire values are consumed exactly as before, preserving the ui's internal seconds model end to end — and the server (stores the payload raw, unit-agnostic) and Roku (already compliant) are not touched.
 
@@ -1764,13 +1845,6 @@
 ### Fixes
 - fix(player): select closest quality >= source height instead of flooring
 
-
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.80.1] - 2026-07-14
 

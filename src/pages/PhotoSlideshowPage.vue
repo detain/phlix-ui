@@ -306,13 +306,13 @@ watch([libraryId, albumId], () => {
         </EmptyState>
 
         <!-- No library selected -->
-        <EmptyState v-else-if="!libraryId" icon="image" title="No Library Selected">
+        <EmptyState v-else-if="!libraryId" icon="image" title="No library selected">
             <p>Please access the slideshow from an album.</p>
             <Button variant="subtle" @click="exit">Go Back</Button>
         </EmptyState>
 
         <!-- No slides -->
-        <EmptyState v-else-if="slides.length === 0" icon="image" title="No Photos">
+        <EmptyState v-else-if="slides.length === 0" icon="image" title="No photos">
             <p>This slideshow has no photos.</p>
             <Button variant="subtle" @click="exit">Go Back</Button>
         </EmptyState>

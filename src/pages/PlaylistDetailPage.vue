@@ -19,6 +19,7 @@
  * between list and detail fetch, so the remove affordance stays reachable.
  */
 import { computed, onMounted, ref, watch } from 'vue';
+import { useMessages } from '../composables/useMessages';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiClient, type PlaylistSummary } from '../api/client';
 import type { MediaItem } from '../types/media-item';
@@ -41,6 +42,7 @@ import Spinner from '../components/ui/Spinner.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Icon from '../components/Icon.vue';
 
+const { t } = useMessages();
 const props = defineProps<{
   /** Test seam — defaults to the shared `api` singleton. */
   client?: ApiClient;
@@ -194,7 +196,7 @@ onMounted(() => void load());
     <EmptyState
       v-else-if="error"
       icon="alert"
-      title="Couldn’t load this playlist"
+      :title="t('playlist.loadError')"
       :description="error"
     >
       <template #actions>
