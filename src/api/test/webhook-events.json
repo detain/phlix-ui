@@ -1,0 +1,56 @@
+{
+    "$id": "https://phlix.tv/schemas/webhook-events.json",
+    "title": "Phlix webhook event catalog",
+    "description": "Canonical list of webhook event types a webhook subscription may select (consumed by the admin SPA webhook picker and future server-side events[] validation). DISTINCT from the plugin PSR-14 events in Phlix\\Shared\\Plugin\\EventNameMap (those are 'phlix.*' aliases for in-process plugin subscriptions). NOTE: these event types are the supported/styled vocabulary; actual emission of most of them is an unfinished backend gap to be wired in a later phase.",
+    "events": [
+        {
+            "type": "playback.started",
+            "group": "playback",
+            "label": "Playback started",
+            "description": "A user began playing a media item."
+        },
+        {
+            "type": "playback.ended",
+            "group": "playback",
+            "label": "Playback ended",
+            "description": "A playback session finished or was stopped."
+        },
+        {
+            "type": "library.updated",
+            "group": "library",
+            "label": "Library updated",
+            "description": "A library scan added, changed, or removed media items."
+        },
+        {
+            "type": "download.complete",
+            "group": "downloads",
+            "label": "Download complete",
+            "description": "A queued download finished and is available."
+        },
+        {
+            "type": "recording.started",
+            "group": "recordings",
+            "label": "Recording started",
+            "description": "A scheduled or manual DVR recording began."
+        },
+        {
+            "type": "recording.stopped",
+            "group": "recordings",
+            "label": "Recording stopped",
+            "description": "A DVR recording finished or was cancelled."
+        },
+        {
+            "type": "alert",
+            "group": "system",
+            "label": "Alert",
+            "description": "A server-level alert or warning was raised."
+        }
+    ],
+    "reserved": [
+        {
+            "type": "webhook.test",
+            "internal": true,
+            "description": "Fired only by the admin 'Test webhook' action; not user-subscribable."
+        }
+    ]
+}

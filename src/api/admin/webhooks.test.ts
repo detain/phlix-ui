@@ -6,12 +6,91 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   AdminWebhooksApi,
   SUBSCRIBABLE_EVENTS,
   WEBHOOK_EVENT_CATEGORIES,
 } from './webhooks';
 import type { ApiClient } from '../client';
+
+// ── M-UI-21: the picker pinned to the wire contract ─────────────────────────
+//
+// The picker used to be a hand-maintained mirror: `webhooks.ts` froze 10
+// events / 6 groups and the only test asserted its OWN list self-referentially
+// (count 10, group labels) — a server-side catalog change reached neither the
+// picker nor a red test. The fix pins the picker against the vendored wire
+// contract: `src/api/test/webhook-events.json`, a byte-identical copy of
+// phlix-shared `schemas/webhook-events.json` (the schema the server's
+// `WebhookEventCatalog` is itself documented to carry). Vendoring follows the
+// sanctioned interim pattern of `server-route-manifest.json` in the same
+// directory: ui has no dependency edge to the PHP package, so bytes are
+// copied, md5-pinned, and rotated by re-vendoring — never re-typed.
+
+const SCHEMA_FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'test', 'webhook-events.json');
+
+/** md5 of the vendored bytes == phlix-shared schemas/webhook-events.json at bb291122… (origin-master-verified). */
+const SCHEMA_MD5 = '248eff91be7b01021755484b220ef33e';
+
+interface SchemaEvent {
+  type: string;
+  group: string;
+  label: string;
+}
+
+const schemaBytes = readFileSync(SCHEMA_FILE);
+const schema = JSON.parse(schemaBytes.toString('utf8')) as {
+  events: SchemaEvent[];
+  reserved: Array<{ type: string; internal?: boolean }>;
+};
+
+describe('AdminWebhooksApi — shared schema pin (M-UI-21)', () => {
+  it('the vendored schema is byte-identical to the phlix-shared artifact', () => {
+    expect(createHash('md5').update(schemaBytes).digest('hex')).toBe(SCHEMA_MD5);
+  });
+
+  it('the five schema groups mirror schema.events exactly — type, label and per-group membership', () => {
+    const mirrored = WEBHOOK_EVENT_CATEGORIES.filter((c) => c.label !== 'User');
+    expect(mirrored.map((c) => c.label)).toEqual(['Playback', 'Library', 'Downloads', 'Recordings', 'System']);
+    let consumed = 0;
+    for (const group of mirrored) {
+      const expected = schema.events.filter((e) => e.group === group.label.toLowerCase());
+      consumed += expected.length;
+      expect(
+        group.events.map((e) => ({ type: e.id, label: e.label })),
+        `picker group ${group.label}`,
+      ).toEqual(expected.map((e) => ({ type: e.type, label: e.label })));
+    }
+    // Anti-vacuity both ways: the picker consumed the WHOLE schema — a schema
+    // addition that skips the picker reddens here, not silently.
+    expect(consumed).toBe(schema.events.length);
+  });
+
+  it('the User group is the declared ahead-of-schema superset, each id absent from the schema', () => {
+    // Documented in webhooks.ts: these user-dot events are already EMITTED by
+    // the server (its WebhookEventCatalog::EVENTS names all 10) but not yet in
+    // the shared schema; widening that file is the phlix-shared cascade's job.
+    // When the schema absorbs them, THIS reddens and the group folds into the
+    // mirror law above — drift becomes a test signal, not a silent skew.
+    const userGroup = WEBHOOK_EVENT_CATEGORIES.find((c) => c.label === 'User');
+    expect(userGroup?.events.map((e) => e.id)).toEqual(['user.login', 'user.logout', 'user.created']);
+    const schemaTypes = new Set(schema.events.map((e) => e.type));
+    for (const ev of userGroup?.events ?? []) {
+      expect(schemaTypes.has(ev.id), `schema already names ${ev.id} — re-partition the mirror`).toBe(false);
+    }
+  });
+
+  it('every schema-reserved event is internal and not user-subscribable', () => {
+    expect(schema.reserved.length).toBeGreaterThan(0);
+    for (const r of schema.reserved) {
+      expect(r.internal, r.type).toBe(true);
+      expect(SUBSCRIBABLE_EVENTS).not.toContain(r.type);
+    }
+  });
+});
 
 /** A mock ApiClient whose verbs are vi.fn()s the test can assert on. */
 function makeClient() {

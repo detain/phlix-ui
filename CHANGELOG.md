@@ -12,6 +12,30 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui minors lane 2026-10-30 (W-min192): the hub surface gets its gate, and the webhook picker stops being a mirror of itself
+
+- M-UI-24 (fedev m4): the named W18 follow-up lands. `claimServer`, `invite-links`
+  and `mcp-tokens` now drive through the same 404-discipline route harness as the
+  server-facing modules, against a byte-pinned vendored copy of the hub's
+  `openapi.yaml` (the contract hub's own `OpenApiSpecMatchesRouter` CI gate keeps
+  truthful against its router). New `routeGate.hub.test.ts` pins the vendored md5,
+  the mechanical tuple extraction (130 tuples / 104 paths over the pinned bytes),
+  all 9 hub-addressed urls, the not-a-server-route partition law, a clean 9-URL
+  drive and a hub-side 404 control. `expectGateClean` generalised from the server
+  manifest to the served route set — identical semantics for every existing drive
+  (all 7 gate files stay green, 73 tests unchanged).
+- M-UI-21 (fedev m1): the webhook event picker's self-referential pin retired.
+  `webhooks.test.ts` now pins the vendored `phlix-shared/schemas/webhook-events.json`
+  bytes (md5) and mirrors the picker's five schema groups against it — type, label
+  and whole-schema coverage, so a server-side catalog addition reddens instead of
+  silently skewing; the User group stays a declared ahead-of-schema superset whose
+  re-absorption is guarded by its own test.
+- Verification: vue-tsc 0; eslint 0; vitest full serial 321 files / 6499 passed /
+  10 skipped (+1 file, +10 tests exact vs W-min191 baseline: 6 hub-gate + 4
+  schema-pin); build determinism ×2. dist UNCHANGED (aggregate md5 stays
+  62f3b92f…): `tsconfig.build.json` excludes `src/api/test/**`, so the harness
+  change emits no bundle or `.d.ts` delta — the new files are test-venue only.
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min191): remotes press buttons, dead tokens die honest
 
 - **Cross-device verb (M-UI-06):** `settings.resetConfirm` — all 7 registries — swaps the mouse-only

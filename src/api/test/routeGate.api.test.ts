@@ -316,9 +316,9 @@ describe('route gate — index-buckets.ts (fetchIndexBuckets)', () => {
     });
 });
 
-// ── hub-addressed modules — enumerated, gated in W18 ─────────────────────────
+// ── hub-addressed modules — enumerated here, gated in routeGate.hub.test.ts ──
 
-describe('route gate — hub-addressed modules (enumerated; W18 follow-up)', () => {
+describe('route gate — hub-addressed modules (enumerated; hub drive in routeGate.hub.test.ts)', () => {
     /**
      * Three src/api modules address the HUB's HTTP surface, not the media
      * server's: claimServer (`POST /api/v1/server-claims/claim`, hub-gated by
@@ -326,8 +326,9 @@ describe('route gate — hub-addressed modules (enumerated; W18 follow-up)', () 
      * `/api/v1/me/servers`, `/api/v1/me/libraries`) and mcp-tokens
      * (`/api/v1/me/mcp-tokens`, phlix-hub `Application.php:497-519`). Pinning
      * them against the SERVER manifest would be a false red — the server does
-     * not serve them; the hub does. Their gate is the HUB's route contract, a
-     * named W18 follow-up (s280rest). Asserting they are NOT server routes
+     * not serve them; the hub does. Their gate is the HUB's route contract,
+     * landed since as `routeGate.hub.test.ts` (M-UI-24 closed the named W18
+     * follow-up s280rest). Asserting they are NOT server routes
      * keeps the partition honest: if one of these ever lands on the server,
      * this reds and the partition must be re-drawn.
      */

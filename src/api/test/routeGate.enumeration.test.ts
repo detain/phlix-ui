@@ -114,11 +114,12 @@ const GATED_API = [
 ];
 
 /**
- * Files the api gate ENUMERATES but does not drive against the server
- * manifest (hub-addressed surfaces + known-unserved endpoints — see the
- * partition describes in `routeGate.api.test.ts` / `routeGate.admin.test.ts`).
+ * HUB-addressed modules — gated, just not against the SERVER manifest: their
+ * drives live in `routeGate.hub.test.ts` against the vendored hub route
+ * contract (M-UI-24 landed the named W18 follow-up). The api/admin gates still
+ * enumerate them and pin that their urls are NOT server routes.
  */
-const PARTITIONED_API = [
+const GATED_HUB_API = [
     'claimServer.ts',
     'invite-links.ts',
     'mcp-tokens.ts',
@@ -143,7 +144,7 @@ describe('route gate — module enumeration', () => {
         const scanned = scanDir(path.join(REPO_ROOT, 'src', 'api'))
             .map((f) => f.replace(/^src\/api\//, ''))
             .sort();
-        const asserted = [...GATED_API, ...PARTITIONED_API].sort();
+        const asserted = [...GATED_API, ...GATED_HUB_API].sort();
         expect(scanned).toEqual(asserted);
     });
 

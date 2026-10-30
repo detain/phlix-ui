@@ -137,6 +137,16 @@ export interface RouteGateServerOptions {
      * a route the client legitimately calls (the S280 defect shape).
      */
     omit?: string[];
+    /**
+     * The route tuple set to serve; defaults to `SERVER_ROUTE_MANIFEST`.
+     * M-UI-24 landed the named W18 follow-up: the hub-addressed drives pass the
+     * tuples extracted from the vendored hub route contract
+     * (`routeGate.hub.test.ts`) so the SAME 404-discipline harness gates both
+     * HTTP surfaces. Same law as the server manifest: tuples come from the
+     * SERVER side (hub's `openapi.yaml`, kept truthful by hub's
+     * `OpenApiSpecMatchesRouter` CI gate), never transcribed from the client.
+     */
+    routes?: ReadonlyArray<readonly [string, string]>;
 }
 
 /**
@@ -149,7 +159,11 @@ export interface RouteGateServerOptions {
 export function makeRouteGateServer(baseUrl = '', options: RouteGateServerOptions = {}): RouteGateServer {
     const requests: RouteGateObservedRequest[] = [];
     const omit = new Set(options.omit ?? []);
-    const registered = COMPILED.filter((r) => !omit.has(`${r.method} ${r.template}`));
+    const compiled =
+        options.routes === undefined
+            ? COMPILED
+            : options.routes.map(([method, template]) => ({ method, template, pattern: routeToRegExp(template) }));
+    const registered = compiled.filter((r) => !omit.has(`${r.method} ${r.template}`));
 
     const impl = (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
         const method = (init?.method ?? 'GET').toUpperCase();
@@ -244,9 +258,10 @@ export async function driveGated(
  * 1. ANTI-VACUITY — the drive really issued at least `minRequests` requests.
  * 2. NO 404 — every requested url is one the server registers (the defect
  *    layer: a client calling a url that never existed reds here).
- * 3. TUPLE-EXACT — every observed `[method, template]` is a manifest member by
- *    exact equality, and the DISTINCT set is pinned exactly (`expected`): a
- *    rename absorbed by a wildcard sibling changes the set and reds.
+ * 3. TUPLE-EXACT — every observed `[method, template]` is a member of the
+ *    served route set by exact equality, and the DISTINCT set is pinned exactly
+ *    (`expected`): a rename absorbed by a wildcard sibling changes the set and
+ *    reds.
  */
 export function expectGateClean(
     server: RouteGateServer,
@@ -258,9 +273,14 @@ export function expectGateClean(
     const notOk = server.requests.filter((r) => r.status !== 200);
     expect(notOk.map((r) => `${r.method} ${r.path} → ${r.status}`)).toEqual([]);
 
+    // Membership is against THIS server's served set — the SERVER manifest by
+    // default, the hub contract for M-UI-24 hub drives. Semantics are identical
+    // for every server-facing use (served == the manifest); a 200 the fake
+    // server never registered is structurally impossible, so the belt stays on.
+    const servedKeys = new Set(server.served.map(([m, t]) => `${m} ${t}`));
     for (const r of server.requests) {
-        if (!isRegisteredRoute(r.method, r.template)) {
-            throw new Error(`route gate — observed ${r.method} ${r.template}, not in the server manifest`);
+        if (!servedKeys.has(`${r.method} ${r.template}`)) {
+            throw new Error(`route gate — observed ${r.method} ${r.template}, not in the served route set`);
         }
     }
 
