@@ -233,8 +233,8 @@ export { useCommandStore, fuzzyScore, matchCommand } from './stores/useCommandSt
 export type { Command } from './stores/useCommandStore';
 export { useCommandPaletteHotkey } from './composables/useCommandPaletteHotkey';
 export { useTheme, applyStoredThemeEarly } from './composables/useTheme';
-export { BUILT_IN_THEME_IDS, THEME_TOKEN_ALLOWLIST, THEME_CACHE_KEY, MAX_EXTENDS_DEPTH, isBuiltInThemeId, isAllowedThemeToken, isSafeThemeTokenValue, sanitizeThemeTokens, normalizeServerTheme, resolveThemeTokens, resolveThemeBase, activeThemeStyle, applyThemeTokens, clearThemeTokens, readCachedTheme, writeCachedTheme, } from './composables/themeTokens';
-export type { BuiltInThemeId, ServerTheme, ActiveThemeStyle } from './composables/themeTokens';
+export { BUILT_IN_THEME_IDS, THEME_TOKEN_ALLOWLIST, THEME_CACHE_KEY, MAX_EXTENDS_DEPTH, isBuiltInThemeId, isAllowedThemeToken, isSafeThemeTokenValue, sanitizeThemeTokens, normalizeServerTheme, resolveThemeTokens, resolveThemeBase, activeThemeStyle, applyThemeTokens, clearThemeTokens, readCachedTheme, writeCachedTheme, FOCUS_RING_MIN_CONTRAST, RING_GROUND_KEYS, parseThemeColor, compositedContrastOver, focusRingLawViolation, } from './composables/themeTokens';
+export type { BuiltInThemeId, ServerTheme, ActiveThemeStyle, ParsedThemeColor } from './composables/themeTokens';
 export { useThemesStore } from './stores/useThemesStore';
 export { fetchThemes } from './api/themes';
 export { useOnline } from './composables/useOnline';

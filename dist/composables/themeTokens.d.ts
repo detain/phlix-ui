@@ -208,6 +208,49 @@ export interface ActiveThemeStyle {
  * built-in (nothing to apply — `data-theme` alone does it) or unknown.
  */
 export declare function activeThemeStyle(id: string, themes: readonly ServerTheme[]): ActiveThemeStyle | null;
+/** WCAG 1.4.11 minimum contrast for a focus indicator against its ground. */
+export declare const FOCUS_RING_MIN_CONTRAST = 3;
+/**
+ * Grounds the ring is measured on: the opaque elevation stack a focus ring
+ * actually paints over. `--surface-3` is deliberately excluded — it is a
+ * transient hover ground and the static token lock
+ * (`src/tokens/contrast.test.ts`) scopes it out by the same decision;
+ * binding it here would false-deny shipped themes (sample-theme measures
+ * 2.93 on its own s3 while passing every real interaction ground).
+ */
+export declare const RING_GROUND_KEYS: readonly ["--bg", "--surface", "--surface-2"];
+/** An 8-bit sRGB colour with its coverage alpha (1 = opaque). */
+export interface ParsedThemeColor {
+    rgb: readonly [number, number, number];
+    alpha: number;
+}
+/**
+ * Parse the colour forms the ring law can MEASURE: hex (3/4/6/8 digit) and
+ * comma- or slash-separated `rgb()/rgba()` with plain numeric channels.
+ * Anything else — hsl/hsla, percentages, keywords, `currentcolor` — is
+ * returned as null, which every caller treats as UNPROVABLE, never as a
+ * violation: a colour this parser cannot reduce to sRGB pixels may well
+ * pass, and denying it would be superstition, not measurement. (The space-
+ * separated modern function syntax never reaches here either — the module's
+ * own value grammar already refuses it.)
+ */
+export declare function parseThemeColor(value: string): ParsedThemeColor | null;
+/**
+ * Contrast of a ring value COMPOSITED over a ground value, as the browser
+ * would paint it (alpha source-over in 8-bit sRGB, rounded per channel —
+ * the exact math of every theme repo's TokenContrastTest). Null when either
+ * side is unmeasurable or the ground is translucent (its own composite is
+ * unknowable from the token map alone).
+ */
+export declare function compositedContrastOver(ringValue: string, groundValue: string): number | null;
+/**
+ * Why a token map's `--accent-ring` violates the focus-ring law, or null when
+ * the map declares no ring, nothing to measure it against, or a passing ring.
+ * The reason line names the measured ratio and the failing ground, phrased
+ * like the theme repos' guard failures so the same vocabulary travels from
+ * CI to console.
+ */
+export declare function focusRingLawViolation(tokens: Record<string, string>): string | null;
 /**
  * Set a theme's tokens on an element via CSSOM.
  *
@@ -215,6 +258,14 @@ export declare function activeThemeStyle(id: string, themes: readonly ServerThem
  * This is the single place a plugin-supplied string becomes CSS, so it is the
  * one place worth being redundant: any future caller that forgets to sanitise
  * still cannot set a property outside {@link THEME_TOKEN_ALLOWLIST}.
+ *
+ * The third check lives here for the same reason (R-UI-05): a theme whose
+ * `--accent-ring` composites below the WCAG 1.4.11 focus-indicator floor on
+ * the grounds its own map declares gets that ONE token dropped — the cascade
+ * then paints the base theme's certified ring, exactly like any other
+ * dropped token, and the author sees a console.warn naming the measurement.
+ * Unmeasurable rings (hsl, translucent grounds) are never denied: the law
+ * only fires on a PROVEN failure.
  */
 export declare function applyThemeTokens(el: HTMLElement, tokens: Record<string, string>): void;
 /**

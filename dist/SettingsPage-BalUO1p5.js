@@ -3,7 +3,7 @@ import { a as n } from "./usePreferencesStore-CFPikE8Z.js";
 import { t as r } from "./useMessages-CiSCI5Ag.js";
 import { t as i } from "./useApiBase-CV_r-Kk4.js";
 import { t as ee } from "./useToastStore-BDoKlU6N.js";
-import { _ as te, g as ne, n as re, t as a } from "./SecuritySettingsPage-CiiawT-H.js";
+import { S as te, n as ne, t as a, x as re } from "./SecuritySettingsPage-DMcXCmty.js";
 import { t as ie } from "./Button-BuG0GvCa.js";
 import { t as o } from "./Slider-DqFxiMp4.js";
 import { t as s } from "./Switch-ibkXiiN-.js";
@@ -40,7 +40,7 @@ var de = {
 	__name: "AppearanceSettings",
 	props: { panel: { default: "appearance" } },
 	setup(e) {
-		let a = n(), l = re(), v = ee(), { t: z } = r(), B = i(), V = [
+		let a = n(), l = ne(), v = ee(), { t: z } = r(), B = i(), V = [
 			{
 				value: "nocturne",
 				label: "Nocturne",
@@ -64,7 +64,7 @@ var de = {
 		let H = d(() => [...V, ...l.pluginThemes.map((e) => ({
 			value: e.id,
 			label: e.name,
-			base: ne(e.id, l.items),
+			base: re(e.id, l.items),
 			tokens: te(e.id, l.items)
 		}))]), U = [
 			{
@@ -487,4 +487,4 @@ var de = {
 //#endregion
 export { W as default };
 
-//# sourceMappingURL=SettingsPage-C3ktkmSJ.js.map
+//# sourceMappingURL=SettingsPage-BalUO1p5.js.map
