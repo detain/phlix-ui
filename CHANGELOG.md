@@ -12,6 +12,26 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui minors lane 2026-10-30 (W-min186 r2): the last named Title Case island closes, and the M-UI-05 closure claim becomes true
+
+- **M-UI-05 (copywriter, rework r2).** Forward-correction, not a rewrite: the W-min186 entry
+  claimed "the eight photo-page EmptyState titles move to the estate's sentence-case law" —
+  seven moved. `src/pages/PhotoAlbumPage.vue:146` (the `!album` EmptyState,
+  `title="Album Not Found"`) survived its own sweep; the independent review re-measured the
+  repo-wide offender regex (`EmptyState[^>]*title="[A-Z][a-z]+ [A-Z]"`) and found EXACTLY this
+  one hit at the r1 pin. It now reads `title="Album not found"` — the same in-place case-flip
+  its seven accepted siblings received (the photo pages render inline copy today; wiring them
+  onto catalog keys is the documented m10-class program, and the only existing `albumNotFound`
+  key belongs to the `music` domain, so it was not borrowed). The new value matches
+  `music.albumNotFound`'s sentence-case form exactly. Measured with the reviewer's own sweep:
+  1 hit at parent `9901dd4b`, 0 hits here — the island is now closed as claimed.
+- Verification: vue-tsc 0; eslint 0; vitest full serial 321 files / 6 499 passed / 10 skipped
+  — zero pins moved (no test referenced the literal anywhere), floor held vs the W-min192
+  staircase exactly (re-measured, not copied); build determinism ×2 (aggregate md5
+  `fbf627d5a4921c77a38a0e2653ecfb1a` both runs); `dist/` rebuilt and committed in the same
+  commit (5 files: both bundles + both maps + `style.css`, the SFC edit rehashing its
+  `data-v-` scope id); zero `Album Not Found` bytes remain in the shipped bundles.
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min192): the hub surface gets its gate, and the webhook picker stops being a mirror of itself
 
 - M-UI-24 (fedev m4): the named W18 follow-up lands. `claimServer`, `invite-links`

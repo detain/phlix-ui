@@ -143,7 +143,7 @@ watch([() => props.id, libraryId], () => {
         </EmptyState>
 
         <!-- No album found -->
-        <EmptyState v-else-if="!album" icon="image" title="Album Not Found">
+        <EmptyState v-else-if="!album" icon="image" title="Album not found">
             <p>This album could not be found.</p>
             <Button variant="subtle" @click="goBack">Go to Albums</Button>
         </EmptyState>

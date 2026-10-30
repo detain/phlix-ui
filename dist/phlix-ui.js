@@ -6529,7 +6529,7 @@ var vg = { class: "photo-albums-page" }, yg = { class: "page-header" }, bg = { c
 		}, Y(e.name), 9, Yg)])], 8, Wg))), 128))])) : (K(), L(k, {
 			key: 3,
 			icon: "image",
-			title: "Album Not Found"
+			title: "Album not found"
 		}, {
 			default: Q(() => [t[7] ||= B("p", null, "This album could not be found.", -1), H(A, {
 				variant: "subtle",
@@ -6554,7 +6554,7 @@ var vg = { class: "photo-albums-page" }, yg = { class: "page-header" }, bg = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-7a6615ce"]]), Zg = { class: "photo-view-page" }, Qg = { class: "page-header" }, $g = { class: "header-content" }, e_ = {
+}), [["__scopeId", "data-v-06b09a97"]]), Zg = { class: "photo-view-page" }, Qg = { class: "page-header" }, $g = { class: "header-content" }, e_ = {
 	key: 0,
 	class: "photo-name"
 }, t_ = { class: "header-actions" }, n_ = ["href"], r_ = {
