@@ -534,7 +534,18 @@ the real container MIME (`containerMimeForExtension()`) and the primary audio-tr
 ### Forms & long-tail pages
 
 `LoginForm` · `SignupForm`, plus the directly-exported consumer pages
-`LibraryScanPage` · `MyServersPage` · `FederationPage` · `ManageSharesPage` · `AuditLogsPage`.
+`LibraryScanPage` · `MyServersPage` · `ServerDetailPage` · `FederationPage` · `FederationSharesPage` ·
+`ManageSharesPage` · `SharedWithMePage` · `RequestsPage` · `InviteLinksPage` · `AcceptInvitePage` ·
+`SecuritySettingsPage`, the photo family `PhotoAlbumsPage` · `PhotoAlbumPage` · `PhotoViewPage` ·
+`PhotoSlideshowPage`, the book family `BooksPage` · `BookDetailPage` · `BookReaderPage`, the audiobook
+family `AudiobooksPage` · `AudiobookDetailPage` · `AudiobookPlayerPage`, and `SearchPage` (a lazy
+`defineAsyncComponent` factory, not a static re-export — S324). The `Music*` pages are listed under
+Music surfaces above.
+
+> `AuditLogsPage` is intentionally **not** re-exported: it ships as a lazy admin chunk through
+> `hubAdminPages` / `buildHubAdminRoutes()` (NOTE (H0) in `src/index.ts`) — a static root re-export
+> would merge it back into the main bundle (Rollup `INEFFECTIVE_DYNAMIC_IMPORT`) and defeat the
+> code-split.
 
 > The six built-in **route** pages (Browse/Detail/Player/Login/Signup/Settings) and every admin page
 > are intentionally **not** re-exported — they are lazy chunks mounted by `createPhlixApp` /

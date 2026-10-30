@@ -1,3 +1,23 @@
+## Unreleased — ui majors lane 2026-10-30 (M-UI-07): the README drops AuditLogsPage from its directly-exported list and completes the page enumeration
+
+- **The ask.** ui__docmaint M-UI-07: the Component catalog listed `AuditLogsPage`
+  among "the directly-exported consumer pages", while `src/index.ts` NOTE (H0) says
+  the opposite in code — it is a lazy admin chunk owned by the hub admin registry
+  (`hubAdminPages` / `buildHubAdminRoutes()`), and a static root re-export would
+  re-merge it into the main bundle (Rollup `INEFFECTIVE_DYNAMIC_IMPORT`). The
+  adjacent blockquote already stated that every admin page is NOT re-exported —
+  the README contradicted itself two lines apart.
+- **The cure.** `AuditLogsPage` left the exported list; a dedicated blockquote now
+  names the lazy admin-chunk reality and points at NOTE (H0). The same sentence
+  claimed an enumeration of the exported consumer pages yet omitted eight real
+  exports (`ServerDetailPage`, `FederationSharesPage`, `SharedWithMePage`,
+  `RequestsPage`, `InviteLinksPage`, `AcceptInvitePage`, `SecuritySettingsPage`,
+  plus the Photo/Audiobook families that appeared nowhere in the catalog) and
+  blurred `SearchPage`'s lazy-factory shape; the list is now complete and matches
+  `grep "from './pages/" src/index.ts` exactly, with the `Music*` pages kept under
+  their own section.
+- **Evidence.** README copy only; no src/dist delta in this commit.
+
 
 ## Unreleased — ui majors lane 2026-10-30 (M-UI-06): the README stops promising the Player surface on the package root
 
