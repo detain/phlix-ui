@@ -131,14 +131,25 @@ always want (`app`, `apiBase`):
 | `apiBase` | `string` | Base URL for all `/api/v1` calls (provided to the stores via `inject('apiBase')`). |
 | `imageOrigin?` | `string` | Cross-origin host serving posters/artwork (a CDN/proxy). Warmed early via `usePreconnect`; falls back to the `apiBase` host when omitted. |
 | `routerBase?` | `string` | Vue Router history base. Default `'/app'`. |
+| `home?` | `string` | Path the app treats as "home": where login/signup land, where the brand link points, and where a logged-in non-admin is bounced from an admin-only route. Defaults to `routerBase`; the hub sets it to its servers list so it never lands on the server-only Browse page. |
 | `menu?` | `MenuItem[]` | Navigation entries rendered in the app shell. |
 | `extraRoutes?` | `RouteRecordRaw[]` | Extra routes merged after the built-ins (e.g. spread `buildAdminRoutes()` here). |
-| `features?` | `Record<string, boolean>` | Arbitrary feature-flag map. |
+| `features?` | `Record<string, boolean>` | Arbitrary feature-flag map. Recognized keys include `resumeSync` (cross-device continue-watching pull on login; default true on the server, false on the hub). |
 | `commands?` | `Command[]` | App-injected ⌘K command-palette entries (registered alongside the built-ins). |
+| `hubRelay?` | `HubRelayConfig` | Hub-relay pending-command consumer config (S298): the host supplies the server id + a token provider (tokens expire hourly; re-read on every reconnect). When present, the app opens the hub's SyncPlay relay socket at boot so "Alexa, play X" can reach the player. |
 | `defaultTheme?` | `'nocturne' \| 'daylight' \| 'midnight'` | Initial theme for a first-time visitor. A stored user choice always wins. |
+| `defaultTv?` | `boolean` | Initial TV mode for a first-time visitor (10-foot sizing + visible focus rings). A stored user toggle always wins; applied pre-mount like `defaultTheme`. |
 | `branding?` | `BrandingConfig` | Per-app brand: `wordmark?`, `logoSrc?`, `logoAlt?`, `tagline?`. |
 | `homeRows?` | `HomeRow[]` | Browse home-row shelves: `{ id, title, query? }` (query is a partial `LibraryQueryParams`, incl. `libraryId`). Rendered _in addition to_ the automatic per-library rails. |
 | `messages?` | `PhlixMessagesConfig` | Deep-partial override of user-facing English strings (the i18n-readiness seam). |
+| `locale?` | `PhlixErrorLocale` | Selects which of the seven complete error-code catalogs (`src/i18n/errors.ts`) renders. Omit (or pass an unknown tag) ⇒ English. Config-time like `messages` — no runtime locale switch. |
+| `wsUrl?` | `string \| null` | R12-02 — operator-pinned WebSocket endpoint for the SPA's sockets (`ws(s)://host[:port]`, NO path/query/userinfo; hub env `HUB_WS_URL`). A valid value overrides the legacy same-origin port derivations (`:8097` SyncPlay direct, `:8804` hub relay); null/absent/invalid ⇒ legacy behavior unchanged. |
+| `wsPath?` | `string \| null` | R12-02 — path companion to `wsUrl` (a single absolute path, e.g. `/syncplay`; hub env `HUB_WS_PATH`). Only refines a present `wsUrl`; the hub relay defaults its `/syncplay` prefix when omitted. |
+| `deviceHeaders?` | `Record<string, string>` | Extra headers sent on every API request — native-device identity (`X-Phlix-Device-ID` / `-Name` / `-Type`, `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`; this is how the Windows/Tizen apps identify as devices. |
+| `requireConnection?` | `boolean` | When true, any route visited with no resolved API base redirects to the Connect screen. Native desktop/TV clients set this (they ship with no baked-in server origin); web-hosted server/hub leave it false. |
+| `onConnectionChange?` | `(url: string \| null) => void` | Called whenever the Connect screen persists (or clears, with `null`) the chosen API base — native shells mirror it into their own durable store. |
+| `connectScan?` | `() => Promise<ConnectCandidate[]>` | Host-injected LAN server scan consumed by the Connect screen's "Scan" affordance (S532). OMITTED ⇒ the affordance is hidden (a web-hosted app has nothing to scan). |
+| `playerHlsConfig?` | `Partial<HlsConfig>` | Per-app hls.js overrides for the transcode player (e.g. a TV tuning `maxBufferLength` down to cap RAM). Merged OVER the built-in defaults; the auth `xhrSetup` is always preserved. |
 
 ```ts
 import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';

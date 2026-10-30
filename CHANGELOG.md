@@ -1,3 +1,20 @@
+## Unreleased — ui majors lane 2026-10-30 (M-UI-08): the README PhlixAppConfig table now covers all 23 shipped fields
+
+- **The ask.** ui__docmaint M-UI-08: the `Configuration — PhlixAppConfig` table
+  presented itself as the complete field reference ("Every field is optional except…")
+  but documented only 12 of the 23 fields declared in `src/app/types.ts` — omitting the
+  R12-02 socket seams (`wsUrl`/`wsPath`), `home`, `hubRelay`, `defaultTv`, `locale`,
+  `deviceHeaders`, `requireConnection`, `onConnectionChange`, `connectScan`, and
+  `playerHlsConfig`. A host integrating native/TV shells had no documented route to the
+  connection-gating or device-identity fields.
+- **The cure.** The eleven missing fields are documented with types and honest purposes
+  drawn from the interface's own docblocks.
+- **The guard.** A new test, `src/app/phlixAppConfigDocs.test.ts`, mechanically parses
+  the `PhlixAppConfig` interface and the README table and asserts two-way completeness —
+  no shipped field undocumented, no documented field phantom, and a floor asserting the
+  interface still exposes >=23 fields (tripwire against parser rot). Verified teeth:
+  deleting the `wsUrl?` table row reddens exactly the completeness test.
+
 ## Unreleased — ui majors lane 2026-10-30 (M-UI-07): the README drops AuditLogsPage from its directly-exported list and completes the page enumeration
 
 - **The ask.** ui__docmaint M-UI-07: the Component catalog listed `AuditLogsPage`
