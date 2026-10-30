@@ -122,7 +122,7 @@ function toggleReveal(): void {
     box-shadow var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
 }
 .authfield__input::placeholder {
-  color: var(--text-faint);
+  color: var(--text-subtle);
 }
 .authfield__input:hover:not(:disabled) {
   border-color: var(--border-strong);

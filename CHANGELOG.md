@@ -1,3 +1,23 @@
+## Unreleased — R-W4 riders lane 2026-10-30 (R-UI-04): AuthField placeholders join the shared placeholder tier
+
+- **The ask.** Review theme-jade `__r1` observation 3a (endorsed cosmetic-but-
+  recurring): `AuthField.vue` bound `.authfield__input::placeholder` to
+  `--text-faint` while `Input.vue` and `Combobox.vue` bind their placeholders
+  to `--text-subtle` — auth screens rendered ghost text one tier dimmer than
+  every other field in the same design system.
+- **The cure.** One-line binding alignment: the placeholder color now reads
+  `var(--text-subtle)`, the tier the other two field components already share
+  (and which the AA-cure re-pin at fed7fa5a left intact). `--text-faint`
+  remains the disabled/faint tier elsewhere; the tokens contrast lock
+  (`src/tokens/contrast.test.ts`) scopes faint out by design and needed no
+  pin rotation — grep census found zero tests encoding the old binding.
+- **Teeth.** Full serial suite green unchanged: 313 files, 6424 passed /
+  10 skipped — exact R-W2 floors, zero goldens moved. `npm run build`
+  re-emitted the AuthField chunk with deterministic ×2 aggregate md5 and
+  `dist:check` is green on the committed tree.
+- **Seam reported (owner-gated, NOT taken by this lane).** Rides the v0.99.12
+  wave reel; no tag or consumer cascade created here.
+
 ## Unreleased — R-W2 riders lane 2026-10-30 (R-UI-02): the quota.exceeded copy stops claiming bandwidth it never gated
 
 - **The ask.** M-HUB-05's fix closeout filed rider R-UI-02 against this repo:

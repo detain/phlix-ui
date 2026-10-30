@@ -1,4 +1,4 @@
-import { r as e } from "./AuthField-C-hq6_no.js";
+import { r as e } from "./AuthField-D1BjkcxS.js";
 import { n as t, t as n } from "./Icon-CIwTuFLd.js";
 import { t as r } from "./IconButton-y6A8Bq4D.js";
 import { a as i, i as a, n as o, o as s, r as c, t as l } from "./useFocusTrap-rrmOWOBy.js";
@@ -64,8 +64,8 @@ import { n as En, r as Dn, t as On } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as kn, n as An, r as jn, t as Mn } from "./plugins-DjIeCRMB.js";
 import { n as Nn, r as Pn, t as Fn } from "./maintenance-CETCLHzL.js";
 import { t as In } from "./hubDashboard-BhOaaDD-.js";
-import { t as Ln } from "./LoginForm-CpKL-vaa.js";
-import { t as Rn } from "./SignupForm-Dx5DvSZT.js";
+import { t as Ln } from "./LoginForm-C7HumuSd.js";
+import { t as Rn } from "./SignupForm-xqCKyrjY.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as zn, t as Bn } from "./debounce-BkSsZiXZ.js";
 import { t as Vn } from "./Input-DOj6fN8q.js";
@@ -1306,19 +1306,19 @@ function Ya(e) {
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-C34Mkp-U.js")
+			component: () => import("./LoginPage-DbwGfWko.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CNcDLrRa.js")
+			component: () => import("./SignupPage-BXhkrJ06.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-CPIK_4iP.js")
+			component: () => import("./ConnectPage-3ymyPnfM.js")
 		},
 		{
 			path: `${t}/settings`,
