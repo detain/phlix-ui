@@ -293,7 +293,7 @@ describe('MediaCard — quick actions + slots', () => {
     await w.find('.media-card__iconbtn--play').trigger('click');
     // The favorite button keeps emitting `watchlist` for back-compat (the store
     // wiring is additive) — it is the canonical favorite/bookmark slot.
-    await w.find('[aria-label="Add to favorites"]').trigger('click');
+    await w.find('[aria-label="Add to My List"]').trigger('click');
     await w.find('[aria-label="More info"]').trigger('click');
     expect(w.emitted('play')![0][0]).toMatchObject({ id: 'm1' });
     expect(w.emitted('watchlist')).toHaveLength(1);
@@ -348,12 +348,12 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
   it('reflects the store: outline + aria-pressed=false when not favorited', async () => {
     const w = mount(MediaCard, { props: { item: media() } });
     await reveal(w);
-    const btn = w.find('[aria-label="Add to favorites"]');
+    const btn = w.find('[aria-label="Add to My List"]');
     expect(btn.exists()).toBe(true);
     expect(btn.attributes('aria-pressed')).toBe('false');
     expect(btn.classes()).not.toContain('is-active');
     // outline bookmark icon when not favorited
-    expect(w.find('[aria-label="Add to favorites"] svg').exists()).toBe(true);
+    expect(w.find('[aria-label="Add to My List"] svg').exists()).toBe(true);
   });
 
   it('reflects the store: filled + aria-pressed=true when the item is favorited', async () => {
@@ -361,7 +361,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     store.entries.set('m1', { favorite: true, rating: null, like_level: 0, watched: false });
     const w = mount(MediaCard, { props: { item: media() } });
     await reveal(w);
-    const btn = w.find('[aria-label="Remove from favorites"]');
+    const btn = w.find('[aria-label="Remove from My List"]');
     expect(btn.exists()).toBe(true);
     expect(btn.attributes('aria-pressed')).toBe('true');
     expect(btn.classes()).toContain('is-active');
@@ -381,15 +381,15 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
       global: { provide: { phlixConfig: { app: 'server', apiBase: '/api-host' } } },
     });
     await reveal(w);
-    expect(w.find('[aria-label="Add to favorites"]').attributes('aria-pressed')).toBe('false');
+    expect(w.find('[aria-label="Add to My List"]').attributes('aria-pressed')).toBe('false');
 
-    await w.find('[aria-label="Add to favorites"]').trigger('click');
+    await w.find('[aria-label="Add to My List"]').trigger('click');
 
     expect(toggle).toHaveBeenCalledTimes(1);
     expect(toggle).toHaveBeenCalledWith('m1', '/api-host');
     await nextTick();
     // visual now reflects the store's favorited state
-    const on = w.find('[aria-label="Remove from favorites"]');
+    const on = w.find('[aria-label="Remove from My List"]');
     expect(on.exists()).toBe(true);
     expect(on.attributes('aria-pressed')).toBe('true');
   });
@@ -403,7 +403,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
       attrs: { onClick: onCardClick },
     });
     await reveal(w);
-    await w.find('[aria-label="Add to favorites"]').trigger('click');
+    await w.find('[aria-label="Add to My List"]').trigger('click');
     expect(w.emitted('watchlist')).toHaveLength(1);
     expect(w.emitted('watchlist')![0][0]).toMatchObject({ id: 'm1' });
     // @click.stop.prevent: the click never reaches the card / stretched info link
@@ -415,7 +415,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     const toggle = vi.spyOn(store, 'toggleFavorite').mockResolvedValue(undefined);
     const w = mount(MediaCard, { props: { item: media() } });
     await reveal(w);
-    await w.find('[aria-label="Add to favorites"]').trigger('click');
+    await w.find('[aria-label="Add to My List"]').trigger('click');
     expect(toggle).toHaveBeenCalledWith('m1', '');
   });
 
@@ -425,7 +425,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
-    expect(labels).toEqual(['Play', 'Add to favorites', 'Mark as watched', 'More info', 'More actions', 'Match metadata']);
+    expect(labels).toEqual(['Play', 'Add to My List', 'Mark as watched', 'More info', 'More actions', 'Match metadata']);
   });
 
   it('keeps the canonical order without the admin Match button', async () => {
@@ -434,7 +434,7 @@ describe('MediaCard — favorite/bookmark wiring (Feature 17)', () => {
     const labels = w
       .findAll('.media-card__actions .media-card__iconbtn')
       .map((b) => b.attributes('aria-label'));
-    expect(labels).toEqual(['Play', 'Add to favorites', 'Mark as watched', 'More info', 'More actions']);
+    expect(labels).toEqual(['Play', 'Add to My List', 'Mark as watched', 'More info', 'More actions']);
   });
 });
 
@@ -493,7 +493,7 @@ describe('MediaCard — watched (eye) toggle', () => {
     expect(buttons).toHaveLength(1);
     expect(buttons[0].attributes('aria-label')).toBe('Play');
     expect(w.find('.thumb-rating').exists()).toBe(false);
-    expect(w.find('[aria-label="Add to favorites"]').exists()).toBe(false);
+    expect(w.find('[aria-label="Add to My List"]').exists()).toBe(false);
     expect(w.find('[aria-label="More actions"]').exists()).toBe(false);
   });
 
@@ -596,7 +596,7 @@ describe('MediaCard — ThumbRating (thumbs up/down)', () => {
       'Play',
       'Like',
       'Dislike',
-      'Add to favorites',
+      'Add to My List',
       'Mark as watched',
       'More info',
       'More actions',
@@ -679,7 +679,7 @@ describe('MediaCard — overlay action row lazy-mount (UI-2.5 [U-R2])', () => {
     // every button/menu/rating instance is ABSENT from the DOM — not just CSS-hidden.
     expect(w.find('.media-card__actions').exists()).toBe(false);
     expect(w.find('.media-card__iconbtn--play').exists()).toBe(false);
-    expect(w.find('[aria-label="Add to favorites"]').exists()).toBe(false);
+    expect(w.find('[aria-label="Add to My List"]').exists()).toBe(false);
     expect(w.find('[aria-label="More actions"]').exists()).toBe(false);
     expect(w.find('.thumb-rating').exists()).toBe(false);
 
@@ -1166,7 +1166,7 @@ describe('MediaCard — action button tooltips (S20)', () => {
     // toMatchObject asserts MediaCard's own actions without over-constraining.
     expect(tooltipTextByLabel(w)).toMatchObject({
       Play: 'Play',
-      'Add to favorites': 'Add to favorites',
+      'Add to My List': 'Add to My List',
       'Mark as watched': 'Mark as watched',
       'More info': 'More info',
       'More actions': 'More actions',
@@ -1179,7 +1179,7 @@ describe('MediaCard — action button tooltips (S20)', () => {
     await reveal(w);
     for (const label of [
       'Play',
-      'Add to favorites',
+      'Add to My List',
       'Mark as watched',
       'More info',
       'More actions',
@@ -1211,14 +1211,14 @@ describe('MediaCard — action button tooltips (S20)', () => {
     await reveal(w);
     // Not favorited.
     const off = tooltipTextByLabel(w);
-    expect(off['Add to favorites']).toBe('Add to favorites');
-    expect(off['Remove from favorites']).toBeUndefined();
+    expect(off['Add to My List']).toBe('Add to My List');
+    expect(off['Remove from My List']).toBeUndefined();
     // Favorited → the tip (and the aria-label it mirrors) flip together.
     store.entries.set('m1', { favorite: true, rating: null, like_level: 0, watched: false });
     await nextTick();
     const on = tooltipTextByLabel(w);
-    expect(on['Remove from favorites']).toBe('Remove from favorites');
-    expect(on['Add to favorites']).toBeUndefined();
+    expect(on['Remove from My List']).toBe('Remove from My List');
+    expect(on['Add to My List']).toBeUndefined();
   });
 
   it('the Watched tooltip text flips with isWatched (both states)', async () => {

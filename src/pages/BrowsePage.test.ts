@@ -1070,7 +1070,7 @@ describe('BrowsePage — card actions', () => {
     w.findComponent(HomeRow).vm.$emit('watchlist', media({ id: 'p1', name: 'Dune' }));
     expect(
       toasts.toasts.some(
-        (t) => t.tone === 'success' && t.message.includes('Dune') && /favorites/i.test(t.message),
+        (t) => t.tone === 'success' && t.message.includes('Dune') && /my list/i.test(t.message),
       ),
     ).toBe(true);
   });
@@ -1085,7 +1085,7 @@ describe('BrowsePage — card actions', () => {
     w.findComponent(HomeRow).vm.$emit('watchlist', media({ id: 'p2', name: 'Arrival' }));
     expect(
       toasts.toasts.some(
-        (t) => t.tone === 'info' && t.message.includes('Arrival') && /favorites/i.test(t.message),
+        (t) => t.tone === 'info' && t.message.includes('Arrival') && /my list/i.test(t.message),
       ),
     ).toBe(true);
   });

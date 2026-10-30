@@ -302,7 +302,7 @@ describe('SeasonPage (U3)', () => {
     const { w } = await mountAt('sh1', '1', fetchMock);
     await flushPromises();
     expect(w.find('.season-page__favorite').attributes('aria-pressed')).toBe('true');
-    expect(w.find('.season-page__favorite').text()).toContain('In favorites');
+    expect(w.find('.season-page__favorite').text()).toContain('In My List');
     expect(w.find('.season-page__watched').attributes('aria-pressed')).toBe('true');
     expect(w.find('.season-page__watched').text()).toContain('Watched');
   });

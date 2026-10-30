@@ -30,6 +30,7 @@ import type { MediaItem, PosterSrcsetInput } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { useMessages } from '../composables/useMessages';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { usePrefetch } from '../composables/usePrefetch';
@@ -205,6 +206,7 @@ const phlixConfig = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 // Router instance for SPA navigation (null when router unavailable, e.g. standalone mounts).
 const router = inject(routerKey, null);
+const { t } = useMessages();
 
 /** Whether THIS item is currently favorited per the store (false when unknown). */
 const isFavorited = computed(() => userItemData.isFavorite(props.item.id));
@@ -594,12 +596,12 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           />
 
           <!-- [ Favorite/Bookmark ] -->
-          <Tooltip :text="isFavorited ? 'Remove from favorites' : 'Add to favorites'">
+          <Tooltip :text="isFavorited ? t('itemActions.removeFavorite') : t('itemActions.addFavorite')">
             <button
               type="button"
               class="media-card__iconbtn"
               :class="{ 'is-active': isFavorited }"
-              :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+              :aria-label="isFavorited ? t('itemActions.removeFavorite') : t('itemActions.addFavorite')"
               :aria-pressed="isFavorited ? 'true' : 'false'"
               @click.stop.prevent="onFavorite"
             >

@@ -326,10 +326,13 @@ export const DEFAULT_MESSAGES = {
    * canonical generic strings (audit L3).
    */
   itemActions: {
-    addFavorite: 'Add to favorites',
-    removeFavorite: 'Remove from favorites',
-    inFavorites: 'In favorites',
-    watchlist: 'Watchlist',
+    addFavorite: 'Add to My List',
+    removeFavorite: 'Remove from My List',
+    inFavorites: 'In My List',
+    watchlist: 'My List',
+    /** M-UI-02 — the card/detail favorite toggle's delivery toast (one word with the rail heading). */
+    addedToList: 'Added “{name}” to My List.',
+    removedFromList: 'Removed “{name}” from My List.',
     markWatched: 'Mark watched',
     watched: 'Watched',
     markWatchedAria: 'Mark as watched',
@@ -573,10 +576,10 @@ export const DEFAULT_MESSAGES = {
   season: {
     // Season page top actions (whole-season Play + per-season-row user data)
     play: 'Play',
-    watchlist: 'Watchlist',
-    inFavorites: 'In favorites',
-    addFavorite: 'Add to favorites',
-    removeFavorite: 'Remove from favorites',
+    watchlist: 'My List',
+    inFavorites: 'In My List',
+    addFavorite: 'Add to My List',
+    removeFavorite: 'Remove from My List',
     markWatched: 'Mark watched',
     watched: 'Watched',
     markWatchedAria: 'Mark as watched',

@@ -1,10 +1,10 @@
-import { r as e } from "./AuthField-BIE6hn4P.js";
+import { r as e } from "./AuthField-B7b9Ju6g.js";
 import { n as t, t as n } from "./Icon-CIwTuFLd.js";
 import { t as r } from "./IconButton-y6A8Bq4D.js";
 import { a as i, i as a, n as o, o as s, r as c, t as l } from "./useFocusTrap-rrmOWOBy.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-CFPikE8Z.js";
 import { a as h, i as g, n as _, o as v, r as y, s as b, t as x } from "./plural-DMM7pLFA.js";
-import { i as S, n as C, r as w, t as T } from "./useMessages-_RNJP-px.js";
+import { i as S, n as C, r as w, t as T } from "./useMessages-M5VcrfIX.js";
 import { _ as ee, a as E, b as te, c as ne, d as re, f as ie, g as ae, h as oe, i as se, l as ce, m as le, n as ue, o as de, p as fe, r as pe, t as me, u as he, v as ge, y as D } from "./client-DdVqCKVh.js";
 import { n as O, r as _e, t as ve } from "./useApiBase-CV_r-Kk4.js";
 import { t as ye } from "./useAuthStore-Bi1-VYV4.js";
@@ -16,12 +16,12 @@ import { t as ze } from "./useToastStore-BDoKlU6N.js";
 import { n as Be, t as Ve } from "./ThumbRating-B5EFc49E.js";
 import { i as He, o as Ue, s as We } from "./shortcuts-Ck2yBFUB.js";
 import { t as Ge } from "./Tooltip-D_txjC1i.js";
-import { t as Ke } from "./Spinner-DFw4BJdj.js";
-import { t as qe } from "./NetworkHealthIndicator-Dkz9es0E.js";
-import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-D1lo3xYn.js";
+import { t as Ke } from "./Spinner-CcXHI0nh.js";
+import { t as qe } from "./NetworkHealthIndicator-BkfPE7iw.js";
+import { C as Je, S as Ye, _ as Xe, a as Ze, b as Qe, c as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, w as ht, x as gt, y as _t } from "./SecuritySettingsPage-DvCf2CdR.js";
 import { i as vt, n as yt, r as bt, t as xt } from "./Kbd-DdcgRPIx.js";
 import { a as St, i as Ct, n as wt, o as Tt, r as Et, t as Dt } from "./useLibrariesStore-5icSJdQF.js";
-import { n as Ot, t as kt } from "./HomeRow-uXWG-ADH.js";
+import { n as Ot, t as kt } from "./HomeRow-B5MRhbmy.js";
 import { t as At } from "./safeHref-C9H0Sqte.js";
 import { t as A } from "./EmptyState-BAyOxAcK.js";
 import { t as j } from "./Button-BuG0GvCa.js";
@@ -32,20 +32,20 @@ import { t as M } from "./Badge-A88fI41k.js";
 import { t as Kt } from "./Slider-DqFxiMp4.js";
 import { t as qt } from "./Switch-ibkXiiN-.js";
 import { t as Jt } from "./Chip-CYhlmz6l.js";
-import { t as Yt } from "./Select-D5WM74_-.js";
-import { t as Xt } from "./Combobox-BEPuTDWZ.js";
-import { t as Zt } from "./Modal-eRq9Rw_4.js";
-import { t as Qt } from "./ConfirmDialog-D_kXRdOx.js";
+import { t as Yt } from "./Select-CUH5f-z1.js";
+import { t as Xt } from "./Combobox-DmL52a_p.js";
+import { t as Zt } from "./Modal-9IqluoNm.js";
+import { t as Qt } from "./ConfirmDialog-CusF0Ku-.js";
 import { t as N } from "./Skeleton-rHw-IJtl.js";
 import { t as $t } from "./PageHint-BGYg6qRJ.js";
 import { t as en } from "./Tabs-7t3yuCWn.js";
 import { t as tn } from "./Menu-Dm56tG4N.js";
 import { t as nn } from "./HelpText-aA3EQtU4.js";
-import { o as rn, t as an } from "./MediaCard-DvejVokB.js";
-import { t as on } from "./MediaGrid-B4hII6Te.js";
-import { t as sn } from "./MediaRow-RxyLbu4n.js";
+import { o as rn, t as an } from "./MediaCard-CT1dSDzK.js";
+import { t as on } from "./MediaGrid-C-hydGqX.js";
+import { t as sn } from "./MediaRow-BpWZGlBq.js";
 import { n as cn, t as ln } from "./media-query-DKjhlX8r.js";
-import { n as un, t as dn } from "./metadata-sources-PxbEQOwF.js";
+import { n as un, t as dn } from "./metadata-sources-DOrPr-47.js";
 import { n as fn, t as pn } from "./logs-DadTfaTq.js";
 import { t as mn } from "./dashboard-BTCOCTHQ.js";
 import { n as hn, r as gn, t as _n } from "./webhooks-aMh0Jywf.js";
@@ -64,12 +64,12 @@ import { n as jn, r as Mn, t as Nn } from "./useSettingsPrefs-CEFxTJFG.js";
 import { i as Pn, n as Fn, r as In, t as Ln } from "./plugins-Dj2gQeBS.js";
 import { n as Rn, r as zn, t as Bn } from "./maintenance-CETCLHzL.js";
 import { t as Vn } from "./hubDashboard-BhOaaDD-.js";
-import { t as Hn } from "./LoginForm-CqSD8QYf.js";
-import { t as Un } from "./SignupForm-QWSiO_-T.js";
+import { t as Hn } from "./LoginForm-D2EZshgq.js";
+import { t as Un } from "./SignupForm-B125wJKo.js";
 import { t as P } from "./hubHelpLinks-DqAE3Wx3.js";
 import { n as Wn, t as Gn } from "./debounce-BkSsZiXZ.js";
 import { t as Kn } from "./Input-DOj6fN8q.js";
-import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-FVfzRc2o.js";
+import { i as qn, n as Jn, r as Yn, t as Xn } from "./MusicAlbumCard-Beyt1vJj.js";
 import { t as Zn } from "./useMediaStore-Bam6M9Oo.js";
 import { Fragment as F, Teleport as Qn, Transition as $n, TransitionGroup as er, computed as I, createApp as tr, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as nr, createTextVNode as V, createVNode as H, defineAsyncComponent as rr, defineComponent as U, getCurrentScope as ir, inject as ar, nextTick as or, normalizeClass as W, normalizeStyle as sr, onBeforeUnmount as cr, onMounted as G, onScopeDispose as lr, onUnmounted as ur, openBlock as K, provide as dr, readonly as fr, ref as q, renderList as J, renderSlot as pr, resolveComponent as mr, resolveDynamicComponent as hr, toDisplayString as Y, toValue as gr, unref as X, useId as _r, vModelSelect as vr, vModelText as yr, vShow as br, watch as Z, watchEffect as xr, withCtx as Q, withDirectives as Sr, withModifiers as Cr } from "vue";
 import { createPinia as wr, defineStore as Tr } from "pinia";
@@ -918,7 +918,7 @@ var la = ["src", "alt"], ua = { class: "brand-wordmark" }, da = {
 		Qi();
 		let t = vt(), i = $(), a = Ar(), { t: o } = T(), s = Ue(), c = I(() => a.meta?.fullBleed === !0 && s.theaterActive);
 		$i();
-		let l = rr(() => import("./CommandPalette-BxLqAzpE.js")), u = q(!1);
+		let l = rr(() => import("./CommandPalette-BsBSMAjl.js")), u = q(!1);
 		Z(() => t.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1279,111 +1279,111 @@ function eo(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-AMoa2nyQ.js")
+			component: () => import("./BrowsePage-YN4ISn9x.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-Ca_CewXV.js")
+			component: () => import("./MediaDetailPage-D8Jmn48f.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-DMDNrskE.js")
+			component: () => import("./SeasonPage-DJRNoES-.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-C_bHSoIE.js")
+			component: () => import("./LibraryPage-D1laJeP8.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-DTyl4_n-.js")
+			component: () => import("./PlayerPage-DPRMFHBN.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DyHeP2o3.js")
+			component: () => import("./LoginPage-1JJa5ZL1.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CaZUzM_G.js")
+			component: () => import("./SignupPage-C-TLRBL0.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-DHBzfCQH.js")
+			component: () => import("./ConnectPage-_hHQJmti.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-pEIuXvmV.js")
+			component: () => import("./SettingsPage-CETADyvM.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-DpaIs5jV.js")
+			component: () => import("./ExplorePage-De0w1UaL.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-JyQhMLWK.js")
+			component: () => import("./RecommendationsPage-ClIjZ4B4.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-DJlZTj3F.js")
+			component: () => import("./WatchHistoryPage-CoNKJa9W.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-8VKSnLpM.js")
+			component: () => import("./SyncPlayPage-O4Wydo3u.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-Ct7lGpep.js")
+			component: () => import("./MusicLibraryPage-BQRVMG1C.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-B8i2m6Rt.js")
+			component: () => import("./ParentalControlsPage-BvCrXYJm.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-CCrn9WXT.js")
+			component: () => import("./ProfilesPage-DGgc_x77.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-CvbZBTbA.js")
+			component: () => import("./PlaylistsPage-DZdOy7WB.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-CwB9PzVU.js")
+			component: () => import("./PlaylistDetailPage-CyzVM_b7.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Wa}`,
 		name: Ua,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-DUVTPmTT.js")
+		component: () => import("./McpTokensPage-BYVyPyza.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1658,25 +1658,25 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-CTJx4DmV.js")
+	component: () => import("./DashboardPage-DzQfmB33.js")
 }, _o = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-BqAl8JGd.js")
+	component: () => import("./UsersPage-BGvXkWXq.js")
 }, vo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-B0Wk05Vo.js")
+	component: () => import("./LogsPage-CIYq05kk.js")
 }, yo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-DCVu2SP2.js")
+	component: () => import("./WebhooksPage-CXpKNvEl.js")
 }, bo = {
 	name: "admin-services",
 	path: "services",
@@ -1688,13 +1688,13 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-Bib_wgTi.js")
+	component: () => import("./IntegrationsPage-CFLbueRd.js")
 }, So = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-bnaGn31C.js")
+	component: () => import("./BackupPage-ChqJHF7o.js")
 }, Co = {
 	name: "admin-cast",
 	path: "cast-devices",
@@ -1712,19 +1712,19 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-C9oSsczs.js")
+	component: () => import("./RemoteAccessPage-DEXQdJgk.js")
 }, Eo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-BzhFLe6z.js")
+	component: () => import("./LiveTvPage-CEkF21ff.js")
 }, Do = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-OoFa1P9Y.js")
+	component: () => import("./CollectionsPage-_CxeFJZb.js")
 }, Oo = {
 	name: "admin-history",
 	path: "history",
@@ -1736,43 +1736,43 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-B_4sV5Jc.js")
+	component: () => import("./SyncPlayPage-BNKgHeir.js")
 }, Ao = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-CeuEG1MX.js")
+	component: () => import("./LibrariesPage-DvQbAxLZ.js")
 }, jo = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-C7mvk8p3.js")
+	component: () => import("./DuplicatesPage-BHo-MPTM.js")
 }, Mo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-Df3j87LK.js")
+	component: () => import("./PluginsPage-ClYNDWwq.js")
 }, No = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-Db1aMyRF.js")
+	component: () => import("./TasksPage-C9YxTspV.js")
 }, Po = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-DWT_5Jpd.js")
+	component: () => import("./TranscodingSettingsPage-Bw7j-OuK.js")
 }, Fo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-Ba0I_NB-.js")
+	component: () => import("./SettingsPage-upP4fW_B.js")
 }, Io = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1784,7 +1784,7 @@ var no = /*#__PURE__*/ t(/* @__PURE__ */ U({
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-B311Zw7k.js")
+	component: () => import("./MetricsPage-ChetagHB.js")
 }, Ro = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -7479,10 +7479,12 @@ var H_ = {
 		skipControls: "Controles de salto"
 	},
 	itemActions: {
-		addFavorite: "Añadir a favoritos",
-		removeFavorite: "Quitar de favoritos",
-		inFavorites: "En favoritos",
+		addFavorite: "Añadir a mi lista",
+		removeFavorite: "Quitar de mi lista",
+		inFavorites: "En mi lista",
 		watchlist: "Mi lista",
+		addedToList: "“{name}” se añadió a tu lista.",
+		removedFromList: "“{name}” se quitó de tu lista.",
 		markWatched: "Marcar como visto",
 		watched: "Visto",
 		markWatchedAria: "Marcar como visto",
@@ -7653,9 +7655,9 @@ var H_ = {
 	season: {
 		play: "Reproducir",
 		watchlist: "Mi lista",
-		inFavorites: "En favoritos",
-		addFavorite: "Añadir a favoritos",
-		removeFavorite: "Quitar de favoritos",
+		inFavorites: "En mi lista",
+		addFavorite: "Añadir a mi lista",
+		removeFavorite: "Quitar de mi lista",
 		markWatched: "Marcar como visto",
 		watched: "Visto",
 		markWatchedAria: "Marcar como visto",
@@ -7973,10 +7975,12 @@ var H_ = {
 		skipControls: "Contrôles de saut"
 	},
 	itemActions: {
-		addFavorite: "Ajouter aux favoris",
-		removeFavorite: "Retirer des favoris",
-		inFavorites: "Dans les favoris",
+		addFavorite: "Ajouter à ma liste",
+		removeFavorite: "Retirer de ma liste",
+		inFavorites: "Dans ma liste",
 		watchlist: "Ma liste",
+		addedToList: "« {name} » a été ajouté à votre liste.",
+		removedFromList: "« {name} » a été retiré de votre liste.",
 		markWatched: "Marquer comme vu",
 		watched: "Vu",
 		markWatchedAria: "Marquer comme vu",
@@ -8147,9 +8151,9 @@ var H_ = {
 	season: {
 		play: "Lecture",
 		watchlist: "Ma liste",
-		inFavorites: "Dans les favoris",
-		addFavorite: "Ajouter aux favoris",
-		removeFavorite: "Retirer des favoris",
+		inFavorites: "Dans ma liste",
+		addFavorite: "Ajouter à ma liste",
+		removeFavorite: "Retirer de ma liste",
 		markWatched: "Marquer comme vu",
 		watched: "Vu",
 		markWatchedAria: "Marquer comme vu",
@@ -8467,10 +8471,12 @@ var H_ = {
 		skipControls: "Skip-Steuerung"
 	},
 	itemActions: {
-		addFavorite: "Zu Favoriten hinzufügen",
-		removeFavorite: "Aus Favoriten entfernen",
-		inFavorites: "In Favoriten",
-		watchlist: "Merkliste",
+		addFavorite: "Zu meiner Liste hinzufügen",
+		removeFavorite: "Aus meiner Liste entfernen",
+		inFavorites: "In meiner Liste",
+		watchlist: "Meine Liste",
+		addedToList: "„{name}“ wurde zu deiner Liste hinzugefügt.",
+		removedFromList: "„{name}“ wurde aus deiner Liste entfernt.",
 		markWatched: "Als gesehen markieren",
 		watched: "Gesehen",
 		markWatchedAria: "Als gesehen markieren",
@@ -8640,10 +8646,10 @@ var H_ = {
 	history: { title: "Wiedergabeverlauf" },
 	season: {
 		play: "Wiedergabe",
-		watchlist: "Merkliste",
-		inFavorites: "In Favoriten",
-		addFavorite: "Zu Favoriten hinzufügen",
-		removeFavorite: "Aus Favoriten entfernen",
+		watchlist: "Meine Liste",
+		inFavorites: "In meiner Liste",
+		addFavorite: "Zu meiner Liste hinzufügen",
+		removeFavorite: "Aus meiner Liste entfernen",
 		markWatched: "Als gesehen markieren",
 		watched: "Gesehen",
 		markWatchedAria: "Als gesehen markieren",
@@ -8961,10 +8967,12 @@ var H_ = {
 		skipControls: "Controlli di salto"
 	},
 	itemActions: {
-		addFavorite: "Aggiungi ai preferiti",
-		removeFavorite: "Rimuovi dai preferiti",
-		inFavorites: "Nei preferiti",
-		watchlist: "Da vedere",
+		addFavorite: "Aggiungi alla mia lista",
+		removeFavorite: "Rimuovi dalla mia lista",
+		inFavorites: "Nella mia lista",
+		watchlist: "La mia lista",
+		addedToList: "“{name}” aggiunto alla tua lista.",
+		removedFromList: "“{name}” rimosso dalla tua lista.",
 		markWatched: "Segna come visto",
 		watched: "Visto",
 		markWatchedAria: "Segna come visto",
@@ -9134,10 +9142,10 @@ var H_ = {
 	history: { title: "Cronologia" },
 	season: {
 		play: "Riproduci",
-		watchlist: "Da vedere",
-		inFavorites: "Nei preferiti",
-		addFavorite: "Aggiungi ai preferiti",
-		removeFavorite: "Rimuovi dai preferiti",
+		watchlist: "La mia lista",
+		inFavorites: "Nella mia lista",
+		addFavorite: "Aggiungi alla mia lista",
+		removeFavorite: "Rimuovi dalla mia lista",
 		markWatched: "Segna come visto",
 		watched: "Visto",
 		markWatchedAria: "Segna come visto",
@@ -9455,10 +9463,12 @@ var H_ = {
 		skipControls: "Controles para pular"
 	},
 	itemActions: {
-		addFavorite: "Adicionar aos favoritos",
-		removeFavorite: "Remover dos favoritos",
-		inFavorites: "Nos favoritos",
+		addFavorite: "Adicionar à minha lista",
+		removeFavorite: "Remover da minha lista",
+		inFavorites: "Na minha lista",
 		watchlist: "Minha lista",
+		addedToList: "“{name}” adicionado à sua lista.",
+		removedFromList: "“{name}” removido da sua lista.",
 		markWatched: "Marcar como assistido",
 		watched: "Assistido",
 		markWatchedAria: "Marcar como assistido",
@@ -9629,9 +9639,9 @@ var H_ = {
 	season: {
 		play: "Reproduzir",
 		watchlist: "Minha lista",
-		inFavorites: "Nos favoritos",
-		addFavorite: "Adicionar aos favoritos",
-		removeFavorite: "Remover dos favoritos",
+		inFavorites: "Na minha lista",
+		addFavorite: "Adicionar à minha lista",
+		removeFavorite: "Remover da minha lista",
 		markWatched: "Marcar como assistido",
 		watched: "Assistido",
 		markWatchedAria: "Marcar como assistido",
@@ -9949,10 +9959,12 @@ var H_ = {
 		skipControls: "スキップ操作"
 	},
 	itemActions: {
-		addFavorite: "お気に入りに追加",
-		removeFavorite: "お気に入りから削除",
-		inFavorites: "お気に入り済み",
-		watchlist: "ウォッチリスト",
+		addFavorite: "マイリストに追加",
+		removeFavorite: "マイリストから削除",
+		inFavorites: "マイリスト済み",
+		watchlist: "マイリスト",
+		addedToList: "「{name}」をマイリストに追加しました。",
+		removedFromList: "「{name}」をマイリストから削除しました。",
 		markWatched: "視聴済みにする",
 		watched: "視聴済み",
 		markWatchedAria: "視聴済みとしてマーク",
@@ -10122,10 +10134,10 @@ var H_ = {
 	history: { title: "視聴履歴" },
 	season: {
 		play: "再生",
-		watchlist: "ウォッチリスト",
-		inFavorites: "お気に入り済み",
-		addFavorite: "お気に入りに追加",
-		removeFavorite: "お気に入りから削除",
+		watchlist: "マイリスト",
+		inFavorites: "マイリスト済み",
+		addFavorite: "マイリストに追加",
+		removeFavorite: "マイリストから削除",
 		markWatched: "視聴済みにする",
 		watched: "視聴済み",
 		markWatchedAria: "視聴済みとしてマーク",
@@ -10199,7 +10211,7 @@ var H_ = {
 	it: G_,
 	pt_BR: K_,
 	ja: q_
-}, Y_ = rr(() => import("./MediaDetail-CkxrJOvS.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-CGnCz4cr.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-DBSNpQXL.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-BOYhvBYj.js"));
+}, Y_ = rr(() => import("./MediaDetail-BGEv-Sr1.js").then((e) => e.n)), X_ = rr(() => import("./MetadataMatchModal-BqXZFpiN.js").then((e) => e.n)), Z_ = rr(() => import("./FilterBar-8_h9en-H.js").then((e) => e.n)), Q_ = rr(() => import("./SearchPage-CFJUohdo.js"));
 //#endregion
 export { je as ACTIVE_PROFILE_KEY, pn as ALL_LOGS, pd as AcceptInvitePage, bn as AdminBackupApi, xn as AdminCastApi, Tn as AdminCollectionsApi, mn as AdminDashboardApi, Sn as AdminDlnaServerApi, En as AdminHistoryApi, Vn as AdminHubDashboardApi, yn as AdminIntegrationsApi, An as AdminLibrariesApi, wn as AdminLiveTvApi, fn as AdminLogsApi, Bn as AdminMaintenanceApi, dn as AdminMetadataSourcesApi, Ln as AdminPluginsApi, Cn as AdminRemoteAccessApi, vn as AdminServicesApi, jn as AdminSettingsApi, Dn as AdminSyncPlayApi, Oe as AdminUsersApi, _n as AdminWebhooksApi, me as ApiClient, ae as ApiError, e as AppBackdrop, Kr as AppLayout, Oh as AudiobookDetailPage, cg as AudiobookPlayerPage, Qm as AudiobooksPage, it as BUILT_IN_THEME_IDS, M as Badge, ym as BookDetailPage, Lm as BookReaderPage, Qp as BooksPage, j as Button, zt as CONNECTION_API_BASE_KEY, Ft as CONNECTION_CONFIRMED_ORIGIN_KEY, ha as CURRENT_SERVER_ID_KEY, ga as CURRENT_SERVER_NAME_KEY, Jt as Chip, Xt as Combobox, Qt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, C as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, we as DEFAULT_THROTTLE_BPS, W_ as DE_MESSAGES, he as ERROR_MESSAGES, re as ERROR_TITLES, H_ as ES_MESSAGES, A as EmptyState, Ze as FOCUS_RING_MIN_CONTRAST, U_ as FR_MESSAGES, sl as FederationPage, Al as FederationSharesPage, Z_ as FilterBar, ie as GENERIC_ERROR_MESSAGE, xa as HUB_SYNC_PLAY_PORT, lo as HelpPopover, nn as HelpText, G_ as IT_MESSAGES, n as Icon, r as IconButton, cd as InviteLinksPage, q_ as JA_MESSAGES, xt as Kbd, On as LIBRARY_TYPES, J_ as LOCALE_MESSAGES, xs as LibraryScanPage, ce as LocalStorageTokenStore, Hn as LoginForm, Rn as MAINTENANCE_ENDPOINTS, zn as MAINTENANCE_TASK_NAMES, ct as MAX_EXTENDS_DEPTH, Ua as MCP_TOKENS_ROUTE_NAME, Wa as MCP_TOKENS_ROUTE_PATH, ue as MUSIC_PAGE_SIZE, Bl as ManageSharesPage, an as MediaCard, Y_ as MediaDetail, on as MediaGrid, kt as MediaHomeRow, sn as MediaRow, tn as Menu, X_ as MetadataMatchModal, Zt as Modal, Pd as MusicAlbumPage, Sf as MusicArtistPage, $d as MusicArtistsPage, Rp as MusicPlayerPage, sp as MusicTracksPage, Vs as MyServersPage, ee as NetworkError, Fn as PLUGIN_SECRET_MASK, x as PLURAL_CATEGORIES, Ee as PROFILE_LAST_ERROR_CODE, Se as PROFILE_LAST_ERROR_TEXT, K_ as PT_BR_MESSAGES, $t as PageHint, ro as PageTransition, fa as PhlixApp, Wg as PhotoAlbumPage, kg as PhotoAlbumsPage, O_ as PhotoSlideshowPage, p_ as PhotoViewPage, ls as ProfileImageSettings, be as RATING_LABELS, Te as RATING_MAX, De as RATING_OPTIONS, Gn as REQUEST_SEARCH_DEBOUNCE_MS, Re as RESUME_MAX_RATIO, Ie as RESUME_MIN_SECONDS, dt as RING_GROUND_KEYS, po as RatingBadge, ku as RequestsPage, no as Reveal, kn as SCAN_JOB_TYPES, Mn as SETTINGS_SECRET_MASK, Ct as SORT_TITLE_ARTICLES, hn as SUBSCRIBABLE_EVENTS, Q_ as SearchPage, ft as SecuritySettingsPage, Yt as Select, Jc as ServerDetailPage, eu as SharedWithMePage, Ir as Sheet, Un as SignupForm, N as Skeleton, Kt as Slider, un as SourcePriorityEditor, Ke as Spinner, qt as Switch, $e as THEME_CACHE_KEY, at as THEME_TOKEN_ALLOWLIST, xe as THROTTLE_BPS_LEVELS, Ce as THROTTLE_BPS_OPTIONS, pe as TMDB_UNCONFIGURED_CODE, en as Tabs, Ve as ThumbRating, ge as TimeoutError, Bi as ToastHost, Ge as Tooltip, ho as UserRatingPicker, gn as WEBHOOK_EVENT_CATEGORIES, ke as activeProfileStorageKey, pt as activeThemeStyle, Zo as adminMenu, Zi as applyStoredThemeEarly, et as applyThemeTokens, F_ as bestCandidate, k_ as bindMediaStoreToRouter, Jo as buildAdminRoutes, Xo as buildHubAdminRoutes, Ea as buildHubRelayUrl, ln as buildMediaQuery, cn as buildMediaUrl, Yo as buildServerAdminRoutes, tt as clearThemeTokens, Fa as closeHubRelayConnection, Uo as commonAdminPages, St as compareByStrippedTitle, lt as compositedContrastOver, to as createPhlixApp, w as createTranslator, Wn as debounce, Ji as deriveAccentVars, D as errMessage, fe as errorCodeMessage, le as errorCodeTitle, wt as fetchLibraries, ut as fetchThemes, ot as focusRingLawViolation, c as focusable, a as focusableRegistry, Gt as formatPageTitle, yt as fuzzyScore, E as getDefaultApiHeaders, Ia as getHubRelaySocket, p as hasStoredPreferences, Go as hubAdminPages, i as installFocusable, Lt as isAllowedBase, rt as isAllowedThemeToken, nt as isBuiltInThemeId, te as isOffline, Nt as isPlaintextPublic, _ as isPluralTemplate, jt as isPrivateHost, oe as isRegisteredErrorCode, Ne as isRewritableImagePath, Xe as isSafeThemeTokenValue, de as isTmdbUnconfigured, bt as matchCommand, Ga as mcpTokensMenuItem, S as mergeMessages, It as normalizeBase, mt as normalizeServerTheme, Ma as openHubRelayConnection, Rt as originOf, wa as parsePendingCommandFrame, _t as parseThemeColor, In as pluginErrorCode, Pn as pluginValidationErrors, y as plural, g as pluralCategory, h as pluralCount, v as pluralize, Mt as probeServer, Qe as readCachedTheme, d as readStoredPreferences, A_ as rectCenter, Pe as resolveImageSrc, Me as resolveImageSrcset, gt as resolveThemeBase, Ye as resolveThemeTokens, At as safeHref, Je as sanitizeThemeTokens, b as selectPluralTemplate, Wo as serverAdminPages, Ut as setAppName, ne as setDefaultApiHeaders, Wt as setPageTitle, Et as sortLibraries, Tt as stripLeadingArticle, ve as useApiBase, ye as useAuthStore, $i as useCommandPaletteHotkey, vt as useCommandStore, Pt as useConnectionStore, o as useFocusTrap, k as useImageSrc, Dt as useLibrariesStore, O as useMediaApiBase, Zn as useMediaStore, T as useMessages, V_ as useOnline, Ht as usePageTitle, Fe as usePlayerStore, ia as usePreconnect, u as usePreferencesStore, rn as usePrefetch, Ae as useProfileStore, ca as useResumeReporter, Ot as useResumeSync, ba as useServerStore, Nn as useSettingsPrefsStore, B_ as useSpatialNav, Qi as useTheme, st as useThemesStore, ze as useToastStore, Be as useUserItemDataStore, Bt as withScheme, ht as writeCachedTheme };
 

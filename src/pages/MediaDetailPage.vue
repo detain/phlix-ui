@@ -20,6 +20,7 @@ import { useRoute, useRouter } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient } from '../api/client';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useMessages } from '../composables/useMessages';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -65,6 +66,7 @@ const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
 const toasts = useToastStore();
+const { t } = useMessages();
 const auth = useAuthStore();
 const userItemData = useUserItemDataStore();
 
@@ -277,9 +279,9 @@ function onPlaySeason(group: SeasonGroup): void {
 // persisted state from the store, which is now correct for both paths.
 function onWatchlist(m: MediaItem): void {
   if (userItemData.isFavorite(m.id)) {
-    toasts.success(`Added "${m.name}" to your favorites`);
+    toasts.success(t('itemActions.addedToList', { name: m.name }));
   } else {
-    toasts.info(`Removed "${m.name}" from your favorites`);
+    toasts.info(t('itemActions.removedFromList', { name: m.name }));
   }
 }
 function onInfo(m: MediaItem): void {

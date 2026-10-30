@@ -1950,7 +1950,7 @@ onBeforeUnmount(() => {
             type="button"
             class="player__iconbtn player__favorite"
             :class="{ 'is-on': isFavorited }"
-            :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+            :aria-label="isFavorited ? t('itemActions.removeFavorite') : t('itemActions.addFavorite')"
             :aria-pressed="isFavorited ? 'true' : 'false'"
             @click="onFavorite"
           >

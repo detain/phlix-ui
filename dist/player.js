@@ -5360,10 +5360,12 @@ var zo = {
 		skipControls: "Skip controls"
 	},
 	itemActions: {
-		addFavorite: "Add to favorites",
-		removeFavorite: "Remove from favorites",
-		inFavorites: "In favorites",
-		watchlist: "Watchlist",
+		addFavorite: "Add to My List",
+		removeFavorite: "Remove from My List",
+		inFavorites: "In My List",
+		watchlist: "My List",
+		addedToList: "Added “{name}” to My List.",
+		removedFromList: "Removed “{name}” from My List.",
 		markWatched: "Mark watched",
 		watched: "Watched",
 		markWatchedAria: "Mark as watched",
@@ -5533,10 +5535,10 @@ var zo = {
 	history: { title: "Watch History" },
 	season: {
 		play: "Play",
-		watchlist: "Watchlist",
-		inFavorites: "In favorites",
-		addFavorite: "Add to favorites",
-		removeFavorite: "Remove from favorites",
+		watchlist: "My List",
+		inFavorites: "In My List",
+		addFavorite: "Add to My List",
+		removeFavorite: "Remove from My List",
 		markWatched: "Mark watched",
 		watched: "Watched",
 		markWatchedAria: "Mark as watched",
@@ -11012,7 +11014,7 @@ var dm = { class: "player__stage" }, fm = ["src", "poster"], pm = [
 					s("button", {
 						type: "button",
 						class: g(["player__iconbtn player__favorite", { "is-on": D.value }]),
-						"aria-label": D.value ? "Remove from favorites" : "Add to favorites",
+						"aria-label": D.value ? O(b)("itemActions.removeFavorite") : O(b)("itemActions.addFavorite"),
 						"aria-pressed": D.value ? "true" : "false",
 						onClick: A
 					}, [u(J, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, Am),
@@ -11223,7 +11225,7 @@ var dm = { class: "player__stage" }, fm = ["src", "poster"], pm = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-5b943e9d"]]), Zm = ["aria-label"], Qm = ["src", "poster"], $m = { class: "mini__body" }, eh = { class: "mini__title" }, th = { class: "mini__controls" }, nh = ["aria-label"], rh = ["aria-label", "aria-pressed"], ih = ["aria-label"], ah = ["aria-label"], oh = {
+}), [["__scopeId", "data-v-e09b4f44"]]), Zm = ["aria-label"], Qm = ["src", "poster"], $m = { class: "mini__body" }, eh = { class: "mini__title" }, th = { class: "mini__controls" }, nh = ["aria-label"], rh = ["aria-label", "aria-pressed"], ih = ["aria-label"], ah = ["aria-label"], oh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, sh = /*#__PURE__*/ Y(/* @__PURE__ */ d({

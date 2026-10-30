@@ -281,6 +281,9 @@ export declare const DE_MESSAGES: {
         removeFavorite: string;
         inFavorites: string;
         watchlist: string;
+        /** M-UI-02 — the card/detail favorite toggle's delivery toast (one word with the rail heading). */
+        addedToList: string;
+        removedFromList: string;
         markWatched: string;
         watched: string;
         markWatchedAria: string;

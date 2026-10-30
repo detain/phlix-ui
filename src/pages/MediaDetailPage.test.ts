@@ -262,7 +262,7 @@ describe('MediaDetailPage — actions & navigation', () => {
     w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
     expect(
       toasts.toasts.some(
-        (t) => t.tone === 'success' && t.message.includes('Dune') && /favorites/i.test(t.message),
+        (t) => t.tone === 'success' && t.message.includes('Dune') && /my list/i.test(t.message),
       ),
     ).toBe(true);
   });
@@ -278,7 +278,7 @@ describe('MediaDetailPage — actions & navigation', () => {
     w.findComponent(MediaDetail).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
     expect(
       toasts.toasts.some(
-        (t) => t.tone === 'info' && t.message.includes('Dune') && /favorites/i.test(t.message),
+        (t) => t.tone === 'info' && t.message.includes('Dune') && /my list/i.test(t.message),
       ),
     ).toBe(true);
   });
@@ -326,7 +326,7 @@ describe('MediaDetailPage — actions & navigation', () => {
     expect((favCall?.[1] as RequestInit | undefined)?.method).toBe('POST');
     // the page toast reads the CORRECT post-toggle state → "Added" (success)
     expect(
-      toasts.toasts.some((t) => t.tone === 'success' && t.message.includes('Dune') && /favorites/i.test(t.message)),
+      toasts.toasts.some((t) => t.tone === 'success' && t.message.includes('Dune') && /my list/i.test(t.message)),
     ).toBe(true);
     // and NOT a misleading "Removed" toast
     expect(toasts.toasts.some((t) => /removed/i.test(t.message))).toBe(false);
@@ -354,7 +354,7 @@ describe('MediaDetailPage — actions & navigation', () => {
     expect((favCall?.[1] as RequestInit | undefined)?.method).toBe('DELETE');
     // the page toast reads the CORRECT post-toggle state → "Removed" (info)
     expect(
-      toasts.toasts.some((t) => t.tone === 'info' && t.message.includes('Dune') && /favorites/i.test(t.message)),
+      toasts.toasts.some((t) => t.tone === 'info' && t.message.includes('Dune') && /my list/i.test(t.message)),
     ).toBe(true);
     expect(toasts.toasts.some((t) => /added/i.test(t.message))).toBe(false);
   });

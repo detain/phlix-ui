@@ -1,3 +1,36 @@
+## Unreleased — ui majors lane 2026-10-30 (M-UI-02): the saved-items feature finally has ONE name — My List (all 7 catalogs)
+
+- **The ask.** ui__copywriter M-UI-02: one feature, three names. The Browse rail
+  heading said "My List" (hardcoded), the card/detail toggle said "Watchlist"
+  (`itemActions.watchlist`), its filled state said "In favorites", the aria/tooltip
+  pair said "Add to / Remove from favorites", and four pages toasted
+  `Added "{name}" to your favorites`. Locally: IT 'Da vedere' vs preferiti, JA
+  ウォッチリスト vs お気に入り. Verified at tip.
+- **The cure (values, not identifiers).** Every catalog's `itemActions` + `season`
+  label VALUES now carry one noun family: EN My List, DE Meine Liste, ES Mi lista,
+  FR Ma liste, IT La mia lista (was 'Da vedere'), JA マイリスト (was ウォッチリスト),
+  PT_BR Minha lista — 4 values × both groups × 7 catalogs. New
+  `itemActions.addedToList/removedFromList` keys ({name}-interpolated, curly-quoted
+  per catalog law) replace the hardcoded toasts in BrowsePage/MediaDetailPage/
+  RecommendationsPage/ExplorePage; BrowsePage's rail heading now renders
+  `t('itemActions.watchlist')` instead of hardcoded English; MediaCard's tooltip +
+  aria and Player's favorite aria moved from hardcoded 'Add to favorites' to the
+  catalog keys (t() wired into the four files that lacked it — MediaCard, Browse,
+  MediaDetailPage, Recommendations, Explore).
+- **Back-compat law (disclosed).** The `watchlist` component-EVENT name and the
+  KEY names (watchlist/inFavorites/addFavorite/removeFavorite) intentionally stay —
+  they are code surface, not user-facing copy; renaming them breaks slot users.
+- **Test law moved (permanent re-pins, disclosed).** 8 suites pinned the old words
+  as selectors/assertions (aria 'Add to favorites' ×17 sites, /favorites/i toast
+  regexes, 'In favorites' text) → re-pinned to the My-List family; measure-at-red
+  first: 21 targeted failures, exactly those files, zero unexplained.
+- **The guard.** New `src/i18n/oneWordList.test.ts` (15 tests): every locale's four
+  action labels must contain ITS list-noun family, no group value may resurrect the
+  old favorites/watchlist words (per-locale banned tokens incl. ウォッチ — the guard
+  is teeth-proven against a ウォッチリスト mutation), and the delivery toasts must
+  interpolate `{name}` in all 7 catalogs.
+
+
 ## Unreleased — ui majors lane 2026-10-30 (M-UI-03): German now speaks Du everywhere — the error catalog's formal-Sie island is gone
 
 - **The ask.** ui__copywriter M-UI-03: `locales/de.ts` runs a consistent informal-Du

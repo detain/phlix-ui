@@ -153,7 +153,7 @@ describe('SeriesDetail (U3)', () => {
     const plays = w.findAll('.media-card__iconbtn--play');
     expect(plays).toHaveLength(3);
     expect(w.find('.media-card__actions .thumb-rating').exists()).toBe(false);
-    expect(w.find('.media-card__actions [aria-label="Add to favorites"]').exists()).toBe(false);
+    expect(w.find('.media-card__actions [aria-label="Add to My List"]').exists()).toBe(false);
     expect(w.find('.media-card__actions [aria-label="More actions"]').exists()).toBe(false);
   });
 

@@ -22,6 +22,7 @@
 import { onMounted, watch, inject, computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useMessages } from '../composables/useMessages';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useToastStore } from '../stores/useToastStore';
@@ -62,6 +63,7 @@ const homeRows = computed<HomeRowConfig[]>(() => config?.homeRows ?? []);
 const libraries = useLibrariesStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
+const { t } = useMessages();
 const auth = useAuthStore();
 const userItemData = useUserItemDataStore();
 const profiles = useProfileStore();
@@ -439,12 +441,12 @@ function onWatchlist(item: MediaItem): void {
   // U-N5: patch favoriteItems locally instead of refetching the whole list.
   // The store was already toggled optimistically by MediaCard.
   if (userItemData.isFavorite(item.id)) {
-    toasts.success(`Added "${item.name}" to your favorites`);
+    toasts.success(t('itemActions.addedToList', { name: item.name }));
     if (!favoriteItems.value.some((f) => f.id === item.id)) {
       favoriteItems.value = [...favoriteItems.value, item];
     }
   } else {
-    toasts.info(`Removed "${item.name}" from your favorites`);
+    toasts.info(t('itemActions.removedFromList', { name: item.name }));
     favoriteItems.value = favoriteItems.value.filter((f) => f.id !== item.id);
   }
 }
@@ -566,7 +568,7 @@ function onSeeAll(row: HomeRowConfig): void {
          empty; patched locally on toggle (U-N5). -->
     <MediaRow
       v-if="showFavorites"
-      title="My List"
+      :title="t('itemActions.watchlist')"
       :items="favoriteItems"
       :can-match="auth.isAdmin"
       hide-when-empty

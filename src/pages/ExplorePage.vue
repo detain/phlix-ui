@@ -12,6 +12,7 @@
 import { onMounted, watch, computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useMessages } from '../composables/useMessages';
 import { ApiClient } from '../api/client';
 import MediaGrid from '../components/MediaGrid.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
@@ -41,6 +42,7 @@ const route = useRoute();
 const router = useRouter();
 const apiBase = useMediaApiBase();
 const toasts = useToastStore();
+const { t } = useMessages();
 const auth = useAuthStore();
 const userItemData = useUserItemDataStore();
 const player = usePlayerStore();
@@ -137,9 +139,9 @@ function onInfo(item: MediaItem): void {
 
 function onWatchlist(item: MediaItem): void {
   if (userItemData.isFavorite(item.id)) {
-    toasts.success(`Added "${item.name}" to your favorites`);
+    toasts.success(t('itemActions.addedToList', { name: item.name }));
   } else {
-    toasts.info(`Removed "${item.name}" from your favorites`);
+    toasts.info(t('itemActions.removedFromList', { name: item.name }));
   }
 }
 

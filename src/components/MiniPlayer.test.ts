@@ -233,7 +233,7 @@ describe('MiniPlayer — expand + close', () => {
 });
 
 describe('MiniPlayer — favorite toggle (Feature 16.2)', () => {
-  const FAV = '[aria-label="Add to favorites"], [aria-label="Remove from favorites"]';
+  const FAV = '[aria-label="Add to My List"], [aria-label="Remove from My List"]';
 
   /** Activate the dock and provide a phlixConfig apiBase via global.provide. */
   function mountActiveWithConfig(apiBase = '/api-host', over: Partial<MediaItem> = {}) {
@@ -266,14 +266,14 @@ describe('MiniPlayer — favorite toggle (Feature 16.2)', () => {
     const btn = w.find(FAV);
     // not favorited initially
     expect(btn.attributes('aria-pressed')).toBe('false');
-    expect(btn.attributes('aria-label')).toBe('Add to favorites');
+    expect(btn.attributes('aria-label')).toBe('Add to My List');
 
     // seed the store as favorited → the button reflects it after a tick
     userData.hydrate({ ...media(), user_data: { favorite: true, rating: null } } as MediaItem);
     await nextTick();
     const onBtn = w.find(FAV);
     expect(onBtn.attributes('aria-pressed')).toBe('true');
-    expect(onBtn.attributes('aria-label')).toBe('Remove from favorites');
+    expect(onBtn.attributes('aria-label')).toBe('Remove from My List');
   });
 
   it('calls toggleFavorite(id, apiBase) exactly once on click', async () => {
