@@ -1280,7 +1280,7 @@ function no(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-BBL9ycAd.js")
+			component: () => import("./PlayerPage-DEidop14.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1328,7 +1328,7 @@ function no(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-DBOpzrG5.js")
+			component: () => import("./SyncPlayPage-8SHRQ-YD.js")
 		},
 		{
 			path: `${t}/music`,

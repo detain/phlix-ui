@@ -105,7 +105,10 @@ const roomId = ref('');
 const roomPassword = ref('');
 const passwordRevealed = ref(false);
 /** True when the target room is known to be locked (picked from the listing)
- *  or was refused for a missing/wrong credential — then the field is required. */
+ *  or was refused for a missing/wrong credential — then the field is required.
+ *  R-UI-07: a listing pick RESETS this to the picked room's lock state, so the
+ *  flag describes the CURRENT target, never a stale escalation from an earlier
+ *  pick within the same open session. */
 const requiresPassword = ref(false);
 const passwordInputEl = ref<HTMLInputElement | null>(null);
 /** Same seam `SyncPlayControls` uses (M-UI-12): hosts inject `phlixConfig`
@@ -216,9 +219,15 @@ function selectRoom(room: SyncPlayRoom): void {
   mode.value = 'join';
   roomId.value = room.id;
   roomName.value = room.name;
-  // A locked pick is KNOWN-locked: require the credential up front instead of
-  // making the user pay for a refused round trip first.
-  if (!room.isPublic) requiresPassword.value = true;
+  // R-UI-07 (M-UI-14 r1 finding #2): the gate MIRRORS the picked room; it does
+  // not ratchet. A locked pick is KNOWN-locked: require the credential up front
+  // instead of making the user pay for a refused round trip first — and an
+  // unlocked pick clears any escalation a previous locked pick or a 400 refusal
+  // left within this same open session, so `canJoin` is never gated on a field
+  // the chosen room does not need. (The typed credential text deliberately
+  // stays: dirty-state law, and the server ignores credentials on unlocked
+  // groups, so a leftover is harmless.)
+  requiresPassword.value = !room.isPublic;
 }
 
 function close(): void {

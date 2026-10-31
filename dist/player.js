@@ -10005,7 +10005,7 @@ var pp = class extends Error {
 			}
 		}
 		function se(e) {
-			y.value = "join", k.value = e.id, D.value = e.name, e.isPublic || (L.value = !0);
+			y.value = "join", k.value = e.id, D.value = e.name, L.value = !e.isPublic;
 		}
 		function ce() {
 			d("update:modelValue", !1);
@@ -10143,7 +10143,7 @@ var pp = class extends Error {
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-919768e6"]]), rm = {
+}), [["__scopeId", "data-v-3772af96"]]), rm = {
 	key: 0,
 	class: "syncplay-controls"
 }, im = ["aria-label"], am = { class: "syncplay-controls__wait-label" }, om = { class: "syncplay-controls__transport" }, sm = ["aria-label"], cm = ["aria-label"], lm = ["aria-label"], um = { class: "syncplay-controls__status-label" }, dm = 10, fm = /*#__PURE__*/ X(/* @__PURE__ */ d({

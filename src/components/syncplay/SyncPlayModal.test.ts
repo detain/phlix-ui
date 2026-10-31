@@ -589,6 +589,92 @@ describe('SyncPlayModal — locked rooms (M-UI-14)', () => {
         expect(exists('#room-password-hint')).toBe(false);
         expect(exists('.syncplay-modal__error')).toBe(false);
     });
+
+    // R-UI-07 (M-UI-14__r1 finding #2): within ONE open session the gate used
+    // to ratchet — once a locked pick or a 400 set `requiresPassword`, even
+    // picking an UNLOCKED room left `canJoin` gated on a non-empty field the
+    // chosen room does not need. The cure makes the gate a MIRROR of the pick:
+    // `selectRoom()` assigns, never escalates only. Reverting the assignment
+    // to the old `if (!room.isPublic) requiresPassword.value = true;` reddens
+    // BOTH legs below (the stale escalation keeps the hint + the disabled
+    // submit); hard-coding `false` instead reddens the pre-existing
+    // locked-pick-escalates test. Neither mutation can pass silently.
+    it('an UNLOCKED pick from the listing de-escalates a locked pick in the same open modal (R-UI-07)', async () => {
+        server = makeSyncPlayServer(API_BASE, {
+            extraListingRows: [
+                {
+                    id: 'sp_locked9',
+                    name: 'Trivia Night',
+                    member_count: 7,
+                    has_password: true,
+                    current_media: 'media-9',
+                    is_playing: false,
+                },
+            ],
+        });
+        const w = await openModal();
+        await tab('Join room').trigger('click');
+
+        // Locked pick first — escalation is the shipped law (test above).
+        const locked = qa('.syncplay-modal__room').find((r) => r.text().includes('Trivia Night'))!;
+        await locked.find('.syncplay-modal__room-btn').trigger('click');
+        await flushPromises();
+        expect(exists('#room-password-hint')).toBe(true);
+        expect(submitBtn(w).props('disabled')).toBe(true);
+
+        // Same modal, never re-opened: pick the UNLOCKED room. The gate must
+        // follow the new pick — no typed credential demanded, field optional.
+        const open = qa('.syncplay-modal__room').find((r) => r.text().includes('Movie Night'))!;
+        await open.find('.syncplay-modal__room-btn').trigger('click');
+        await flushPromises();
+
+        expect(inputValue('#room-id')).toBe(GROUP_ID);
+        expect(exists('#room-password-hint')).toBe(false);
+        expect(q('#room-password').attributes('required')).toBeUndefined();
+        expect(submitBtn(w).props('disabled')).toBe(false);
+
+        // And the join that the sticky gate used to block now simply works —
+        // empty credential, server-side member of an unlocked group.
+        await submitBtn(w).trigger('click');
+        await flushPromises();
+        expect(w.emitted('joined')).toHaveLength(1);
+    });
+
+    it('an UNLOCKED pick clears a 400-refusal escalation in the same open modal (R-UI-07)', async () => {
+        // Seeded group LOCKED ('hunter2'); the extra row is an unlocked one.
+        server = makeSyncPlayServer(API_BASE, {
+            groupPassword: 'hunter2',
+            extraListingRows: [
+                {
+                    id: 'sp_open77',
+                    name: 'Cards Night',
+                    member_count: 3,
+                    has_password: false,
+                    current_media: 'media-7',
+                    is_playing: false,
+                },
+            ],
+        });
+        const w = await openModal();
+        await tab('Join room').trigger('click');
+        await idInput().setValue(GROUP_ID);
+        await q('#room-password').setValue('nope');
+        await submitBtn(w).trigger('click');
+        await flushPromises();
+        // The refusal escalated the gate (the :204 arm).
+        expect(exists('#room-password-hint')).toBe(true);
+
+        // Pick the unlocked room from the same listing — the escalation must
+        // not survive an explicit known-open re-selection.
+        const open = qa('.syncplay-modal__room').find((r) => r.text().includes('Cards Night'))!;
+        await open.find('.syncplay-modal__room-btn').trigger('click');
+        await flushPromises();
+
+        expect(inputValue('#room-id')).toBe('sp_open77');
+        expect(exists('#room-password-hint')).toBe(false);
+        expect(q('#room-password').attributes('required')).toBeUndefined();
+        expect(submitBtn(w).props('disabled')).toBe(false);
+    });
 });
 
 // ── the rooms list (M-UI-14: locked rooms included) ──────────────────────────

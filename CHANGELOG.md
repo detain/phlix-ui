@@ -12,6 +12,39 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — R-W7 riders lane 2026-10-31 (R-UI-07): the SyncPlay room gate mirrors the pick instead of ratcheting
+
+- **The ask.** Rider R-UI-07 (upstream report M-UI-14__r1 item 2): within ONE open modal
+  session `requiresPassword` only escalated — after a locked listing pick or a 400
+  wrong-password refusal, selecting an UNLOCKED room still gated `canJoin` on a non-empty
+  credential the chosen room does not need. The review rated it "functionally harmless"
+  (the server ignores credentials on unlocked groups) and asked for "a reset in
+  `selectRoom()` for `room.isPublic` picks (tidier)".
+- **The cure.** `selectRoom()` now MIRRORS the picked room's known lock state —
+  `requiresPassword.value = !room.isPublic;` replaces the one-way
+  `if (!room.isPublic) requiresPassword.value = true;` ratchet. A locked pick still
+  requires the credential up front (M-UI-14's law unchanged); an unlocked pick clears a
+  stale escalation from an earlier locked pick or 400 refusal in the same session. The
+  typed `roomPassword` text deliberately stays (dirty-state law; the server ignores it
+  on unlocked groups), and the cross-session boundary is untouched — the reopen watcher
+  still clears both the credential and the flag.
+- **Tests.** +2 in `SyncPlayModal — locked rooms (M-UI-14)`: an unlocked pick
+  de-escalates a locked pick in the same open modal (and the join then emits `joined`
+  with an empty credential), and an unlocked pick clears a 400-refusal escalation.
+  Mutation-toothed: reverting the assignment to the old ratchet reddens exactly the two
+  new legs (36 others green); hard-coding `false` reddens the pre-existing locked-pick
+  pin. Targeted serial run 38/38 (36 tip-era + 2 new).
+- **Evidence.** Full serial vitest battery (`--no-file-parallelism`) on the final tree:
+  **321 files / 6501 passed / 10 skipped** — the tip (b663310a) era measured
+  321/6499/10, so the delta is exactly this lane's two tests. `vue-tsc --noEmit` and
+  repo-wide `eslint .` exit 0. `dist/` rebuilt from scratch twice, byte-deterministic
+  (aggregate md5 `43df5e1cdbc98809519bbb93f3661829` on both builds); the rebuilt
+  `SyncPlayModal` chunk carries the mirror assignment and zero ratchet form (the SFC
+  comment edits are bundle-affecting per the scope-id doctrine, so the rename set ships
+  with the src change).
+- **Scope note.** Modal-internal behavior only: no wire surface, no copy or catalog keys
+  (i18n mirror law inert), no new error codes; contracts fixtures untouched.
+
 ## Unreleased — ui minors lane 2026-10-30 (W-min186 r2): the last named Title Case island closes, and the M-UI-05 closure claim becomes true
 
 - **M-UI-05 (copywriter, rework r2).** Forward-correction, not a rewrite: the W-min186 entry

@@ -1004,7 +1004,7 @@ var Fe = class extends Error {
 			}
 		}
 		function ue(e) {
-			A.value = "join", P.value = e.id, N.value = e.name, e.isPublic || (L.value = !0);
+			A.value = "join", P.value = e.id, N.value = e.name, L.value = !e.isPublic;
 		}
 		function K() {
 			c("update:modelValue", !1);
@@ -1142,7 +1142,7 @@ var Fe = class extends Error {
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-919768e6"]]);
+}), [["__scopeId", "data-v-3772af96"]]);
 export { Ie as n, _e as r, mt as t };
 
-//# sourceMappingURL=SyncPlayModal-C6878e8U.js.map
+//# sourceMappingURL=SyncPlayModal-Di_E9UCN.js.map
