@@ -12,6 +12,37 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui-regreen lane 2026-10-31 (CI `static` re-green): `npm run audit` becomes the allow-list gate — registry-drift advisories glob GHSA-3g3m-2fjr-6pw4 + minimatch GHSA-g3hv-75wg-m249 documented, package.json/lock UNTOUCHED, dist byte-ident
+
+- **The red (premise, origin-derived).** The `static` job's "Dependency audit" step
+  reddened on runs 41158854334 / 41160835182 / 41162674204 (tips 11477e9e / 3690a764 /
+  ee40a516) — the SOLE failed step in each — while the lock stayed byte-identical to the
+  last green run 41145382221 (b663310a). Both advisories published 2026-10-30T23:09Z
+  (gh api), severity medium: pure registry-side waterline drift; two independent reviewer
+  lanes had exonerated the repo.
+- **Lock-only path exhausted, measured.** `npm@11 update` across every flagged axis at pin
+  moves only typescript-eslint 8.65.0→8.72.1 (its ts-estree still declares minimatch
+  ^10.2.2 → 10.2.6 = top of the 10.x line, flagged); the re-audit reports the SAME 16
+  package keys / 2 advisory ids. Registry tops of line (verified 2026-10-31): minimatch
+  3.1.5 / 9.0.9 / 10.2.6 vs first-patched 11.0.1 (no backports, `<11.0.1`); glob 10.5.0
+  vs first-patched 14.0.2 (band `>=9.0.0 <=14.0.1`). Even riding the deliberately-refused
+  majors is no escape: eslint 10.14.0 still declares minimatch ^10.2.6, and in-range
+  `@vue/test-utils` 2.5.1 lands js-beautify ^2 → glob ^13.0.6 = 13.0.6, still in-band.
+- **The cure (website d096ab9a/a4858d87 design, windows 74fc744 lineage).** New
+  `scripts/audit-gate.mjs`: the SAME strict `npm audit --json --audit-level=low` spawn, but
+  the verdict is an EXACT-SET documented allow-list — unknown ids at ANY severity exit 1,
+  a structurally broken audit exits 2, and only clean-or-allowed-only exits 0. Strictly
+  stronger than the bare step it replaces. `package.json` gains exactly one line change
+  (`"audit": "node scripts/audit-gate.mjs"`); dependencies, overrides and the lock are
+  untouched; dist/ rebuilds byte-ident (no flagged package is a bundle input — all three
+  are dev-toolchain-reachable only, proven by `npm run build` + `npm run dist:check`).
+- **Teeth.** `src/test/ci-audit-gate.test.ts` era 2: run-line + no-neutering pins kept;
+  new pins for the byte-exact script swap, the `'--audit-level=low'` spawn constant (count-
+  checked, downgrades rejected), the exact 2-id set, per-entry proof apparatus, the real
+  decide()/collectAdvisoryIds() behavior matrix against the measured at-pin report, and an
+  ANTI-ROT lock cross-check — an allow-listed advisory whose installed resolutions all move
+  past the patched line reddens the suite and orders its own removal.
+
 ## Unreleased — R-W10 riders lane 2026-10-31 (R-UI-10): `PhlixAppConfig.tokenStore` — the token custody seam the Windows DPAPI vault is blocked on
 
 - **The ask.** Rider R-UI-10 (upstream report M-WINDOWS-11__fix, windows tip d48e039):

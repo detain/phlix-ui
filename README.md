@@ -663,7 +663,7 @@ npm install
 npm run dev          # Vite dev server (open src/dev/gallery.html for the primitive Gallery)
 npm run build        # vue-tsc typecheck + vite lib build + d.ts emit + copy fonts
 npm run dist:check   # fail if the committed dist/ drifted from src/ (CI gate step)
-npm run audit        # npm audit --audit-level=low on the full tree (CI gate step, static job)
+npm run audit        # scripts/audit-gate.mjs — strict npm audit + justified allow-list (CI gate step, static job)
 npm run test         # vitest (watch)
 npm run test:run     # vitest run (CI)
 npm run test:run -- --coverage  # same suite + coverage/lcov.info (what CI uploads)
@@ -716,9 +716,12 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
   bundle-vendoring clients (windows) meet that today; hosts that recompile from source choose
   their own targets. Raising or widening this baseline is a deliberate act, not a Vite bump's
   side effect — that silence is exactly what the pin prevents.
-- **Dependency audit** — `npm run audit` (full tree at `--audit-level=low`) gates in CI's
-  `static` job; this repo's dist is vendored estate-wide, so the toolchain that BUILDS it is
-  audited too. Neutering it is caught by `src/test/ci-audit-gate.test.ts`.
+- **Dependency audit** — `npm run audit` execs `scripts/audit-gate.mjs`: the full tree at
+  `--audit-level=low`, passing only on a clean audit or a subset of the script's justified
+  EXACT-SET advisory allow-list (registry-drift advisories with measured no-in-range-fix proofs;
+  unknown ids at any severity still redden, and a broken audit can never read green). It gates
+  in CI's `static` job; this repo's dist is vendored estate-wide, so the toolchain that BUILDS it
+  is audited too. Neutering it is caught by `src/test/ci-audit-gate.test.ts`.
 - **Icons, never emoji** — all iconography is Lucide SVG via the type-checked `Icon` component.
 - **SSR-safe composables** — `usePreconnect`/`useOnline`/`useMessages`/`useTheme` guard `window`/
   `document` access.

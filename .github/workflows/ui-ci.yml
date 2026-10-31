@@ -51,6 +51,11 @@ jobs:
       - run: npm run lint
       # M-UI-27 (S440 estate standard): the tree that BUILDS this vendored dist is
       # audited too — a compromised dev-toolchain ships poison into every consumer.
+      # Era 2 (ui-regreen 2026-10-31): the bare `npm audit` reddened on registry-side
+      # drift (glob GHSA-3g3m-2fjr-6pw4, minimatch GHSA-g3hv-75wg-m249 — no in-range
+      # fix, proofs in-script); `npm run audit` now execs scripts/audit-gate.mjs, the
+      # website/windows-lineage allow-list gate: unknown ids at ANY severity still
+      # redden, and a broken audit can never read green.
       # Guard: src/test/ci-audit-gate.test.ts (text pins; keep strings in sync).
       - name: Dependency audit
         run: npm run audit

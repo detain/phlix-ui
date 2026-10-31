@@ -29,7 +29,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build && vite build --config vite.player.config.ts && vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json && node scripts/copy-fonts.mjs",
     "dist:check": "node scripts/check-dist-clean.mjs",
-    "audit": "npm audit --audit-level=low",
+    "audit": "node scripts/audit-gate.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
