@@ -18,8 +18,32 @@ export { ApiError } from './errors';
 export type { TokenStore } from './tokenStore';
 
 /**
- * Default token store: persist + read the session token from `localStorage` in
- * the browser, and a no-op when there is no `window` (SSR / unit construction).
+ * Boot-time token-store registry (R-UI-10). Set once by `createPhlixApp` from
+ * `PhlixAppConfig.tokenStore`; module-level — like {@link setDefaultApiHeaders} —
+ * so every `ApiClient` construction path needs no change.
+ */
+let configuredTokenStore: TokenStore | null = null;
+
+/**
+ * Register the token store every session custody flows through — the seam that
+ * lets a host application (e.g. the Windows client's DPAPI vault adapter) own
+ * credential storage instead of `localStorage`. Pass `null` to reset to the
+ * built-in default. Registration happens at boot, BEFORE any store/component
+ * constructs a client, and clients resolve the store dynamically per request,
+ * so even the module-singleton {@link api} (constructed at import time) tracks it.
+ */
+export function setDefaultTokenStore(store: TokenStore | null): void {
+    configuredTokenStore = store ?? null;
+}
+
+/** Memoised built-in fallback (window-less no-op, or the localStorage store). */
+let fallbackTokenStore: TokenStore | null = null;
+
+/**
+ * The token store in effect when a client was constructed WITHOUT an explicit
+ * `tokenStore`: the boot-registered store if one is configured, else the
+ * default — persist + read the session token from `localStorage` in the
+ * browser, and a no-op when there is no `window` (SSR / unit construction).
  *
  * Historically the default was a pure no-op, so any `ApiClient` created WITHOUT
  * an explicit `tokenStore` (the exported {@link api} singleton, the media store,
@@ -28,19 +52,22 @@ export type { TokenStore } from './tokenStore';
  * media listing readable without a token. Defaulting to the real store makes
  * every client send the logged-in user's Bearer token unless one is overridden.
  */
-function defaultTokenStore(): TokenStore {
-    if (typeof window === 'undefined') {
-        return {
-            getAccessToken: () => null,
-            setAccessToken: () => {},
-            getRefreshToken: () => null,
-            setRefreshToken: () => {},
-            getUser: () => null,
-            setUser: () => {},
-            clear: () => {},
-        };
+export function defaultTokenStore(): TokenStore {
+    if (configuredTokenStore !== null) return configuredTokenStore;
+    if (fallbackTokenStore === null) {
+        fallbackTokenStore = typeof window === 'undefined'
+            ? {
+                getAccessToken: () => null,
+                setAccessToken: () => {},
+                getRefreshToken: () => null,
+                setRefreshToken: () => {},
+                getUser: () => null,
+                setUser: () => {},
+                clear: () => {},
+            }
+            : new LocalStorageTokenStore();
     }
-    return new LocalStorageTokenStore();
+    return fallbackTokenStore;
 }
 
 /** Default per-request timeout (ms) before the client aborts with a `TimeoutError`. */
@@ -579,7 +606,15 @@ function localizeWireCode(code: string | null): string | null {
 
 export class ApiClient {
     private baseUrl: string;
-    private readonly tokens: TokenStore;
+    /**
+     * Store passed explicitly at construction (tests, `useAuthStore`'s shared
+     * writer/reader instance). `null` means "no explicit store": {@link tokens}
+     * then resolves the boot-registered default DYNAMICALLY per request — mirroring
+     * how the default headers registry is merged at request time — so clients
+     * constructed before boot (the module-singleton {@link api}) still custody
+     * through a store registered later, while an explicit store stays pinned.
+     */
+    private readonly explicitTokenStore: TokenStore | null;
     private readonly doFetch: typeof fetch;
     private readonly timeoutMs: number;
     private readonly instanceHeaders: Record<string, string>;
@@ -598,11 +633,20 @@ export class ApiClient {
 
     constructor(options: ApiClientOptions = {}) {
         this.baseUrl = options.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
-        this.tokens = options.tokenStore ?? defaultTokenStore();
+        this.explicitTokenStore = options.tokenStore ?? null;
         this.doFetch = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
         this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         this.instanceHeaders = pruneHeaders(options.headers ?? {});
         this.loginPath = options.loginPath ?? '/login';
+    }
+
+    /**
+     * The store this client custody-flows through: the explicit construction
+     * store when one was given, else the boot-registered default resolved NOW
+     * (per request), not at construction — see {@link explicitTokenStore}.
+     */
+    private get tokens(): TokenStore {
+        return this.explicitTokenStore ?? defaultTokenStore();
     }
 
     /**

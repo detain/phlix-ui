@@ -7,9 +7,8 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed, watch, inject, type ComputedRef } from 'vue';
-import { ApiClient, type AuthUser } from '../api/client';
+import { ApiClient, defaultTokenStore, type AuthUser } from '../api/client';
 import { ApiError } from '../api/errors';
-import { LocalStorageTokenStore } from '../api/tokenStore';
 import { useApiBase } from '../composables/useApiBase';
 import { useMessages } from '../composables/useMessages';
 
@@ -35,7 +34,12 @@ function parseErrorCode(e: unknown): string | null {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-    const tokenStore = new LocalStorageTokenStore();
+    // R-UI-10: resolve the store IN EFFECT at this store's creation (the pinia
+    // setup runs on first use — the router guard — which is always AFTER
+    // createPhlixApp registered any host token store, never a hardcoded
+    // localStorage instance). It is passed explicitly to the client below so
+    // token writes and Authorization reads share one instance.
+    const tokenStore = defaultTokenStore();
     // The app's own API base, resolved reactively (a native client picks it at
     // runtime on the Connect screen, so it can change after this store — and its
     // client — already exist). The single `client` instance is kept (consumers

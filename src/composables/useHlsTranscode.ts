@@ -15,8 +15,7 @@
  * @license MIT
  */
 import { ref, type Ref } from 'vue';
-import { ApiClient } from '../api/client';
-import { LocalStorageTokenStore } from '../api/tokenStore';
+import { ApiClient, defaultTokenStore } from '../api/client';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { attachHls as defaultAttach, type AttachHlsOptions, type HlsAudioTrack, type HlsHandle, type HlsLevel } from '../components/player/hls-playback';
 import {
@@ -217,8 +216,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const maxAttempts = Math.max(1, Math.ceil(maxWaitMs / Math.max(1, pollIntervalMs)));
 
-  const tokenStore = createTokenStore();
-  const getToken = opts.getToken ?? (() => safeToken(tokenStore));
+  // R-UI-10: the bearer comes from the boot-registered custody store, resolved
+  // at every use (segment xhrSetup fires long after boot), never a hardcoded
+  // localStorage instance.
+  const getToken = opts.getToken ?? safeToken;
 
   let handle: HlsHandle | null = null;
   let unsubscribeLevelSwitched: (() => void) | null = null;
@@ -232,7 +233,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   let runSeq = 0;
 
   function makeClient(): TranscodeHttpClient {
-    return opts.client ?? new ApiClient({ baseUrl: opts.apiBase(), tokenStore: tokenStore ?? undefined, timeoutMs: 60000 });
+    return opts.client ?? new ApiClient({ baseUrl: opts.apiBase(), timeoutMs: 60000 });
   }
 
   async function start(video: HTMLVideoElement, mediaId: string, profile?: string, startPosition?: number): Promise<void> {
@@ -442,17 +443,9 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   };
 }
 
-function createTokenStore(): LocalStorageTokenStore | null {
+function safeToken(): string | null {
   try {
-    return new LocalStorageTokenStore();
-  } catch {
-    return null;
-  }
-}
-
-function safeToken(store: LocalStorageTokenStore | null): string | null {
-  try {
-    return store?.getAccessToken() ?? null;
+    return defaultTokenStore().getAccessToken();
   } catch {
     return null;
   }

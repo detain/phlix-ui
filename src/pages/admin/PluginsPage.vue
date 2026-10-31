@@ -41,7 +41,6 @@
  */
 import { ref, computed, watch, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient, ApiError } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminPluginsApi,
   pluginErrorCode,
@@ -81,7 +80,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminPluginsApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const toasts = useToastStore();
 

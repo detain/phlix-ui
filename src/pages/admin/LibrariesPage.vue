@@ -35,7 +35,6 @@
  */
 import { ref, computed, onMounted, onBeforeUnmount, watch, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminLibrariesApi,
   LIBRARY_TYPES,
@@ -98,7 +97,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const apiClient =
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() });
+  props.client ?? new ApiClient({ baseUrl: apiBase.value });
 const api = new AdminLibrariesApi(apiClient);
 const sourcesApi = new AdminMetadataSourcesApi(apiClient);
 const toasts = useToastStore();

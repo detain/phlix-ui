@@ -29,7 +29,6 @@
  */
 import { ref, computed, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminMetricsApi,
   type MetricsSnapshot,
@@ -90,10 +89,10 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminMetricsApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const serversApi = new AdminServersApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const toasts = useToastStore();
 

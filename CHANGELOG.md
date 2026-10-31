@@ -12,6 +12,48 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — R-W10 riders lane 2026-10-31 (R-UI-10): `PhlixAppConfig.tokenStore` — the token custody seam the Windows DPAPI vault is blocked on
+
+- **The ask.** Rider R-UI-10 (upstream report M-WINDOWS-11__fix, windows tip d48e039):
+  the Windows client shipped a DPAPI `SafeStorageTokenStore implements TokenStore`
+  but could not flip custody onto it — `PhlixAppConfig` had no `tokenStore` seam and
+  `createPhlixApp`-constructed clients hardcoded `LocalStorageTokenStore`. The vault
+  adapter sat UNUSED; credentials stayed in cleartext `localStorage`.
+- **The cure.** `PhlixAppConfig.tokenStore?: TokenStore` registers a host store into
+  a module-level custody registry via the new `setDefaultTokenStore` export
+  (mirrors the `setDefaultApiHeaders` boot-registry precedent: module-level so the
+  ~30 scattered `new ApiClient(...)` paths need no wiring). `ApiClient` now resolves
+  the default **dynamically per request** (`explicitTokenStore ?? defaultTokenStore()`
+  getter), so clients constructed at import time — the module-singleton `api` —
+  track the store registered later at boot, while an explicit construction store
+  stays pinned (tests, `useAuthStore`'s shared writer/reader instance).
+- **Custody is global or it is theater.** Every explicit `new LocalStorageTokenStore()`
+  re-statement — the guarded options in `themes.ts`/`libraries.ts`/`syncplay.ts`, the
+  direct reads in `claimServer.ts`/`useAuthStore`/`useHlsTranscode` (incl. segment
+  `xhrSetup` and the SyncPlay WS token), `getWsToken`, and 27 SFC admin/component
+  sites — now flows through the registry; the SSR no-window case collapses into the
+  registry's no-op fallback (the per-site `typeof window` guards retired with them).
+  A registered vault therefore custodies headers, 401 refresh rotation, sign-in/out,
+  WS tokens and HLS auth end to end. Zero wire-behavior change for consumers that
+  omit the config (localStorage default, now memoised); `@phlix/contracts` pin
+  untouched; no new wire codes; i18n catalogs untouched.
+- **Teeth.** New `src/app/tokenStoreSeam.test.ts` (7 pins): configured-store reads win
+  over seeded localStorage; a client constructed BEFORE registration picks up the
+  later store (kills constructor-time capture — measured: mutating the getter back to
+  a construction-time capture reddens exactly that pin, `ls-token` where `late-vault`
+  expected); explicit store wins over configured; `setDefaultTokenStore(null)`
+  restores localStorage custody; `createPhlixApp({tokenStore})` registers boot-wide
+  and config-omission re-registers the default; `useAuthStore().setTokens` writes the
+  vault and leaves localStorage keys null.
+- **Gates.** vue-tsc 0 / eslint 0 on the 39 touched files; full serial suite
+  322 files / **6510 passed** / 10 skipped (the +7 are this lane's pins; baseline held);
+  `README.md` config table gained the `tokenStore?` row (pinned by the
+  `phlixAppConfigDocs` guard); `dist/` rebuilt twice — byte-identical aggregate md5
+  `84abcae03603085816dafa6125ab30d3` — committed with src (dist-in-master), `dist:check`
+  green at the commit.
+- **Deferred (owner-gated, out of repo).** The windows boot() flip rides the v0.99.12
+  tag wave; the `TokenStore` interface and `LocalStorageTokenStore` export stay as-is.
+
 ## Unreleased — R-W9 riders lane 2026-10-30 (R-UI-09): the no-raw-wire-href template-handler walk stops being an unpinned arm
 
 - **The ask.** Rider R-UI-09 (upstream report M-UI-11__r3 note N2): the rule's

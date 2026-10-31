@@ -8,9 +8,8 @@
  * @license MIT
  */
 
-import { ApiClient } from './client';
+import { ApiClient, defaultTokenStore } from './client';
 import { ApiError } from './errors';
-import { LocalStorageTokenStore } from './tokenStore';
 import { readSocketHint } from './socketHint';
 import type {
   SyncPlayRoom,
@@ -294,10 +293,9 @@ export class SyncPlayApi {
   private client: ApiClient;
 
   constructor(apiBase: string) {
-    this.client = new ApiClient({
-      baseUrl: apiBase,
-      tokenStore: typeof window !== 'undefined' ? new LocalStorageTokenStore() : undefined,
-    });
+    // No explicit tokenStore: R-UI-10 — the client resolves the boot-registered
+    // store (host vault or localStorage default) dynamically per request.
+    this.client = new ApiClient({ baseUrl: apiBase });
   }
 
   /**
@@ -576,9 +574,7 @@ let messageHandler: SyncPlayMessageHandler | null = null;
  */
 function getWsToken(): string | null {
   try {
-    if (typeof window === 'undefined') return null;
-    const store = new LocalStorageTokenStore();
-    return store.getAccessToken();
+    return defaultTokenStore().getAccessToken();
   } catch {
     return null;
   }

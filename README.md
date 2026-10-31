@@ -155,6 +155,7 @@ always want (`app`, `apiBase`):
 | `onConnectionChange?` | `(url: string \| null) => void` | Called whenever the Connect screen persists (or clears, with `null`) the chosen API base — native shells mirror it into their own durable store. |
 | `connectScan?` | `() => Promise<ConnectCandidate[]>` | Host-injected LAN server scan consumed by the Connect screen's "Scan" affordance (S532). OMITTED ⇒ the affordance is hidden (a web-hosted app has nothing to scan). |
 | `playerHlsConfig?` | `Partial<HlsConfig>` | Per-app hls.js overrides for the transcode player (e.g. a TV tuning `maxBufferLength` down to cap RAM). Merged OVER the built-in defaults; the auth `xhrSetup` is always preserved. |
+| `tokenStore?` | `TokenStore` | Token custody seam (R-UI-10): the store all session tokens flow through — `Authorization` headers, 401 refresh rotation, sign-in/out, the SyncPlay WS token, HLS segment auth. Register a host-owned store (e.g. the Windows client's DPAPI `SafeStorageTokenStore`) to keep credentials out of `localStorage`; omitted keeps the localStorage default. Registered once at boot via `setDefaultTokenStore`; resolved per request, so the boot-time `auth.init()` and the import-constructed `api` singleton both flow through it. |
 
 ```ts
 import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';

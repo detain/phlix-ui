@@ -16,7 +16,6 @@
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminServicesApi,
   type TraktStatus,
@@ -41,7 +40,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminServicesApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const toasts = useToastStore();
 // Guarded: these return undefined under a router-less mount (e.g. some unit tests).

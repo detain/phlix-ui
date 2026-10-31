@@ -18,7 +18,6 @@
  */
 import { ref, computed, watch, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminWebhookLogsApi,
   AdminWebhooksApi,
@@ -47,10 +46,10 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminWebhookLogsApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const webhooksApi = new AdminWebhooksApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const toasts = useToastStore();
 

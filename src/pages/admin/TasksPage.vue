@@ -63,7 +63,6 @@
  */
 import { ref, reactive, computed, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminMaintenanceApi,
   type MaintenanceTask,
@@ -93,7 +92,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const client =
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() });
+  props.client ?? new ApiClient({ baseUrl: apiBase.value });
 const api = new AdminMaintenanceApi(client);
 const backupApi = new AdminBackupApi(client);
 const updatesApi = new AdminUpdatesApi(client);

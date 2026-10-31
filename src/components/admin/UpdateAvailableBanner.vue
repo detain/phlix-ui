@@ -58,7 +58,6 @@
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import { ApiError, errMessage } from '../../api/errors';
 import { AdminUpdatesApi, type CoreUpdateStatus } from '../../api/admin/updates';
 import Icon from '../Icon.vue';
@@ -76,7 +75,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminUpdatesApi(
-  new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  new ApiClient({ baseUrl: apiBase.value }),
 );
 
 // ── State ───────────────────────────────────────────────────────────────────

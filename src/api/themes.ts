@@ -6,7 +6,6 @@
  */
 
 import { ApiClient } from './client';
-import { LocalStorageTokenStore } from './tokenStore';
 import { normalizeServerTheme, type ServerTheme } from '../composables/themeTokens';
 
 /**
@@ -48,12 +47,9 @@ import { normalizeServerTheme, type ServerTheme } from '../composables/themeToke
  * (`useThemesStore.load`) can record it and leave the built-ins in place.
  */
 export async function fetchThemes(apiBase: string, signal?: AbortSignal): Promise<ServerTheme[]> {
-  const client = new ApiClient({
-    baseUrl: apiBase,
-    // Guarded for SSR/no-window exactly like `fetchLibraries`: this only ever
-    // runs client-side, but the token store touches localStorage on construct.
-    tokenStore: typeof window !== 'undefined' ? new LocalStorageTokenStore() : undefined,
-  });
+  // No explicit tokenStore: R-UI-10 — the client resolves the boot-registered
+  // store dynamically (no-op without a window, so the SSR concern is covered).
+  const client = new ApiClient({ baseUrl: apiBase });
 
   // Path only — ApiClient prepends `baseUrl` itself.
   const res = await client.get<{ themes?: unknown }>('/api/v1/themes', undefined, signal);

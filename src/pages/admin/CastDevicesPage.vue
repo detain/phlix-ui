@@ -21,7 +21,6 @@
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminCastApi,
   type AirPlayDevice,
@@ -70,7 +69,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminCastApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const toasts = useToastStore();
 

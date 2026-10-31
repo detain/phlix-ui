@@ -24,7 +24,7 @@ import NotFoundPage from './placeholder/NotFoundPage.vue';
 // pages); a static re-export would re-merge them into the main chunk and defeat the
 // split (Rollup's INEFFECTIVE_DYNAMIC_IMPORT warning).
 import { computed } from 'vue';
-import { setDefaultApiHeaders } from '../api/client';
+import { setDefaultApiHeaders, setDefaultTokenStore } from '../api/client';
 import { phlixUiVersion } from '../version';
 import { applyStoredThemeEarly } from '../composables/useTheme';
 import { installFocusable } from '../directives/focusable';
@@ -524,6 +524,13 @@ export function createPhlixApp(config?: Partial<PhlixAppConfig>): VueApp {
     // constructs a client — so every request (incl. the boot-time auth.init())
     // carries them. Native clients (Windows/Tizen) pass these via deviceHeaders.
     setDefaultApiHeaders(fullConfig.deviceHeaders ?? {});
+
+    // Register the host-provided token store (R-UI-10) into the shared custody
+    // registry BEFORE any store/component constructs a client — clients resolve
+    // it dynamically per request, so the boot-time auth.init() and the
+    // import-constructed `api` singleton both flow through it. Omitted config
+    // keeps (or restores, on re-create) the localStorage default.
+    setDefaultTokenStore(fullConfig.tokenStore ?? null);
 
     // Set <html> theme/density/accent + TV mode from persisted prefs before mount
     // → no flash. First-time visitors get the app's defaultTheme/defaultTv; a

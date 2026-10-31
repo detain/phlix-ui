@@ -20,7 +20,6 @@
  */
 import { ref, computed, onMounted, onUnmounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../api/client';
-import { LocalStorageTokenStore } from '../api/tokenStore';
 import { AdminNetworkHealthApi, type HealthSnapshot } from '../api/admin/networkHealth';
 import { errMessage } from '../api/errors';
 import Tooltip from './ui/Tooltip.vue';
@@ -37,7 +36,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminNetworkHealthApi(
-  new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  new ApiClient({ baseUrl: apiBase.value }),
 );
 
 // ── State ───────────────────────────────────────────────────────────────────

@@ -178,4 +178,17 @@ export interface PhlixAppConfig {
      *  injects `phlixConfig` and threads this into `useHlsTranscode`. Omit on the
      *  browser/web-ui (defaults are fine). */
     playerHlsConfig?: Partial<import('hls.js').HlsConfig>;
+    /**
+     * Token custody seam (R-UI-10): the store every auth flow reads/writes
+     * session tokens through — `Authorization` headers, the 401 refresh
+     * rotation, `useAuthStore` login/logout, the SyncPlay WS token, HLS
+     * transcode xhrSetup, and the hub pages. Register a host-owned store (e.g.
+     * the Windows client's DPAPI `SafeStorageTokenStore`) to keep credentials
+     * OUT of `localStorage`; the built-in default persists there. Consumes the
+     * `TokenStore` interface `@phlix/ui` already exports — the same one the
+     * client's vault adapter implements. Omitted/undefined keeps the
+     * localStorage default. Must be registered at boot: clients resolve it
+     * dynamically per request, so even the module-singleton `api` tracks it.
+     */
+    tokenStore?: import('../api/tokenStore').TokenStore;
 }

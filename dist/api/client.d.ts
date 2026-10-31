@@ -11,6 +11,29 @@ import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
 export { ApiError } from './errors';
 /** Re-exported so `import type { TokenStore } from '.../api/client'` deep imports keep working. */
 export type { TokenStore } from './tokenStore';
+/**
+ * Register the token store every session custody flows through — the seam that
+ * lets a host application (e.g. the Windows client's DPAPI vault adapter) own
+ * credential storage instead of `localStorage`. Pass `null` to reset to the
+ * built-in default. Registration happens at boot, BEFORE any store/component
+ * constructs a client, and clients resolve the store dynamically per request,
+ * so even the module-singleton {@link api} (constructed at import time) tracks it.
+ */
+export declare function setDefaultTokenStore(store: TokenStore | null): void;
+/**
+ * The token store in effect when a client was constructed WITHOUT an explicit
+ * `tokenStore`: the boot-registered store if one is configured, else the
+ * default — persist + read the session token from `localStorage` in the
+ * browser, and a no-op when there is no `window` (SSR / unit construction).
+ *
+ * Historically the default was a pure no-op, so any `ApiClient` created WITHOUT
+ * an explicit `tokenStore` (the exported {@link api} singleton, the media store,
+ * the hub's My-Servers / Federation pages, …) silently sent NO `Authorization`
+ * header — which read as "unauthorized" against an authed endpoint and left the
+ * media listing readable without a token. Defaulting to the real store makes
+ * every client send the logged-in user's Bearer token unless one is overridden.
+ */
+export declare function defaultTokenStore(): TokenStore;
 export interface AuthUser {
     id: string;
     email?: string;
@@ -265,7 +288,15 @@ export interface SubtitleDownloadResult {
 }
 export declare class ApiClient {
     private baseUrl;
-    private readonly tokens;
+    /**
+     * Store passed explicitly at construction (tests, `useAuthStore`'s shared
+     * writer/reader instance). `null` means "no explicit store": {@link tokens}
+     * then resolves the boot-registered default DYNAMICALLY per request — mirroring
+     * how the default headers registry is merged at request time — so clients
+     * constructed before boot (the module-singleton {@link api}) still custody
+     * through a store registered later, while an explicit store stays pinned.
+     */
+    private readonly explicitTokenStore;
     private readonly doFetch;
     private readonly timeoutMs;
     private readonly instanceHeaders;
@@ -282,6 +313,12 @@ export declare class ApiClient {
      */
     private refreshPromise;
     constructor(options?: ApiClientOptions);
+    /**
+     * The store this client custody-flows through: the explicit construction
+     * store when one was given, else the boot-registered default resolved NOW
+     * (per request), not at construction — see {@link explicitTokenStore}.
+     */
+    private get tokens();
     /**
      * Re-point this client at a different API base after construction. Lets a
      * long-lived client (e.g. the one held by `useAuthStore`) follow a runtime

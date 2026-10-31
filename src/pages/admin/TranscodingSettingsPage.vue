@@ -15,7 +15,6 @@
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient, ApiError } from '../../api/client';
 import { errMessage } from '../../api/errors';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminTranscodingApi,
   type HardwareAccelerator,
@@ -43,7 +42,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const apiClient =
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() });
+  props.client ?? new ApiClient({ baseUrl: apiBase.value });
 const api = new AdminTranscodingApi(apiClient);
 const toasts = useToastStore();
 const { t } = useMessages();

@@ -43,7 +43,6 @@ import { ref, computed, reactive, onMounted, onBeforeUnmount, inject, type Compu
 import { onBeforeRouteLeave, matchedRouteKey } from 'vue-router';
 import { ApiClient, ApiError } from '../../api/client';
 import { errMessage } from '../../api/errors';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import {
   AdminSettingsApi,
   type SecretStatus,
@@ -83,7 +82,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const apiClient =
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() });
+  props.client ?? new ApiClient({ baseUrl: apiBase.value });
 const api = new AdminSettingsApi(apiClient);
 const toasts = useToastStore();
 const settingsPrefsStore = useSettingsPrefsStore();

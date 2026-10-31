@@ -17,7 +17,6 @@
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
-import { LocalStorageTokenStore } from '../../api/tokenStore';
 import { AdminHistoryApi, type AdminWatchHistoryItem } from '../../api/admin/history';
 import { useToastStore } from '../../stores/useToastStore';
 import { errMessage } from '../../api/errors';
@@ -40,7 +39,7 @@ const apiBase = computed(() =>
   typeof injectedApiBase === 'string' ? injectedApiBase : injectedApiBase?.value ?? '',
 );
 const api = new AdminHistoryApi(
-  props.client ?? new ApiClient({ baseUrl: apiBase.value, tokenStore: new LocalStorageTokenStore() }),
+  props.client ?? new ApiClient({ baseUrl: apiBase.value }),
 );
 const toasts = useToastStore();
 

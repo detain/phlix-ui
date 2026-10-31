@@ -6,7 +6,6 @@
  */
 
 import { ApiClient } from './client';
-import { LocalStorageTokenStore } from './tokenStore';
 import { compareByStrippedTitle } from '../utils/sortTitle';
 
 /**
@@ -59,12 +58,9 @@ export function sortLibraries(list: readonly LibrarySummary[]): LibrarySummary[]
  * teardown can cancel the request.
  */
 export async function fetchLibraries(apiBase: string, signal?: AbortSignal): Promise<LibrarySummary[]> {
-  const client = new ApiClient({
-    baseUrl: apiBase,
-    // Guarded for SSR/no-window (this only ever runs client-side, but the store's
-    // localStorage access would throw if it were ever pre-rendered).
-    tokenStore: typeof window !== 'undefined' ? new LocalStorageTokenStore() : undefined,
-  });
+  // No explicit tokenStore: R-UI-10 — the client resolves the boot-registered
+  // store dynamically (no-op without a window, so the SSR concern is covered).
+  const client = new ApiClient({ baseUrl: apiBase });
   // Path only — ApiClient prepends `baseUrl` (= apiBase) itself.
   const res = await client.get<{ libraries?: LibrarySummary[] }>('/api/v1/libraries', undefined, signal);
   const list = Array.isArray(res.libraries) ? res.libraries : [];

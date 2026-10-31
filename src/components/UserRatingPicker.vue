@@ -31,7 +31,6 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { ApiClient } from '../api/client';
 import { useMediaApiBase } from '../composables/useApiBase';
-import { LocalStorageTokenStore } from '../api/tokenStore';
 
 const props = withDefaults(
   defineProps<{
@@ -68,7 +67,6 @@ const mediaApiBase = useMediaApiBase();
 function ratingClient(): ApiClient {
   return new ApiClient({
     baseUrl: mediaApiBase.value,
-    tokenStore: new LocalStorageTokenStore(),
   });
 }
 

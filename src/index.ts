@@ -25,6 +25,10 @@ export {
   TMDB_UNCONFIGURED_CODE,
   setDefaultApiHeaders,
   getDefaultApiHeaders,
+  // R-UI-10 — token custody seam: register a host-owned TokenStore (e.g. the
+  // Windows client's DPAPI vault) so every auth flow stores/reads session
+  // tokens there instead of localStorage. Mirrors setDefaultApiHeaders.
+  setDefaultTokenStore,
   // The music page size this client requests and the server clamps to
   // (`PageLimit::MAX`). Exported so a consumer can size its own pager identically.
   MUSIC_PAGE_SIZE,

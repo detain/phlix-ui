@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { LocalStorageTokenStore } from './tokenStore';
+import { defaultTokenStore } from './client';
 
 /**
  * Links ("claims") a media server to the signed-in hub user by posting the
@@ -101,8 +101,9 @@ export async function claimServer(
     throw new ClaimError('empty', 'Enter the claim code shown on your server.');
   }
 
-  const token =
-    typeof window !== 'undefined' ? new LocalStorageTokenStore().getAccessToken() : null;
+  // R-UI-10: custody goes through the boot-registered store (localStorage
+  // default; SSR-safe no-op without a window), not a hardcoded instance.
+  const token = defaultTokenStore().getAccessToken();
 
   let res: Response;
   try {
