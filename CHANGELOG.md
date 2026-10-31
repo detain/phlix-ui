@@ -12,6 +12,41 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — R-W9 riders lane 2026-10-30 (R-UI-09): the no-raw-wire-href template-handler walk stops being an unpinned arm
+
+- **The ask.** Rider R-UI-09 (upstream report M-UI-11__r3 note N2): the rule's
+  template-event-handler `window.open` walk (`eslint-rules/no-raw-wire-href.cjs:246-250`)
+  is live-working — the r3 reviewer planted `@click="window.open(props.link.url)"` in a
+  scratch SFC and eslint reddened it `unsafeWindowOpen`, and the `safeHref(…)` swap
+  passed — yet the RuleTester suite carried ZERO cases exercising it: every
+  `window.open` case (V6–V9, H4–H6) binds through SCRIPT scope (`@click="go"` →
+  function). An arm that guards a real sink family with no test is exactly the
+  silent-shrink hazard the S346 inventory pattern exists to prevent.
+- **The cure.** Test-only, two cases into the length-pinned inventories:
+  (V10) `CENSUS_TRUSTED_SHAPES` gains `@click="window.open(safeHref(link.url))"` —
+  the r3 live-probe's cure shape, the walk's PASS side (trusted pin 6→7);
+  (H9) `CENSUS_HOSTILE_SHAPES` gains `@click="window.open(props.link.url)"` — the
+  r3 planted probe itself, the REPORT side (hostile pin 8→9). The file header's
+  shape vocabulary names both classes. The rule itself is byte-untouched — r3 §2
+  proved its teeth on disk; what was missing was the pin, not the logic.
+- **Teeth.** Measured in a `/tmp/opencode/fix-ui09/ui-mut` scratch copy, live tree
+  never mutated. GAP PROOF FIRST: MUT-A — delete the cjs:246-250 arm — against the
+  PRE-FIX 31-case suite passed **31/31 green** (the exact hole N2 describes);
+  against the new inventory the same mutation reddens exactly (H9)
+  (`Should have an error but had none`). MUT-B — bypass the proof check so every
+  template `window.open` reports — reddens exactly (V10)
+  (`Should have no errors but had 1`, `unsafeWindowOpen` text), proving the valid
+  case is not an accident of leniency. Targeted serial run 31→**33** (30 RuleTester
+  cases + the 3 inventory-guard its, N1-truthful wording).
+- **Evidence.** Full serial vitest battery (`--no-file-parallelism`) on the final
+  tree: **321 files / 6503 passed / 10 skipped** — the tip (11477e9e) era measured
+  321/6501/10, so the delta is exactly this lane's two cases. `eslint .` and
+  `vue-tsc --noEmit` exit 0. Zero `src/**` files touched (`git status --porcelain`
+  listed one file pre-CHANGELOG), so the dist rebuild/determinism duty is inert —
+  reported, not performed.
+- **Scope note.** No rule behavior change, no wire surface, no copy or catalog keys
+  (i18n mirror law inert), no contract pins touched, no tags.
+
 ## Unreleased — R-W7 riders lane 2026-10-31 (R-UI-07): the SyncPlay room gate mirrors the pick instead of ratcheting
 
 - **The ask.** Rider R-UI-07 (upstream report M-UI-14__r1 item 2): within ONE open modal

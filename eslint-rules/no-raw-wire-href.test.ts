@@ -23,11 +23,15 @@
  *   (V8) marker on the call statement, constant-scheme builder — the class the
  *        census header names for builder templates
  *   (V9) alias chain whose ROOT is the sanitizer (grep-visible hops)
+ *   (V10) template INLINE handler `@click="window.open(safeHref(…))"` — the
+ *        r3 review's live-probe cure shape, pinning the template-handler
+ *        walk (cjs:246-250) from the PASS side
  * and the planted-hostile ones: the reviewer probe, marker deletion,
  * HTML-comment deletion, a raw declarator, a RAW-ARM TERNARY (the
  * `? safeHref(a) : b.url` smuggle), an alias CHAIN rooted in raw data (the
- * two-name talk-past), a bare undeclared identifier, and an ALIASED IMPORT
- * (`sh`) — each must report exactly once.
+ * two-name talk-past), a bare undeclared identifier, an ALIASED IMPORT
+ * (`sh`), and a raw template INLINE `@click="window.open(wire.url)"` handler
+ * (the r3 review's planted probe, N2) — each must report exactly once.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
@@ -117,6 +121,14 @@ const CENSUS_TRUSTED_SHAPES = [
       'function go(u: string): void { const inner = safeHref(u); const outer = inner; if (outer) window.open(outer, "_blank"); }',
     ),
   },
+  // (V10) template INLINE event handler bound through the sanitizer — the
+  // r3 review's live-probe cure shape. Until R-UI-09 every window.open case
+  // in this file bound through SCRIPT scope, leaving the template-handler
+  // walk (cjs:246-250) live-working but unpinned; this is its PASS side.
+  {
+    filename: 'TemplateOpenSafe.vue',
+    code: sfc('<button @click="window.open(safeHref(link.url))">x</button>'),
+  },
 ];
 
 /**
@@ -191,6 +203,15 @@ const CENSUS_HOSTILE_SHAPES = [
       'import { safeHref as sh } from "../utils/safeHref"; const p = { repo: "x" };',
     ),
     errors: [{ messageId: 'unsafeHrefBinding' }],
+  },
+  // (H9) the r3 review's planted template probe (N2): a raw wire URL handed
+  // straight to window.open in an INLINE `@click` handler — the cjs:246-250
+  // walk's REPORT side, proven live-working on disk but unpinned here until
+  // R-UI-09. Companion to (V10); stripping the arm reddens exactly this case.
+  {
+    filename: 'TemplateOpenRaw.vue',
+    code: sfc('<button @click="window.open(props.link.url)">x</button>'),
+    errors: [{ messageId: 'unsafeWindowOpen' }],
   },
 ];
 
@@ -268,10 +289,10 @@ ts.run('no-raw-wire-href / window.open in .ts', noRawWireHref as never, {
 
 describe('M-UI-11 census inventory guard', () => {
   it('still pins every trusted census shape', () => {
-    expect(CENSUS_TRUSTED_SHAPES).toHaveLength(6);
+    expect(CENSUS_TRUSTED_SHAPES).toHaveLength(7);
   });
   it('still plants every hostile shape', () => {
-    expect(CENSUS_HOSTILE_SHAPES).toHaveLength(8);
+    expect(CENSUS_HOSTILE_SHAPES).toHaveLength(9);
   });
   it('the rule ships the two messageIds the inventory asserts', () => {
     expect(Object.keys(noRawWireHref.meta.messages).sort()).toEqual(['unsafeHrefBinding', 'unsafeWindowOpen']);
