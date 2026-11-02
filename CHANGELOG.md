@@ -12,7 +12,29 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — ui-regreen lane 2026-10-31 (CI `static` re-green): `npm run audit` becomes the allow-list gate — registry-drift advisories glob GHSA-3g3m-2fjr-6pw4 + minimatch GHSA-g3hv-75wg-m249 documented, package.json/lock UNTOUCHED, dist byte-ident
+## 0.99.12 - 2026-11-02
+
+### Release — 38 commits since the `0.99.11` bump (`53c3c2c5`); last PUBLISHED tag is `v0.99.10` (`v0.99.11` was never tagged): the review-campaign reel — riders R-UI-01..R-UI-10, minors W-min185..W-min192, majors M-UI-02/03/06/07/08/10/11/12/13/14/15, theme-sample cohort (M02/M04), and the CI `static` audit re-green — folded verbatim from the pending Unreleased lane blocks below (TAGWAVE-MATRIX P2: bodies untouched, headers demoted `## Unreleased` to `###`; `dist/` rebuilt in the release commit because the M-UI-23 version stamp embeds the version string).
+
+### Dependency pins — tag-wave C10: `@phlix/contracts` `#v0.5.3`→`#v0.5.4`, `@phlix/syncplay` `#v0.1.5`→`#v0.1.6`
+
+- Both are github TAG pins, ls-remote-verified at this cut: contracts `v0.5.4` = tag object
+  `eb649cd9…` peeling to `c491985317…`; syncplay `v0.1.6` = tag object `24e51a95…` peeling to
+  `081687742…`. The contracts registry trio ships byte-identical across the two tags
+  (`dist/error-codes.json` `40c1da48…`, `dist/mcp-scopes.json` `8c92c070…`,
+  `dist/server-route-manifest.json` `91579683…`) and syncplay `v0.1.6` is dist-neutral — the
+  wire vocabulary, the 412-tuple manifest and the bundled payloads do NOT move; this is pin
+  hygiene riding the estate-wide tag wave (TAGWAVE-MATRIX C10).
+- **Lock** surgical via `npm@11 install --package-lock-only`: 8+/8− — 2 own version echoes,
+  2 root dependency-spec echoes, 2 dep nodes × {version, resolved} (git-dep nodes carry no
+  integrity line in npm11 lockshape); zero unrelated churn. `@phlix/tokens` stays `#v0.2.1`
+  (v0.2.2 cut deferred — docs-only delta, re-pin cost; matrix decision).
+- **Era rotation**: the S447 guard `src/api/test/contractsPin.test.ts` re-anchors its peel and
+  version literals to `v0.5.4` (SKEW LINEAGE history prose kept verbatim); v0.5.3 cites in the
+  i18n/LoginForm/routeGate test docblocks that describe the CURRENT pin rotate to v0.5.4 — the
+  manifest bytes themselves are unchanged between the two tags.
+
+### ui-regreen lane 2026-10-31 (CI `static` re-green): `npm run audit` becomes the allow-list gate — registry-drift advisories glob GHSA-3g3m-2fjr-6pw4 + minimatch GHSA-g3hv-75wg-m249 documented, package.json/lock UNTOUCHED, dist byte-ident
 
 - **The red (premise, origin-derived).** The `static` job's "Dependency audit" step
   reddened on runs 41158854334 / 41160835182 / 41162674204 (tips 11477e9e / 3690a764 /
@@ -43,7 +65,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   ANTI-ROT lock cross-check — an allow-listed advisory whose installed resolutions all move
   past the patched line reddens the suite and orders its own removal.
 
-## Unreleased — R-W10 riders lane 2026-10-31 (R-UI-10): `PhlixAppConfig.tokenStore` — the token custody seam the Windows DPAPI vault is blocked on
+### R-W10 riders lane 2026-10-31 (R-UI-10): `PhlixAppConfig.tokenStore` — the token custody seam the Windows DPAPI vault is blocked on
 
 - **The ask.** Rider R-UI-10 (upstream report M-WINDOWS-11__fix, windows tip d48e039):
   the Windows client shipped a DPAPI `SafeStorageTokenStore implements TokenStore`
@@ -85,7 +107,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - **Deferred (owner-gated, out of repo).** The windows boot() flip rides the v0.99.12
   tag wave; the `TokenStore` interface and `LocalStorageTokenStore` export stay as-is.
 
-## Unreleased — R-W9 riders lane 2026-10-30 (R-UI-09): the no-raw-wire-href template-handler walk stops being an unpinned arm
+### R-W9 riders lane 2026-10-30 (R-UI-09): the no-raw-wire-href template-handler walk stops being an unpinned arm
 
 - **The ask.** Rider R-UI-09 (upstream report M-UI-11__r3 note N2): the rule's
   template-event-handler `window.open` walk (`eslint-rules/no-raw-wire-href.cjs:246-250`)
@@ -120,7 +142,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - **Scope note.** No rule behavior change, no wire surface, no copy or catalog keys
   (i18n mirror law inert), no contract pins touched, no tags.
 
-## Unreleased — R-W7 riders lane 2026-10-31 (R-UI-07): the SyncPlay room gate mirrors the pick instead of ratcheting
+### R-W7 riders lane 2026-10-31 (R-UI-07): the SyncPlay room gate mirrors the pick instead of ratcheting
 
 - **The ask.** Rider R-UI-07 (upstream report M-UI-14__r1 item 2): within ONE open modal
   session `requiresPassword` only escalated — after a locked listing pick or a 400
@@ -153,7 +175,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - **Scope note.** Modal-internal behavior only: no wire surface, no copy or catalog keys
   (i18n mirror law inert), no new error codes; contracts fixtures untouched.
 
-## Unreleased — ui minors lane 2026-10-30 (W-min186 r2): the last named Title Case island closes, and the M-UI-05 closure claim becomes true
+### ui minors lane 2026-10-30 (W-min186 r2): the last named Title Case island closes, and the M-UI-05 closure claim becomes true
 
 - **M-UI-05 (copywriter, rework r2).** Forward-correction, not a rewrite: the W-min186 entry
   claimed "the eight photo-page EmptyState titles move to the estate's sentence-case law" —
@@ -173,7 +195,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   commit (5 files: both bundles + both maps + `style.css`, the SFC edit rehashing its
   `data-v-` scope id); zero `Album Not Found` bytes remain in the shipped bundles.
 
-## Unreleased — ui minors lane 2026-10-30 (W-min192): the hub surface gets its gate, and the webhook picker stops being a mirror of itself
+### ui minors lane 2026-10-30 (W-min192): the hub surface gets its gate, and the webhook picker stops being a mirror of itself
 
 - M-UI-24 (fedev m4): the named W18 follow-up lands. `claimServer`, `invite-links`
   and `mcp-tokens` now drive through the same 404-discipline route harness as the
@@ -197,7 +219,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   62f3b92f…): `tsconfig.build.json` excludes `src/api/test/**`, so the harness
   change emits no bundle or `.d.ts` delta — the new files are test-venue only.
 
-## Unreleased — ui minors lane 2026-10-30 (W-min191): remotes press buttons, dead tokens die honest
+### ui minors lane 2026-10-30 (W-min191): remotes press buttons, dead tokens die honest
 
 - **Cross-device verb (M-UI-06):** `settings.resetConfirm` — all 7 registries — swaps the mouse-only
   "Click" for "Press" ('Press again to confirm the reset'; es Pulsa / fr Appuyez / de drücken /
@@ -225,7 +247,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - Verification: vue-tsc 0, eslint 0, full vitest serial green (exact counts in fixlog W-min191),
   build ×2 deterministic, dist:check clean (src touched → dist moves by design).
 
-## Unreleased — ui minors lane 2026-10-30 (W-min190): every toast ends like a sentence, the card menu joins the watched vocabulary, and the phantom tokens finally resolve
+### ui minors lane 2026-10-30 (W-min190): every toast ends like a sentence, the card menu joins the watched vocabulary, and the phantom tokens finally resolve
 
 - **Toast punctuation law (M-UI-01):** 67 inline `toasts.*()` copy strings across 16 components/pages
   gained the terminal period that the catalog and `errors.ts` already kept — measured at tip, the
@@ -256,7 +278,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - Verification: vue-tsc 0, eslint 0, full vitest serial green (see fixlog W-min190 for exact counts),
   build ×2 deterministic, dist:check clean (dist moves: catalog values, inlined page styles).
 
-## Unreleased — ui minors lane 2026-10-30 (W-min189): the build floor gets pinned, the bundle gets a name tag, and the audit gate finally arrives
+### ui minors lane 2026-10-30 (W-min189): the build floor gets pinned, the bundle gets a name tag, and the audit gate finally arrives
 
 - **M-UI-22 (fedev m2).** Both Vite configs now pin `build.target: 'es2021'`
   explicitly. Until now the committed bundle's syntax floor silently tracked
@@ -300,7 +322,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   determinism ×2; `dist:check` green on the clean tree; `npm run audit`
   executed green.
 
-## Unreleased — ui minors lane 2026-10-30 (W-min188): the invite page joins the catalog, "registration" retires, and README's headline facts finally match the shipped library
+### ui minors lane 2026-10-30 (W-min188): the invite page joins the catalog, "registration" retires, and README's headline facts finally match the shipped library
 
 - **M-UI-34 (writer m3).** `AcceptInvitePage.vue` — a new member's first
   contact with the portal — shipped its ENTIRE copy English-inline, bypassing
@@ -355,7 +377,7 @@ Gates: vue-tsc 0, eslint 0, vitest 316 files / 6472 passed / 10 skipped
 determinism ×2 (aggregate dist md5 moves with the catalog by design),
 dist:check clean.
 
-## Unreleased — ui minors lane 2026-10-30 (W-min187): the copy law gets its teeth — one typographic set across every catalog and every inline title, the last-resort error lanes finally speak catalog, and "the 412-key catalog" is now a number that cannot rot
+### ui minors lane 2026-10-30 (W-min187): the copy law gets its teeth — one typographic set across every catalog and every inline title, the last-resort error lanes finally speak catalog, and "the 412-key catalog" is now a number that cannot rot
 
 - **M-UI-04 / M-UI-36 (copywriter m4, writer m5).** The apostrophe split is
   closed with the typographic set as the single house convention: eleven
@@ -420,7 +442,7 @@ dist:check clean.
   W-min186 M-UI-37 cluster). Parked for owner: M-UI-32 (room vs. watch-group
   vocabulary — the naming ruling the estate owes; see the M-UI-01 precedent).
 
-## Unreleased — ui minors lane 2026-10-30 (W-min186): the copy-law cluster — toasts stop swallowing their labels, SyncPlay roles speak wire truth, the Title Case islands sentence-case, status/error lines close their sentences in all seven locales, and the CHANGELOG gets its H1, its format law, and its honest headers
+### ui minors lane 2026-10-30 (W-min186): the copy-law cluster — toasts stop swallowing their labels, SyncPlay roles speak wire truth, the Title Case islands sentence-case, status/error lines close their sentences in all seven locales, and the CHANGELOG gets its H1, its format law, and its honest headers
 
 - **M-UI-28 (webux).** `toasts.error(label, { message })` — the shape ten call
   sites naturally reached for — silently DROPPED the positional label: the helpers
@@ -489,7 +511,7 @@ dist:check clean.
   `window.confirm` survivor is a documented adjudication (cae2a41ae, review #3,
   2026-10-15) — conversion needs an async route-leave bridge, owner-reel row.
 
-## Unreleased — ui minors lane 2026-10-30 (W-min185): copy/ARIA/doc-inventory cluster — the InviteLinks exclamations join the period law, the Explore heading rides its catalog key, the picker switcher becomes a real radiogroup, and the README finally counts its stores, routes, admin pages, and bundle honestly
+### ui minors lane 2026-10-30 (W-min185): copy/ARIA/doc-inventory cluster — the InviteLinks exclamations join the period law, the Explore heading rides its catalog key, the picker switcher becomes a real radiogroup, and the README finally counts its stores, routes, admin pages, and bundle honestly
 
 - **M-UI-02 (copywriter).** `InviteLinksPage.vue` carried the product's last five
   exclamation-mark toasts (`Invite link created!` …) while every sibling clipboard
@@ -515,7 +537,7 @@ dist:check clean.
   "~57 kB" entry-bundle claim against a committed artifact that is measured here in raw
   + gzipped bytes.
 
-## Unreleased — ui majors lane 2026-10-30 (M-UI-10): media-scoped calls finally ride the mediaApiBase — the app-own-base and raw-singleton violations are gone
+### ui majors lane 2026-10-30 (M-UI-10): media-scoped calls finally ride the mediaApiBase — the app-own-base and raw-singleton violations are gone
 
 - **The ask.** ui__fedev M-UI-10: the repo states its own law (`useApiBase.ts`):
   `apiBase` is for the app's OWN endpoints and "must NEVER be proxied to a paired
@@ -553,7 +575,7 @@ dist:check clean.
   is NOT done — architectural, owner-scheduled.
 
 
-## Unreleased — ui majors lane 2026-10-30 (M-UI-02): the saved-items feature finally has ONE name — My List (all 7 catalogs)
+### ui majors lane 2026-10-30 (M-UI-02): the saved-items feature finally has ONE name — My List (all 7 catalogs)
 
 - **The ask.** ui__copywriter M-UI-02: one feature, three names. The Browse rail
   heading said "My List" (hardcoded), the card/detail toggle said "Watchlist"
@@ -586,7 +608,7 @@ dist:check clean.
   interpolate `{name}` in all 7 catalogs.
 
 
-## Unreleased — ui majors lane 2026-10-30 (M-UI-03): German now speaks Du everywhere — the error catalog's formal-Sie island is gone
+### ui majors lane 2026-10-30 (M-UI-03): German now speaks Du everywhere — the error catalog's formal-Sie island is gone
 
 - **The ask.** ui__copywriter M-UI-03: `locales/de.ts` runs a consistent informal-Du
   policy (27 Du forms measured in the review), but the ConfirmDialog default said
@@ -610,7 +632,7 @@ dist:check clean.
   dist determinism disclosed in the fixlog.
 
 
-## Unreleased — ui majors lane 2026-10-30 (M-UI-08): the README PhlixAppConfig table now covers all 23 shipped fields
+### ui majors lane 2026-10-30 (M-UI-08): the README PhlixAppConfig table now covers all 23 shipped fields
 
 - **The ask.** ui__docmaint M-UI-08: the `Configuration — PhlixAppConfig` table
   presented itself as the complete field reference ("Every field is optional except…")
@@ -627,7 +649,7 @@ dist:check clean.
   interface still exposes >=23 fields (tripwire against parser rot). Verified teeth:
   deleting the `wsUrl?` table row reddens exactly the completeness test.
 
-## Unreleased — ui majors lane 2026-10-30 (M-UI-07): the README drops AuditLogsPage from its directly-exported list and completes the page enumeration
+### ui majors lane 2026-10-30 (M-UI-07): the README drops AuditLogsPage from its directly-exported list and completes the page enumeration
 
 - **The ask.** ui__docmaint M-UI-07: the Component catalog listed `AuditLogsPage`
   among "the directly-exported consumer pages", while `src/index.ts` NOTE (H0) says
@@ -648,7 +670,7 @@ dist:check clean.
 - **Evidence.** README copy only; no src/dist delta in this commit.
 
 
-## Unreleased — ui majors lane 2026-10-30 (M-UI-06): the README stops promising the Player surface on the package root
+### ui majors lane 2026-10-30 (M-UI-06): the README stops promising the Player surface on the package root
 
 - **The ask.** ui__docmaint M-UI-06: the Component catalog header says "Everything below
   is a named export from the package root", yet the `### Player surface` section lists
@@ -667,7 +689,7 @@ dist:check clean.
 - **Evidence.** Docs/comment copy only; the committed barrel behavior is unchanged
   (`dist:check` law holds at this commit).
 
-## Unreleased — R-W6 riders lane 2026-10-30 (R-UI-06): the orphaned `syncplay.publicRooms` key is swept from all seven catalogs
+### R-W6 riders lane 2026-10-30 (R-UI-06): the orphaned `syncplay.publicRooms` key is swept from all seven catalogs
 
 - **The ask.** Rider R-UI-06 (upstream report M-UI-14__r1 item 1): when M-UI-14
   renamed the join-listing heading to `syncplay.availableRooms` (locked rooms now
@@ -702,7 +724,7 @@ dist:check clean.
   new error codes; contracts fixtures untouched. Rider R-UI-03 (webauthn tab)
   stays parked for the owner tag-wave — this sweep never touches SettingsPage.
 
-## Unreleased — R-W5 riders lane 2026-10-30 (R-UI-05): the focus-ring contrast law moves into the CSS boundary
+### R-W5 riders lane 2026-10-30 (R-UI-05): the focus-ring contrast law moves into the CSS boundary
 
 - **The ask.** Rider R-UI-05 (upstream report M-THEME-JADE__r1 item 3b): webux M2
   measured jade's shipped `--accent-ring: rgba(80, 200, 120, 0.45)` compositing
@@ -743,7 +765,7 @@ dist:check clean.
   cascade created here. Theme repos converge their bespoke guards on the
   exported SSOT helpers at their own pace.
 
-## Unreleased — R-W4 riders lane 2026-10-30 (R-UI-04): AuthField placeholders join the shared placeholder tier
+### R-W4 riders lane 2026-10-30 (R-UI-04): AuthField placeholders join the shared placeholder tier
 
 - **The ask.** Review theme-jade `__r1` observation 3a (endorsed cosmetic-but-
   recurring): `AuthField.vue` bound `.authfield__input::placeholder` to
@@ -763,7 +785,7 @@ dist:check clean.
 - **Seam reported (owner-gated, NOT taken by this lane).** Rides the v0.99.12
   wave reel; no tag or consumer cascade created here.
 
-## Unreleased — R-W2 riders lane 2026-10-30 (R-UI-02): the quota.exceeded copy stops claiming bandwidth it never gated
+### R-W2 riders lane 2026-10-30 (R-UI-02): the quota.exceeded copy stops claiming bandwidth it never gated
 
 - **The ask.** M-HUB-05's fix closeout filed rider R-UI-02 against this repo:
   the `quota.exceeded` catalog rows were cut in the bandwidth-quota era and
@@ -789,7 +811,7 @@ dist:check clean.
   the fix is unreachable to consumers until the next ui tag wave (v0.99.12
   reel entry); no tag or consumer cascade created here.
 
-## Unreleased — R-W1 riders lane 2026-10-30 (R-UI-01): the AcceptInvitePage redeem fallback speaks the contracts catalog
+### R-W1 riders lane 2026-10-30 (R-UI-01): the AcceptInvitePage redeem fallback speaks the contracts catalog
 
 - **The ask.** M-HUB-05's closeout filed a residual against this repo
   (rider R-UI-01): flip `extractError` precedence (message-first + non-empty)
@@ -823,7 +845,7 @@ dist:check clean.
   cure until the next ui tag wave (v0.99.12 reel entry) — tag/cascade
   deliberately not created here.
 
-## Unreleased — theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M04): the faintest ink reaches AA and the high-contrast variant stops inheriting it
+### theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M04): the faintest ink reaches AA and the high-contrast variant stops inheriting it
 
 - **Second golden rotation, same week.** Upstream raised `--text-faint`
   `#465061`→`#6e7d94` (2.39:1 placeholder ink → ≥4.5:1 on every ground the
@@ -835,7 +857,7 @@ dist:check clean.
   doing its job, not noise: every payload change must cross both repos'
   thresholds together.
 
-## Unreleased — theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M02): the cross-repo themes golden re-pinned against the byte-identical vendored sample payload
+### theme-sample cohort lane 2026-10-29 (M-THEME-SAMPLE M02): the cross-repo themes golden re-pinned against the byte-identical vendored sample payload
 
 - **What moved.** phlix-server re-vendored
   `examples/plugins/phlix-plugin-sample-theme/` byte-identically to the
@@ -850,7 +872,7 @@ dist:check clean.
   overlapping) — the SPA's flattening law itself is untouched: the wire still
   never flattens and the LIST response still supplies every chain link.
 
-## Unreleased — review-fix lane 2026-10-29 (M-UI-15): the German error catalog stops lying about a server fact — signups-disabled is about the ACT of registration, not account state
+### review-fix lane 2026-10-29 (M-UI-15): the German error catalog stops lying about a server fact — signups-disabled is about the ACT of registration, not account state
 
 - **The mistranslation.** `auth.signups_disabled` shipped as
   `'Neue Konten sind auf diesem Server deaktiviert.'` — "new accounts ARE
@@ -894,7 +916,7 @@ dist:check clean.
   unfixed catalog — captured) → tip 6432 tests (6422 pass / 10 skip / 0 fail,
   +11 exact = the new law). `vue-tsc --noEmit` 0, `eslint .` 0.
 
-## Unreleased — review-fix lane 2026-10-29 (M-UI-14): password-locked SyncPlay rooms become reachable from the web surface — create can lock, join can unlock
+### review-fix lane 2026-10-29 (M-UI-14): password-locked SyncPlay rooms become reachable from the web surface — create can lock, join can unlock
 
 - **The structural unreachability ends.** A locked SyncPlay room was, from this
   library, permanently unjoinable and un-creatable: `SyncPlayModal` create mode
@@ -948,7 +970,7 @@ dist:check clean.
   deterministic across two rebuilds (js+css aggregate md5
   59e5e2a0c4ad939ecec01059da94d92d).
 
-## Unreleased — review-fix lane 2026-10-29 (M-UI-13): auth-lockout 422 rejections visible with actionable copy + honest form state
+### review-fix lane 2026-10-29 (M-UI-13): auth-lockout 422 rejections visible with actionable copy + honest form state
 
 - **The invisible-save cure (`src/pages/admin/SettingsPage.vue`).** A settings PUT
   rejected by phlix-server's auth lock-out guards (`AuthMethodPolicy`: R1
@@ -988,7 +1010,7 @@ dist:check clean.
   sanitizer uses `\p{Cc}\p{Cf}` property escapes to satisfy `no-control-regex`).
   dist rebuilt; deterministic across two rebuilds.
 
-## Unreleased — review-fix lane 2026-10-29 (M-UI-12): SyncPlay host-command failures surface via toast with honest state
+### review-fix lane 2026-10-29 (M-UI-12): SyncPlay host-command failures surface via toast with honest state
 
 - **The silent-drop cure (`api/syncplay.ts`, `useSyncPlayStore.ts`, `SyncPlayControls.vue`).**
   A synced play/pause/seek click used to be fire-and-hope: `sendSyncPlayCommand()`
@@ -1039,7 +1061,7 @@ dist:check clean.
   the consumer type contract moving); determinism proven by ×2 aggregate md5
   `7b6d744db62bfcf2ff7a875d676a1548` over two clean builds.
 
-## Unreleased — review-fix lane 2026-10-29 (M-UI-11 r2): the sink census gets its mechanical guard, safeHref becomes public API
+### review-fix lane 2026-10-29 (M-UI-11 r2): the sink census gets its mechanical guard, safeHref becomes public API
 
 - **The M-UI-11 census law is now machine-enforced (`eslint-rules/no-raw-wire-href.cjs`).** The
   parent fix (2d53754e) wired every dynamic `:href`/`window.open` in `src/**` through

@@ -1,5 +1,5 @@
 import { t as e } from "./useMessages-DrceiftD.js";
-import { n as t, t as n } from "./SyncPlayModal-bHwEXjwC.js";
+import { n as t, t as n } from "./SyncPlayModal-C1R90Spw.js";
 import { t as r } from "./useToastStore-Bu-iYU7r.js";
 import { n as ee } from "./useApiBase-DXTBY90j.js";
 import { t as i } from "./Button-1sKEdGjj.js";
@@ -147,4 +147,4 @@ var C = { class: "syncplay-page" }, w = { class: "syncplay-page__header" }, T = 
 }), [["__scopeId", "data-v-df1d5f92"]]);
 export { K as default };
 
-//# sourceMappingURL=SyncPlayPage-oSPKm7V9.js.map
+//# sourceMappingURL=SyncPlayPage-CFYy9Z6a.js.map
