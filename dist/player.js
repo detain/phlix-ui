@@ -6929,7 +6929,7 @@ var gc = [
 			name: "check"
 		})) : a("", !0)]), l(" " + E(e.label), 1)], 42, vc))), 128))], 10, _c), [[N, y.value]])], 2));
 	}
-}), [["__scopeId", "data-v-be7bae5f"]]), xc = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-98c48956"]]), xc = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SpeedMenu",
 	setup(e) {
 		let t = [
@@ -11329,7 +11329,7 @@ var _m = { class: "player__stage" }, vm = ["src", "poster"], ym = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-06928390"]]), rh = "0.99.12", ih = ["aria-label"], ah = ["src", "poster"], oh = { class: "mini__body" }, sh = { class: "mini__title" }, ch = { class: "mini__controls" }, lh = ["aria-label"], uh = ["aria-label", "aria-pressed"], dh = ["aria-label"], fh = ["aria-label"], ph = {
+}), [["__scopeId", "data-v-06928390"]]), rh = "0.99.13", ih = ["aria-label"], ah = ["src", "poster"], oh = { class: "mini__body" }, sh = { class: "mini__title" }, ch = { class: "mini__controls" }, lh = ["aria-label"], uh = ["aria-label", "aria-pressed"], dh = ["aria-label"], fh = ["aria-label"], ph = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, mh = /*#__PURE__*/ X(/* @__PURE__ */ d({
