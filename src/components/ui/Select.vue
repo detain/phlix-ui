@@ -51,14 +51,15 @@ const emit = defineEmits<{
 
 const opts = computed(() => normalizeOptions(props.options));
 const baseId = useId();
-const open = ref(false);
+/** Internal dropdown-open state — distinct by design from the external v-open model (openModel). */
+const isOpen = ref(false);
 const active = ref(-1);
 const rootEl = ref<HTMLElement | null>(null);
 const listEl = ref<HTMLElement | null>(null);
 
 /** Toggle the dropdown open/closed — exposed for programmatic control (e.g. QualityMenu Q-key). */
 function toggleMenu(): void {
-  if (open.value) closeList();
+  if (isOpen.value) closeList();
   else openList();
 }
 defineExpose({ toggleMenu });
@@ -71,8 +72,8 @@ const openModel = defineModel<boolean>('open', { default: false });
 const selectedIndex = computed(() => opts.value.findIndex((o) => o.value === props.modelValue));
 
 watch(openModel, (v) => {
-  if (v && !open.value) openList();
-  else if (!v && open.value) closeList();
+  if (v && !isOpen.value) openList();
+  else if (!v && isOpen.value) closeList();
 }, { immediate: true });
 const selectedLabel = computed(() => opts.value[selectedIndex.value]?.label ?? '');
 const activeId = computed(() => (active.value >= 0 ? `${baseId}-opt-${active.value}` : undefined));
@@ -97,14 +98,14 @@ function updatePlacement() {
 }
 
 function openList() {
-  if (props.disabled || open.value) return;
+  if (props.disabled || isOpen.value) return;
   updatePlacement();
-  open.value = true;
+  isOpen.value = true;
   active.value = selectedIndex.value >= 0 ? selectedIndex.value : edgeEnabledIndex(opts.value, 'first');
   nextTick(scrollActiveIntoView);
 }
 function closeList() {
-  open.value = false;
+  isOpen.value = false;
 }
 function selectIndex(i: number) {
   const o = opts.value[i];
@@ -128,17 +129,17 @@ function scrollActiveIntoView() {
 function onTriggerKeydown(e: KeyboardEvent) {
   if (props.disabled) return;
   switch (e.key) {
-    case 'ArrowDown': e.preventDefault(); open.value ? move(1) : openList(); break;
-    case 'ArrowUp': e.preventDefault(); open.value ? move(-1) : openList(); break;
-    case 'Home': if (open.value) { e.preventDefault(); active.value = edgeEnabledIndex(opts.value, 'first'); nextTick(scrollActiveIntoView); } break;
-    case 'End': if (open.value) { e.preventDefault(); active.value = edgeEnabledIndex(opts.value, 'last'); nextTick(scrollActiveIntoView); } break;
+    case 'ArrowDown': e.preventDefault(); isOpen.value ? move(1) : openList(); break;
+    case 'ArrowUp': e.preventDefault(); isOpen.value ? move(-1) : openList(); break;
+    case 'Home': if (isOpen.value) { e.preventDefault(); active.value = edgeEnabledIndex(opts.value, 'first'); nextTick(scrollActiveIntoView); } break;
+    case 'End': if (isOpen.value) { e.preventDefault(); active.value = edgeEnabledIndex(opts.value, 'last'); nextTick(scrollActiveIntoView); } break;
     case 'Enter':
     case ' ':
       e.preventDefault();
-      if (open.value && active.value >= 0) selectIndex(active.value);
+      if (isOpen.value && active.value >= 0) selectIndex(active.value);
       else openList();
       break;
-    case 'Escape': if (open.value) { e.preventDefault(); closeList(); } break;
+    case 'Escape': if (isOpen.value) { e.preventDefault(); closeList(); } break;
     case 'Tab': closeList(); break;
     default:
       if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) onTypeahead(e.key);
@@ -146,7 +147,7 @@ function onTriggerKeydown(e: KeyboardEvent) {
 }
 
 function onTypeahead(ch: string) {
-  if (!open.value) openList();
+  if (!isOpen.value) openList();
   typeahead += ch.toLowerCase();
   clearTimeout(typeaheadTimer);
   typeaheadTimer = setTimeout(() => (typeahead = ''), 600);
@@ -155,9 +156,9 @@ function onTypeahead(ch: string) {
 }
 
 function onDocPointer(e: PointerEvent) {
-  if (open.value && rootEl.value && !rootEl.value.contains(e.target as Node)) closeList();
+  if (isOpen.value && rootEl.value && !rootEl.value.contains(e.target as Node)) closeList();
 }
-watch(open, (v) => {
+watch(isOpen, (v) => {
   if (v) document.addEventListener('pointerdown', onDocPointer, true);
   else document.removeEventListener('pointerdown', onDocPointer, true);
 });
@@ -168,18 +169,18 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="rootEl" class="phlix-select" :class="{ 'is-open': open, 'is-disabled': disabled, 'is-glass': tone === 'glass' }">
+  <div ref="rootEl" class="phlix-select" :class="{ 'is-open': isOpen, 'is-disabled': disabled, 'is-glass': tone === 'glass' }">
     <button
       type="button"
       class="phlix-select__trigger"
       role="combobox"
       :aria-haspopup="'listbox'"
-      :aria-expanded="open"
-      :aria-controls="open ? `${baseId}-list` : undefined"
-      :aria-activedescendant="open ? activeId : undefined"
+      :aria-expanded="isOpen"
+      :aria-controls="isOpen ? `${baseId}-list` : undefined"
+      :aria-activedescendant="isOpen ? activeId : undefined"
       :aria-label="label"
       :disabled="disabled"
-      @click="open ? closeList() : openList()"
+      @click="isOpen ? closeList() : openList()"
       @keydown="onTriggerKeydown"
     >
       <span class="phlix-select__value" :class="{ 'is-placeholder': selectedIndex < 0 }">
@@ -189,7 +190,7 @@ onBeforeUnmount(() => {
     </button>
 
     <ul
-      v-show="open"
+      v-show="isOpen"
       :id="`${baseId}-list`"
       ref="listEl"
       class="phlix-select__list"
