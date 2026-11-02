@@ -12,6 +12,25 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## 0.99.13 - 2026-11-02
+
+### Fix — Select.vue: internal dropdown ref `open` → `isOpen` (vue/no-dupe-keys cure); public `v-model:open` API unchanged
+
+- The owner's blanket dependency refresh (`a6464f47` — package-lock churn + rebuilt `dist/`,
+  zero src changes since the `v0.99.12` cut `1f0046c5`) landed the eslint-plugin-vue 10.12
+  era, which now flags the collision between `src/components/ui/Select.vue:54`'s internal
+  ref `open` and the `defineModel<boolean>('open')` key as `vue/no-dupe-keys` — the sole
+  `static`-job error on ui-ci run 41498471713 (the same source was green under the 10.5-era
+  plugin at `1f0046c5`).
+- The internal open/closed state is now `isOpen` at every script and template site, with a
+  comment marking the two `open`s distinct by design. The model key `'open'`, the `openModel`
+  binding, the `watch(openModel)` sync logic, the emits, and `defineExpose({ toggleMenu })`
+  are unchanged — the public contract consumed by `QualityMenu.vue` (`v-model:open`) is
+  byte-identical, verified by the unchanged serial suite (322 files / 6525 passed / 10 skipped,
+  identical to the parent `a6464f47` measurement).
+- `dist/` rebuilt in the release commit: toolchain-era bundle from the refreshed lock plus this
+  cure; the M-UI-23 version stamp now embeds `0.99.13`.
+
 ## 0.99.12 - 2026-11-02
 
 ### Release — 38 commits since the `0.99.11` bump (`53c3c2c5`); last PUBLISHED tag is `v0.99.10` (`v0.99.11` was never tagged): the review-campaign reel — riders R-UI-01..R-UI-10, minors W-min185..W-min192, majors M-UI-02/03/06/07/08/10/11/12/13/14/15, theme-sample cohort (M02/M04), and the CI `static` audit re-green — folded verbatim from the pending Unreleased lane blocks below (TAGWAVE-MATRIX P2: bodies untouched, headers demoted `## Unreleased` to `###`; `dist/` rebuilt in the release commit because the M-UI-23 version stamp embeds the version string).
