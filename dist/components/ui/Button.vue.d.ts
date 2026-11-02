@@ -9,10 +9,12 @@ type __VLS_Props = {
     leftIcon?: IconName;
     rightIcon?: IconName;
 };
-declare var __VLS_11: {};
-type __VLS_Slots = {} & {
-    default?: (props: typeof __VLS_11) => any;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        default?: (props: {}) => any;
+    };
 };
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
     type: "button" | "submit" | "reset";
     size: "sm" | "md" | "lg";

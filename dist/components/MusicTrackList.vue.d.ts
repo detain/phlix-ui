@@ -1,3 +1,6 @@
+/**
+ * MusicTrackList — displays a list of tracks with play buttons and duration.
+ */
 import type { MusicTrack } from '../types/music';
 type __VLS_Props = {
     tracks: MusicTrack[];

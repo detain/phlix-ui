@@ -85,7 +85,7 @@ export declare const MediaDetail: import("vue").DefineComponent<{
 }>, {
     canMatch: boolean;
     resumeSeconds: number | null;
-    similar: import("./index.ts").MediaItem[];
+    similar: import("./types/media-item").MediaDetail[];
     similarLoading: boolean;
     showBack: boolean;
     chipsClickable: boolean;

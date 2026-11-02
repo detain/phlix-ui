@@ -27,12 +27,14 @@ type __VLS_Props = {
      */
     fetchPriority?: 'high' | 'low' | 'auto';
 };
-declare var __VLS_1: {}, __VLS_19: {};
-type __VLS_Slots = {} & {
-    action?: (props: typeof __VLS_1) => any;
-} & {
-    empty?: (props: typeof __VLS_19) => any;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        action?: (props: {}) => any;
+    } & {
+        empty?: (props: {}) => any;
+    };
 };
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("../types/media-item").MediaDetail) => any;
     play: (item: import("../types/media-item").MediaDetail) => any;

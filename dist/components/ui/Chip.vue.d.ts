@@ -21,10 +21,12 @@ type __VLS_Props = {
     /** Overrides the main button's accessible name; defaults to the slot content. */
     ariaLabel?: string;
 };
-declare var __VLS_6: {};
-type __VLS_Slots = {} & {
-    default?: (props: typeof __VLS_6) => any;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        default?: (props: {}) => any;
+    };
 };
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     click: () => any;
     "update:selected": (v: boolean) => any;

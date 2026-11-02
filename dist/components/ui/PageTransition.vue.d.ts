@@ -15,10 +15,12 @@
 type __VLS_Props = {
     mode?: 'fade' | 'slide';
 };
-declare var __VLS_7: {};
-type __VLS_Slots = {} & {
-    default?: (props: typeof __VLS_7) => any;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        default?: (props: {}) => any;
+    };
 };
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
     mode: "fade" | "slide";
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;

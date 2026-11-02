@@ -5,5 +5,5 @@ declare const __VLS_export: import("vue").DefineComponent<{
 }, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<{
     position?: "top" | "bottom";
 }> & Readonly<{}>, {
-    position: "top" | "bottom";
+    position: "bottom" | "top";
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;

@@ -14,13 +14,15 @@ type __VLS_Props = {
     icon?: IconName;
     label?: string;
 };
-declare var __VLS_6: {};
-type __VLS_Slots = {} & {
-    default?: (props: typeof __VLS_6) => any;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        default?: (props: {}) => any;
+    };
 };
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
     size: "sm" | "md";
-    tone: "neutral" | "accent" | "success" | "warning" | "error" | "info";
+    tone: "info" | "success" | "error" | "accent" | "neutral" | "warning";
     mono: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;

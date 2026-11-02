@@ -1,7 +1,9 @@
-declare var __VLS_39: {};
-type __VLS_Slots = {} & {
-    oauth?: (props: typeof __VLS_39) => any;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        oauth?: (props: {}) => any;
+    };
 };
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<{}, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     success: () => any;
 }, string, import("vue").PublicProps, Readonly<{}> & Readonly<{

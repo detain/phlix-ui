@@ -110,16 +110,18 @@ type __VLS_Props = {
      */
     lazy?: boolean;
 };
-declare var __VLS_12: {
-    item: import("../types/media-item").MediaDetail;
-}, __VLS_97: {
-    item: import("../types/media-item").MediaDetail;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        badges?: (props: {
+            item: import("../types/media-item").MediaDetail;
+        }) => any;
+    } & {
+        actions?: (props: {
+            item: import("../types/media-item").MediaDetail;
+        }) => any;
+    };
 };
-type __VLS_Slots = {} & {
-    badges?: (props: typeof __VLS_12) => any;
-} & {
-    actions?: (props: typeof __VLS_97) => any;
-};
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     match: (item: import("../types/media-item").MediaDetail) => any;
     play: (item: import("../types/media-item").MediaDetail) => any;

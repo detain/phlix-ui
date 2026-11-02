@@ -10,19 +10,21 @@ type __VLS_Props = {
 };
 declare function openMenu(): void;
 declare function toggleMenu(): void;
-declare var __VLS_1: {
-    open: boolean;
-    toggle: typeof toggleMenu;
-    openMenu: typeof openMenu;
-}, __VLS_15: {
-    item: MenuItem;
-    index: number;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        default?: (props: {
+            open: boolean;
+            toggle: typeof toggleMenu;
+            openMenu: typeof openMenu;
+        }) => any;
+    } & {
+        item?: (props: {
+            item: MenuItem;
+            index: number;
+        }) => any;
+    };
 };
-type __VLS_Slots = {} & {
-    default?: (props: typeof __VLS_1) => any;
-} & {
-    item?: (props: typeof __VLS_15) => any;
-};
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     select: (item: MenuItem, index: number) => any;
     "update:open": (v: boolean) => any;

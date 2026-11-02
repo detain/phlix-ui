@@ -11,12 +11,14 @@ type __VLS_Props = {
      */
     size?: 'sm' | 'md' | 'lg' | 'xl';
 };
-declare var __VLS_20: {}, __VLS_22: {};
-type __VLS_Slots = {} & {
-    default?: (props: typeof __VLS_20) => any;
-} & {
-    footer?: (props: typeof __VLS_22) => any;
+declare const __VLS_template: () => {
+    __VLS_Slots: {
+        default?: (props: {}) => any;
+    } & {
+        footer?: (props: {}) => any;
+    };
 };
+type __VLS_Slots = ReturnType<typeof __VLS_template>['__VLS_Slots'];
 declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {} & {
     close: () => any;
     "update:modelValue": (v: boolean) => any;

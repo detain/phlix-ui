@@ -48,7 +48,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
     limit: number;
     canMatch: boolean;
     showSeeAll: boolean;
-    appliedItem: MediaItem | null;
+    appliedItem: import("../types/media-item").MediaDetail | null;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;

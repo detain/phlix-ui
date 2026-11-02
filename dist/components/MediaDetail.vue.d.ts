@@ -52,7 +52,7 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {
 }>, {
     canMatch: boolean;
     resumeSeconds: number | null;
-    similar: MediaItem[];
+    similar: import("../types/media-item").MediaDetail[];
     similarLoading: boolean;
     showBack: boolean;
     chipsClickable: boolean;
