@@ -12,6 +12,41 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui deferred lane m15 2026-11-03 (review ui__secaudit m2): safeHref becomes an allow-list
+
+- **M-UI-15 (allow-list conversion).** `safeHref` rejected an enumerated set of
+  bad schemes (`javascript:`/`data:`/`vbscript:`) and passed everything else —
+  `blob:`/`file:`/`about:`/`ftp:`/`mailto:`/`tel:`/protocol-relative `//host`
+  passed purely because nobody had listed them. It now admits exactly
+  `{http, https}` plus relative forms (`/`, `./`, `../`, bare paths, `#`, `?`,
+  empty) and denies the rest — parse-don't-validate: an unenumerated scheme is
+  the default-deny case, so inventing a scheme no longer laps the guard. The
+  L6 control-char strip, the identity (never-rewrite) return contract, the
+  `undefined`-renders-inert caller contract and the eslint sink-census law are
+  carried unchanged; classification runs on the stripped probe while the
+  ORIGINAL bytes are what survives.
+- **Disclosed behavior change:** `mailto:`/`tel:` now return `undefined`
+  (inert anchor) where they previously passed. Estate-wide census
+  (2026-11-03, recorded in this lane's ledger): `@phlix/shared` settings schema,
+  server/hub help-link data, all vendored `/app` + widget bundles and every
+  consumer source contain ZERO producers of either scheme reaching an
+  `:href`/`window.open` sink, and ZERO call sites of safeHref outside this
+  package — the pass-through was documented capability, not used capability.
+  Protocol-relative `//host` denial follows tizen's `lanDiscovery` allow-list
+  precedent on the same data class.
+- **Tests:** the two mailto/tel pass-through pins flipped to denial and 29 new
+  law-pins (denied-scheme, obfuscated-denied, protocol-relative, and
+  exact-admitted-set lookalike datasets — `httpx:`/`httpsjavascript:`/
+  `http-javascript:`) were measured RED against the old blocklist before the
+  conversion landed. Two honest-positive pins keep RFC semantics visible:
+  colon-less `https` and percent-encoded `java%09script:x` are relative paths
+  and pass, as the browser agrees.
+- **Cascade note (phase 3).** Bundle-affecting; dist rebuilt det ×2 (agg
+  `57af5857`). server/hub/tizen/windows vendored copies update at the owner's
+  phase-3 re-vendor wave.
+- Gates: FULL vitest serial 324 files 6582 pass/10 skip (+35 additions only),
+  vue-tsc 0, eslint 0, dist det ×2, dist:check green post-commit.
+
 ## Unreleased — ui deferred lane M13 2026-11-03 (review copywriter M5, option A): ParentalControlsPage routes through the catalog
 
 - **M13 option A (executed).** The `parental` catalog group existed but the

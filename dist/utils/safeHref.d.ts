@@ -1,25 +1,49 @@
 /**
- * Blocklist sanitizer for wire-supplied link destinations.
+ * Allow-list sanitizer for wire-supplied link destinations.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
 /**
- * Drop script-y URL schemes from an untrusted link destination.
+ * Admit only `http:`/`https:` URLs and relative references from an untrusted
+ * link destination; everything else returns `undefined`.
  *
- * This is a BLOCKLIST, not an allowlist: it returns `undefined` only for
- * `javascript:`/`data:`/`vbscript:` (after control/space stripping); everything
- * else passes through unchanged — including `blob:`/`file:`/`about:`, which
- * are practically inert for the wire-supplied anchors this guards (no anchor
- * navigation to them executes script; a hostile value reaching them is a
- * server already fully trusted for that payload).
+ * This is an ALLOW-LIST (M-UI-15 [review ui__secaudit m2]): the accepted set is
+ * enumerated — the two web schemes plus relative forms (`/path`, `./p`, `../p`,
+ * `path.html`, `#anchor`, `?query`, and the empty string) — and any value whose
+ * scheme is not exactly `http` or `https` (case-insensitive) fails closed. The
+ * previous shape was a blocklist over `javascript:`/`data:`/`vbscript:`, which
+ * passed `blob:`/`file:`/`about:`/`ftp:`/`mailto:`/`tel:` and protocol-relative
+ * `//host` purely because nobody had enumerated them. Parse-don't-validate
+ * inverts that: the spellings nobody listed are the default-deny case, so the
+ * guard cannot be lapped by a scheme being invented after the code shipped.
+ * This mirrors the estate's own direction of travel — the token-value guard in
+ * `composables/themeTokens.ts` is "a grammar, not a blocklist", and tizen's
+ * `discovery/lanDiscovery.ts` already REJECTS `file://`/`//host` rows by
+ * allow-list on the same data class.
  *
  * The scheme probe strips ALL control and whitespace characters first (L6):
  * browsers ignore embedded control chars like `\x01` or newlines when parsing
- * a URL, so a raw anchored regex would happily ship `java\x09script:` past
- * the blocklist.
+ * a URL, so a raw anchored classifier would happily let `ht\0ps://…` be judged
+ * by its broken spelling. Classification runs on the stripped probe; the
+ * ORIGINAL bytes are what gets returned (identity, never a rewrite — signed
+ * query strings must survive byte-for-byte).
  *
- * Returns `undefined` for a blocked value so callers bind it straight into a
+ * `//host` is deliberately NOT a relative form: a protocol-relative reference
+ * silently inherits the page's scheme and re-points at any host, which is
+ * exactly the row class tizen's discovery allow-list refuses. A schemeless
+ * value that only LOOKS like one (`https` with no colon, `java%09script:`) is
+ * a relative path per RFC 3986 and passes as one — the browser agrees.
+ *
+ * Behavior change disclosed (M13-era dist cascade, phase-3 re-vendor):
+ * `mailto:`/`tel:` now return `undefined` where they previously passed. The
+ * estate-wide census for this conversion (2026-11-03: `@phlix/shared` settings
+ * schema, server/hub help-link data, every vendored `/app` and widget bundle,
+ * and all consumer sources) found zero producers of either scheme at any
+ * `:href`/`window.open` sink, and zero call sites of this function outside
+ * this package; pass-through was documented capability, not used capability.
+ *
+ * Returns `undefined` for a rejected value so callers bind it straight into a
  * `:href` (Vue removes an `undefined` attribute — the anchor renders inert) and
  * can short-circuit `window.open` with the same truthiness check.
  *
@@ -29,7 +53,7 @@
  * wire/remote data (plugin catalogs, settings-schema helpLinks, photo
  * metadata, peer-advertised server URLs). Published from the package barrel
  * since the r2 rework so host apps guard their own sinks with the same
- * primitive rather than re-deriving weaker blocklists per client.
+ * primitive rather than re-deriving weaker lists per client.
  *
  * Census law: every dynamic `:href`/`window.open` site in src/ either binds
  * through this function or carries an `EXPLICITLY TRUSTED` census comment at
@@ -44,6 +68,6 @@
  * `location.href` OAuth navigations (api/admin/services).
  *
  * @param href The raw, untrusted URL string.
- * @return The href unchanged when safe, `undefined` when the scheme is blocked.
+ * @return The href unchanged when its scheme is admitted, `undefined` otherwise.
  */
 export declare function safeHref(href: string): string | undefined;
