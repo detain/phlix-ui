@@ -3534,6 +3534,12 @@ var an = {
 		loadErrorSchedules: "Couldn’t load schedules.",
 		loadErrorTags: "Couldn’t load tags.",
 		loadErrorStreamLimits: "Couldn’t load stream limits.",
+		scheduleSaveError: "Couldn’t save schedule.",
+		scheduleDeleteError: "Couldn’t delete schedule.",
+		tagAddError: "Couldn’t add tag.",
+		tagRemoveError: "Couldn’t remove tag.",
+		streamLimitsSaveError: "Couldn’t update stream limits.",
+		profileLoadError: "Couldn’t load this profile.",
 		retry: "Retry"
 	},
 	admin: {

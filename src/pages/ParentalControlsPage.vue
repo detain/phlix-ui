@@ -27,6 +27,7 @@ import {
   type ProfileTag,
 } from '../api/admin/users';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 import { errMessage } from '../api/errors';
 import Tabs, { type TabItem } from '../components/ui/Tabs.vue';
 import Button from '../components/ui/Button.vue';
@@ -42,6 +43,13 @@ import Icon from '../components/Icon.vue';
 
 const route = useRoute();
 const toasts = useToastStore();
+// M13 option A (deferred lane 2026-11-03): every member-facing sentence this
+// page renders resolves through the `parental` catalog group — the group the
+// page used to duplicate inline (copywriter M5: a consumer overriding
+// `parental.*` changed nothing on screen). The t() keys are type-checked
+// against the catalog (a missing key is a vue-tsc error), so this is the
+// fail-loud adoption the catalog's promise demands.
+const { t } = useMessages();
 
 const props = defineProps<{
   /** Inject a pre-built API client for tests; otherwise one is built from `apiBase`. */
@@ -118,7 +126,7 @@ async function loadProfiles(): Promise<void> {
     profiles.value = [await api.getProfile(profileId)];
   } catch (e) {
     profiles.value = [];
-    profilesError.value = errMessage(e, 'Could not load this profile.');
+    profilesError.value = errMessage(e, t('parental.profileLoadError'));
   } finally {
     loadingProfiles.value = false;
   }
@@ -170,9 +178,9 @@ onMounted(() => {
 type TabValue = 'schedules' | 'tags' | 'streamLimits';
 
 const TABS: TabItem[] = [
-  { value: 'schedules', label: 'Schedules', icon: 'calendar' },
-  { value: 'tags', label: 'Tags', icon: 'bookmark' },
-  { value: 'streamLimits', label: 'Stream limits', icon: 'play' },
+  { value: 'schedules', label: t('parental.schedules'), icon: 'calendar' },
+  { value: 'tags', label: t('parental.tags'), icon: 'bookmark' },
+  { value: 'streamLimits', label: t('parental.streamLimits'), icon: 'play' },
 ];
 
 const activeTab = ref<TabValue>('schedules');
@@ -216,7 +224,7 @@ async function loadSchedules(): Promise<void> {
     schedules.value = await api.profileSchedules(selectedProfileId.value);
     selectedScheduleIndex.value = Math.min(selectedScheduleIndex.value, schedules.value.length - 1);
   } catch (e) {
-    schedulesError.value = errMessage(e, 'Failed to load schedules.');
+    schedulesError.value = errMessage(e, t('parental.loadErrorSchedules'));
   } finally {
     loadingSchedules.value = false;
   }
@@ -312,11 +320,11 @@ async function submitScheduleForm(): Promise<void> {
         scheduleForm.value.isActive,
       );
     }
-    toasts.success(editingSchedule.value ? 'Schedule updated.' : 'Schedule created.');
+    toasts.success(editingSchedule.value ? t('parental.scheduleUpdated') : t('parental.scheduleCreated'));
     showScheduleForm.value = false;
     await loadSchedules();
   } catch (e) {
-    formError.value = errMessage(e, 'Failed to save schedule.');
+    formError.value = errMessage(e, t('parental.scheduleSaveError'));
   }
 }
 
@@ -324,11 +332,11 @@ async function confirmDeleteSchedule(schedule: AccessSchedule): Promise<void> {
   if (!selectedProfileId.value) return;
   try {
     await api.deleteProfileSchedule(selectedProfileId.value, schedule.id);
-    toasts.success('Schedule deleted.');
+    toasts.success(t('parental.scheduleDeleted'));
     pendingDeleteSchedule.value = null;
     await loadSchedules();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to delete schedule.'));
+    toasts.error(errMessage(e, t('parental.scheduleDeleteError')));
     pendingDeleteSchedule.value = null;
   }
 }
@@ -357,8 +365,8 @@ function formatDays(days: string[]): string {
 
 // ── Tags ───────────────────────────────────────────────────────────────────────
 const TAG_TYPE_OPTIONS = [
-  { value: 'blocked', label: 'Blocked' },
-  { value: 'allowed', label: 'Allowed' },
+  { value: 'blocked', label: t('parental.tagBlocked') },
+  { value: 'allowed', label: t('parental.tagAllowed') },
 ];
 
 const tags = ref<ProfileTag[]>([]);
@@ -382,7 +390,7 @@ async function loadTags(): Promise<void> {
     tags.value = await api.profileTags(selectedProfileId.value);
     selectedTagIndex.value = Math.min(selectedTagIndex.value, tags.value.length - 1);
   } catch (e) {
-    tagsError.value = errMessage(e, 'Failed to load tags.');
+    tagsError.value = errMessage(e, t('parental.loadErrorTags'));
   } finally {
     loadingTags.value = false;
   }
@@ -407,11 +415,11 @@ async function submitTagForm(): Promise<void> {
   }
   try {
     await api.addProfileTag(selectedProfileId.value, tag, tagForm.value.tagType);
-    toasts.success('Tag added.');
+    toasts.success(t('parental.tagAdded'));
     showTagForm.value = false;
     await loadTags();
   } catch (e) {
-    tagFormError.value = errMessage(e, 'Failed to add tag.');
+    tagFormError.value = errMessage(e, t('parental.tagAddError'));
   }
 }
 
@@ -419,11 +427,11 @@ async function confirmDeleteTag(tag: ProfileTag): Promise<void> {
   if (!selectedProfileId.value) return;
   try {
     await api.deleteProfileTag(selectedProfileId.value, tag.id);
-    toasts.success('Tag removed.');
+    toasts.success(t('parental.tagRemoved'));
     pendingDeleteTag.value = null;
     await loadTags();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to remove tag.'));
+    toasts.error(errMessage(e, t('parental.tagRemoveError')));
     pendingDeleteTag.value = null;
   }
 }
@@ -471,7 +479,7 @@ async function loadStreamLimits(): Promise<void> {
   try {
     streamLimits.value = await api.profileStreamLimits(selectedProfileId.value);
   } catch (e) {
-    streamLimitsError.value = errMessage(e, 'Failed to load stream limits.');
+    streamLimitsError.value = errMessage(e, t('parental.loadErrorStreamLimits'));
   } finally {
     loadingStreamLimits.value = false;
   }
@@ -508,11 +516,11 @@ async function submitStreamLimitsForm(): Promise<void> {
     // A blank / sub-1 bandwidth is "no cap", not an error — the field is optional.
     const maxBandwidth = parseNumericInput(streamLimitsForm.value.maxTotalBandwidthKbps, 1);
     await api.updateProfileStreamLimits(selectedProfileId.value, maxStreams, maxBandwidth);
-    toasts.success('Stream limits updated.');
+    toasts.success(t('parental.streamLimitsUpdated'));
     showStreamLimitsForm.value = false;
     await loadStreamLimits();
   } catch (e) {
-    streamLimitsFormError.value = errMessage(e, 'Failed to update stream limits.');
+    streamLimitsFormError.value = errMessage(e, t('parental.streamLimitsSaveError'));
   }
 }
 
@@ -551,7 +559,7 @@ function askDeleteTag(tag: ProfileTag): void {
     <header class="parental-page__head">
       <div>
         <p class="parental-page__eyebrow">Profile Controls</p>
-        <h1 class="parental-page__title">Parental controls</h1>
+        <h1 class="parental-page__title">{{ t('parental.title') }}</h1>
       </div>
       <div v-if="selectedProfile" class="parental-page__profile-badge">
         <Icon name="user" size="sm" />
@@ -577,8 +585,8 @@ function askDeleteTag(tag: ProfileTag): void {
     <div v-if="!selectedProfileId" class="parental-page__no-profile">
       <EmptyState
         icon="user"
-        title="No profile selected"
-        description="Parental controls apply to one profile at a time. No profile was selected, so there is nothing to show yet — go back and pick a profile first."
+        :title="t('parental.noProfileSelected')"
+        :description="t('parental.noProfileSelectedHint')"
       />
     </div>
 
@@ -592,7 +600,7 @@ function askDeleteTag(tag: ProfileTag): void {
                 <kbd>c</kbd> create &nbsp; <kbd>E</kbd> edit &nbsp; <kbd>x</kbd> delete &nbsp; <kbd>r</kbd> refresh
               </p>
               <Button variant="solid" size="sm" left-icon="plus" @click="openScheduleCreate">
-                Create schedule
+                {{ t('parental.createSchedule') }}
               </Button>
             </div>
 
@@ -603,19 +611,19 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="schedulesError"
               icon="alert"
-              title="Couldn’t load schedules"
+              :title="t('parental.loadErrorSchedules')"
               :description="schedulesError"
             >
               <template #actions>
-                <Button variant="ghost" size="sm" left-icon="rewind" @click="loadSchedules">Retry</Button>
+                <Button variant="ghost" size="sm" left-icon="rewind" @click="loadSchedules">{{ t('parental.retry') }}</Button>
               </template>
             </EmptyState>
 
             <EmptyState
               v-else-if="schedules.length === 0"
               icon="calendar"
-              title="No access schedules"
-              description="Create schedules to limit when this profile can access content."
+              :title="t('parental.noSchedules')"
+              :description="t('parental.noSchedulesHint')"
             />
 
             <div v-else class="parental-section__list">
@@ -636,7 +644,7 @@ function askDeleteTag(tag: ProfileTag): void {
                 </div>
                 <div class="parental-section__item-actions">
                   <Badge :tone="schedule.is_active ? 'success' : 'neutral'">
-                    {{ schedule.is_active ? 'Active' : 'Inactive' }}
+                    {{ schedule.is_active ? t('parental.active') : t('parental.inactive') }}
                   </Badge>
                   <Button variant="ghost" size="sm" @click.stop="openScheduleEdit(schedule)">Edit</Button>
                   <Button variant="ghost" size="sm" @click.stop="askDeleteSchedule(schedule)">Delete</Button>
@@ -652,7 +660,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <div class="parental-section__toolbar">
               <p class="parental-section__hint"><kbd>c</kbd> create &nbsp; <kbd>x</kbd> delete &nbsp; <kbd>r</kbd> refresh</p>
               <Button variant="solid" size="sm" left-icon="plus" @click="openTagCreate">
-                Add tag
+                {{ t('parental.addTag') }}
               </Button>
             </div>
 
@@ -663,19 +671,19 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="tagsError"
               icon="alert"
-              title="Couldn’t load tags"
+              :title="t('parental.loadErrorTags')"
               :description="tagsError"
             >
               <template #actions>
-                <Button variant="ghost" size="sm" left-icon="rewind" @click="loadTags">Retry</Button>
+                <Button variant="ghost" size="sm" left-icon="rewind" @click="loadTags">{{ t('parental.retry') }}</Button>
               </template>
             </EmptyState>
 
             <EmptyState
               v-else-if="tags.length === 0"
               icon="bookmark"
-              title="No tags"
-              description="Add tags to block or allow specific content categories."
+              :title="t('parental.noTags')"
+              :description="t('parental.noTagsHint')"
             />
 
             <div v-else class="parental-section__list">
@@ -706,7 +714,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <div class="parental-section__toolbar">
               <p class="parental-section__hint"><kbd>u</kbd> update limits &nbsp; <kbd>r</kbd> refresh</p>
               <Button variant="solid" size="sm" left-icon="settings" @click="openStreamLimitsEdit">
-                Update limits
+                {{ t('parental.updateLimits') }}
               </Button>
             </div>
 
@@ -717,23 +725,23 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="streamLimitsError"
               icon="alert"
-              title="Couldn’t load stream limits"
+              :title="t('parental.loadErrorStreamLimits')"
               :description="streamLimitsError"
             >
               <template #actions>
-                <Button variant="ghost" size="sm" left-icon="rewind" @click="loadStreamLimits">Retry</Button>
+                <Button variant="ghost" size="sm" left-icon="rewind" @click="loadStreamLimits">{{ t('parental.retry') }}</Button>
               </template>
             </EmptyState>
 
             <Card v-else class="parental-section__limits-card">
               <div class="parental-section__limits-row">
-                <span class="parental-section__limits-label">Max concurrent streams</span>
+                <span class="parental-section__limits-label">{{ t('parental.maxConcurrentStreams') }}</span>
                 <span class="parental-section__limits-value">
                   {{ streamLimits?.max_concurrent_streams ?? 'Not set' }}
                 </span>
               </div>
               <div class="parental-section__limits-row">
-                <span class="parental-section__limits-label">Max total bandwidth (Kbps)</span>
+                <span class="parental-section__limits-label">{{ t('parental.maxBandwidth') }}</span>
                 <span class="parental-section__limits-value">
                   {{ streamLimits?.max_total_bandwidth_kbps ?? 'Not set' }}
                 </span>
@@ -745,31 +753,31 @@ function askDeleteTag(tag: ProfileTag): void {
     </template>
 
     <!-- Schedule form modal -->
-    <Modal v-model="showScheduleForm" :title="editingSchedule ? 'Edit schedule' : 'Create schedule'" size="sm">
+    <Modal v-model="showScheduleForm" :title="editingSchedule ? t('parental.editSchedule') : t('parental.createSchedule')" size="sm">
       <form class="parental-form" @submit.prevent="submitScheduleForm">
         <p v-if="formError" class="parental-form__error">{{ formError }}</p>
 
         <Input
           v-model="scheduleForm.name"
-          label="Name"
-          placeholder="e.g. Weekday Evenings"
+          :label="t('parental.scheduleName')"
+          :placeholder="t('parental.scheduleNamePlaceholder')"
         />
 
         <div class="parental-form__row">
           <Input
             v-model="scheduleForm.startTime"
-            label="Start time (HH:MM)"
+            :label="t('parental.startTime')"
             placeholder="08:00"
           />
           <Input
             v-model="scheduleForm.endTime"
-            label="End time (HH:MM)"
+            :label="t('parental.endTime')"
             placeholder="22:00"
           />
         </div>
 
         <div class="parental-form__days">
-          <label class="parental-form__label">Days</label>
+          <label class="parental-form__label">{{ t('parental.days') }}</label>
           <div class="parental-form__day-buttons">
             <Button
               v-for="day in VALID_DAYS"
@@ -783,7 +791,7 @@ function askDeleteTag(tag: ProfileTag): void {
           </div>
         </div>
 
-        <Switch v-model="scheduleForm.isActive" label="Active" />
+        <Switch v-model="scheduleForm.isActive" :label="t('parental.active')" />
 
         <div class="parental-form__actions">
           <Button variant="ghost" type="button" @click="showScheduleForm = false">Cancel</Button>
@@ -793,25 +801,25 @@ function askDeleteTag(tag: ProfileTag): void {
     </Modal>
 
     <!-- Tag form modal -->
-    <Modal v-model="showTagForm" title="Add tag" size="sm">
+    <Modal v-model="showTagForm" :title="t('parental.addTag')" size="sm">
       <form class="parental-form" @submit.prevent="submitTagForm">
         <p v-if="tagFormError" class="parental-form__error">{{ tagFormError }}</p>
 
         <Input
           v-model="tagForm.tag"
-          label="Tag name"
-          placeholder="e.g. kids, restricted, work"
+          :label="t('parental.tagName')"
+          :placeholder="t('parental.tagNamePlaceholder')"
         />
 
         <Select
           v-model="tagForm.tagType"
-          label="Tag type"
+          :label="t('parental.tagType')"
           :options="TAG_TYPE_OPTIONS"
         />
 
         <div class="parental-form__actions">
           <Button variant="ghost" type="button" @click="showTagForm = false">Cancel</Button>
-          <Button variant="solid" type="submit">Add tag</Button>
+          <Button variant="solid" type="submit">{{ t('parental.addTag') }}</Button>
         </div>
       </form>
     </Modal>
@@ -823,17 +831,17 @@ function askDeleteTag(tag: ProfileTag): void {
 
         <Input
           v-model.number="streamLimitsForm.maxConcurrentStreams"
-          label="Max concurrent streams"
+          :label="t('parental.maxConcurrentStreams')"
           type="number"
           min="1"
         />
 
         <Input
           v-model="streamLimitsForm.maxTotalBandwidthKbps"
-          label="Max total bandwidth (Kbps, optional)"
+          :label="t('parental.maxBandwidth')"
           type="number"
           min="0"
-          placeholder="Leave empty for no limit"
+          :placeholder="t('parental.maxBandwidthPlaceholder')"
         />
 
         <div class="parental-form__actions">
@@ -846,7 +854,7 @@ function askDeleteTag(tag: ProfileTag): void {
     <!-- Delete schedule confirmation -->
     <Modal v-model="showDeleteScheduleModal" title="Delete schedule" size="sm">
       <p v-if="pendingDeleteSchedule">
-        Delete schedule <strong>{{ pendingDeleteSchedule.name }}</strong>?
+        {{ t('parental.deleteScheduleConfirm', { name: pendingDeleteSchedule.name }) }}
       </p>
       <div class="parental-form__actions">
         <Button variant="ghost" @click="pendingDeleteSchedule = null">Cancel</Button>
@@ -859,7 +867,7 @@ function askDeleteTag(tag: ProfileTag): void {
     <!-- Delete tag confirmation -->
     <Modal v-model="showDeleteTagModal" title="Remove tag" size="sm">
       <p v-if="pendingDeleteTag">
-        Remove tag <strong>{{ pendingDeleteTag.tag }}</strong>?
+        {{ t('parental.removeTagConfirm', { tag: pendingDeleteTag.tag }) }}
       </p>
       <div class="parental-form__actions">
         <Button variant="ghost" @click="pendingDeleteTag = null">Cancel</Button>

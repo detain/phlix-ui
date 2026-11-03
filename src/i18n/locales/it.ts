@@ -582,6 +582,12 @@ export const IT_MESSAGES = {
     loadErrorSchedules: 'Impossibile caricare gli orari.',
     loadErrorTags: 'Impossibile caricare i tag.',
     loadErrorStreamLimits: 'Impossibile caricare i limiti di stream.',
+    scheduleSaveError: 'Impossibile salvare l’orario.',
+    scheduleDeleteError: 'Impossibile eliminare l’orario.',
+    tagAddError: 'Impossibile aggiungere il tag.',
+    tagRemoveError: 'Impossibile rimuovere il tag.',
+    streamLimitsSaveError: 'Impossibile aggiornare i limiti di stream.',
+    profileLoadError: 'Impossibile caricare questo profilo.',
     retry: 'Riprova',
   },
   admin: {

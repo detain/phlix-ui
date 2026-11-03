@@ -582,6 +582,12 @@ export const DE_MESSAGES = {
     loadErrorSchedules: 'Zeitpläne konnten nicht geladen werden.',
     loadErrorTags: 'Tags konnten nicht geladen werden.',
     loadErrorStreamLimits: 'Stream-Limits konnten nicht geladen werden.',
+    scheduleSaveError: 'Zeitplan konnte nicht gespeichert werden.',
+    scheduleDeleteError: 'Zeitplan konnte nicht gelöscht werden.',
+    tagAddError: 'Tag konnte nicht hinzugefügt werden.',
+    tagRemoveError: 'Tag konnte nicht entfernt werden.',
+    streamLimitsSaveError: 'Stream-Limits konnten nicht aktualisiert werden.',
+    profileLoadError: 'Profil konnte nicht geladen werden.',
     retry: 'Erneut versuchen',
   },
   admin: {

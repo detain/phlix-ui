@@ -12,6 +12,52 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui deferred lane M13 2026-11-03 (review copywriter M5, option A): ParentalControlsPage routes through the catalog
+
+- **M13 option A (executed).** The `parental` catalog group existed but the
+  page never called `t()` for it, so overriding the group changed nothing on
+  screen — the catalog advertised adoption it didn't have. Every member-facing
+  sentence the group already covered now resolves through it: the h1, the tab
+  labels, all three error-empty-state titles, the empty-state pair per section,
+  the profile gate, every form label/placeholder, the modal titles, the
+  confirmation sentences (catalog interpolation, `profiles.deleteConfirm`
+  precedent — the `<strong>` around the name is gone, one interpolated
+  sentence is what a translator can actually translate), the success toasts,
+  and the three Retry buttons (`parental.retry`, not `common.retry` — the
+  group's own key gets its adopter). All 24 orphan keys now have real adoption
+  sites; zero keys deleted.
+- **Six new keys** (`scheduleSaveError`, `scheduleDeleteError`, `tagAddError`,
+  `tagRemoveError`, `streamLimitsSaveError`, `profileLoadError`), ×7 catalogs
+  (EN + 6 mirrors, per-locale typography). These complete the half of copy
+  m24 deliberately deferred INTO this item: the page's remaining "Failed
+  to …"/"Could not …" error fallbacks move to the catalog's "Couldn’t …."
+  voice. Disclosed copy moves: three error-empty-state titles gain the
+  sibling-carried period; two form labels drop the "(HH:MM)"/", optional"
+  suffixes (the placeholders and `maxBandwidthPlaceholder` carry the hint);
+  catalog surface grows 508→514 keys (prose trio re-pinned from measured red).
+- **Rejected alternatives (disclosure).** Option B — delete the orphan group
+  and keep inline copy — would shrink the public catalog surface but strand
+  the router meta title (`parental.title` is a live adopter via
+  `createPhlixApp.ts`) and undo the localizer promise instead of honoring it.
+  Option C — status quo — leaves a finding whose whole defect is a promise the
+  catalog breaks on itself. Option A is the only one that makes the documented
+  law true.
+- **Residuals named (out of this item's cited scope).** Form-validation strings
+  (the review's own "inline validations exist only outside the seam"
+  observation), generic action labels (Cancel/Edit/Delete/Update/Create/
+  Remove), the S203 "Unidentified profile #…" badge, the keyboard-hint words,
+  the eyebrow, and the Tabs aria label stay inline; the two dead
+  `settings.loadFailed`/`settings.loadErrorTitle` keys (M5's second clause)
+  keep zero adoption sites — the honest-promise sentence in `messages.ts`
+  still names them as the exception class pending their own call.
+- **Cascade note (phase 3).** Bundle-affecting copy; dist rebuilt det ×2
+  (agg `a934c79c`). The server/hub `/app` re-vendor rides the owner's phase-3
+  tag wave — NOT cascaded here. The two `pageTitles.test.ts` static-file pins
+  for this page were rotated red-first: the h1 is no longer a literal, and the
+  law is carried by the catalog pin + the page suite's rendered-h1 pin.
+- Gates: FULL vitest serial (counts held), vue-tsc 0, eslint 0, dist det ×2,
+  dist:check green.
+
 ## Unreleased — ui fix lane m10-m13-m26 2026-11-03 (review i18n m10, m13 + docs m26): page chrome routes through the catalog
 
 - **m10 (MediaCard).** The card's aria-labels and tooltip texts were hardcoded

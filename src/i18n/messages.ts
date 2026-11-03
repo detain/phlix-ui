@@ -719,6 +719,15 @@ export const DEFAULT_MESSAGES = {
     loadErrorSchedules: "Couldn’t load schedules.",
     loadErrorTags: "Couldn’t load tags.",
     loadErrorStreamLimits: "Couldn’t load stream limits.",
+    // M13 option A (deferred lane 2026-11-03): the write-side twins of the
+    // loadError trio — the page's error fallbacks, previously inline in the
+    // 'Failed to ….' voice m24 deprecated. Same 'Couldn’t ….' law, same shape.
+    scheduleSaveError: "Couldn’t save schedule.",
+    scheduleDeleteError: "Couldn’t delete schedule.",
+    tagAddError: "Couldn’t add tag.",
+    tagRemoveError: "Couldn’t remove tag.",
+    streamLimitsSaveError: "Couldn’t update stream limits.",
+    profileLoadError: "Couldn’t load this profile.",
     retry: 'Retry',
   },
   admin: {

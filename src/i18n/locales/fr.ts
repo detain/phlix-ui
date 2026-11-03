@@ -586,6 +586,12 @@ export const FR_MESSAGES = {
     loadErrorSchedules: 'Impossible de charger les horaires.',
     loadErrorTags: 'Impossible de charger les étiquettes.',
     loadErrorStreamLimits: 'Impossible de charger les limites de stream.',
+    scheduleSaveError: 'Impossible d’enregistrer l’horaire.',
+    scheduleDeleteError: 'Impossible de supprimer l’horaire.',
+    tagAddError: 'Impossible d’ajouter l’étiquette.',
+    tagRemoveError: 'Impossible de retirer l’étiquette.',
+    streamLimitsSaveError: 'Impossible de mettre à jour les limites de stream.',
+    profileLoadError: 'Impossible de charger ce profil.',
     retry: 'Réessayer',
   },
   admin: {

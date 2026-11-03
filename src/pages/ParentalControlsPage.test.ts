@@ -543,7 +543,7 @@ describe('ParentalControlsPage — schedules list', () => {
     const get = getWithProfile(async () => { throw {}; });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
-    expect(w.text()).toContain('Failed to load schedules.');
+    expect(w.text()).toContain("Couldn’t load schedules.");
   });
 });
 
@@ -753,7 +753,7 @@ describe('ParentalControlsPage — creating and editing a schedule', () => {
     await flushPromises();
     await setInput(0, 'Bedtime');
     await submitForm();
-    expect(formError()).toBe('Failed to save schedule.');
+    expect(formError()).toBe("Couldn’t save schedule.");
   });
 
   it('prefills the edit form from the row and titles the modal Edit schedule', async () => {
@@ -929,7 +929,7 @@ describe('ParentalControlsPage — deleting a schedule requires confirmation', (
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Delete')!.trigger('click');
     await flushPromises();
-    expect(useToastStore().toasts.some((t) => t.message === 'Failed to delete schedule.')).toBe(true);
+    expect(useToastStore().toasts.some((t) => t.message === "Couldn’t delete schedule.")).toBe(true);
   });
 });
 
@@ -994,7 +994,7 @@ describe('ParentalControlsPage — tags', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
     await goToTags(w);
-    expect(w.text()).toContain('Failed to load tags.');
+    expect(w.text()).toContain("Couldn’t load tags.");
   });
 
   it('refuses an empty tag', async () => {
@@ -1087,7 +1087,7 @@ describe('ParentalControlsPage — tags', () => {
     await flushPromises();
     await setInput(0, 'gore');
     await submitForm();
-    expect(formError()).toBe('Failed to add tag.');
+    expect(formError()).toBe("Couldn’t add tag.");
   });
 
   it('removing a tag requires confirmation and does not call the API first', async () => {
@@ -1149,7 +1149,7 @@ describe('ParentalControlsPage — tags', () => {
     await flushPromises();
     await findBtnIn(w, modalPanel(), 'Remove')!.trigger('click');
     await flushPromises();
-    expect(useToastStore().toasts.some((t) => t.message === 'Failed to remove tag.')).toBe(true);
+    expect(useToastStore().toasts.some((t) => t.message === "Couldn’t remove tag.")).toBe(true);
   });
 
   it('marks the clicked tag row as selected', async () => {
@@ -1212,7 +1212,7 @@ describe('ParentalControlsPage — stream limits', () => {
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
     await goToLimits(w);
-    expect(w.text()).toContain('Failed to load stream limits.');
+    expect(w.text()).toContain("Couldn’t load stream limits.");
   });
 
   it('prefills the edit form from the loaded limits', async () => {
@@ -1475,7 +1475,7 @@ describe('ParentalControlsPage — stream limits', () => {
     await findBtn(w, 'Update limits')!.trigger('click');
     await flushPromises();
     await submitForm();
-    expect(formError()).toBe('Failed to update stream limits.');
+    expect(formError()).toBe("Couldn’t update stream limits.");
   });
 
   it('cancels without writing', async () => {
@@ -1779,7 +1779,7 @@ describe('ParentalControlsPage — profile identity badge', () => {
     });
     const client = { get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient;
     const w = await mountPage(client);
-    expect(w.find('.parental-page__profile-badge').text()).toContain('Could not load this profile.');
+    expect(w.find('.parental-page__profile-badge').text()).toContain("Couldn’t load this profile.");
   });
 
   /**

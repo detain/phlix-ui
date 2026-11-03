@@ -574,6 +574,12 @@ export declare const IT_MESSAGES: {
         loadErrorSchedules: string;
         loadErrorTags: string;
         loadErrorStreamLimits: string;
+        scheduleSaveError: string;
+        scheduleDeleteError: string;
+        tagAddError: string;
+        tagRemoveError: string;
+        streamLimitsSaveError: string;
+        profileLoadError: string;
         retry: string;
     };
     admin: {

@@ -75,7 +75,11 @@ describe('page titles (copywriter m6 — sentence-case law, enforced)', () => {
       ['SecuritySettingsPage.vue', 'Passkey settings'],
       ['LibraryScanPage.vue', 'Library scanner'],
       ['AuditLogsPage.vue', 'Audit logs'],
-      ['ParentalControlsPage.vue', 'Parental controls'],
+      // ParentalControlsPage.vue dropped from this static list: its h1 now
+      // renders t('parental.title') (M13 option A), so the file no longer
+      // contains the literal. The law is still enforced twice over: the
+      // catalog value is pinned sentence-case below, and the suite mounts
+      // the page and asserts the rendered h1.
     ];
     for (const [f, want] of cases) {
       expect(readFileSync(join(PAGES, f), 'utf8'), f).toContain(`>${want}</h1>`);

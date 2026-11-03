@@ -584,6 +584,12 @@ export const ES_MESSAGES = {
     loadErrorSchedules: 'No se pudieron cargar los horarios.',
     loadErrorTags: 'No se pudieron cargar las etiquetas.',
     loadErrorStreamLimits: 'No se pudieron cargar los límites de stream.',
+    scheduleSaveError: 'No se pudo guardar el horario.',
+    scheduleDeleteError: 'No se pudo eliminar el horario.',
+    tagAddError: 'No se pudo añadir la etiqueta.',
+    tagRemoveError: 'No se pudo quitar la etiqueta.',
+    streamLimitsSaveError: 'No se pudieron actualizar los límites de stream.',
+    profileLoadError: 'No se pudo cargar este perfil.',
     retry: 'Reintentar',
   },
   admin: {

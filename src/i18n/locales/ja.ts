@@ -583,6 +583,12 @@ export const JA_MESSAGES = {
     loadErrorSchedules: 'スケジュールを読み込めませんでした。',
     loadErrorTags: 'タグを読み込めませんでした。',
     loadErrorStreamLimits: '配信制限を読み込めませんでした。',
+    scheduleSaveError: 'スケジュールを保存できずにしました。',
+    scheduleDeleteError: 'スケジュールを削除できずにしました。',
+    tagAddError: 'タグを追加できずにしました。',
+    tagRemoveError: 'タグを削除できずにしました。',
+    streamLimitsSaveError: '配信制限を更新できずにしました。',
+    profileLoadError: 'このプロフィールを読み込めませんでした。',
     retry: '再試行',
   },
   admin: {
