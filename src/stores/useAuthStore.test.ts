@@ -164,6 +164,65 @@ describe('useAuthStore', () => {
     expect(s.user).toBeNull();
     expect(s.isLoggedIn).toBe(false); // tokens cleared
   });
+
+  /**
+   * M4 (fedev review): a NETWORK failure (offline reload, server restart) is
+   * *unknown*, not *rejected* — the same M-UI-26 law the client's refresh path
+   * honors. The old code cleared the tokens on ANY throw, logging the user out
+   * of a perfectly valid session because the server was briefly unreachable.
+   */
+  /**
+   * M4 (fedev review): a NETWORK failure (offline reload, server restart) is
+   * *unknown*, not *rejected* — the same M-UI-26 law the client's refresh path
+   * honors. The old code cleared the tokens on ANY throw, logging the user out
+   * of a perfectly valid session because the server was briefly unreachable.
+   * Note the store binds `globalThis.fetch` at construction (client.ts:642),
+   * so the stub flips an `online` flag rather than re-stubbing mid-test.
+   */
+  it('fetchUser KEEPS the tokens on a network failure and reports unreachable', async () => {
+    localStorage.setItem('access_token', 'GOOD');
+    localStorage.setItem('refresh_token', 'RT');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    );
+    const s = useAuthStore();
+    expect(s.isLoggedIn).toBe(true);
+
+    const outcome = await s.fetchUser();
+
+    expect(outcome).toBe('unreachable');
+    expect(s.isLoggedIn).toBe(true); // tokens survive — unknown ≠ rejected
+    expect(localStorage.getItem('access_token')).toBe('GOOD');
+    expect(localStorage.getItem('refresh_token')).toBe('RT');
+    expect(s.error).toBeTruthy(); // a connection error is surfaced
+  });
+
+  it('init() retries validation after an unreachable boot (memo dropped)', async () => {
+    localStorage.setItem('access_token', 'GOOD');
+    let online = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (!online) return Promise.reject(new TypeError('Failed to fetch'));
+        return Promise.resolve(
+          String(url).includes(AUTH_ME_PATH)
+            ? jsonResponse({ user: { id: 1, email: 'a@b.c', is_admin: false } })
+            : jsonResponse({ message: 'not found' }, 404),
+        );
+      }),
+    );
+    const s = useAuthStore();
+    await s.init();
+    // Not "initialized": the next protected navigation must re-validate.
+    expect(s.isLoggedIn).toBe(true);
+    expect(s.user).toBeNull();
+
+    // Server comes back — the same store instance now validates for real.
+    online = true;
+    await s.init();
+    expect(s.user?.email).toBe('a@b.c');
+  });
 });
 
 // W4 review fix (HIGH): login/signup/fetchUser must carry the `errorCode` ref

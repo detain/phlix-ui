@@ -147,6 +147,7 @@ export const JA_MESSAGES = {
     passwordMinLength: 'パスワードは8文字以上で入力してください。',
     passwordMismatch: 'パスワードが一致しません。',
     signInFailed: 'サインインできませんでした。',
+    serverUnreachable: 'サーバーに接続できませんでした。接続を確認して再試行してください。',
     signupFailed: 'アカウントを作成できませんでした。もう一度お試しください。',
   },
   connect: {

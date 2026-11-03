@@ -604,6 +604,23 @@ function localizeWireCode(code: string | null): string | null {
     return null;
 }
 
+/**
+ * Module-scoped in-flight refresh, keyed by the resolved `TokenStore` (M5 —
+ * fedev + secaudit review). Single-flight MUST live outside the instance: the
+ * auth store builds its own `ApiClient`, page components build dozens more
+ * (`MediaCard`, `LibraryPage`, `useTrickplay`, …), and all of them custody-flow
+ * the SAME store. A boot-time burst of 401s across instances would otherwise
+ * let each instance single-flight its OWN refresh: the winner rotates the
+ * one-time-use refresh token, every loser's POST carries the consumed token,
+ * fails, and cleared the just-rotated pair — a hard logout mid-session despite
+ * valid credentials. Keyed by store identity, every client sharing a
+ * credential store shares exactly one in-flight refresh. (Keying caveat, on
+ * purpose: clients that share a store but differ in baseUrl also share one
+ * refresh — in this estate a store belongs to one server's credential space,
+ * so the first caller's base is the right one.)
+ */
+const sharedRefreshInFlight = new WeakMap<TokenStore, Promise<boolean>>();
+
 export class ApiClient {
     private baseUrl: string;
     /**
@@ -619,18 +636,6 @@ export class ApiClient {
     private readonly timeoutMs: number;
     private readonly instanceHeaders: Record<string, string>;
     private readonly loginPath: string;
-    /**
-     * In-flight token refresh, single-flighted per `ApiClient` instance. When an
-     * access token expires, every concurrent request gets a 401 and calls
-     * {@link refreshToken} at once; without coordination each would POST
-     * `/api/v1/auth/refresh` with the same refresh token. The hub rotates
-     * refresh tokens one-time-use, so the second+ POST presents an
-     * already-consumed token, fails, and spuriously logs the user out
-     * mid-session. Memoising the promise (cleared in `.finally()`) makes the N
-     * callers await the SAME refresh — exactly one POST, one rotation.
-     */
-    private refreshPromise: Promise<boolean> | null = null;
-
     constructor(options: ApiClientOptions = {}) {
         this.baseUrl = options.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
         this.explicitTokenStore = options.tokenStore ?? null;
@@ -832,64 +837,103 @@ export class ApiClient {
     }
 
     /**
-     * Refresh the access token, single-flighted per instance. Concurrent callers
-     * (e.g. several requests that all hit a 401 at once) share ONE in-flight
-     * refresh rather than each POSTing `/api/v1/auth/refresh` — see
-     * {@link refreshPromise}. The promise is cleared in `.finally()` so a later
-     * expiry starts a fresh refresh. Returns `true` on success / `false` on any
-     * failure (no refresh token, non-2xx, network error, missing access_token).
+     * Expire the session unless the store's refresh token has MOVED past the
+     * one this attempt consumed (M5 companion — secaudit): a sibling client
+     * sharing the store already rotated the pair successfully, so this
+     * attempt only LOOKED dead (its POST carried the consumed token). Wiping
+     * the fresh pair would be the very spurious logout the single-flight
+     * exists to prevent; the survivor's pair stands. A cleared store (null)
+     * or the still-consumed token means the pair is really dead — expire.
+     */
+    private expireSessionUnlessRotated(consumedRefreshToken: string): void {
+        const current = this.tokens.getRefreshToken();
+        if (current !== null && current !== consumedRefreshToken) {
+            return;
+        }
+        this.expireSession();
+    }
+
+    /**
+     * Refresh the access token, single-flighted per CREDENTIAL STORE — not per
+     * instance (M5). Concurrent callers across every `ApiClient` sharing this
+     * store's tokens await ONE in-flight refresh; the memo is dropped in
+     * `.finally()` so a later expiry starts a fresh one. Returns `true` on
+     * success / `false` on any failure (no refresh token, non-2xx, network
+     * error, missing access_token).
      *
      * M-UI-26 (seceng: failed refresh kept the tokens): a DETERMINED failure —
      * no refresh token to try, a non-2xx answer, or a payload that carries no
      * access_token — means the persisted pair can never authenticate again, so
-     * {@link expireSession} clears the store and fires the `phlix:auth-expired`
-     * window event the auth store mirrors into its reactive state. A NETWORK
-     * error is deliberately NOT determinative: the pair may still be valid
-     * server-side, so tokens survive and the next attempt retries.
+     * the session expires ({@link expireSessionUnlessRotated} — clear +
+     * `phlix:auth-expired` event, which the auth store mirrors into reactive
+     * state) UNLESS a sibling caller already rotated the pair out from under
+     * this attempt. A NETWORK error is deliberately NOT determinative: the
+     * pair may still be valid server-side, so tokens survive and the next
+     * attempt retries.
      */
     async refreshToken(): Promise<boolean> {
-        if (this.refreshPromise !== null) {
-            return this.refreshPromise;
+        const store = this.tokens;
+        const existing = sharedRefreshInFlight.get(store);
+        if (existing !== undefined) {
+            return existing;
         }
-        this.refreshPromise = (async (): Promise<boolean> => {
-            const refreshToken = this.tokens.getRefreshToken();
-            if (!refreshToken) {
-                this.expireSession();
-                return false;
-            }
-            try {
-                const response = await this.doFetch(`${this.baseUrl}/api/v1/auth/refresh`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ refresh_token: refreshToken }),
-                });
-                if (!response.ok) {
-                    this.expireSession();
-                    return false;
-                }
-                const data = (await response.json()) as {
-                    access_token?: string;
-                    refresh_token?: string;
-                };
-                if (typeof data.access_token !== 'string') {
-                    this.expireSession();
-                    return false;
-                }
-                this.tokens.setAccessToken(data.access_token);
-                if (typeof data.refresh_token === 'string') {
-                    this.tokens.setRefreshToken(data.refresh_token);
-                }
-                return true;
-            } catch {
-                // Network-level failure is unknown, not rejected — tokens survive
-                // (see refreshToken docblock; M-UI-26 asymmetry is deliberate).
-                return false;
-            }
-        })().finally(() => {
-            this.refreshPromise = null;
+        const attempt = this.performRefresh(store).finally(() => {
+            sharedRefreshInFlight.delete(store);
         });
-        return this.refreshPromise;
+        sharedRefreshInFlight.set(store, attempt);
+        return attempt;
+    }
+
+    /**
+     * One refresh round-trip against a pinned store snapshot.
+     *
+     * M7 (fedev review): the leg now carries the SAME timeout discipline as
+     * `request()` (`this.timeoutMs`, own AbortController) — a hung server must
+     * not park the single-flighted promise, and every waiter behind it,
+     * forever. A fired timeout lands in the catch below: unknown, not
+     * rejected, tokens survive.
+     */
+    private async performRefresh(store: TokenStore): Promise<boolean> {
+        const refreshToken = store.getRefreshToken();
+        if (!refreshToken) {
+            this.expireSession();
+            return false;
+        }
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+        try {
+            const response = await this.doFetch(`${this.baseUrl}/api/v1/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ refresh_token: refreshToken }),
+                signal: controller.signal,
+            });
+            if (!response.ok) {
+                this.expireSessionUnlessRotated(refreshToken);
+                return false;
+            }
+            const data = (await response.json()) as {
+                access_token?: string;
+                refresh_token?: string;
+            };
+            if (typeof data.access_token !== 'string') {
+                this.expireSessionUnlessRotated(refreshToken);
+                return false;
+            }
+            store.setAccessToken(data.access_token);
+            if (typeof data.refresh_token === 'string') {
+                store.setRefreshToken(data.refresh_token);
+            }
+            return true;
+        } catch {
+            // Network-level failure (or our own abort) is unknown, not rejected —
+            // tokens survive (see refreshToken docblock; M-UI-26 asymmetry is
+            // deliberate).
+            return false;
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     async get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T> {
@@ -901,16 +945,19 @@ export class ApiClient {
         return this.request<T>('POST', endpoint, data ?? null, signal);
     }
 
-    async put<T = unknown>(endpoint: string, data?: unknown): Promise<T> {
-        return this.request<T>('PUT', endpoint, data ?? null);
+    // m8 (fedev review): the write verbs take the same optional `signal` as
+    // get/post — cancellation of a write in flight (unmount, superseded form
+    // submit) must be structurally possible, not just a read-path affordance.
+    async put<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T> {
+        return this.request<T>('PUT', endpoint, data ?? null, signal);
     }
 
-    async patch<T = unknown>(endpoint: string, data?: unknown): Promise<T> {
-        return this.request<T>('PATCH', endpoint, data ?? null);
+    async patch<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T> {
+        return this.request<T>('PATCH', endpoint, data ?? null, signal);
     }
 
-    async delete<T = unknown>(endpoint: string): Promise<T> {
-        return this.request<T>('DELETE', endpoint);
+    async delete<T = unknown>(endpoint: string, signal?: AbortSignal): Promise<T> {
+        return this.request<T>('DELETE', endpoint, null, signal);
     }
 
     /**

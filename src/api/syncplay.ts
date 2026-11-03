@@ -900,6 +900,23 @@ function connectSyncPlaySocket(
  * Close the current SyncPlay WebSocket connection.
  */
 export function closeSyncPlayConnection(): void {
+  // m6 (fedev review): leave BEFORE the socket goes. The client's send closure
+  // only transmits while `readyState === OPEN`, so closing first silently
+  // discarded the explicit LEAVE frame — the server saw a bare disconnect and
+  // lost the leave *reason*. Ordering: emit leave (+ client-side bookkeeping)
+  // while the wire can still carry it, then detach and close. The send is
+  // BEST-EFFORT: a wire that dies mid-send (transport break, quota) must not
+  // abort the teardown — the close below always runs, and the server reaps
+  // the membership on the disconnect regardless.
+  if (syncPlayClient) {
+    try {
+      syncPlayClient.leaveGroup();
+    } catch {
+      /* leave frame lost — disconnect carries the intent. */
+    }
+    syncPlayClient.onDisconnect();
+    syncPlayClient = null;
+  }
   if (syncPlayWs) {
     // Detach first — an intentional close must not schedule a reconnect when the
     // close event arrives (or after this module's state is already reset).
@@ -910,11 +927,6 @@ export function closeSyncPlayConnection(): void {
     closing.onerror = null;
     closing.close();
     syncPlayWs = null;
-  }
-  if (syncPlayClient) {
-    syncPlayClient.leaveGroup();
-    syncPlayClient.onDisconnect();
-    syncPlayClient = null;
   }
   syncPlayRoomId = null;
   syncPlayReconnectAttempts = 0;

@@ -143,6 +143,7 @@ export declare const PT_BR_MESSAGES: {
         passwordMinLength: string;
         passwordMismatch: string;
         signInFailed: string;
+        serverUnreachable: string;
         signupFailed: string;
     };
     connect: {

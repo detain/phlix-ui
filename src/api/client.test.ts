@@ -353,6 +353,93 @@ describe('ApiClient', () => {
             expect(second).toBe(true);
             expect(refreshCount()).toBe(2);
         });
+
+        /**
+         * M5 (fedev M2 + secaudit M1): the memo must live at MODULE scope keyed
+         * by the credential STORE, not per instance. The estate runs dozens of
+         * `new ApiClient(...)` sites that custody-flow the SAME store (the auth
+         * store builds its own client; MediaCard/LibraryPage/useTrickplay build
+         * more). At the per-instance law this scenario refreshed TWICE — the
+         * second POST presented the already-consumed one-time-use token, failed,
+         * and cleared the winner's rotated pair: a mid-session hard logout.
+         */
+        it('collapses concurrent 401s ACROSS two clients sharing one store into ONE refresh POST', async () => {
+            const tokens = new MemoryTokenStore({ access: 'old', refresh: 'ref-0' });
+            const { fetch, refreshCount } = makeUrlAwareFetch();
+            const a = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+            const b = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl: fetch });
+
+            const results = await Promise.all([
+                a.get<{ ok: boolean; sentAuth: string }>('/api/v1/r0'),
+                b.get<{ ok: boolean; sentAuth: string }>('/api/v1/r1'),
+                a.get<{ ok: boolean; sentAuth: string }>('/api/v1/r2'),
+                b.get<{ ok: boolean; sentAuth: string }>('/api/v1/r3'),
+            ]);
+
+            expect(refreshCount()).toBe(1);
+            for (const r of results) {
+                expect(r.ok).toBe(true);
+                expect(r.sentAuth).toBe('Bearer acc-1');
+            }
+            expect(tokens.getRefreshToken()).toBe('ref-1');
+        });
+
+        /**
+         * M5 companion (secaudit's alternative guard, shipped alongside the
+         * hoist): a failed refresh must NOT wipe a pair a sibling already
+         * rotated. The fetch stub performs the sibling's successful rotation
+         * mid-flight, then answers THIS POST with the one-time-use rejection.
+         */
+        it('a failed refresh does NOT expire a pair a sibling already rotated', async () => {
+            const tokens = new MemoryTokenStore({ access: 'old', refresh: 'r-1' });
+            let expiredEvents = 0;
+            const onExpired = () => {
+                expiredEvents += 1;
+            };
+            window.addEventListener('phlix:auth-expired', onExpired);
+            const fetchImpl = vi.fn(() => {
+                tokens.setAccessToken('acc-sibling');
+                tokens.setRefreshToken('r-2');
+                return Promise.resolve(
+                    new Response(JSON.stringify({ error: 'refresh token already used' }), {
+                        status: 401,
+                        headers: { 'content-type': 'application/json' },
+                    }),
+                );
+            });
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl });
+
+            await expect(client.refreshToken()).resolves.toBe(false);
+
+            expect(tokens.getRefreshToken()).toBe('r-2'); // survivor's pair stands
+            expect(tokens.getAccessToken()).toBe('acc-sibling');
+            expect(expiredEvents).toBe(0);
+            window.removeEventListener('phlix:auth-expired', onExpired);
+        });
+
+        it('control: the same failure with NO sibling rotation clears the dead pair', async () => {
+            const tokens = new MemoryTokenStore({ access: 'old', refresh: 'r-1' });
+            let expiredEvents = 0;
+            const onExpired = () => {
+                expiredEvents += 1;
+            };
+            window.addEventListener('phlix:auth-expired', onExpired);
+            const fetchImpl = vi.fn(() =>
+                Promise.resolve(
+                    new Response(JSON.stringify({ error: 'invalid refresh token' }), {
+                        status: 401,
+                        headers: { 'content-type': 'application/json' },
+                    }),
+                ),
+            );
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl });
+
+            await expect(client.refreshToken()).resolves.toBe(false);
+
+            expect(tokens.getRefreshToken()).toBeNull(); // determinatively dead
+            expect(expiredEvents).toBe(1);
+            window.removeEventListener('phlix:auth-expired', onExpired);
+        });
     });
 
     describe('error handling', () => {

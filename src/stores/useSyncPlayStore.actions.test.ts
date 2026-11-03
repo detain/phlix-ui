@@ -400,18 +400,30 @@ describe('useSyncPlayStore — error paths', () => {
         expect(store.error).not.toBeNull();
     });
 
-    it('leaveRoom records the error and does NOT clear the room', async () => {
+    /**
+     * M6 (fedev review) — this used to pin the trap: a failed REST leave
+     * rethrew and left `currentRoom` populated, so the UI stayed "in group"
+     * with a live socket and position-reporting interval and the user could
+     * not leave without a reload. New law: the REST call is BEST-EFFORT (the
+     * server reaps membership on socket close); local teardown runs in a
+     * `finally` regardless, the failure is recorded through `error`, and the
+     * call resolves so the two UI callers (which have no catch) stay clean.
+     */
+    it('leaveRoom records the REST failure but tears down local state anyway', async () => {
         server = makeSyncPlayServer(BASE, { omit: ['POST /api/v1/syncplay/groups/{id}/leave'] });
         const store = useSyncPlayStore();
         await store.joinRoom(BASE, GROUP_ID);
         store.currentRoom = { ...room };
 
-        await expect(store.leaveRoom(BASE)).rejects.toThrow();
+        await expect(store.leaveRoom(BASE)).resolves.toBeUndefined();
         expect(store.error).not.toBeNull();
         expect(store.isLoading).toBe(false);
-        // Still in the room: the server never confirmed the leave.
-        expect(store.currentRoom).not.toBeNull();
-        expect(store.isInRoom).toBe(true);
+        // Local group state is gone even though the server never confirmed:
+        // the user is free to leave; a stale room was the original bug.
+        expect(store.currentRoom).toBeNull();
+        expect(store.currentSession).toBeNull();
+        expect(store.isInRoom).toBe(false);
+        expect(store.members).toEqual([]);
     });
 
     it('leaveRoom with no room is a silent no-op — no request, no error', async () => {

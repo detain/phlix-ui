@@ -146,6 +146,7 @@ export const DE_MESSAGES = {
     passwordMinLength: 'Das Passwort muss mindestens 8 Zeichen haben.',
     passwordMismatch: 'Die Passwörter stimmen nicht überein.',
     signInFailed: 'Anmeldung fehlgeschlagen.',
+    serverUnreachable: 'Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.',
     signupFailed: 'Dein Konto konnte nicht erstellt werden. Bitte versuche es erneut.',
   },
   connect: {

@@ -301,17 +301,6 @@ export declare class ApiClient {
     private readonly timeoutMs;
     private readonly instanceHeaders;
     private readonly loginPath;
-    /**
-     * In-flight token refresh, single-flighted per `ApiClient` instance. When an
-     * access token expires, every concurrent request gets a 401 and calls
-     * {@link refreshToken} at once; without coordination each would POST
-     * `/api/v1/auth/refresh` with the same refresh token. The hub rotates
-     * refresh tokens one-time-use, so the second+ POST presents an
-     * already-consumed token, fails, and spuriously logs the user out
-     * mid-session. Memoising the promise (cleared in `.finally()`) makes the N
-     * callers await the SAME refresh — exactly one POST, one rotation.
-     */
-    private refreshPromise;
     constructor(options?: ApiClientOptions);
     /**
      * The store this client custody-flows through: the explicit construction
@@ -337,27 +326,49 @@ export declare class ApiClient {
      */
     private expireSession;
     /**
-     * Refresh the access token, single-flighted per instance. Concurrent callers
-     * (e.g. several requests that all hit a 401 at once) share ONE in-flight
-     * refresh rather than each POSTing `/api/v1/auth/refresh` — see
-     * {@link refreshPromise}. The promise is cleared in `.finally()` so a later
-     * expiry starts a fresh refresh. Returns `true` on success / `false` on any
-     * failure (no refresh token, non-2xx, network error, missing access_token).
+     * Expire the session unless the store's refresh token has MOVED past the
+     * one this attempt consumed (M5 companion — secaudit): a sibling client
+     * sharing the store already rotated the pair successfully, so this
+     * attempt only LOOKED dead (its POST carried the consumed token). Wiping
+     * the fresh pair would be the very spurious logout the single-flight
+     * exists to prevent; the survivor's pair stands. A cleared store (null)
+     * or the still-consumed token means the pair is really dead — expire.
+     */
+    private expireSessionUnlessRotated;
+    /**
+     * Refresh the access token, single-flighted per CREDENTIAL STORE — not per
+     * instance (M5). Concurrent callers across every `ApiClient` sharing this
+     * store's tokens await ONE in-flight refresh; the memo is dropped in
+     * `.finally()` so a later expiry starts a fresh one. Returns `true` on
+     * success / `false` on any failure (no refresh token, non-2xx, network
+     * error, missing access_token).
      *
      * M-UI-26 (seceng: failed refresh kept the tokens): a DETERMINED failure —
      * no refresh token to try, a non-2xx answer, or a payload that carries no
      * access_token — means the persisted pair can never authenticate again, so
-     * {@link expireSession} clears the store and fires the `phlix:auth-expired`
-     * window event the auth store mirrors into its reactive state. A NETWORK
-     * error is deliberately NOT determinative: the pair may still be valid
-     * server-side, so tokens survive and the next attempt retries.
+     * the session expires ({@link expireSessionUnlessRotated} — clear +
+     * `phlix:auth-expired` event, which the auth store mirrors into reactive
+     * state) UNLESS a sibling caller already rotated the pair out from under
+     * this attempt. A NETWORK error is deliberately NOT determinative: the
+     * pair may still be valid server-side, so tokens survive and the next
+     * attempt retries.
      */
     refreshToken(): Promise<boolean>;
+    /**
+     * One refresh round-trip against a pinned store snapshot.
+     *
+     * M7 (fedev review): the leg now carries the SAME timeout discipline as
+     * `request()` (`this.timeoutMs`, own AbortController) — a hung server must
+     * not park the single-flighted promise, and every waiter behind it,
+     * forever. A fired timeout lands in the catch below: unknown, not
+     * rejected, tokens survive.
+     */
+    private performRefresh;
     get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T>;
     post<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
-    put<T = unknown>(endpoint: string, data?: unknown): Promise<T>;
-    patch<T = unknown>(endpoint: string, data?: unknown): Promise<T>;
-    delete<T = unknown>(endpoint: string): Promise<T>;
+    put<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
+    patch<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
+    delete<T = unknown>(endpoint: string, signal?: AbortSignal): Promise<T>;
     /**
      * Interactive per-item metadata match — search TMDB candidates for one item
      * (S5: `GET /api/v1/media/{id}/match/search`). All params are optional; the

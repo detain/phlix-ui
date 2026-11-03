@@ -456,7 +456,18 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     error.value = null;
     try {
       const api = getSyncPlayApi(apiBase);
-      await api.leaveRoom(currentRoom.value.id);
+      try {
+        await api.leaveRoom(currentRoom.value.id);
+      } catch (e) {
+        // M6 (fedev review): the REST leave is BEST-EFFORT. An offline/5xx
+        // answer must not strand the user "in group" — the server reaps the
+        // membership when the socket below closes anyway. Record the failure
+        // through `error` (the surfaces read it) and tear down regardless;
+        // rethrowing here was the trap: no local state was cleared and the
+        // two callers have no catch.
+        error.value = e instanceof Error ? e.message : t('syncplay.errorLeave');
+      }
+    } finally {
       // S287: stop reporting BEFORE the socket goes, so a tick cannot land on a
       // half-torn-down connection.
       stopPositionReporting();
@@ -465,10 +476,6 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       currentRoom.value = null;
       currentSession.value = null;
       members.value = [];
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : t('syncplay.errorLeave');
-      throw e;
-    } finally {
       isLoading.value = false;
     }
   }

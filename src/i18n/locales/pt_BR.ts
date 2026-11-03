@@ -146,6 +146,7 @@ export const PT_BR_MESSAGES = {
     passwordMinLength: 'A senha deve ter pelo menos 8 caracteres.',
     passwordMismatch: 'As senhas não coincidem.',
     signInFailed: 'Falha ao entrar.',
+    serverUnreachable: 'Não foi possível contatar o servidor. Verifique sua conexão e tente novamente.',
     signupFailed: 'Não foi possível criar sua conta. Tente novamente.',
   },
   connect: {

@@ -166,6 +166,10 @@ export const DEFAULT_MESSAGES = {
     passwordMinLength: 'Password must be at least 8 characters.',
     passwordMismatch: 'Passwords do not match.',
     signInFailed: 'Sign in failed.',
+    // M4 (fedev review): boot session validation could not reach the server.
+    // The tokens are KEPT (network = unknown, not rejected); this is the
+    // last-resort line the auth store surfaces when the failure isn't an Error.
+    serverUnreachable: 'Couldn’t reach the server. Check your connection and try again.',
     signupFailed: 'Couldn’t create your account. Please try again.',
   },
   connect: {

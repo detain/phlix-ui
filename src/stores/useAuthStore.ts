@@ -165,18 +165,34 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function fetchUser(): Promise<void> {
-        if (!isLoggedIn.value) return;
+    async function fetchUser(): Promise<'valid' | 'invalid' | 'unreachable'> {
+        if (!isLoggedIn.value) return 'valid';
         // Only a real attempt resets the code — the logged-out guard above keeps
         // a failure code the form is currently displaying from being wiped.
         errorCode.value = null;
         try {
             user.value = await client.getCurrentUser();
+            return 'valid';
         } catch (e) {
             errorCode.value = parseErrorCode(e);
             user.value = null;
-            tokenStore.clear();
-            accessToken.value = null;
+            if (e instanceof ApiError) {
+                // The server ANSWERED and the session cannot load its own user —
+                // determinative (401/403/404): clear. The pinned login-404 law
+                // ("accepted password but /auth/me fails ⇒ logged out") keeps
+                // every definitive answer's verdict semantics intact.
+                tokenStore.clear();
+                accessToken.value = null;
+                return 'invalid';
+            }
+            // M4 (fedev review): NetworkError/TimeoutError (offline reload,
+            // server restart) is *unknown*, not *rejected* — the same M-UI-26
+            // law the client's refresh path already honors. A reload while the
+            // server is briefly unreachable must not cost the user a valid
+            // token: keep it, surface the connection error, and let init()
+            // re-validate on the next protected navigation.
+            error.value = e instanceof Error ? e.message : t('auth.serverUnreachable');
+            return 'unreachable';
         }
     }
 
@@ -189,15 +205,24 @@ export const useAuthStore = defineStore('auth', () => {
      * the account badge are correct after a reload), and an invalid/expired token
      * is cleared by fetchUser() — which flips `isLoggedIn` to false so the guard
      * redirects to login instead of rendering protected/admin pages off a stale
-     * token. Memoised: the work runs at most once per app instance, and concurrent
-     * callers await the same in-flight promise.
+     * token. A NETWORK failure is not a verdict (M4): the tokens are kept and the
+     * memo is dropped so the next protected navigation retries. Memoised: the
+     * validation runs at most once per conclusive outcome, and concurrent callers
+     * await the same in-flight promise.
      */
     async function init(): Promise<void> {
         if (initialized.value) return;
         if (initPromise === null) {
-            // fetchUser() is a no-op when there is no token, and otherwise either
-            // populates `user` or clears the tokens on any failure.
-            initPromise = fetchUser().finally(() => {
+            // fetchUser() is a no-op when there is no token; on a definitive
+            // outcome it either populates `user` or clears the tokens.
+            initPromise = fetchUser().then((outcome) => {
+                if (outcome === 'unreachable') {
+                    // M4: an offline boot is NOT a verdict. Drop the memo so the
+                    // next protected navigation re-validates, instead of the
+                    // guard trusting token-presence-without-user forever.
+                    initPromise = null;
+                    return;
+                }
                 initialized.value = true;
             });
         }

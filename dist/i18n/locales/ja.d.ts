@@ -144,6 +144,7 @@ export declare const JA_MESSAGES: {
         passwordMinLength: string;
         passwordMismatch: string;
         signInFailed: string;
+        serverUnreachable: string;
         signupFailed: string;
     };
     connect: {

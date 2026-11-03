@@ -147,6 +147,7 @@ export declare const FR_MESSAGES: {
         passwordMinLength: string;
         passwordMismatch: string;
         signInFailed: string;
+        serverUnreachable: string;
         signupFailed: string;
     };
     connect: {
