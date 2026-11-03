@@ -238,7 +238,7 @@ function onSeek(event: Event): void {
       <div v-else class="track-table" role="table" :aria-label="t('music.musicTracksAria')">
         <div class="track-table__header" role="row">
           <span class="col-num" role="columnheader">#</span>
-          <span class="col-title" role="columnheader">{{ t('music.title') }}</span>
+          <span class="col-title" role="columnheader">{{ t('music.titleColumn') }}</span>
           <span class="col-artist" role="columnheader">{{ t('music.artist') }}</span>
           <span class="col-album" role="columnheader">{{ t('music.album') }}</span>
           <span class="col-duration" role="columnheader">{{ t('music.duration') }}</span>

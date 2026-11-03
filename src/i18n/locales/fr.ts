@@ -60,7 +60,7 @@ export const FR_MESSAGES = {
     primaryNav: 'Principale',
     openMenu: 'Ouvrir le menu de navigation',
     menu: 'Menu',
-    openCommandPalette: 'Ouvrir la palette de commandes (⌘K)',
+    openCommandPalette: 'Ouvrir la palette de commandes ({chord})',
     browse: 'Parcourir',
     explore: 'Explorer',
     recommendations: 'Pour vous',
@@ -376,6 +376,7 @@ export const FR_MESSAGES = {
   },
   music: {
     title: 'Bibliothèque musicale',
+    titleColumn: 'Titre',
     nav: 'Musique',
     artists: 'Artistes',
     albums: 'Albums',

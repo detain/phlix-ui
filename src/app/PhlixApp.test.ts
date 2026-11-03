@@ -421,7 +421,7 @@ describe('PhlixApp — command palette trigger', () => {
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
     const store = useCommandStore();
     expect(store.open).toBe(false);
-    await wrapper.find('[aria-label="Open command palette (⌘K)"]').trigger('click');
+    await wrapper.find('[aria-label="Open command palette (Ctrl+K)"]').trigger('click');
     expect(store.open).toBe(true);
   });
 

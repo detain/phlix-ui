@@ -12,6 +12,22 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui fix lane c1 2026-11-03 (review C1, C2): Tracks column header + platform-true palette chord
+
+- **C1 (copywriter).** `MusicTracksPage` rendered the page-name key `music.title` ('Music Library')
+  as the track table's title-column header, so every locale read "Music Library" over the title
+  column. New catalog key `music.titleColumn` ('Title' + six locale mirrors) is wired at the one
+  wrong reference; the adjacent artist/album/duration keys were already correct. Catalog leaf count
+  rotates 477→478 — the `locales.test.ts` prose tripwire drove the rotation in `errors.ts`,
+  `errors.test.ts` and the README.
+- **C2 (copywriter).** The palette trigger's accessible name was `Open command palette (⌘K)` on
+  every platform while the hotkey fires on `metaKey || ctrlKey`; Windows/Linux users (and the
+  phlix-windows-client shell) were told to press a key their keyboards lack. The message now
+  interpolates `{chord}` and new `commandPaletteChord()` resolves `⌘K` on Apple UAs and `Ctrl+K`
+  elsewhere, falling back non-Apple when no UA is visible (SSR-safe, injectable for tests).
+  `PhlixApp.test.ts`'s literal pin rotates to the jsdom (non-Apple) form.
+- `dist/` rebuilt in-lockstep (S176 gate green; determinism re-proven ×2).
+
 ## 0.99.13 - 2026-11-02
 
 ### Fix — Select.vue: internal dropdown ref `open` → `isOpen` (vue/no-dupe-keys cure); public `v-model:open` API unchanged

@@ -52,7 +52,7 @@
         <template #actions>
             <IconButton
                 name="search"
-                :label="t('shell.openCommandPalette')"
+                :label="t('shell.openCommandPalette', { chord: commandPaletteChord() })"
                 variant="ghost"
                 @click="commands.openPalette()"
             />
@@ -107,6 +107,7 @@ import { useResumeSync } from '../composables/useResumeSync';
 import { useResumeReporter } from '../composables/useResumeReporter';
 import { useMessages } from '../composables/useMessages';
 import { safeHref } from '../utils/safeHref';
+import { commandPaletteChord } from '../utils/commandPaletteChord';
 import { profilesFeatureEnabled } from './profilesFeature';
 import type { PhlixAppConfig, MenuItem, BrandingConfig } from './types';
 

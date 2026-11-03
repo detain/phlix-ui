@@ -57,7 +57,7 @@ export const JA_MESSAGES = {
     primaryNav: 'メイン',
     openMenu: 'ナビゲーションメニューを開く',
     menu: 'メニュー',
-    openCommandPalette: 'コマンドパレットを開く（⌘K）',
+    openCommandPalette: 'コマンドパレットを開く（{chord}）',
     browse: 'ブラウズ',
     explore: '見つける',
     recommendations: 'あなたへのおすすめ',
@@ -373,6 +373,7 @@ export const JA_MESSAGES = {
   },
   music: {
     title: 'ミュージックライブラリ',
+    titleColumn: 'タイトル',
     nav: '音楽',
     artists: 'アーティスト',
     albums: 'アルバム',

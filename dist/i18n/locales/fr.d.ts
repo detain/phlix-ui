@@ -368,6 +368,7 @@ export declare const FR_MESSAGES: {
     };
     music: {
         title: string;
+        titleColumn: string;
         nav: string;
         artists: string;
         albums: string;

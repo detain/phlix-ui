@@ -365,6 +365,7 @@ export declare const JA_MESSAGES: {
     };
     music: {
         title: string;
+        titleColumn: string;
         nav: string;
         artists: string;
         albums: string;

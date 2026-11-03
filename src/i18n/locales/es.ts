@@ -58,7 +58,7 @@ export const ES_MESSAGES = {
     primaryNav: 'Principal',
     openMenu: 'Abrir el menú de navegación',
     menu: 'Menú',
-    openCommandPalette: 'Abrir la paleta de comandos (⌘K)',
+    openCommandPalette: 'Abrir la paleta de comandos ({chord})',
     browse: 'Explorar',
     explore: 'Descubrir',
     recommendations: 'Para ti',
@@ -374,6 +374,7 @@ export const ES_MESSAGES = {
   },
   music: {
     title: 'Biblioteca de música',
+    titleColumn: 'Título',
     nav: 'Música',
     artists: 'Artistas',
     albums: 'Álbumes',

@@ -3011,7 +3011,7 @@ var an = {
 		primaryNav: "Primary",
 		openMenu: "Open navigation menu",
 		menu: "Menu",
-		openCommandPalette: "Open command palette (⌘K)",
+		openCommandPalette: "Open command palette ({chord})",
 		browse: "Browse",
 		explore: "Explore",
 		recommendations: "For You",
@@ -3317,6 +3317,7 @@ var an = {
 	playlist: { loadError: "Couldn’t load this playlist." },
 	music: {
 		title: "Music Library",
+		titleColumn: "Title",
 		nav: "Music",
 		artists: "Artists",
 		albums: "Albums",

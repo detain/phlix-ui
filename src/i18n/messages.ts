@@ -69,7 +69,7 @@ export const DEFAULT_MESSAGES = {
     primaryNav: 'Primary',
     openMenu: 'Open navigation menu',
     menu: 'Menu',
-    openCommandPalette: 'Open command palette (⌘K)',
+    openCommandPalette: 'Open command palette ({chord})',
     browse: 'Browse',
     explore: 'Explore',
     recommendations: 'For You',
@@ -437,6 +437,9 @@ export const DEFAULT_MESSAGES = {
   },
   music: {
     title: 'Music Library',
+    // C1 (copywriter review): the Tracks table's title-column header must not
+    // reuse the page-name value; this is the column label itself.
+    titleColumn: 'Title',
     nav: 'Music',
     artists: 'Artists',
     albums: 'Albums',
