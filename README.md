@@ -13,7 +13,7 @@ once and it ships to both.
 
 `@phlix/ui` is a self-contained kit: a 3-theme **"Nocturne" cinema-after-dark** token system, 26
 accessible primitives, a media-browsing + video-player surface, auth/settings forms, a ⌘K command
-palette, thirteen Pinia stores, and a `createPhlixApp()` factory that wires it all into a ready-to-mount
+palette, fifteen Pinia stores (thirteen exported + two internal), and a `createPhlixApp()` factory that wires it all into a ready-to-mount
 Vue app.
 
 - 🎨 **Three built-in themes** (`nocturne` dark · `daylight` light · `midnight` OLED) with live
@@ -22,13 +22,13 @@ Vue app.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
-- ⚡ **Code-split + lazy-routed** — the entry bundle is ~371 kB raw (~91 kB gzipped); routes, the
+- ⚡ **Code-split + lazy-routed** — the entry bundle is ~384 kB raw (~92 kB gzipped); routes, the
   player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme, full keyboard support, honored
   reduced-motion, an i18n-readiness seam.
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v0.99.10`. Pre-1.0, so minor releases may include breaking changes. See
+> **Status:** `v0.99.13`. Pre-1.0, so minor releases may include breaking changes. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -40,7 +40,8 @@ Vue app.
 - [Configuration — `PhlixAppConfig`](#configuration--phlixappconfig)
 - [Theming & user preferences](#theming--user-preferences)
 - [Stores & composables](#stores--composables)
-- [Pluralisation (`src/utils/plural.ts`)](#pluralisation-srcutilspluralts)
+- [Pluralization (`src/utils/plural.ts`)](#pluralization-srcutilspluralts)
+- [Performance patterns](#performance-patterns)
 - [Component catalog](#component-catalog)
 - [Command palette (⌘K)](#command-palette-k)
 - [Admin surface](#admin-surface)
@@ -59,7 +60,7 @@ Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v0.99.10"
+    "@phlix/ui": "github:detain/phlix-ui#v0.99.13"
   }
 }
 ```
@@ -78,8 +79,10 @@ You must provide compatible copies of Vue, Pinia, and Vue Router:
 | `pinia` | `^3.0.0` |
 | `vue-router` | `^5.0.0` |
 
-Node **≥ 20.19** (or **≥ 22.12**) is required to build — the engine floor of the
-Vite 8 toolchain named below.
+Node **≥ 20.19** (or **≥ 22.12**) is required to **build from source** — the engine floor of the
+Vite 8 toolchain named below. `package.json` keeps `engines.node: ">=18"` on purpose: it declares the
+supported **consumer** runtime (consumers take the prebuilt `dist/`), not the build floor. Don't
+"fix" one to match the other without changing what each is about.
 
 ---
 
@@ -118,17 +121,18 @@ Set `libraryLinks: true` on a `MenuItem` to also surface one nav link per librar
 `beforeEach`, and falls through to the generic grid when the type can't be resolved or the host's
 route table has no `music` route.
 
-> **CSS is not auto-injected.** The two `import '...css'` lines above are required — without
-> `style.css` nothing is styled; without `fonts.css` the type falls back to metric-matched system
-> faces (no layout shift, but not the intended typography). See
+> **CSS is not auto-injected.** Of the two `import '...css'` lines above, `style.css` is
+> **required** — without it nothing is styled. `fonts.css` is **strongly recommended** — without it
+> the type falls back to metric-matched system faces (no layout shift, but not the intended
+> typography), which is survivable, so it is not load-bearing. See
 > [CSS & font delivery](#css--font-delivery).
 
 ---
 
 ## Configuration — `PhlixAppConfig`
 
-`createPhlixApp(config?: Partial<PhlixAppConfig>)`. Every field is optional except the two you almost
-always want (`app`, `apiBase`):
+`createPhlixApp(config?: Partial<PhlixAppConfig>)` — every field is optional, though you will
+almost always pass two: `app` and `apiBase`:
 
 | Field | Type | Purpose |
 | --- | --- | --- |
@@ -203,7 +207,7 @@ The "Nocturne" system ships three themes, applied via a `data-theme` attribute o
 | `theme` | `'nocturne'` | one of the three above |
 | `accent` | `null` | a hex string overrides projector-amber via `deriveAccentVars()` |
 | `density` | `'comfortable'` | or `'compact'` (smaller controls) |
-| `cardSize` | `180` | poster width in px (drives grid auto-fit) |
+| `cardSize` | `200` | poster width in px (drives grid auto-fit) |
 | `gridDensity` | `'comfy'` | `'cozy' \| 'comfy' \| 'dense'` |
 | `viewMode` | `'grid'` | `ViewMode` — `'grid' \| 'list' \| 'backdrop' \| 'table'`; set by the `FilterBar` toggle, read by `LibraryPage` |
 | `reducedMotion` | `'auto'` | `'auto' \| 'on' \| 'off'` (auto honors the OS setting) |
@@ -229,7 +233,12 @@ prefs.reset();            // back to DEFAULT_PREFERENCES
 
 ## Stores & composables
 
-Thirteen Pinia stores carry all app state — every one of them is exported from the package root.
+Fifteen store modules carry app state; **thirteen are exported from the package root** (table
+below). The two exceptions are deliberate internals, absent from `src/index.ts` and `src/player.ts`
+so their shape can evolve without breaking a published export: **`useSyncPlayStore`** (the watch-party
+group state behind the `/app/syncplay` route + `<SyncPlayControls>`; consumers drive it through those
+surfaces, never directly) and **`usePlayerUiStore`** (transient player chrome state owned by the
+bundled player components).
 Import the composables directly; they expect to run inside an app created by `createPhlixApp` (which
 provides `apiBase`).
 
@@ -264,7 +273,7 @@ provides `apiBase`).
 | `useFocusTrap(container, active, opts?)` | Focus-trap + scroll-lock + Escape for overlays (powers `Modal`/`Sheet`). |
 | `deriveAccentVars(hex)` | Pure: a hex → the full `--accent*` custom-property ramp. |
 
-### Pluralisation (`src/utils/plural.ts`)
+### Pluralization (`src/utils/plural.ts`)
 
 Every plural noun in the SPA goes through one `Intl.PluralRules`-backed helper. Do
 not write `n === 1 ? 'album' : 'albums'`: `n === 1` is not the singular test in
@@ -277,17 +286,17 @@ can fix it.
 | `plural(count, forms, opts?)` | Core. `forms` is `{ one?, two?, few?, many?, zero?, other }`; an unsupplied category degrades to `other`. |
 | `pluralize(count, one, other, opts?)` | Two-form English shortcut. `other` is required — `entry`/`entries` and `person`/`people` are not suffix rules. |
 | `pluralCount(count, one, other, opts?)` | `` `${count} ${form}` ``. Pass `formatNumber: true` for digit grouping. |
-| `selectPluralTemplate(tpl, count, opts?)` | Resolves the catalogue's pipe form, `'{count} member \| {count} members'`. Used by `createTranslator`. |
+| `selectPluralTemplate(tpl, count, opts?)` | Resolves the catalog's pipe form, `'{count} member \| {count} members'`. Used by `createTranslator`. |
 | `pluralCategory(count, opts?)` | The raw LDML category. |
 
-Message-catalogue plurals are authored in the pipe form and **must** be
+Message-catalog plurals are authored in the pipe form and **must** be
 translated with a `count` param — `t('syncplay.members', { count: n })`. The parts
 map onto the *locale's own* plural categories, so a Russian override may supply
 four parts and have each land on the right rule.
 
 Both rules are enforced at lint time by the local plugin in `eslint-rules/`:
 
-- **`plural/no-hand-rolled-plural`** — reports hand-rolled pluralisation
+- **`plural/no-hand-rolled-plural`** — reports hand-rolled pluralization
   *semantically*, from the AST, not by matching source text. It flags any
   conditional that compares a quantity against `1` to pick between strings
   (whatever the operator or spelling, in `<script>` **and** in the Vue template),
@@ -305,6 +314,12 @@ Both rules are enforced at lint time by the local plugin in `eslint-rules/`:
   message that passes no `count`. The key list is parsed out of
   `src/i18n/messages.ts` at lint time, so adding a plural message automatically
   extends the check.
+
+A **third** local law guards a security property, not grammar:
+**`phlix-href/no-raw-wire-href`** (error-level, `eslint.config.js`) — no wire-supplied value may reach
+an `:href`/`window.open` sink without passing `safeHref()` (`src/utils/safeHref.ts`; rationale in the
+rule + `src/index.ts` barrel note). The plural rules above are exactly the sibling lint this law
+mirrors: mechanical enforcement, zero review burden.
 
 ### Locale bundles (`src/i18n/locales/`)
 
@@ -361,7 +376,7 @@ locales supply the honest two-slot form and `ja` one segment.
 ### Error catalog (`src/i18n/errors.ts`) — deliberately NOT in `DEFAULT_MESSAGES`
 
 The wire carries stable error codes (the registry lives in `@phlix/contracts`
-— `ERROR_CODES`, 204 codes / 37 domains at the `v0.5.3` pin); clients localize
+— `ERROR_CODES`, 204 codes / 37 domains at the current `#v0.5.4` pin); clients localize
 code→message and the server's English `error` text is debug fallback only. This
 file is that localization layer: one flat `Record<ErrorCode, string>` per locale
 (`en` + the six bundle locales), plus `ERROR_TITLES` (the three Browse EmptyState
@@ -370,8 +385,9 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-492-key identity and downstream clients (tizen, windows) pin bundle↔installed
-equality at tag `v0.99.5` — ~150 registry strings would churn every equality pin
+492-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
+equality on every ui tag since the `v0.99.5` era (now `v0.99.13`-era) — ~150 registry strings
+would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
 DERIVED from contracts (`Record<ErrorCode, string>` makes adding/removing a
 registered code a compile error), so it versions with the contracts pin, not
@@ -403,11 +419,11 @@ everywhere, the same aggregate diacriticals floors, and the full accessor
 degradation matrix (known/unknown/blank/non-string codes × locale/invalid-locale
 × fallback/blank-fallback).
 
-### Performance Patterns
+## Performance patterns
 
 **Page Visibility API for Polling:**
 
-Polling timers (e.g., for live scan status) should pause when the tab is hidden to avoid unnecessary server load and battery drain. Use the Page Visibility API (`document.visibilityState` / `visibilitychange` event):
+Polling timers (e.g. for live scan status) should pause when the tab is hidden to avoid unnecessary server load and battery drain. Use the Page Visibility API (`document.visibilityState` / `visibilitychange` event):
 
 ```ts
 function handleVisibilityChange(): void {
@@ -468,7 +484,7 @@ The media-detail and player pages share a module-level singleton item cache (`us
 
 **Debounced Preference Persistence:**
 
-Deep-watched preference writes to `localStorage` are debounced (250 ms trailing edge) so rapid slider/toggle changes don't thrash storage; a `pagehide` listener flushes immediately so no write is lost on tab close. `usePreferencesStore` clears both on `onScopeDispose`, so a disposed store can never write again (this is what keeps a suite that swaps its pinia between tests isolated).
+Deep-watched preference writes to `localStorage` are debounced (250 ms trailing edge) so rapid slider/toggle changes don't thrash storage; a `pagehide` listener flushes immediately so no write is lost on tab close. `usePreferencesStore` clears both on `onScopeDispose`, so a disposed store can never write again (this is what keeps a suite that swaps its Pinia between tests isolated).
 
 ---
 
@@ -555,16 +571,25 @@ These are **not** root exports: the whole surface ships on the secondary entry
 deliberately keeps them out so the main bundle stays lean, and the entry's CSS publishes as
 `@phlix/ui/player.css` — a strict subset of `@phlix/ui/style.css`; load one, not both.
 
+> **⚠ Dual-entry state duplication.** The player build lists `@phlix/ui` as external, but that
+> specifier never matches its own imports, so every shared module (`ApiClient`, `usePlayerStore`, …)
+> is **inlined a second time** into `dist/player.js` (≈421 kB vs the ≈384 kB main entry —
+> `vite.player.config.ts` head comment). Composing pages from root building blocks while mounting
+> `Player` from `@phlix/ui/player` therefore yields **two singleton store/ApiClient instances with
+> silently divergent playback state**. Until that is fixed or the entry retired, pick ONE entry per
+> app instance.
+
 `Player` · `MiniPlayer` · `Scrubber` · `VolumeControl` · `SpeedMenu` · `QualityMenu` ·
 `CaptionsMenu` · `CaptionOverlay` · `SubtitleSearch` · `AmbientCanvas` · `ResumePrompt` · `UpNext` ·
 `TranscodeNotice` · `TranscodePreparing` · `SkipButton` · `ShortcutsHelp`, plus the pure helpers that
 ship on the same entry (`playback.ts`, `captions.ts`, `ambient.ts`, `shortcuts.ts`, `format-time.ts`,
 `transcode.ts`, `hls-playback.ts`, and the `useHlsTranscode` / `usePlayerStore` seams). Direct play vs.
 server transcode is decided in
-`playback.ts`: `videoCodecFromStreams()` reads the source's video codec off the detail response's
-`streams[]`, `videoCodecPolicy()` classifies it against a decodable **allowlist**
-(`direct` / `probe` / `transcode`), and `needsTranscodeWithCapabilities()` combines that verdict with
-the real container MIME (`containerMimeForExtension()`) and the primary audio-track probe.
+`playback.ts`. The entry itself re-exports only `needsTranscode`, `extensionOf`,
+`isFatalMediaError`, `ringDashoffset` (+ the `DIRECT_PLAY_EXTENSIONS`/`TRANSCODE_EXTENSIONS`/
+`UPNEXT_*` constants): the codec pipeline — `videoCodecFromStreams()`, `videoCodecPolicy()`,
+`needsTranscodeWithCapabilities()`, `containerMimeForExtension()` — is **internal to
+`playback.ts`**, not importable from `@phlix/ui/player`.
 
 ### Forms & long-tail pages
 
@@ -691,11 +716,17 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
 
 ## Build output
 
+**Releasing (checklist — every step, or the README rots):** bump `package.json`
+version, tag `vX.Y.Z`, publish — then rotate this README's **Status stamp** (top of file), the
+**install-example pin** (Quick start), and the **bundle-size figures** (`⚡` bullet + Build output
+table) to the new tag/bytes. ipd/writer/docmaint all flagged the stamp+pin trio as the README's
+most consequential currency defect when it silently lags (it did: `v0.99.10` sat three releases).
+
 `npm run build` emits to `dist/` (committed in this repo):
 
 | Output | Notes |
 | --- | --- |
-| `dist/phlix-ui.js` | ESM entry (~371 kB raw / ~91 kB gzipped; routes/player/palette split into lazy chunks). |
+| `dist/phlix-ui.js` | ESM entry (~384 kB raw / ~92 kB gzipped; routes/player/palette split into lazy chunks). |
 | `dist/phlix-ui.umd.cjs` | UMD/CJS build for `require()`. |
 | `dist/style.css` | Tokens + component styles. |
 | `dist/fonts/` | `fonts.css` + three variable `.woff2` files. |
