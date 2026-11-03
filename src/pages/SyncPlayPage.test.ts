@@ -665,7 +665,7 @@ describe('SyncPlayPage — consuming the modal\'s `joined` event (S285)', () => 
     await flushPromises();
 
     expect(toasts.toasts).toHaveLength(1);
-    expect(toasts.toasts[0]!.message).toBe('Joined Movie Night');
+    expect(toasts.toasts[0]!.message).toBe('Joined Movie Night.');
     expect(toasts.toasts[0]!.tone).toBe('success');
   });
 
@@ -675,7 +675,7 @@ describe('SyncPlayPage — consuming the modal\'s `joined` event (S285)', () => 
     const { w } = await mountPage();
     modalStub(w).vm.$emit('joined', { ...joinedRoom, name: 'Book Club' });
     await flushPromises();
-    expect(useToastStore().toasts[0]!.message).toBe('Joined Book Club');
+    expect(useToastStore().toasts[0]!.message).toBe('Joined Book Club.');
   });
 
   it('retires the join-link: `?room=` is stripped and the prefill cleared', async () => {

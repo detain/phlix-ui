@@ -455,14 +455,14 @@ describe('Player — Scrubber integration', () => {
     expect(state.currentTime).toBe(35); // seeked to the marker end
   });
 
-  it('shows "Skip outro" inside the outro marker and seeks to its end on click', async () => {
+  it('shows "Skip end credits" inside the outro marker and seeks to its end on click', async () => {
     const { w, video, state } = mountPlayer({ outroMarker: { start: 540, end: 600 } });
     state.duration = 600;
     state.currentTime = 560;
     video.dispatchEvent(new Event('timeupdate'));
     await nextTick();
     const btn = w.findComponent(SkipButton).find('button');
-    expect(btn.text()).toContain('Skip outro');
+    expect(btn.text()).toContain('Skip end credits');
     await btn.trigger('click');
     expect(state.currentTime).toBe(600);
   });
@@ -652,7 +652,7 @@ describe('Player — consuming SyncPlayModal `joined` (S285)', () => {
     await nextTick();
 
     expect(toasts.toasts).toHaveLength(1);
-    expect(toasts.toasts[0]!.message).toBe('Joined Movie Night');
+    expect(toasts.toasts[0]!.message).toBe('Joined Movie Night.');
     expect(toasts.toasts[0]!.tone).toBe('success');
   });
 
@@ -660,7 +660,7 @@ describe('Player — consuming SyncPlayModal `joined` (S285)', () => {
     const { w } = mountPlayer();
     modal(w).vm.$emit('joined', { ...joinedRoom, name: 'Book Club' });
     await nextTick();
-    expect(useToastStore().toasts[0]!.message).toBe('Joined Book Club');
+    expect(useToastStore().toasts[0]!.message).toBe('Joined Book Club.');
   });
 
   it('says nothing until a join is actually reported', async () => {

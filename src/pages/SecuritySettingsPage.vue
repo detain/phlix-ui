@@ -277,7 +277,7 @@ async function handleRegister(): Promise<void> {
         }
         nickname.value = '';
 
-        statusLine.value = 'Passkey registered successfully';
+        statusLine.value = 'Passkey registered successfully.';
         toasts.success('Passkey registered successfully.');
         await loadCredentials();
     } catch (e) {

@@ -169,7 +169,7 @@ export const DEFAULT_MESSAGES = {
     passwordChoose: 'Choose a password.',
     passwordMinLength: 'Password must be at least 8 characters.',
     passwordMismatch: 'Passwords do not match.',
-    signInFailed: 'Sign in failed.',
+    signInFailed: 'Couldn’t sign in.',
     // M4 (fedev review): boot session validation could not reach the server.
     // The tokens are KEPT (network = unknown, not rejected); this is the
     // last-resort line the auth store surfaces when the failure isn't an Error.
@@ -219,7 +219,7 @@ export const DEFAULT_MESSAGES = {
     nextEpisode: 'Next episode',
     // Skip intro / outro markers (server playback-info)
     skipIntro: 'Skip intro',
-    skipOutro: 'Skip outro',
+    skipOutro: 'Skip end credits',
     skipLabelIntro: 'Intro',
     skipLabelCredits: 'End credits',
     skipLabelSkipCredits: 'Skip credits',
@@ -406,7 +406,7 @@ export const DEFAULT_MESSAGES = {
     joinRoom: 'Join room',
     leaveRoom: 'Leave room',
     /** Confirmation shown when the modal's `joined` event is consumed (S285). */
-    joinedRoom: 'Joined {name}',
+    joinedRoom: 'Joined {name}.',
     members: '{count} member | {count} members',
     synced: 'Synced',
     outOfSync: 'Out of sync',
@@ -419,9 +419,9 @@ export const DEFAULT_MESSAGES = {
     cancel: 'Cancel',
     loading: 'Loading…',
     noRooms: 'No public rooms available',
-    errorCreate: 'Failed to create the room.',
-    errorJoin: 'Failed to join the room.',
-    errorLeave: 'Failed to leave the room.',
+    errorCreate: 'Couldn’t create the room.',
+    errorJoin: 'Couldn’t join the room.',
+    errorLeave: 'Couldn’t leave the room.',
     yourRole: 'You are {role}',
     roleOwner: 'Owner',
     roleMember: 'Member',
@@ -540,7 +540,7 @@ export const DEFAULT_MESSAGES = {
      * place is intact, because it is: a failed page leaves the previously loaded rows
      * and the pager untouched, so the failure is a blip and not a dead end.
      */
-    pageLoadFailed: 'Could not load that page. Your place is unchanged — try again.',
+    pageLoadFailed: 'Couldn’t load that page. Your place is unchanged — try again.',
     /** Accessible name of a pager landmark when it has no listing name. */
     pagination: 'Pagination',
     /**
@@ -695,8 +695,8 @@ export const DEFAULT_MESSAGES = {
     deleteScheduleConfirm: 'Delete schedule {name}?',
     removeTagConfirm: 'Remove tag {tag}?',
     loadErrorSchedules: "Couldn’t load schedules.",
-    loadErrorTags: "Couldn’t load tags",
-    loadErrorStreamLimits: "Couldn’t load stream limits",
+    loadErrorTags: "Couldn’t load tags.",
+    loadErrorStreamLimits: "Couldn’t load stream limits.",
     retry: 'Retry',
   },
   admin: {

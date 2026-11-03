@@ -30,10 +30,10 @@ describe('SkipButton', () => {
     expect(w.emitted('skip')?.[0]).toEqual([35]);
   });
 
-  it('shows "Skip outro" inside the outro range and emits the outro end on click', async () => {
+  it('shows "Skip end credits" inside the outro range and emits the outro end on click', async () => {
     const w = mountSkip({ position: 560, outroMarker: { start: 540, end: 600 } });
     const btn = w.find('button');
-    expect(btn.text()).toContain('Skip outro');
+    expect(btn.text()).toContain('Skip end credits');
     await btn.trigger('click');
     expect(w.emitted('skip')?.[0]).toEqual([600]);
   });

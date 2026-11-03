@@ -199,7 +199,7 @@ describe('LoginForm', () => {
     await flushPromises();
     // The store stayed silent; the banner still renders the generic localized
     // message, and nothing reaches the toast queue.
-    expect(w.get('[role="alert"]').text()).toContain('Sign in failed.');
+    expect(w.get('[role="alert"]').text()).toContain('Couldn’t sign in.');
     expect(toastErr).not.toHaveBeenCalled();
   });
 

@@ -12,6 +12,37 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui fix lane m23-m25 2026-11-03 (review copywriter m7, m8, m9): one voice, one punctuation policy, one segment name
+
+- **m23 (punctuation).** Same strings had drifted to two forms: `parental.loadErrorTags` and
+  `parental.loadErrorStreamLimits` gained the sentence period their sibling
+  `loadErrorSchedules` always carried — across EN and all six locale mirrors (the mirrors
+  had replicated the defect verbatim; ja ends in `。`). `syncplay.joinedRoom` — a success
+  toast among period-carrying toast siblings — became `'Joined {name}.'` in all seven
+  catalogs. SecuritySettingsPage rendered 'Passkey registered successfully' as a status
+  line and '…successfully.' as a toast at the same moment; both now carry the period.
+  Four toast-message pins rotated to the new casing of the same law (measured red at the
+  old literals first).
+- **m24 (voice).** Three voices had described one failure class — "Sign in failed." /
+  "Failed to create the room." / "Could not load that page." against the canonical
+  "Couldn't …." family. The catalog now speaks one: `auth.signInFailed` → 'Couldn't sign
+  in.', `syncplay.errorCreate/errorJoin/errorLeave` → 'Couldn't …  the room.', and
+  `music.pageLoadFailed` contracted to "Couldn't …". No mirror edits: de/es/fr/it/ja/pt_BR
+  already carried genuine translations of these keys (fr 'Impossible de', ja
+  '〜できませんでした' were always the 'Couldn't' voice — English was the outlier).
+  The ParentalControlsPage inline-'Failed to' half of this finding FOLDS INTO the deferred
+  M13 decision: the page's whole copy strategy (orphan catalog group vs wiring) is the
+  open design call, and half-flipping its eight inline strings would double that work.
+- **m25 (naming, credits half).** One marker segment answered to 'outro', 'End credits'
+  and 'Skip credits' inside a single control cluster; the plain-language name won:
+  `player.skipOutro` → 'Skip end credits' (button), joining the existing 'End credits'
+  labels — the wire's `'outro'` marker type keeps its server-side name. The finding's
+  other half ('Recommended for You' h1 vs 'For You' nav) landed with m22 in `cfb0393d`.
+- `dist/` rebuilt in-lockstep (determinism ×2, aggregate md5 `8e4fc65b`); `dist:check`
+  green post-commit. Full vitest 324 files / 6547 pass / 10 skip serial (counts held —
+  copy moves, no new tests), vue-tsc 0, eslint 0. Catalog key count and group count
+  unchanged (492/24 claims hold).
+
 ## Unreleased — ui fix lane m22 2026-11-03 (review copywriter m6): sentence-case headings + enforcement tripwire
 
 - **m22 (copywriter).** Twelve surfaces shipped Title Case against the catalog's own law
