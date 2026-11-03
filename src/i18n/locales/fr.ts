@@ -274,6 +274,7 @@ export const FR_MESSAGES = {
     upNext: 'À suivre',
     startsIn: 'Commence dans {count} seconde | Commence dans {count} secondes',
     startingNow: 'Démarrage…',
+    buffering: 'Mise en mémoire tampon…',
     playNow: 'Lire maintenant',
     cancel: 'Annuler',
     transcodePreparingHeading: 'Préparation de votre stream…',

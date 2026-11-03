@@ -126,6 +126,21 @@ describe('InviteLinksPage — create modal', () => {
     w.unmount();
   });
 
+  // webux m1: the hand-rolled create-modal now rides useFocusTrap — Escape
+  // closes it (Tab containment is the trap primitive's own law).
+  it('Escape closes the create modal', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await flushPromises();
+    expect(document.querySelector('.modal')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await flushPromises();
+    expect(document.querySelector('.modal')).toBeNull();
+    w.unmount();
+  });
+
   // Discriminating regression test: the page typed the servers response as
   // {id, server_name} while the hub sends camelCase {serverId, serverName}, so every
   // option was {value: undefined, label: undefined} and createLink() always failed

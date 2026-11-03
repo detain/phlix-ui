@@ -236,6 +236,14 @@ const containerRef = ref<HTMLElement | null>(null);
  *  captions must clear (S504) instead of a fixed lift. */
 const controlsRef = ref<HTMLElement | null>(null);
 const showChrome = ref(true);
+/**
+ * webux M1: the media element fires `waiting`/`stalled` when the buffer runs dry
+ * mid-playback — but the store's `playing` mirror (play/pause events only) keeps
+ * saying "playing", so the frozen frame looked like a live picture while the
+ * chrome auto-hid. This flag surfaces a Spinner cue, keeps the chrome visible,
+ * and announces through role=status for screen readers.
+ */
+const buffering = ref(false);
 const fullscreen = ref(false);
 const scrubbing = ref(false);
 const showHelp = ref(false);
@@ -1253,6 +1261,18 @@ function onPlay(): void {
 function onPause(): void {
   player.pause();
   player.setMediaPositionState();
+  buffering.value = false; // an explicit pause is not "buffering"
+}
+/** webux M1: buffer ran dry (`waiting`) or data stopped arriving (`stalled`). */
+function onWaiting(): void {
+  buffering.value = true;
+  clearIdle();
+  showChrome.value = true; // the idle timer may already have hidden the chrome
+}
+/** webux M1: frames are flowing again. */
+function onPlaying(): void {
+  buffering.value = false;
+  revealChrome(); // re-arms the auto-hide that onWaiting suppressed
 }
 function onTimeUpdate(): void {
   const v = videoRef.value;
@@ -1540,9 +1560,10 @@ function clearIdle(): void {
 }
 function scheduleHide(): void {
   clearIdle();
-  if (!player.playing || scrubbing.value) return; // never hide while paused or scrubbing
+  // never hide while paused, scrubbing, or waiting on data (webux M1)
+  if (!player.playing || scrubbing.value || buffering.value) return;
   idleTimer = setTimeout(() => {
-    if (player.playing && !scrubbing.value) showChrome.value = false;
+    if (player.playing && !scrubbing.value && !buffering.value) showChrome.value = false;
   }, props.idleTimeout ?? 3000);
 }
 function revealChrome(): void {
@@ -1602,6 +1623,7 @@ watch(
   (playing) => {
     if (!playing) {
       clearIdle();
+      buffering.value = false; // webux M1: a paused player is not "buffering"
       showChrome.value = true; // always visible when paused
     } else {
       // playback (re)started: a resume choice + a lingering up-next are both moot
@@ -1668,7 +1690,10 @@ watch(
   (session) => {
     if (!session) return;
     if (session.state === 'playing') {
-      void videoRef.value?.play();
+      // fedev m9: a remote-initiated play is exactly the gesture-less context
+      // where NotAllowedError is routine — mirror the catch every other play()
+      // site (:721/:728/:1633) already carries.
+      void videoRef.value?.play()?.catch(() => {});
       player.play();
     } else if (session.state === 'paused') {
       videoRef.value?.pause();
@@ -1711,7 +1736,8 @@ watch(
         resetPosition: true,
         streamUrl: props.streamUrlFor?.(item) ?? '',
       });
-      void videoRef.value?.play();
+      // fedev m9: same gesture-less-remote-play law as the session watcher.
+      void videoRef.value?.play()?.catch(() => {});
       player.play();
       syncPlay.consumePendingPlayMedia();
       lastPendingCommandKey = null;
@@ -1781,6 +1807,9 @@ onBeforeUnmount(() => {
         @timeupdate="onTimeUpdate"
         @loadedmetadata="onLoadedMetadata"
         @canplay="onCanPlay"
+        @waiting="onWaiting"
+        @stalled="onWaiting"
+        @playing="onPlaying"
         @progress="onProgress"
         @volumechange="onVolumeChange"
         @ratechange="onRateChange"
@@ -1817,6 +1846,13 @@ onBeforeUnmount(() => {
 
       <div class="player__scrim player__scrim--top" aria-hidden="true" />
       <div class="player__scrim player__scrim--bottom" aria-hidden="true" />
+
+      <!-- webux M1: mid-playback stall cue. Spinner carries role=status (its own
+           root) and the visible word is aria-hidden to avoid a double read. -->
+      <div v-if="buffering" class="player__buffering">
+        <Spinner :size="38" :label="t('player.buffering')" />
+        <span class="player__buffering-text" aria-hidden="true">{{ t('player.buffering') }}</span>
+      </div>
 
       <!-- metadata -->
       <div class="player__meta">
@@ -2164,7 +2200,7 @@ onBeforeUnmount(() => {
         :duration="player.duration"
         :is-playing="player.playing"
         @seek="onSeek"
-        @play="void videoRef?.play()"
+        @play="void videoRef?.play()?.catch(() => {})"
         @pause="void videoRef?.pause()"
       />
 
@@ -2621,5 +2657,25 @@ onBeforeUnmount(() => {
   font-size: var(--text-xs);
   color: var(--text-muted);
   margin-top: var(--space-1);
+}
+/* webux M1: centered stall pill */
+.player__buffering {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  pointer-events: none;
+  z-index: 6;
+}
+.player__buffering-text {
+  font-size: var(--text-sm);
+  letter-spacing: 0.01em;
 }
 </style>

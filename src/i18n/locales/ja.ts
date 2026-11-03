@@ -271,6 +271,7 @@ export const JA_MESSAGES = {
     upNext: '次に再生',
     startsIn: '{count}秒後に開始',
     startingNow: '開始します…',
+    buffering: 'バッファ読み込み中…',
     playNow: '今すぐ再生',
     cancel: 'キャンセル',
     transcodePreparingHeading: 'ストリームを準備中…',

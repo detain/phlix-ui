@@ -268,6 +268,7 @@ export declare const ES_MESSAGES: {
         upNext: string;
         startsIn: string;
         startingNow: string;
+        buffering: string;
         playNow: string;
         cancel: string;
         transcodePreparingHeading: string;

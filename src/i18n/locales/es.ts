@@ -272,6 +272,7 @@ export const ES_MESSAGES = {
     upNext: 'A continuación',
     startsIn: 'Comienza en {count} segundo | Comienza en {count} segundos',
     startingNow: 'Comenzando…',
+    buffering: 'Almacenando en búfer…',
     playNow: 'Reproducir ahora',
     cancel: 'Cancelar',
     transcodePreparingHeading: 'Preparando tu stream…',

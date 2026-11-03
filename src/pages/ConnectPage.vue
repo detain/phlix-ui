@@ -46,6 +46,7 @@ import {
   probeServer,
 } from '../stores/useConnectionStore';
 import { useMessages } from '../composables/useMessages';
+import { safeRedirect } from '../utils/safeRedirect';
 import type { ConnectCandidate, PhlixAppConfig } from '../app/types';
 
 const prefs = usePreferencesStore();
@@ -93,10 +94,12 @@ watch(address, () => {
   pendingUrl.value = null;
 });
 
-/** Resolve where to go once connected: the route that bounced us here, else home. */
+/** Resolve where to go once connected: the route that bounced us here, else home.
+ *  secaudit m3: the same `safeRedirect` law LoginForm and SignupForm honor —
+ *  vue-router keeps a rejected value inside the SPA, but the asymmetry invited
+ *  a future copy of this pattern into a `location.href` sink. */
 function destination(): string {
-  const redirect = route.query['redirect'];
-  return typeof redirect === 'string' && redirect ? redirect : homePath.value;
+  return safeRedirect(route.query['redirect']) ?? homePath.value;
 }
 
 function commit(url: string): void {

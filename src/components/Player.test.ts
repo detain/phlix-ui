@@ -3388,3 +3388,50 @@ describe('Player — downlinkMax seeds the transcode ?profile= hint (W110 S514)'
     expect(tc().start.mock.calls[0][2]).toBeUndefined();
   });
 });
+
+describe('webux M1 — buffering cue', () => {
+  it('shows a role=status cue on `waiting` and hides it on `playing`', async () => {
+    const { w, video } = mountPlayer();
+    expect(w.find('.player__buffering').exists()).toBe(false);
+    video.dispatchEvent(new Event('play')); // store mirror: playing
+    await nextTick();
+    video.dispatchEvent(new Event('waiting'));
+    await nextTick();
+    const cue = w.find('.player__buffering');
+    expect(cue.exists()).toBe(true);
+    expect(cue.find('[role="status"]').exists()).toBe(true);
+    expect(cue.text()).toContain('Buffering…');
+    video.dispatchEvent(new Event('playing'));
+    await nextTick();
+    expect(w.find('.player__buffering').exists()).toBe(false);
+  });
+
+  it('`stalled` arms the cue; an explicit pause clears it', async () => {
+    const { w, video } = mountPlayer();
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    video.dispatchEvent(new Event('stalled'));
+    await nextTick();
+    expect(w.find('.player__buffering').exists()).toBe(true);
+    video.dispatchEvent(new Event('pause'));
+    await nextTick();
+    expect(w.find('.player__buffering').exists()).toBe(false);
+  });
+
+  it('keeps the chrome visible through a stall that outlives the idle timer', async () => {
+    vi.useFakeTimers();
+    try {
+      const { w, video } = mountPlayer({ idleTimeout: 3000 });
+      video.dispatchEvent(new Event('play'));
+      await w.trigger('pointermove');
+      vi.advanceTimersByTime(3001);
+      await nextTick();
+      expect(w.classes()).toContain('is-chrome-hidden');
+      video.dispatchEvent(new Event('waiting'));
+      await nextTick();
+      expect(w.classes()).not.toContain('is-chrome-hidden');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

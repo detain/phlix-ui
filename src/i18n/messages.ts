@@ -317,6 +317,7 @@ export const DEFAULT_MESSAGES = {
     upNext: 'Up next',
     startsIn: 'Starts in {count} second | Starts in {count} seconds',
     startingNow: 'Starting…',
+    buffering: 'Buffering…',
     playNow: 'Play now',
     cancel: 'Cancel',
     // Transcode "preparing" overlay (server is transcoding to HLS on demand)

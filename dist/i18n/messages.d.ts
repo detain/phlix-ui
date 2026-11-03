@@ -279,6 +279,7 @@ export declare const DEFAULT_MESSAGES: {
         upNext: string;
         startsIn: string;
         startingNow: string;
+        buffering: string;
         playNow: string;
         cancel: string;
         transcodePreparingHeading: string;

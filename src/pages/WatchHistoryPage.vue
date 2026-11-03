@@ -10,7 +10,7 @@
  * Fetches from GET /api/v1/me/history if available, otherwise falls back to
  * GET /api/v1/me/progress and shows items with progress > 0.
  */
-import { onMounted, computed, ref, watch, type PropType } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
@@ -27,16 +27,14 @@ import { usePlayerStore } from '../stores/usePlayerStore';
 import type { MediaItem } from '../types/media-item';
 import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 
-const props = defineProps({
-  /**
-   * Optional API client for testing. When provided, this client is used instead of
-   * creating a new ApiClient instance. Follows the pattern used by other pages.
-   */
-  client: {
-    type: Object as PropType<ApiClientType>,
-    default: null,
-  },
-});
+const props = withDefaults(
+  // fedev m6: the generic-typed form every other SFC in the file set uses —
+  // the runtime object form was the only one among the pages. `client` is an
+  // optional API client for testing: when provided it is used instead of a
+  // freshly built ApiClient, same pattern as the other pages.
+  defineProps<{ client?: ApiClientType | null }>(),
+  { client: null },
+);
 
 const router = useRouter();
 const injectedClient = useMediaApiBase();

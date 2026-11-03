@@ -40,6 +40,7 @@ import {
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
+import { useFocusTrap } from '../components/ui/useFocusTrap';
 import { errMessage } from '../api/errors';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
@@ -307,6 +308,18 @@ function closeCreateModal(): void {
   resetForm();
 }
 
+// webux m1: the hand-rolled create-modal now rides the same focus-trap
+// primitive as Modal/CommandPalette/ShortcutsHelp — Tab stays inside the
+// dialog, Escape closes it. This dialog's whole job is capturing a shown-once
+// secret, so keyboard users are the ones most exposed without it.
+const createModalEl = ref<HTMLElement | null>(null);
+useFocusTrap(createModalEl, showCreateModal, {
+  onEscape: () => {
+    closeCreateModal();
+    return true;
+  },
+});
+
 function resetForm(): void {
   createdLink.value = null;
   copyingResult.value = null;
@@ -458,7 +471,7 @@ onMounted(() => loadLinks(true));
     <!-- Create Modal -->
     <Teleport to="body">
       <div v-if="showCreateModal" class="modal-backdrop" @click.self="closeCreateModal">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
+        <div ref="createModalEl" class="modal" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
           <header class="modal__header">
             <h2 id="create-modal-title" class="modal__title">New Invite Link</h2>
             <button type="button" class="modal__close" aria-label="Close" @click="closeCreateModal">

@@ -148,6 +148,21 @@ describe('ConnectPage', () => {
     expect(push).toHaveBeenCalledWith('/app/media/42');
   });
 
+  // secaudit m3: ConnectPage consumed ?redirect raw while LoginForm and
+  // SignupForm route it through safeRedirect — the asymmetry invited a future
+  // copy into a location.href sink. A hostile value now falls back to home.
+  it('falls back to home for a ?redirect the safeRedirect law rejects', async () => {
+    stubFetch(okHealth);
+    const { w, router } = await mountPage('/app/connect?redirect=https://evil.example/');
+    const push = vi.spyOn(router, 'push');
+    await w.find('input[name="server-address"]').setValue('https://srv:8096');
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    await w.find('.connect__confirm').findAll('button')[0]?.trigger('click');
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith('/app');
+  });
+
   it('rejects a non-http(s) address with an invalid-address error and no commit', async () => {
     const { w, router } = await mountPage();
     const push = vi.spyOn(router, 'push');

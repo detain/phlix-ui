@@ -270,6 +270,7 @@ export const IT_MESSAGES = {
     upNext: 'Prossimo',
     startsIn: 'Inizia tra {count} secondo | Inizia tra {count} secondi',
     startingNow: 'Avvio…',
+    buffering: 'Buffering in corso…',
     playNow: 'Riproduci adesso',
     cancel: 'Annulla',
     transcodePreparingHeading: 'Preparazione dello stream…',
