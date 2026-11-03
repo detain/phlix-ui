@@ -32,6 +32,8 @@ export declare const PT_BR_MESSAGES: {
         loading: string;
         notifications: string;
         noMatches: string;
+        missingMediaId: string;
+        missingSeasonId: string;
         searchPlaceholder: string;
         selectPlaceholder: string;
         breadcrumb: string;
@@ -263,6 +265,7 @@ export declare const PT_BR_MESSAGES: {
         startOver: string;
         upNext: string;
         startsIn: string;
+        startingNow: string;
         playNow: string;
         cancel: string;
         transcodePreparingHeading: string;
@@ -470,6 +473,7 @@ export declare const PT_BR_MESSAGES: {
         groupSaved: string;
         groupSaveError: string;
         loadFailed: string;
+        passkeyNotCreated: string;
         loadErrorTitle: string;
     };
     explore: {

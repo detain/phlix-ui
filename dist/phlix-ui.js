@@ -1,22 +1,22 @@
-import { r as e } from "./AuthField-B8d5Bo7g.js";
+import { r as e } from "./AuthField-DelkpiPf.js";
 import { t } from "./IconButton-oCt4k5-3.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-FI3Uj9O8.js";
 import { n as c, t as l } from "./Icon-55iG1rR7.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-DrDMAwjz.js";
-import { i as h, n as g, r as _, t as v } from "./useMessages-DWw2mCAy.js";
-import { t as y } from "./useAuthStore-COWhJKKe.js";
-import { n as b, r as x, t as S } from "./useProfileStore-00he1hm_.js";
+import { i as h, n as g, r as _, t as v } from "./useMessages-D1_IM8ik.js";
+import { t as y } from "./useAuthStore-QU98jdIF.js";
+import { n as b, r as x, t as S } from "./useProfileStore-DImuYbKO.js";
 import { i as C, n as w, r as T, t as E } from "./useImageSrc-CSM61b-l.js";
 import { i as ee, n as D, r as te, t as ne } from "./usePlayerStore-B7mnqLe3.js";
-import { n as re, t as ie } from "./ThumbRating-e24-tIgQ.js";
+import { n as re, t as ie } from "./ThumbRating-DQSqEOKH.js";
 import { n as O, r as ae, t as oe } from "./useApiBase-DXTBY90j.js";
 import { i as se, o as ce, s as le } from "./shortcuts-BPpemCee.js";
-import { t as ue } from "./NetworkHealthIndicator-Cu32oDl7.js";
+import { t as ue } from "./NetworkHealthIndicator-mSb4WoWe.js";
 import { t as de } from "./useToastStore-Bu-iYU7r.js";
-import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-BYXWyAgl.js";
+import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-DkQQvyeY.js";
 import { i as Ie, n as Le, r as Re, t as ze } from "./Kbd-B47x87jw.js";
 import { a as Be, i as Ve, n as He, o as Ue, r as We, t as Ge } from "./useLibrariesStore-DC6tlBJW.js";
-import { n as Ke, t as qe } from "./HomeRow-X_MFsvGR.js";
+import { n as Ke, t as qe } from "./HomeRow-ByKZV_lq.js";
 import { t as Je } from "./safeHref-CxjNgvYf.js";
 import { t as k } from "./EmptyState-DjfWh3kt.js";
 import { t as A } from "./Button-BLpPomsd.js";
@@ -28,21 +28,21 @@ import { t as M } from "./Badge-B_3IbdKb.js";
 import { t as jt } from "./Slider-Bj5BaBUu.js";
 import { t as Mt } from "./Switch-C607L4Vu.js";
 import { t as Nt } from "./Chip-eO7BYLEk.js";
-import { t as Pt } from "./Select-CQOnMRFF.js";
-import { t as Ft } from "./Combobox-BcSt3UDA.js";
-import { t as It } from "./Modal-DKIr686F.js";
-import { t as Lt } from "./ConfirmDialog-CHz9i2RW.js";
+import { t as Pt } from "./Select-DgyDgK6d.js";
+import { t as Ft } from "./Combobox-D6YrmI8p.js";
+import { t as It } from "./Modal-CHIcB_qP.js";
+import { t as Lt } from "./ConfirmDialog-AvhwRU2h.js";
 import { t as Rt } from "./Tooltip-CaS-pDMB.js";
 import { t as N } from "./Skeleton-DDhrDRE7.js";
-import { t as zt } from "./Spinner-CGrQW_2z.js";
+import { t as zt } from "./Spinner-D5QuBNcY.js";
 import { t as Bt } from "./PageHint-BNwIsAdC.js";
 import { t as Vt } from "./Tabs-Dd1Z-m2P.js";
 import { t as Ht } from "./Menu-D1MRZDZu.js";
 import { t as Ut } from "./HelpText-Ctv3rP_Q.js";
-import { o as Wt, t as Gt } from "./MediaCard-Cv3a64Ys.js";
-import { t as Kt } from "./MediaGrid-BebThHY4.js";
-import { t as qt } from "./MediaRow-U4ZE4o2H.js";
-import { n as Jt, t as Yt } from "./metadata-sources-u7iEvRJb.js";
+import { o as Wt, t as Gt } from "./MediaCard-D17yKYuw.js";
+import { t as Kt } from "./MediaGrid-CpPhlO6D.js";
+import { t as qt } from "./MediaRow-CL2rNEop.js";
+import { n as Jt, t as Yt } from "./metadata-sources-BjdyYDQ0.js";
 import { n as Xt, t as Zt } from "./logs-_zKk3C5E.js";
 import { t as Qt } from "./dashboard-BwN19iSq.js";
 import { a as $t, c as en, i as tn, l as nn, n as rn, o as an, r as on, s as sn, t as cn } from "./users-Dyp9EnDL.js";
@@ -63,13 +63,13 @@ import { i as On, n as kn, r as An, t as jn } from "./plugins-kZa-PXB4.js";
 import { n as Mn, r as Nn, t as Pn } from "./maintenance-CBNkxYQh.js";
 import { t as Fn } from "./hubDashboard-DCTkP-u4.js";
 import { n as In, t as Ln } from "./media-query-D7hrCu8r.js";
-import { t as Rn } from "./LoginForm-BNP-0bd0.js";
-import { t as zn } from "./SignupForm-D2pJfRIf.js";
+import { t as Rn } from "./LoginForm-ZkDmiwvV.js";
+import { t as zn } from "./SignupForm-C0ySu-ZJ.js";
 import { t as P } from "./hubHelpLinks-C396-WBg.js";
 import { a as Bn, i as Vn, n as Hn, o as Un, r as Wn, s as Gn, t as Kn } from "./plural-B3O2rVPV.js";
 import { n as qn, t as Jn } from "./debounce-BnRz-bwe.js";
 import { t as Yn } from "./Input-BsvG-hIx.js";
-import { i as Xn, n as Zn, r as Qn, t as $n } from "./MusicAlbumCard-CaF2iQNr.js";
+import { i as Xn, n as Zn, r as Qn, t as $n } from "./MusicAlbumCard-DVMs27Pm.js";
 import { t as er } from "./useMediaStore-DHwqPYF_.js";
 import { Fragment as F, Teleport as tr, Transition as nr, TransitionGroup as rr, computed as I, createApp as ir, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as ar, createTextVNode as V, createVNode as H, defineAsyncComponent as or, defineComponent as U, getCurrentScope as sr, inject as cr, nextTick as lr, normalizeClass as W, normalizeStyle as ur, onBeforeUnmount as dr, onMounted as G, onScopeDispose as fr, onUnmounted as pr, openBlock as K, provide as mr, readonly as hr, ref as q, renderList as J, renderSlot as gr, resolveComponent as _r, resolveDynamicComponent as vr, toDisplayString as Y, toValue as yr, unref as X, useId as br, vModelSelect as xr, vModelText as Sr, vShow as Cr, watch as Z, watchEffect as wr, withCtx as Q, withDirectives as Tr, withModifiers as Er } from "vue";
 import { createPinia as Dr, defineStore as Or } from "pinia";
@@ -910,7 +910,7 @@ var ha = ["src", "alt"], ga = { class: "brand-wordmark" }, _a = {
 		ta();
 		let n = Ie(), r = $(), i = Nr(), { t: a } = v(), o = ce(), s = I(() => i.meta?.fullBleed === !0 && o.theaterActive);
 		na();
-		let c = or(() => import("./CommandPalette-Cckl9EGC.js")), u = q(!1);
+		let c = or(() => import("./CommandPalette-RyCwpJ7M.js")), u = q(!1);
 		Z(() => n.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1268,111 +1268,111 @@ function so(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-Chhum9EE.js")
+			component: () => import("./BrowsePage-DLFTdRY6.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-QKTcG4_l.js")
+			component: () => import("./MediaDetailPage-922tzt6k.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-DPd4-zok.js")
+			component: () => import("./SeasonPage-RisA7Eim.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-BGTjiwVf.js")
+			component: () => import("./LibraryPage-B_ioeAvO.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-BYb-i0Za.js")
+			component: () => import("./PlayerPage-3ihW8ICr.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DdxxqfAC.js")
+			component: () => import("./LoginPage-C6gywOAR.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CrfJjDuf.js")
+			component: () => import("./SignupPage-CRrpixaT.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-DC1zZ171.js")
+			component: () => import("./ConnectPage-B7KiMS2N.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-U88fq4la.js")
+			component: () => import("./SettingsPage-DYjuNLDM.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-zRUtIGyH.js")
+			component: () => import("./ExplorePage-DraFDevG.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-Dl9ZS4Va.js")
+			component: () => import("./RecommendationsPage-B9APi1TL.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-CU2RSFlp.js")
+			component: () => import("./WatchHistoryPage-c9CTCQ-h.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-BLEfORma.js")
+			component: () => import("./SyncPlayPage-BSn82ZdQ.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-DyxtbJ5J.js")
+			component: () => import("./MusicLibraryPage-CUJG9ZIe.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-BcSOvyq2.js")
+			component: () => import("./ParentalControlsPage-XEz2dv5Y.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-CgjmXqhL.js")
+			component: () => import("./ProfilesPage-BsKbitG6.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-BrAOq1vg.js")
+			component: () => import("./PlaylistsPage-DkX7ybKg.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-BICYl1TQ.js")
+			component: () => import("./PlaylistDetailPage-DpIk-lDQ.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Za}`,
 		name: Xa,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-Dgnmm5WE.js")
+		component: () => import("./McpTokensPage-A47mw9sY.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1644,25 +1644,25 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-CDyifF0b.js")
+	component: () => import("./DashboardPage-C1G_ZJ84.js")
 }, wo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-Cfsz4IKy.js")
+	component: () => import("./UsersPage-KMK79R7N.js")
 }, To = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-D4fHT_fM.js")
+	component: () => import("./LogsPage-Q6y-CoGE.js")
 }, Eo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-CufTPupI.js")
+	component: () => import("./WebhooksPage-B9oLS4BE.js")
 }, Do = {
 	name: "admin-services",
 	path: "services",
@@ -1674,13 +1674,13 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-BdFEWKxs.js")
+	component: () => import("./IntegrationsPage-BGGyT_nh.js")
 }, ko = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-CACh9bXr.js")
+	component: () => import("./BackupPage-BL-PDVwO.js")
 }, Ao = {
 	name: "admin-cast",
 	path: "cast-devices",
@@ -1698,19 +1698,19 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-CI-yoTuB.js")
+	component: () => import("./RemoteAccessPage-BuZSPv2q.js")
 }, No = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-B_1G4yVI.js")
+	component: () => import("./LiveTvPage-CH7fw79r.js")
 }, Po = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-Coq9_KhV.js")
+	component: () => import("./CollectionsPage-PYwnX9ej.js")
 }, Fo = {
 	name: "admin-history",
 	path: "history",
@@ -1722,43 +1722,43 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-DKrvqgKK.js")
+	component: () => import("./SyncPlayPage-BLWWbz1O.js")
 }, Lo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-DK7hdU7n.js")
+	component: () => import("./LibrariesPage-tiLvyNBs.js")
 }, Ro = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-Cj4CNqrA.js")
+	component: () => import("./DuplicatesPage-CmXi_CLL.js")
 }, zo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-BAWZJPom.js")
+	component: () => import("./PluginsPage-BFIhKdiX.js")
 }, Bo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-TIAqh0x_.js")
+	component: () => import("./TasksPage-sQQPiEZy.js")
 }, Vo = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-CKV5KTZg.js")
+	component: () => import("./TranscodingSettingsPage-By5CQcG8.js")
 }, Ho = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-SkQeUDTt.js")
+	component: () => import("./SettingsPage-BmjUJ1Zb.js")
 }, Uo = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1770,7 +1770,7 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-EDhs-hQC.js").then((e) => e.t)
+	component: () => import("./MetricsPage-CTZLCSmb.js").then((e) => e.t)
 }, Go = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -7172,6 +7172,8 @@ var $_ = {
 		loading: "Cargando",
 		notifications: "Notificaciones",
 		noMatches: "Sin coincidencias",
+		missingMediaId: "Ningún elemento seleccionado. Elige uno de tu biblioteca.",
+		missingSeasonId: "Ninguna temporada seleccionada. Elige una en la página de la serie.",
 		searchPlaceholder: "Buscar…",
 		selectPlaceholder: "Seleccionar…",
 		breadcrumb: "Miga de pan"
@@ -7400,7 +7402,8 @@ var $_ = {
 		resume: "Reanudar",
 		startOver: "Empezar de nuevo",
 		upNext: "A continuación",
-		startsIn: "Comienza en {seconds} s",
+		startsIn: "Comienza en {count} segundo | Comienza en {count} segundos",
+		startingNow: "Comenzando…",
 		playNow: "Reproducir ahora",
 		cancel: "Cancelar",
 		transcodePreparingHeading: "Preparando tu stream…",
@@ -7603,6 +7606,7 @@ var $_ = {
 		groupSaved: "Ajustes de {name} guardados.",
 		groupSaveError: "No se pudieron guardar los ajustes de {name}.",
 		loadFailed: "No se pudieron cargar los ajustes.",
+		passkeyNotCreated: "No se ha creado ninguna llave de acceso. Inténtalo de nuevo.",
 		loadErrorTitle: "No se pudieron cargar los ajustes"
 	},
 	explore: { title: "Explorar similares" },
@@ -7688,6 +7692,8 @@ var $_ = {
 		loading: "Chargement",
 		notifications: "Notifications",
 		noMatches: "Aucun résultat",
+		missingMediaId: "Aucun élément sélectionné. Choisissez-en un dans votre bibliothèque.",
+		missingSeasonId: "Aucune saison sélectionnée. Choisissez-en une sur la page de la série.",
 		searchPlaceholder: "Rechercher…",
 		selectPlaceholder: "Sélectionner…",
 		breadcrumb: "Fil d’Ariane"
@@ -7916,7 +7922,8 @@ var $_ = {
 		resume: "Reprendre",
 		startOver: "Recommencer",
 		upNext: "À suivre",
-		startsIn: "Commence dans {seconds} s",
+		startsIn: "Commence dans {count} seconde | Commence dans {count} secondes",
+		startingNow: "Démarrage…",
 		playNow: "Lire maintenant",
 		cancel: "Annuler",
 		transcodePreparingHeading: "Préparation de votre stream…",
@@ -8119,6 +8126,7 @@ var $_ = {
 		groupSaved: "Paramètres {name} enregistrés.",
 		groupSaveError: "Échec de l’enregistrement des paramètres {name}.",
 		loadFailed: "Échec du chargement des paramètres.",
+		passkeyNotCreated: "Aucune clé d’accès n’a été créée. Réessayez.",
 		loadErrorTitle: "Impossible de charger les paramètres"
 	},
 	explore: { title: "Titres similaires" },
@@ -8204,6 +8212,8 @@ var $_ = {
 		loading: "Wird geladen",
 		notifications: "Mitteilungen",
 		noMatches: "Keine Treffer",
+		missingMediaId: "Kein Titel ausgewählt. Wähle einen aus deiner Bibliothek.",
+		missingSeasonId: "Keine Staffel ausgewählt. Wähle eine auf der Serien-Seite.",
 		searchPlaceholder: "Suchen…",
 		selectPlaceholder: "Auswählen…",
 		breadcrumb: "Brotkrumenavigation"
@@ -8432,7 +8442,8 @@ var $_ = {
 		resume: "Fortsetzen",
 		startOver: "Von vorn beginnen",
 		upNext: "Als Nächstes",
-		startsIn: "Startet in {seconds} s",
+		startsIn: "Startet in {count} Sekunde | Startet in {count} Sekunden",
+		startingNow: "Startet…",
 		playNow: "Jetzt abspielen",
 		cancel: "Abbrechen",
 		transcodePreparingHeading: "Dein Stream wird vorbereitet…",
@@ -8635,6 +8646,7 @@ var $_ = {
 		groupSaved: "{name}-Einstellungen gespeichert.",
 		groupSaveError: "{name}-Einstellungen konnten nicht gespeichert werden.",
 		loadFailed: "Einstellungen konnten nicht geladen werden.",
+		passkeyNotCreated: "Es wurde kein Passkey erstellt. Versuche es erneut.",
 		loadErrorTitle: "Einstellungen konnten nicht geladen werden"
 	},
 	explore: { title: "Ähnliches entdecken" },
@@ -8720,6 +8732,8 @@ var $_ = {
 		loading: "Caricamento",
 		notifications: "Notifiche",
 		noMatches: "Nessuna corrispondenza",
+		missingMediaId: "Nessun elemento selezionato. Scegline uno dalla tua libreria.",
+		missingSeasonId: "Nessuna stagione selezionata. Scegliline una nella pagina della serie.",
 		searchPlaceholder: "Cerca…",
 		selectPlaceholder: "Seleziona…",
 		breadcrumb: "Percorso di navigazione"
@@ -8948,7 +8962,8 @@ var $_ = {
 		resume: "Riprendi",
 		startOver: "Ricomincia",
 		upNext: "Prossimo",
-		startsIn: "Inizia tra {seconds} s",
+		startsIn: "Inizia tra {count} secondo | Inizia tra {count} secondi",
+		startingNow: "Avvio…",
 		playNow: "Riproduci adesso",
 		cancel: "Annulla",
 		transcodePreparingHeading: "Preparazione dello stream…",
@@ -9151,6 +9166,7 @@ var $_ = {
 		groupSaved: "Impostazioni di {name} salvate.",
 		groupSaveError: "Impossibile salvare le impostazioni di {name}.",
 		loadFailed: "Impossibile caricare le impostazioni.",
+		passkeyNotCreated: "Nessun passkey creato. Riprova.",
 		loadErrorTitle: "Impossibile caricare le impostazioni"
 	},
 	explore: { title: "Esplora simili" },
@@ -9236,6 +9252,8 @@ var $_ = {
 		loading: "Carregando",
 		notifications: "Notificações",
 		noMatches: "Nenhuma correspondência",
+		missingMediaId: "Nenhum item selecionado. Escolha um da sua biblioteca.",
+		missingSeasonId: "Nenhuma temporada selecionada. Escolha uma na página da série.",
 		searchPlaceholder: "Pesquisar…",
 		selectPlaceholder: "Selecionar…",
 		breadcrumb: "Trilha de navegação"
@@ -9464,7 +9482,8 @@ var $_ = {
 		resume: "Retomar",
 		startOver: "Começar de novo",
 		upNext: "A seguir",
-		startsIn: "Começa em {seconds} s",
+		startsIn: "Começa em {count} segundo | Começa em {count} segundos",
+		startingNow: "Começando…",
 		playNow: "Reproduzir agora",
 		cancel: "Cancelar",
 		transcodePreparingHeading: "Preparando o seu stream…",
@@ -9667,6 +9686,7 @@ var $_ = {
 		groupSaved: "Configurações de {name} salvas.",
 		groupSaveError: "Falha ao salvar as configurações de {name}.",
 		loadFailed: "Falha ao carregar as configurações.",
+		passkeyNotCreated: "Nenhuma chave de acesso foi criada. Tente novamente.",
 		loadErrorTitle: "Não foi possível carregar as configurações"
 	},
 	explore: { title: "Explorar semelhantes" },
@@ -9752,6 +9772,8 @@ var $_ = {
 		loading: "読み込み中",
 		notifications: "通知",
 		noMatches: "該当する項目はありません",
+		missingMediaId: "項目が選択されていません。ライブラリから選択してください。",
+		missingSeasonId: "シーズンが選択されていません。シリーズページから選択してください。",
 		searchPlaceholder: "検索…",
 		selectPlaceholder: "選択…",
 		breadcrumb: "パンくずリスト"
@@ -9980,7 +10002,8 @@ var $_ = {
 		resume: "続きから",
 		startOver: "最初から再生",
 		upNext: "次に再生",
-		startsIn: "{seconds}秒後に開始",
+		startsIn: "{count}秒後に開始",
+		startingNow: "開始します…",
 		playNow: "今すぐ再生",
 		cancel: "キャンセル",
 		transcodePreparingHeading: "ストリームを準備中…",
@@ -10183,6 +10206,7 @@ var $_ = {
 		groupSaved: "{name}の設定を保存しました。",
 		groupSaveError: "{name}の設定を保存できませんでした。",
 		loadFailed: "設定を読み込めませんでした。",
+		passkeyNotCreated: "パスキーが作成されませんでした。もう一度お試しください。",
 		loadErrorTitle: "設定を読み込めませんでした"
 	},
 	explore: { title: "類似作品を探す" },
@@ -10267,7 +10291,7 @@ var $_ = {
 	it: nv,
 	pt_BR: rv,
 	ja: iv
-}, ov = or(() => import("./MediaDetail-CGkJj2Br.js").then((e) => e.n)), sv = or(() => import("./MetadataMatchModal-B6qr9Wnv.js").then((e) => e.n)), cv = or(() => import("./FilterBar-SqQVmwv2.js").then((e) => e.n)), lv = or(() => import("./SearchPage-Lx3oOR2N.js"));
+}, ov = or(() => import("./MediaDetail-D3LI6xeB.js").then((e) => e.n)), sv = or(() => import("./MetadataMatchModal-M7qroSBc.js").then((e) => e.n)), cv = or(() => import("./FilterBar-BxM49rxc.js").then((e) => e.n)), lv = or(() => import("./SearchPage-Cm2PiesN.js"));
 export { S as ACTIVE_PROFILE_KEY, Zt as ALL_LOGS, wd as AcceptInvitePage, mn as AdminBackupApi, hn as AdminCastApi, yn as AdminCollectionsApi, Qt as AdminDashboardApi, gn as AdminDlnaServerApi, bn as AdminHistoryApi, Fn as AdminHubDashboardApi, pn as AdminIntegrationsApi, wn as AdminLibrariesApi, vn as AdminLiveTvApi, Xt as AdminLogsApi, Pn as AdminMaintenanceApi, Yt as AdminMetadataSourcesApi, jn as AdminPluginsApi, _n as AdminRemoteAccessApi, fn as AdminServicesApi, Tn as AdminSettingsApi, xn as AdminSyncPlayApi, cn as AdminUsersApi, dn as AdminWebhooksApi, ft as ApiClient, mt as ApiError, e as AppBackdrop, Yr as AppLayout, zh as AudiobookDetailPage, yg as AudiobookPlayerPage, lh as AudiobooksPage, Se as BUILT_IN_THEME_IDS, M as Badge, Am as BookDetailPage, Jm as BookReaderPage, lm as BooksPage, A as Button, wt as CONNECTION_API_BASE_KEY, bt as CONNECTION_CONFIRMED_ORIGIN_KEY, Sa as CURRENT_SERVER_ID_KEY, Ca as CURRENT_SERVER_NAME_KEY, Nt as Chip, Ft as Combobox, Lt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, rn as DEFAULT_THROTTLE_BPS, tv as DE_MESSAGES, tt as ERROR_MESSAGES, lt as ERROR_TITLES, $_ as ES_MESSAGES, k as EmptyState, he as FOCUS_RING_MIN_CONTRAST, ev as FR_MESSAGES, ml as FederationPage, Ll as FederationSharesPage, cv as FilterBar, ot as GENERIC_ERROR_MESSAGE, Oa as HUB_SYNC_PLAY_PORT, _o as HelpPopover, Ut as HelpText, nv as IT_MESSAGES, l as Icon, t as IconButton, hd as InviteLinksPage, iv as JA_MESSAGES, ze as Kbd, Sn as LIBRARY_TYPES, av as LOCALE_MESSAGES, Os as LibraryScanPage, et as LocalStorageTokenStore, Rn as LoginForm, Mn as MAINTENANCE_ENDPOINTS, Nn as MAINTENANCE_TASK_NAMES, Ee as MAX_EXTENDS_DEPTH, Xa as MCP_TOKENS_ROUTE_NAME, Za as MCP_TOKENS_ROUTE_PATH, st as MUSIC_PAGE_SIZE, ql as ManageSharesPage, Gt as MediaCard, ov as MediaDetail, Kt as MediaGrid, qe as MediaHomeRow, qt as MediaRow, Ht as Menu, sv as MetadataMatchModal, It as Modal, Gd as MusicAlbumPage, Nf as MusicArtistPage, df as MusicArtistsPage, Yp as MusicPlayerPage, vp as MusicTracksPage, Js as MyServersPage, ht as NetworkError, kn as PLUGIN_SECRET_MASK, Kn as PLURAL_CATEGORIES, on as PROFILE_LAST_ERROR_CODE, tn as PROFILE_LAST_ERROR_TEXT, rv as PT_BR_MESSAGES, Bt as PageHint, uo as PageTransition, va as PhlixApp, t_ as PhotoAlbumPage, Bg as PhotoAlbumsPage, z_ as PhotoSlideshowPage, w_ as PhotoViewPage, gs as ProfileImageSettings, $t as RATING_LABELS, an as RATING_MAX, sn as RATING_OPTIONS, Jn as REQUEST_SEARCH_DEBOUNCE_MS, ne as RESUME_MAX_RATIO, D as RESUME_MIN_SECONDS, ke as RING_GROUND_KEYS, bo as RatingBadge, Iu as RequestsPage, lo as Reveal, Cn as SCAN_JOB_TYPES, En as SETTINGS_SECRET_MASK, Ve as SORT_TITLE_ARTICLES, ln as SUBSCRIBABLE_EVENTS, lv as SearchPage, Ae as SecuritySettingsPage, Pt as Select, tl as ServerDetailPage, su as SharedWithMePage, zr as Sheet, zn as SignupForm, N as Skeleton, jt as Slider, Jt as SourcePriorityEditor, zt as Spinner, Mt as Switch, _e as THEME_CACHE_KEY, Ce as THEME_TOKEN_ALLOWLIST, en as THROTTLE_BPS_LEVELS, nn as THROTTLE_BPS_OPTIONS, ut as TMDB_UNCONFIGURED_CODE, Vt as Tabs, ie as ThumbRating, $e as TimeoutError, Ui as ToastHost, Rt as Tooltip, So as UserRatingPicker, un as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, je as activeThemeStyle, is as adminMenu, ea as applyStoredThemeEarly, ve as applyThemeTokens, K_ as bestCandidate, B_ as bindMediaStoreToRouter, ts as buildAdminRoutes, rs as buildHubAdminRoutes, Na as buildHubRelayUrl, Ln as buildMediaQuery, In as buildMediaUrl, ns as buildServerAdminRoutes, ye as clearThemeTokens, Ha as closeHubRelayConnection, Xo as commonAdminPages, Be as compareByStrippedTitle, De as compositedContrastOver, co as createPhlixApp, _ as createTranslator, qn as debounce, Zi as deriveAccentVars, j as errMessage, rt as errorCodeMessage, nt as errorCodeTitle, He as fetchLibraries, Oe as fetchThemes, we as focusRingLawViolation, o as focusable, r as focusableRegistry, At as formatPageTitle, Le as fuzzyScore, ct as getDefaultApiHeaders, Ua as getHubRelaySocket, p as hasStoredPreferences, Qo as hubAdminPages, n as installFocusable, St as isAllowedBase, xe as isAllowedThemeToken, be as isBuiltInThemeId, Xe as isOffline, vt as isPlaintextPublic, Hn as isPluralTemplate, gt as isPrivateHost, Ze as isRegisteredErrorCode, w as isRewritableImagePath, me as isSafeThemeTokenValue, dt as isTmdbUnconfigured, Re as matchCommand, Qa as mcpTokensMenuItem, h as mergeMessages, xt as normalizeBase, Me as normalizeServerTheme, za as openHubRelayConnection, Ct as originOf, ja as parsePendingCommandFrame, Fe as parseThemeColor, xa as phlixUiVersion, An as pluginErrorCode, On as pluginValidationErrors, Wn as plural, Vn as pluralCategory, Bn as pluralCount, Un as pluralize, _t as probeServer, ge as readCachedTheme, d as readStoredPreferences, V_ as rectCenter, T as resolveImageSrc, C as resolveImageSrcset, Pe as resolveThemeBase, pe as resolveThemeTokens, Je as safeHref, fe as sanitizeThemeTokens, Gn as selectPluralTemplate, Zo as serverAdminPages, Ot as setAppName, at as setDefaultApiHeaders, pt as setDefaultTokenStore, kt as setPageTitle, We as sortLibraries, Ue as stripLeadingArticle, oe as useApiBase, y as useAuthStore, na as useCommandPaletteHotkey, Ie as useCommandStore, yt as useConnectionStore, i as useFocusTrap, E as useImageSrc, Ge as useLibrariesStore, O as useMediaApiBase, er as useMediaStore, v as useMessages, Q_ as useOnline, Dt as usePageTitle, ee as usePlayerStore, sa as usePreconnect, u as usePreferencesStore, Wt as usePrefetch, x as useProfileStore, da as useResumeReporter, Ke as useResumeSync, Da as useServerStore, Dn as useSettingsPrefsStore, Z_ as useSpatialNav, ta as useTheme, Te as useThemesStore, de as useToastStore, re as useUserItemDataStore, Tt as withScheme, Ne as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

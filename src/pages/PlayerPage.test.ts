@@ -1055,7 +1055,7 @@ describe('PlayerPage — edge cases', () => {
     const w = mount(Harness, { global: { plugins: [router] } });
     wrappers.push(w);
     await flushPromises();
-    expect(w.text()).toContain('No media id provided');
+    expect(w.text()).toContain('No item was selected. Choose one from your library.');
     expect(w.findComponent(Player).exists()).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
   });

@@ -149,7 +149,7 @@ async function load(): Promise<void> {
   similar.value = [];
   seasons.value = [];
   if (!id) {
-    error.value = 'No media id provided';
+    error.value = t('common.missingMediaId');
     loading.value = false;
     return;
   }

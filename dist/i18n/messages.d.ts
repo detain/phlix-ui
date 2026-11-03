@@ -45,6 +45,8 @@ export declare const DEFAULT_MESSAGES: {
         loading: string;
         notifications: string;
         noMatches: string;
+        missingMediaId: string;
+        missingSeasonId: string;
         searchPlaceholder: string;
         selectPlaceholder: string;
         breadcrumb: string;
@@ -276,6 +278,7 @@ export declare const DEFAULT_MESSAGES: {
         startOver: string;
         upNext: string;
         startsIn: string;
+        startingNow: string;
         playNow: string;
         cancel: string;
         transcodePreparingHeading: string;
@@ -525,6 +528,7 @@ export declare const DEFAULT_MESSAGES: {
         groupSaveError: string;
         loadFailed: string;
         loadErrorTitle: string;
+        passkeyNotCreated: string;
     };
     explore: {
         title: string;

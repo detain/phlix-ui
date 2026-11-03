@@ -3004,6 +3004,8 @@ var on = {
 		loading: "Loading",
 		notifications: "Notifications",
 		noMatches: "No matches",
+		missingMediaId: "No item was selected. Choose one from your library.",
+		missingSeasonId: "No season was selected. Choose one from the series page.",
 		searchPlaceholder: "Search…",
 		selectPlaceholder: "Select…",
 		breadcrumb: "Breadcrumb"
@@ -3220,7 +3222,7 @@ var on = {
 		subtitleHearingImpaired: "SDH",
 		subtitleHearingImpairedFull: "Hearing impaired",
 		subtitleRating: "Rating {rating}",
-		subtitleDownloads: "{count} downloads",
+		subtitleDownloads: "{count} download | {count} downloads",
 		subtitleFps: "{fps} fps",
 		subtitleAddLabel: "Add {release} from {provider}",
 		chapters: "Chapters",
@@ -3232,7 +3234,8 @@ var on = {
 		resume: "Resume",
 		startOver: "Start over",
 		upNext: "Up next",
-		startsIn: "Starts in {seconds} seconds",
+		startsIn: "Starts in {count} second | Starts in {count} seconds",
+		startingNow: "Starting…",
 		playNow: "Play now",
 		cancel: "Cancel",
 		transcodePreparingHeading: "Preparing your stream…",
@@ -3435,7 +3438,8 @@ var on = {
 		groupSaved: "{name} settings saved.",
 		groupSaveError: "Failed to save {name} settings.",
 		loadFailed: "Failed to load settings.",
-		loadErrorTitle: "Couldn’t load settings"
+		loadErrorTitle: "Couldn’t load settings",
+		passkeyNotCreated: "No passkey was created. Try again."
 	},
 	explore: { title: "Explore similar titles" },
 	recommendations: { title: "For You" },
@@ -8516,7 +8520,7 @@ var pd = ["aria-label"], md = ["src"], hd = { class: "upnext__body" }, gd = { cl
 			s("div", hd, [
 				s("p", gd, E(O(n)("player.upNext")), 1),
 				s("h4", _d, E(e.media.name), 1),
-				e.counting ? (x(), o("p", vd, E(O(n)("player.startsIn", { seconds: Math.max(0, e.remaining) })), 1)) : a("", !0),
+				e.counting ? (x(), o("p", vd, E(e.remaining > 0 ? O(n)("player.startsIn", { count: e.remaining }) : O(n)("player.startingNow")), 1)) : a("", !0),
 				s("div", yd, [s("button", {
 					type: "button",
 					class: "upnext__btn upnext__btn--amber",
@@ -8548,7 +8552,7 @@ var pd = ["aria-label"], md = ["src"], hd = { class: "upnext__body" }, gd = { cl
 			}, null, 8, Sd)])) : a("", !0)
 		], 8, pd));
 	}
-}), [["__scopeId", "data-v-9115aa2b"]]), wd = {
+}), [["__scopeId", "data-v-3fc667d0"]]), wd = {
 	class: "transcode",
 	role: "alert"
 }, Td = { class: "transcode__card" }, Ed = { class: "transcode__heading" }, Dd = { class: "transcode__body" }, Od = /*#__PURE__*/ X(/* @__PURE__ */ d({

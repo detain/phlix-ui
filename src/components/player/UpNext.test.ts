@@ -49,9 +49,17 @@ describe('UpNext', () => {
     expect(arc.attributes('stroke-dashoffset')).toBe(String(ringDashoffset(4, 8)));
   });
 
-  it('never shows a negative "Starts in" value', () => {
+  // M11 (copywriter review): the countdown used to read "Starts in 0 seconds" at
+  // hand-off and "1 seconds" one tick earlier. Spent countdowns now word as
+  // 'Starting…' and the pipe form singularizes 1.
+  it('words the spent hand-off as "Starting…" (never a negative/zero countdown)', () => {
     const w = mount(UpNext, { props: { media: media(), remaining: -2, total: 8, counting: true } });
-    expect(w.find('.upnext__cd').text()).toBe('Starts in 0 seconds');
+    expect(w.find('.upnext__cd').text()).toBe('Starting…');
+  });
+
+  it('singularizes the one-second tick via the pipe form', () => {
+    const w = mount(UpNext, { props: { media: media(), remaining: 1, total: 8, counting: true } });
+    expect(w.find('.upnext__cd').text()).toBe('Starts in 1 second');
   });
 
   it('is static (no ring, no countdown text) when not counting (autoplay off)', () => {

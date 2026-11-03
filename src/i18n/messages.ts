@@ -48,6 +48,10 @@ export const DEFAULT_MESSAGES = {
     loading: 'Loading',
     notifications: 'Notifications',
     noMatches: 'No matches',
+    // M12 (copywriter review): route-param guards render through the page-error
+    // surface — user-facing sentences, not the old 'No media id provided' jargon.
+    missingMediaId: 'No item was selected. Choose one from your library.',
+    missingSeasonId: 'No season was selected. Choose one from the series page.',
     searchPlaceholder: 'Search…',
     selectPlaceholder: 'Select…',
     breadcrumb: 'Breadcrumb',
@@ -294,7 +298,7 @@ export const DEFAULT_MESSAGES = {
     subtitleHearingImpaired: 'SDH',
     subtitleHearingImpairedFull: 'Hearing impaired',
     subtitleRating: 'Rating {rating}',
-    subtitleDownloads: '{count} downloads',
+    subtitleDownloads: '{count} download | {count} downloads',
     subtitleFps: '{fps} fps',
     subtitleAddLabel: 'Add {release} from {provider}',
     // Chapter list
@@ -311,7 +315,8 @@ export const DEFAULT_MESSAGES = {
     startOver: 'Start over',
     // Up-next card
     upNext: 'Up next',
-    startsIn: 'Starts in {seconds} seconds',
+    startsIn: 'Starts in {count} second | Starts in {count} seconds',
+    startingNow: 'Starting…',
     playNow: 'Play now',
     cancel: 'Cancel',
     // Transcode "preparing" overlay (server is transcoding to HLS on demand)
@@ -598,6 +603,8 @@ export const DEFAULT_MESSAGES = {
     groupSaveError: 'Failed to save {name} settings.',
     loadFailed: 'Failed to load settings.',
     loadErrorTitle: "Couldn’t load settings",
+    // M12: WebAuthn ceremony returning null replaces 'No credential created'.
+    passkeyNotCreated: 'No passkey was created. Try again.',
     // NOTE: the appearance option *enum* labels (theme/accent/density/grid/motion/
     // quality/subtitle-language names) deliberately stay inline-English —
     // operator/technical copy, matching the R6.5c decision to keep enum + admin

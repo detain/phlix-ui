@@ -86,7 +86,7 @@ async function load(): Promise<void> {
     series.value = null;
     season.value = null;
     if (!id) {
-        error.value = 'No series id provided';
+        error.value = t('common.missingSeasonId');
         loading.value = false;
         return;
     }

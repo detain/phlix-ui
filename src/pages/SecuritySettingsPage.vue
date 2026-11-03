@@ -21,6 +21,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import Icon, { type IconName } from '../components/Icon.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useMessages } from '../composables/useMessages';
 
 interface Credential {
     credential_id: string;
@@ -49,6 +50,7 @@ interface PasskeyMeta {
 const injectedClient = useMediaApiBase();
 const toasts = useToastStore();
 const auth = useAuthStore();
+const { t } = useMessages();
 
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: injectedClient.value });
@@ -241,7 +243,7 @@ async function handleRegister(): Promise<void> {
         }) as PublicKeyCredential | null;
 
         if (!credential) {
-            throw new Error('No credential created');
+            throw new Error(t('settings.passkeyNotCreated'));
         }
 
         // Step 4: Encode credential for transfer

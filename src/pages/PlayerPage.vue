@@ -31,6 +31,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient, ApiError } from '../api/client';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
+import { useMessages } from '../composables/useMessages';
 import { useImageSrc } from '../composables/useImageSrc';
 import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
@@ -112,6 +113,7 @@ const { imgSrc } = useImageSrc();
 const directBase = useMediaDirectBase();
 const route = useRoute();
 const router = useRouter();
+const { t } = useMessages();
 // W4: the configured error-catalog locale (config-time, like `messages`).
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const player = usePlayerStore();
@@ -430,7 +432,7 @@ async function load(): Promise<void> {
   nextEp.value = null;
   player.hideMiniPlayer(); // the full player owns playback while we're on this route
   if (!id) {
-    error.value = 'No media id provided';
+    error.value = t('common.missingMediaId');
     loading.value = false;
     return;
   }

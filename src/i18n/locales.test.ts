@@ -197,6 +197,9 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'player.qualityAuto',
     'player.qualityAutoActive',
     'player.qualityOriginal',
+    // M11 era: EN's new pipe form made subtitleDownloads byte-identical —
+    // pt_BR uses the English loanword verbatim.
+    'player.subtitleDownloads',
     'player.subtitleHearingImpaired',
     'player.volume',
     'parental.tags',

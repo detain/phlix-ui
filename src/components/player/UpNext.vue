@@ -54,7 +54,7 @@ const dashOffset = computed(() => ringDashoffset(props.remaining, props.total));
     <div class="upnext__body">
       <p class="upnext__eyebrow">{{ t('player.upNext') }}</p>
       <h4 class="upnext__title">{{ media.name }}</h4>
-      <p v-if="counting" class="upnext__cd numeric">{{ t('player.startsIn', { seconds: Math.max(0, remaining) }) }}</p>
+      <p v-if="counting" class="upnext__cd numeric">{{ remaining > 0 ? t('player.startsIn', { count: remaining }) : t('player.startingNow') }}</p>
       <div class="upnext__actions">
         <button type="button" class="upnext__btn upnext__btn--amber" @click="emit('play-now')">
           <Icon name="play" />
