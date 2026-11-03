@@ -12,7 +12,70 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — ui deferred lane m21 2026-11-04 (review writer m9): production file headers get real summaries
+## 0.99.14 - 2026-11-03
+
+### Release — phase-3 cascade cut: the `@phlix/contracts` `#v0.5.5` registry cohort (one new RESERVED word `not_found`, localized across all seven catalogs; 204→205 pins rotated from measured red), plus the review-campaign deferred lanes m21/m15/M13 and the fix-lane cluster m10-m13-m26 / m23-m25 / m22 / c1 — the seven pending Unreleased blocks below fold verbatim (bodies untouched, headers demoted `## Unreleased` to `###`), and the disclosed CHANGELOG fold debt for five entry-less review-fix batches lands here as its scheduled consolidated forward entry. `dist/` rebuilt in the release commit because the M-UI-23 version stamp embeds the version string.
+
+### Dependency pins — cascade lane: `@phlix/contracts` `#v0.5.4` → `#v0.5.5` (github TAG pin)
+
+- Tag pin ls-remote-verified at this cut: contracts `v0.5.5` = tag object `122d0acb…` peeling to
+  `e21598166a…` (contracts push CI green at that sha — run 41731582115). The registry trio moves
+  together-or-not-at-all: `dist/error-codes.json` md5 `40c1da48…`→`5d1783a7…` (204→205 codes;
+  domains hold at 37 — the new word joins the existing `common` group), while
+  `dist/server-route-manifest.json` (`91579683…`) and `dist/mcp-scopes.json` (`8c92c070…`) are
+  byte-identical across the two tags (re-measured at both tags, not inherited from the release note).
+- The single new wire word is the bare `not_found` — **RESERVED: minted, no producer yet.** The
+  contracts ruling mints it for the hub's two prose-only 404 envelopes; the emitter flips are the
+  hub's own C1 leg and land when the hub re-pins. Until then nothing on the wire carries it — the
+  catalog rows are the discipline's usual ahead-of-traffic localization (same posture as the
+  syncplay dotted-twins block, whose section header the EN reserved-disclosure comment mirrors).
+- **The ⚠ seven-site TS2741 cohort the contracts release entry names:** the re-pin reddened
+  `vue-tsc` with exactly 7 `TS2741` errors — `src/i18n/errors.ts` `EN:47`, `ES:336`, `FR:602`,
+  `DE:837`, `IT:1074`, `PT_BR:1308`, `JA:1542`, all `Record<ErrorCode, string>` catalogs the
+  compiler forces exhaustive. Cure measured-from-red: seven `not_found` rows inserted at the
+  registry-declaration position (after `not_server_owner`, before the federation block) in every
+  locale; the EN sentence is the hub ruling's own shipped sentence verbatim
+  (`The requested resource was not found.`), and the six translations mirror each locale's
+  existing `*_not_found` "could not be found" idiom.
+- Count pins and census prose rotated from the 9 measured suite reds (not predicted):
+  `errors.test.ts` parity-test title + both `toBe(204)` assertions → 205, header census
+  `204×6`→`205×6` and `204-key`→`205-key`; `errors.ts` header `~204`→`~205`; README
+  `204 codes … #v0.5.4`→`205 codes … #v0.5.5` (37 domains unchanged).
+- Lock surgical: root dependency echo + the contracts node's `version`/`resolved` (tag → sha
+  `e21598166a…`), proven idempotent under a real npm 12.0.2 install with a scoped
+  `allow-git=all` userconfig. One repair disclosed: the committed lock's own version echoes were
+  stale (`0.99.12` since the v0.99.13 cut bumped `package.json` without a lock sync); the install
+  synced them and this release carries them to `0.99.14`.
+- Gates on the settled tree: vue-tsc 0 (inside the release build), FULL serial vitest
+  (`--no-file-parallelism`) **324 files / 6582 passed / 10 skipped — held to the m21-era floor to
+  the last digit** (zero losses, zero additions: the cohort is data rows + pin rotations, no new
+  tests), repo-wide eslint 0, `dist/` rebuilt twice byte-identical (aggregate md5 `f13454eb`,
+  sorted file-list method), `dist:check` green post-commit.
+- Downstream cascade duties (server/hub byte-copy fixtures and their `40c1da48` "frozen" prose,
+  the client note-docs) belong to the other cascade lanes — enumerated in
+  `.reviews/CONTRACTS-WAVE-RESULT.md`; this entry records only what ui itself moved.
+
+### Consolidated forward entry — five review-fix batches that shipped entry-less (batches `5698bbce`, `d20faae2`, `7aa4a137`, `5a1a5da7`, `848265b5`, 2026-11-03): the fold-debt disclosure named by the deferred-lane close audit is retired here; the historical commits are untouched (forward-record law), and the four small fixes m9/m11/m12/m16 that were silently absorbed into `5a1a5da7` from shared-tree WIP keep their from-disk addendum credit
+
+- `5698bbce` (M4, M5, M6 + fedev m1-m3): network-unknown `fetchUser`, module-scoped store-keyed
+  refresh single-flight with rotation-aware expiry, best-effort `leaveRoom` teardown,
+  leave-before-close, refresh timeout, write-verb signals; dist rebuild; 479-key catalog mirrors.
+- `d20faae2` (M11, M12): pipe-plural `startsIn`/`subtitleDownloads` gain the `Starting…`
+  hand-off word; dev-speak guard copy routed through the catalog
+  (`missingMediaId`/`missingSeasonId`/`passkeyNotCreated`, 483-key mirrors ×7, pt_BR loanword
+  allow-list).
+- `7aa4a137` (M8 + webux m13): ConfirmDialog gates for invite-link and share revocation; revoke
+  toasts routed through the catalog (`invite.*` +4; new `shares` group; 483→491; the README
+  24-group claim rotated).
+- `5a1a5da7` (M7): buffering cue — video `@waiting`/`@stalled`/`@playing` bound, Spinner
+  `role=status` pill, player chrome pinned visible through a stall (`player.buffering` ×7
+  mirrors; 491→492 trio).
+- `848265b5` (README currency cluster): store count 13→15 with named internals, player-entry
+  export truth + dual-instance caveat, v0.99.13 stamp/pin + release checklist, `fonts.css`
+  wording, pin-era prose, `cardSize` 200, engines-vs-build-floor note, href lint law, measured
+  sizes, American spelling, sentence-case + TOC, optionality sentence.
+
+### ui deferred lane m21 2026-11-04 (review writer m9): production file headers get real summaries
 
 - **M21 (production sweep).** The boilerplate first-line docblock summary
   `Source file.` — a generator artifact that told a reader nothing — is
@@ -41,7 +104,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   residues (the three test-file grep hits are their own unfixed headers), so
   nothing rotated; no golden moved.
 
-## Unreleased — ui deferred lane m15 2026-11-03 (review ui__secaudit m2): safeHref becomes an allow-list
+### ui deferred lane m15 2026-11-03 (review ui__secaudit m2): safeHref becomes an allow-list
 
 - **M-UI-15 (allow-list conversion).** `safeHref` rejected an enumerated set of
   bad schemes (`javascript:`/`data:`/`vbscript:`) and passed everything else —
@@ -76,7 +139,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - Gates: FULL vitest serial 324 files 6582 pass/10 skip (+35 additions only),
   vue-tsc 0, eslint 0, dist det ×2, dist:check green post-commit.
 
-## Unreleased — ui deferred lane M13 2026-11-03 (review copywriter M5, option A): ParentalControlsPage routes through the catalog
+### ui deferred lane M13 2026-11-03 (review copywriter M5, option A): ParentalControlsPage routes through the catalog
 
 - **M13 option A (executed).** The `parental` catalog group existed but the
   page never called `t()` for it, so overriding the group changed nothing on
@@ -122,7 +185,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - Gates: FULL vitest serial (counts held), vue-tsc 0, eslint 0, dist det ×2,
   dist:check green.
 
-## Unreleased — ui fix lane m10-m13-m26 2026-11-03 (review i18n m10, m13 + docs m26): page chrome routes through the catalog
+### ui fix lane m10-m13-m26 2026-11-03 (review i18n m10, m13 + docs m26): page chrome routes through the catalog
 
 - **m10 (MediaCard).** The card's aria-labels and tooltip texts were hardcoded
   English while the component already held a translator: `Play`, the mark
@@ -150,7 +213,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 - **Dist.** Rebuilt twice deterministically (identical aggregate hash) and
   committed in-lockstep; `dist:check` green.
 
-## Unreleased — ui fix lane m23-m25 2026-11-03 (review copywriter m7, m8, m9): one voice, one punctuation policy, one segment name
+### ui fix lane m23-m25 2026-11-03 (review copywriter m7, m8, m9): one voice, one punctuation policy, one segment name
 
 - **m23 (punctuation).** Same strings had drifted to two forms: `parental.loadErrorTags` and
   `parental.loadErrorStreamLimits` gained the sentence period their sibling
@@ -181,7 +244,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   copy moves, no new tests), vue-tsc 0, eslint 0. Catalog key count and group count
   unchanged (492/24 claims hold).
 
-## Unreleased — ui fix lane m22 2026-11-03 (review copywriter m6): sentence-case headings + enforcement tripwire
+### ui fix lane m22 2026-11-03 (review copywriter m6): sentence-case headings + enforcement tripwire
 
 - **m22 (copywriter).** Twelve surfaces shipped Title Case against the catalog's own law
   ("Titles and headings are not exempt", `messages.ts` header): the catalog pair
@@ -204,7 +267,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   `dist:check` green post-commit. Full vitest 324 files / 6547 pass / 10 skip serial
   (+1 file, +5 tests — the tripwire), vue-tsc 0, eslint 0.
 
-## Unreleased — ui fix lane c1 2026-11-03 (review C1, C2): Tracks column header + platform-true palette chord
+### ui fix lane c1 2026-11-03 (review C1, C2): Tracks column header + platform-true palette chord
 
 - **C1 (copywriter).** `MusicTracksPage` rendered the page-name key `music.title` ('Music Library')
   as the track table's title-column header, so every locale read "Music Library" over the title

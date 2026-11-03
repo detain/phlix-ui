@@ -1,6 +1,6 @@
 {
   "name": "@phlix/ui",
-  "version": "0.99.13",
+  "version": "0.99.14",
   "description": "Shared Vue 3 UI components and utilities for Phlix",
   "type": "module",
   "main": "./dist/phlix-ui.umd.cjs",
@@ -87,7 +87,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@phlix/contracts": "github:detain/phlix-contracts#v0.5.4",
+    "@phlix/contracts": "github:detain/phlix-contracts#v0.5.5",
     "@phlix/syncplay": "github:detain/phlix-syncplay#v0.1.6",
     "apexcharts": "^5.15.2",
     "hls.js": "^1.6.16",

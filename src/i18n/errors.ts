@@ -12,7 +12,7 @@
  * every `src/i18n/locales/*.ts` bundle is `satisfies PhlixMessages` with exact
  * key-identity against the 514-key UI-chrome catalog, and downstream clients
  * (tizen, windows) PIN bundle↔installed equality at the release tag. Folding
- * ~204 registry-adjacent error strings into the main catalog would force churn
+ * ~205 registry-adjacent error strings into the main catalog would force churn
  * in every equality pin on each registry edit. The error catalog is instead a
  * SEPARATE layer keyed by the contracts wire strings, complete for all seven
  * locales, and validated against `ERROR_CODES` by `errors.test.ts` — adding a
@@ -217,6 +217,8 @@ const EN: PhlixErrorCatalog = {
   missing_user_id: 'A user ID is required.',
   missing_server_id: 'A server ID is required.',
   not_server_owner: 'Only the owner of this server can manage it.',
+  // reserved — minted at contracts v0.5.5; the hub's two prose-only 404s move onto this word when it re-pins.
+  not_found: 'The requested resource was not found.',
 
   // ── federation — peer / offer / delegation CRUD (bare snake codes) ──
   peer_url_exists: 'A peer with that URL is already added.',
@@ -488,6 +490,7 @@ const ES: PhlixErrorCatalog = {
   missing_user_id: 'Se requiere un ID de usuario.',
   missing_server_id: 'Se requiere un ID de servidor.',
   not_server_owner: 'Solo el propietario de este servidor puede gestionarlo.',
+  not_found: 'No se pudo encontrar el recurso solicitado.',
   // ── federation ──
   peer_url_exists: 'Ya hay un par agregado con esa URL.',
   peer_key_exists: 'Ya hay un par agregado con esa clave pública.',
@@ -735,6 +738,7 @@ const FR: PhlixErrorCatalog = {
   missing_user_id: 'Un identifiant d’utilisateur est requis.',
   missing_server_id: 'Un identifiant de serveur est requis.',
   not_server_owner: 'Seul le propriétaire de ce serveur peut le gérer.',
+  not_found: 'Impossible de trouver la ressource demandée.',
   peer_url_exists: 'Un pair avec cette URL est déjà ajouté.',
   peer_key_exists: 'Un pair avec cette clé publique est déjà ajouté.',
   peer_not_found: 'Impossible de trouver ce pair fédéré.',
@@ -973,6 +977,7 @@ const DE: PhlixErrorCatalog = {
   missing_user_id: 'Eine Benutzer-ID ist erforderlich.',
   missing_server_id: 'Eine Server-ID ist erforderlich.',
   not_server_owner: 'Nur der Eigentümer dieses Servers kann ihn verwalten.',
+  not_found: 'Die angeforderte Ressource wurde nicht gefunden.',
   peer_url_exists: 'Ein Peer mit dieser URL wurde bereits hinzugefügt.',
   peer_key_exists: 'Ein Peer mit diesem öffentlichen Schlüssel wurde bereits hinzugefügt.',
   peer_not_found: 'Dieser föderierte Peer wurde nicht gefunden.',
@@ -1208,6 +1213,7 @@ const IT: PhlixErrorCatalog = {
   missing_user_id: 'È richiesto un ID utente.',
   missing_server_id: 'È richiesto un ID server.',
   not_server_owner: 'Solo il proprietario di questo server può gestirlo.',
+  not_found: 'Impossibile trovare la risorsa richiesta.',
   peer_url_exists: 'Un peer con questo URL è già stato aggiunto.',
   peer_key_exists: 'Un peer con questa chiave pubblica è già stato aggiunto.',
   peer_not_found: 'Impossibile trovare questo peer federato.',
@@ -1442,6 +1448,7 @@ const PT_BR: PhlixErrorCatalog = {
   missing_user_id: 'Um ID de usuário é obrigatório.',
   missing_server_id: 'Um ID de servidor é obrigatório.',
   not_server_owner: 'Somente o dono deste servidor pode gerenciá-lo.',
+  not_found: 'O recurso solicitado não pôde ser encontrado.',
   peer_url_exists: 'Um par com essa URL já foi adicionado.',
   peer_key_exists: 'Um par com essa chave pública já foi adicionado.',
   peer_not_found: 'Não foi possível encontrar esse par federado.',
@@ -1663,6 +1670,7 @@ const JA: PhlixErrorCatalog = {
   missing_user_id: 'ユーザーIDは必須です。',
   missing_server_id: 'サーバーIDは必須です。',
   not_server_owner: 'このサーバーを管理できるのは所有者だけです。',
+  not_found: 'リクエストされたリソースが見つかりませんでした。',
   peer_url_exists: 'そのURLのピアはすでに追加されています。',
   peer_key_exists: 'その公開鍵のピアはすでに追加されています。',
   peer_not_found: 'その連合ピアは見つかりませんでした。',

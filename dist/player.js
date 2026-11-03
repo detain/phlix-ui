@@ -604,7 +604,8 @@ var q = {
 		MISSING_PUBLIC_KEY: "missing_public_key",
 		MISSING_USER_ID: "missing_user_id",
 		MISSING_SERVER_ID: "missing_server_id",
-		NOT_SERVER_OWNER: "not_server_owner"
+		NOT_SERVER_OWNER: "not_server_owner",
+		NOT_FOUND: "not_found"
 	},
 	federation: {
 		PEER_URL_EXISTS: "peer_url_exists",
@@ -874,6 +875,7 @@ var it = {
 	missing_user_id: "A user ID is required.",
 	missing_server_id: "A server ID is required.",
 	not_server_owner: "Only the owner of this server can manage it.",
+	not_found: "The requested resource was not found.",
 	peer_url_exists: "A peer with that URL is already added.",
 	peer_key_exists: "A peer with that public key is already added.",
 	peer_not_found: "That federated peer could not be found.",
@@ -1079,6 +1081,7 @@ var it = {
 	missing_user_id: "Se requiere un ID de usuario.",
 	missing_server_id: "Se requiere un ID de servidor.",
 	not_server_owner: "Solo el propietario de este servidor puede gestionarlo.",
+	not_found: "No se pudo encontrar el recurso solicitado.",
 	peer_url_exists: "Ya hay un par agregado con esa URL.",
 	peer_key_exists: "Ya hay un par agregado con esa clave pública.",
 	peer_not_found: "No se pudo encontrar ese par federado.",
@@ -1284,6 +1287,7 @@ var it = {
 	missing_user_id: "Un identifiant d’utilisateur est requis.",
 	missing_server_id: "Un identifiant de serveur est requis.",
 	not_server_owner: "Seul le propriétaire de ce serveur peut le gérer.",
+	not_found: "Impossible de trouver la ressource demandée.",
 	peer_url_exists: "Un pair avec cette URL est déjà ajouté.",
 	peer_key_exists: "Un pair avec cette clé publique est déjà ajouté.",
 	peer_not_found: "Impossible de trouver ce pair fédéré.",
@@ -1489,6 +1493,7 @@ var it = {
 	missing_user_id: "Eine Benutzer-ID ist erforderlich.",
 	missing_server_id: "Eine Server-ID ist erforderlich.",
 	not_server_owner: "Nur der Eigentümer dieses Servers kann ihn verwalten.",
+	not_found: "Die angeforderte Ressource wurde nicht gefunden.",
 	peer_url_exists: "Ein Peer mit dieser URL wurde bereits hinzugefügt.",
 	peer_key_exists: "Ein Peer mit diesem öffentlichen Schlüssel wurde bereits hinzugefügt.",
 	peer_not_found: "Dieser föderierte Peer wurde nicht gefunden.",
@@ -1694,6 +1699,7 @@ var it = {
 	missing_user_id: "È richiesto un ID utente.",
 	missing_server_id: "È richiesto un ID server.",
 	not_server_owner: "Solo il proprietario di questo server può gestirlo.",
+	not_found: "Impossibile trovare la risorsa richiesta.",
 	peer_url_exists: "Un peer con questo URL è già stato aggiunto.",
 	peer_key_exists: "Un peer con questa chiave pubblica è già stato aggiunto.",
 	peer_not_found: "Impossibile trovare questo peer federato.",
@@ -1899,6 +1905,7 @@ var it = {
 	missing_user_id: "Um ID de usuário é obrigatório.",
 	missing_server_id: "Um ID de servidor é obrigatório.",
 	not_server_owner: "Somente o dono deste servidor pode gerenciá-lo.",
+	not_found: "O recurso solicitado não pôde ser encontrado.",
 	peer_url_exists: "Um par com essa URL já foi adicionado.",
 	peer_key_exists: "Um par com essa chave pública já foi adicionado.",
 	peer_not_found: "Não foi possível encontrar esse par federado.",
@@ -2104,6 +2111,7 @@ var it = {
 	missing_user_id: "ユーザーIDは必須です。",
 	missing_server_id: "サーバーIDは必須です。",
 	not_server_owner: "このサーバーを管理できるのは所有者だけです。",
+	not_found: "リクエストされたリソースが見つかりませんでした。",
 	peer_url_exists: "そのURLのピアはすでに追加されています。",
 	peer_key_exists: "その公開鍵のピアはすでに追加されています。",
 	peer_not_found: "その連合ピアは見つかりませんでした。",
@@ -11411,7 +11419,7 @@ var vm = { class: "player__stage" }, ym = ["src", "poster"], bm = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-5479ff65"]]), oh = "0.99.13", sh = ["aria-label"], ch = ["src", "poster"], lh = { class: "mini__body" }, uh = { class: "mini__title" }, dh = { class: "mini__controls" }, fh = ["aria-label"], ph = ["aria-label", "aria-pressed"], mh = ["aria-label"], hh = ["aria-label"], gh = {
+}), [["__scopeId", "data-v-5479ff65"]]), oh = "0.99.14", sh = ["aria-label"], ch = ["src", "poster"], lh = { class: "mini__body" }, uh = { class: "mini__title" }, dh = { class: "mini__controls" }, fh = ["aria-label"], ph = ["aria-label", "aria-pressed"], mh = ["aria-label"], hh = ["aria-label"], gh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, _h = /*#__PURE__*/ Z(/* @__PURE__ */ d({
