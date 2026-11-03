@@ -238,12 +238,12 @@ describe('ServerDetailPage — TLS expiry pluralisation (S134)', () => {
 });
 
 describe('ServerDetailPage — navigation', () => {
-  it('Back to My Servers navigates to /app/servers', async () => {
+  it('Back to My servers navigates to /app/servers', async () => {
     const { client } = makeClient();
     const { w, router } = await mountPage(client);
     await flushPromises();
     const push = vi.spyOn(router, 'push');
-    await findBtnByText(w, 'Back to My Servers')!.trigger('click');
+    await findBtnByText(w, 'Back to My servers')!.trigger('click');
     expect(push).toHaveBeenCalledWith('/app/servers');
     w.unmount();
   });

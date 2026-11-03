@@ -115,7 +115,7 @@ export const hubPageHelp: Record<string, HubPageHelp> = {
       'Reject while they are pending. The Outgoing tab lists libraries this server has ' +
       'offered to its peers. Like the Federation page, this is an administrator ' +
       'feature and non-administrators will see only a load error. Federation shares are ' +
-      'distinct from the personal library shares on the Manage Shares page, which are ' +
+      'distinct from the personal library shares on the Manage shares page, which are ' +
       'between people rather than between servers.',
   },
   'manage-shares': {
@@ -128,7 +128,7 @@ export const hubPageHelp: Record<string, HubPageHelp> = {
       'with, the permission level they were granted, and an expiry date if you set one ' +
       '— an expired share is marked and no longer grants access. Revoke ends a ' +
       'share immediately. This is the granting side of sharing; the libraries other ' +
-      'people have shared with you appear under Shared With Me.',
+      'people have shared with you appear under Shared with me.',
   },
   'shared-with-me': {
     links: [
@@ -141,7 +141,7 @@ export const hubPageHelp: Record<string, HubPageHelp> = {
       'read-only, or read and write. Only shares that are currently active are listed; ' +
       'if an owner revokes a share it simply stops appearing here. This is the ' +
       'receiving side of sharing; the libraries you have shared with others appear ' +
-      'under Manage Shares.',
+      'under Manage shares.',
   },
   'invite-links': {
     links: [doc('hub/invite-links', 'Invite links')],

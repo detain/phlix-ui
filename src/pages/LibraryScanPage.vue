@@ -173,7 +173,7 @@ onMounted(loadLibraries);
 <template>
   <section class="library-scan" aria-labelledby="library-scan-heading">
     <header class="library-scan__head">
-      <h1 id="library-scan-heading" class="library-scan__title">Library Scanner</h1>
+      <h1 id="library-scan-heading" class="library-scan__title">Library scanner</h1>
       <p class="library-scan__subtitle">Scan your media libraries to discover new content.</p>
     </header>
 

@@ -232,7 +232,7 @@ onUnmounted(() => applySearch.cancel());
   <section class="requests" aria-labelledby="requests-heading">
     <header class="requests__head">
       <div class="requests__head-text">
-        <h1 id="requests-heading" class="requests__title">Media Requests</h1>
+        <h1 id="requests-heading" class="requests__title">Media requests</h1>
         <p class="requests__subtitle">Request movies or TV series to be added to your library.</p>
       </div>
       <Button variant="solid" size="sm" @click="showCreateModal = true">New Request</Button>

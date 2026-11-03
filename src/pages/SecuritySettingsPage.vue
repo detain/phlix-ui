@@ -308,7 +308,7 @@ onMounted(() => {
     <div class="security-settings-page">
         <header class="security-settings-page__head">
             <p class="security-settings-page__eyebrow">Account Security</p>
-            <h1 class="security-settings-page__title">Passkey Settings</h1>
+            <h1 class="security-settings-page__title">Passkey settings</h1>
             <p class="security-settings-page__desc">
                 Manage your passkeys (WebAuthn/FIDO2 credentials) for passwordless login.
             </p>

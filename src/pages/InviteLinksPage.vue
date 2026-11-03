@@ -381,7 +381,7 @@ onMounted(() => loadLinks(true));
   <section class="invite-links" aria-labelledby="invite-links-heading">
     <header class="invite-links__head">
       <div class="invite-links__head-text">
-        <h1 id="invite-links-heading" class="invite-links__title">Invite Links</h1>
+        <h1 id="invite-links-heading" class="invite-links__title">Invite links</h1>
         <p class="invite-links__subtitle">Create and manage invite links for sharing access to your servers.</p>
       </div>
       <Button variant="solid" size="md" left-icon="plus" @click="openCreateModal">
@@ -473,7 +473,7 @@ onMounted(() => loadLinks(true));
       <div v-if="showCreateModal" class="modal-backdrop" @click.self="closeCreateModal">
         <div ref="createModalEl" class="modal" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
           <header class="modal__header">
-            <h2 id="create-modal-title" class="modal__title">New Invite Link</h2>
+            <h2 id="create-modal-title" class="modal__title">New invite link</h2>
             <button type="button" class="modal__close" aria-label="Close" @click="closeCreateModal">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 6L6 18M6 6l12 12" />

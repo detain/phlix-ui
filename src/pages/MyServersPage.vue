@@ -255,7 +255,7 @@ onMounted(loadServers);
   <section class="my-servers" aria-labelledby="my-servers-heading">
     <header class="my-servers__head">
       <div>
-        <h1 id="my-servers-heading" class="my-servers__title">My Servers</h1>
+        <h1 id="my-servers-heading" class="my-servers__title">My servers</h1>
         <p class="my-servers__subtitle">Manage your connected media servers.</p>
       </div>
       <Button variant="solid" size="sm" left-icon="plus" @click="openAdd">Add server</Button>

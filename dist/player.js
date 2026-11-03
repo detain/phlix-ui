@@ -3343,7 +3343,7 @@ var an = {
 	},
 	playlist: { loadError: "Couldn’t load this playlist." },
 	music: {
-		title: "Music Library",
+		title: "Music library",
 		titleColumn: "Title",
 		nav: "Music",
 		artists: "Artists",
@@ -3474,7 +3474,7 @@ var an = {
 		notFoundDescription: "{series} has no such season."
 	},
 	parental: {
-		title: "Parental Controls",
+		title: "Parental controls",
 		schedules: "Schedules",
 		tags: "Tags",
 		streamLimits: "Stream limits",
@@ -10968,7 +10968,7 @@ var vm = { class: "player__stage" }, ym = ["src", "poster"], bm = [
 		}), P(() => d.media?.id, () => {
 			T.hydrate(d.media);
 		}), P(() => w.currentSession, (e) => {
-			e && (e.state === "playing" ? (N.value?.play(), m.play()) : e.state === "paused" && (N.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && Qe(e.playbackPosition));
+			e && (e.state === "playing" ? (N.value?.play()?.catch(() => {}), m.play()) : e.state === "paused" && (N.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && Qe(e.playbackPosition));
 		});
 		let Ln = null;
 		return P(() => w.pendingPlayMedia, async (e) => {
@@ -10989,7 +10989,7 @@ var vm = { class: "player__stage" }, ym = ["src", "poster"], bm = [
 				m.setCurrent(t, {
 					resetPosition: !0,
 					streamUrl: d.streamUrlFor?.(t) ?? ""
-				}), N.value?.play(), m.play(), w.consumePendingPlayMedia(), Ln = null;
+				}), N.value?.play()?.catch(() => {}), m.play(), w.consumePendingPlayMedia(), Ln = null;
 				return;
 			}
 			let n = `${e.mediaId}@${e.issuedAt}`;
@@ -11353,7 +11353,7 @@ var vm = { class: "player__stage" }, ym = ["src", "poster"], bm = [
 				duration: O(m).duration,
 				"is-playing": O(m).playing,
 				onSeek: dn,
-				onPlay: r[13] ||= (e) => void N.value?.play(),
+				onPlay: r[13] ||= (e) => void N.value?.play()?.catch(() => {}),
 				onPause: r[14] ||= (e) => void N.value?.pause()
 			}, null, 8, [
 				"position",
@@ -11385,7 +11385,7 @@ var vm = { class: "player__stage" }, ym = ["src", "poster"], bm = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-dd32031c"]]), oh = "0.99.13", sh = ["aria-label"], ch = ["src", "poster"], lh = { class: "mini__body" }, uh = { class: "mini__title" }, dh = { class: "mini__controls" }, fh = ["aria-label"], ph = ["aria-label", "aria-pressed"], mh = ["aria-label"], hh = ["aria-label"], gh = {
+}), [["__scopeId", "data-v-5479ff65"]]), oh = "0.99.13", sh = ["aria-label"], ch = ["src", "poster"], lh = { class: "mini__body" }, uh = { class: "mini__title" }, dh = { class: "mini__controls" }, fh = ["aria-label"], ph = ["aria-label", "aria-pressed"], mh = ["aria-label"], hh = ["aria-label"], gh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, _h = /*#__PURE__*/ Z(/* @__PURE__ */ d({

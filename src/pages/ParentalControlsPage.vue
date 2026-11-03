@@ -551,7 +551,7 @@ function askDeleteTag(tag: ProfileTag): void {
     <header class="parental-page__head">
       <div>
         <p class="parental-page__eyebrow">Profile Controls</p>
-        <h1 class="parental-page__title">Parental Controls</h1>
+        <h1 class="parental-page__title">Parental controls</h1>
       </div>
       <div v-if="selectedProfile" class="parental-page__profile-badge">
         <Icon name="user" size="sm" />

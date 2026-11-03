@@ -78,7 +78,7 @@ async function loadShares(initial = false): Promise<void> {
   if (initial) loading.value = true;
   error.value = null;
   try {
-    // The hub returns `{ outgoing, incoming }`; "Manage Shares" lists the
+    // The hub returns `{ outgoing, incoming }`; "Manage shares" lists the
     // libraries the current user shares OUT. permission_level is read|readwrite;
     // dates are UNIX seconds; shared_with falls back to the collaborator id.
     const data = await http.get<{ outgoing?: HubShare[] }>('/api/v1/me/shares/');
@@ -146,14 +146,14 @@ onMounted(() => loadShares(true));
 <template>
   <section class="shares" aria-labelledby="shares-heading">
     <header class="shares__head">
-      <h1 id="shares-heading" class="shares__title">Manage Shares</h1>
+      <h1 id="shares-heading" class="shares__title">Manage shares</h1>
       <p class="shares__subtitle">View and manage your shared libraries.</p>
     </header>
 
     <PageHint :links="hubPageHelp['manage-shares'].links" :details="hubPageHelp['manage-shares'].details">
       The libraries you have shared with other people, with the permission you granted and
       any expiry. <strong>Revoke</strong> ends a share immediately. Libraries others have
-      shared with you appear under <strong>Shared With Me</strong>.
+      shared with you appear under <strong>Shared with me</strong>.
     </PageHint>
 
     <div v-if="loading" class="shares__skel"><Skeleton variant="text" :lines="6" /></div>

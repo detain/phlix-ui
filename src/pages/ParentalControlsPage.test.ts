@@ -276,7 +276,7 @@ describe('ParentalControlsPage — the profile gate (fail closed)', () => {
   it('renders the page shell and heading', async () => {
     const { client } = makeClient();
     const w = await mountPage(client);
-    expect(w.find('.parental-page__title').text()).toBe('Parental Controls');
+    expect(w.find('.parental-page__title').text()).toBe('Parental controls');
     expect(w.find('.parental-page__eyebrow').text()).toBe('Profile Controls');
   });
 

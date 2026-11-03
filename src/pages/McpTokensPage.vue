@@ -354,7 +354,7 @@ onMounted(() => loadTokens(true));
   <section class="mcp-tokens" aria-labelledby="mcp-tokens-heading">
     <header class="mcp-tokens__head">
       <div class="mcp-tokens__head-text">
-        <h1 id="mcp-tokens-heading" class="mcp-tokens__title">MCP Tokens</h1>
+        <h1 id="mcp-tokens-heading" class="mcp-tokens__title">MCP tokens</h1>
         <p class="mcp-tokens__subtitle">
           Personal access tokens an MCP client (Claude Desktop, an agent runner, an editor
           plugin) presents to this hub.

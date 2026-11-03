@@ -198,7 +198,7 @@ onMounted(() => loadServer(true));
     <!-- Back button -->
     <div class="server-detail__back">
       <Button variant="ghost" size="sm" left-icon="chevron-left" @click="$router.push('/app/servers')">
-        Back to My Servers
+        Back to My servers
       </Button>
     </div>
 

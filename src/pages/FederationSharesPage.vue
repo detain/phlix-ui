@@ -219,7 +219,7 @@ onMounted(() => loadAll());
 <template>
   <section class="fed-shares" aria-labelledby="fed-shares-heading">
     <header class="fed-shares__head">
-      <h1 id="fed-shares-heading" class="fed-shares__title">Federation Library Shares</h1>
+      <h1 id="fed-shares-heading" class="fed-shares__title">Federation library shares</h1>
       <p class="fed-shares__subtitle">Manage library share offers between your federation peers.</p>
     </header>
 

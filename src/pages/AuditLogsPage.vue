@@ -116,7 +116,7 @@ onMounted(() => loadLogs());
 <template>
   <section class="audit" aria-labelledby="audit-heading">
     <header class="audit__head">
-      <h1 id="audit-heading" class="audit__title">Audit Logs</h1>
+      <h1 id="audit-heading" class="audit__title">Audit logs</h1>
       <p class="audit__subtitle">View system activity and user actions.</p>
     </header>
 

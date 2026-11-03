@@ -459,7 +459,7 @@ export const DEFAULT_MESSAGES = {
     loadError: "Couldn’t load this playlist.",
   },
   music: {
-    title: 'Music Library',
+    title: 'Music library',
     // C1 (copywriter review): the Tracks table's title-column header must not
     // reuse the page-name value; this is the column label itself.
     titleColumn: 'Title',
@@ -657,7 +657,7 @@ export const DEFAULT_MESSAGES = {
     notFoundDescription: '{series} has no such season.',
   },
   parental: {
-    title: 'Parental Controls',
+    title: 'Parental controls',
     schedules: 'Schedules',
     tags: 'Tags',
     streamLimits: 'Stream limits',

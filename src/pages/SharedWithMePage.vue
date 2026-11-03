@@ -79,7 +79,7 @@ async function loadShares(initial = false): Promise<void> {
     if (initial) loading.value = true;
     error.value = null;
     try {
-        // The hub returns `{ outgoing, incoming }`; "Shared With Me" lists the
+        // The hub returns `{ outgoing, incoming }`; "Shared with me" lists the
         // libraries OTHER users share WITH the current user.
         const data = await http.get<SharesResponse>('/api/v1/me/shares');
         // Sort by created_at descending (most recent first). `created_at` is UNIX
@@ -158,7 +158,7 @@ onMounted(() => loadShares(true));
 <template>
     <section class="shared-with-me" aria-labelledby="shared-with-me-heading">
         <header class="shared-with-me__head">
-            <h1 id="shared-with-me-heading" class="shared-with-me__title">Shared With Me</h1>
+            <h1 id="shared-with-me-heading" class="shared-with-me__title">Shared with me</h1>
             <p class="shared-with-me__subtitle">
                 Libraries shared with you by other users.
             </p>

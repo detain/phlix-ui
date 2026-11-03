@@ -12,6 +12,29 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui fix lane m22 2026-11-03 (review copywriter m6): sentence-case headings + enforcement tripwire
+
+- **m22 (copywriter).** Twelve surfaces shipped Title Case against the catalog's own law
+  ("Titles and headings are not exempt", `messages.ts` header): the catalog pair
+  `music.title`/`parental.title` plus ten inline page h1s ('Manage Shares', 'Federation
+  Library Shares', 'Invite Links', 'Media Requests', 'Shared With Me', 'My Servers',
+  'MCP Tokens', 'Passkey Settings', 'Library Scanner', 'Audit Logs', 'Parental Controls')
+  now render sentence-cased ('Manage shares', 'MCP tokens', …). The recommendations h1
+  lands as 'For You' — one surface, one name with the nav rail (the m9 fold; its 'Skip
+  outro'/'End credits' twin awaits the naming sweep). Cross-references to renamed surfaces
+  follow verbatim (`PageHint`/`hubHelpLinks` prose, ServerDetailPage's back button, the
+  create-modal h2 'New invite link'); code comments quoting the new labels were corrected.
+- **Tripwire.** `src/pages/pageTitles.test.ts` scans every static page h1 with a
+  title-level predicate (capitals allowed at position 0 and inside short all-upper
+  initialisms only — a per-token check would let 'Shares' slip), teeth-tested in both
+  directions, with 'For You' on a documented brand exception list. Verbatim pins lock the
+  landed strings so a future re-capping reddens CI.
+- Catalog value moves touch EN only — the six locale mirrors carry translated titles.
+  Key count unchanged (492 trio held); no group added, so README's 24-group claim holds.
+- `dist/` rebuilt in-lockstep (determinism proven ×2, aggregate md5 `e4c25e5d`);
+  `dist:check` green post-commit. Full vitest 324 files / 6547 pass / 10 skip serial
+  (+1 file, +5 tests — the tripwire), vue-tsc 0, eslint 0.
+
 ## Unreleased — ui fix lane c1 2026-11-03 (review C1, C2): Tracks column header + platform-true palette chord
 
 - **C1 (copywriter).** `MusicTracksPage` rendered the page-name key `music.title` ('Music Library')
