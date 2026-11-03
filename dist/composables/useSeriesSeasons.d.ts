@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useSeriesSeasons (U3) — fetch a series’ children and group them into seasons (detail + season pages).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

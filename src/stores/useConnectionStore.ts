@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Connection persistence — the chosen API base + confirmed origin for no-baked-in-origin hosts.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

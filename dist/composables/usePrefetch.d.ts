@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * usePrefetch (R6.1c) — prefetch-on-hover warming of a route’s lazy chunks.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * imageSrc (S241) — resolve payload-supplied image URLs against the SAME base the payload came from.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

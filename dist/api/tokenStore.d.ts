@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * TokenStore seam — token custody; the browser default persists to localStorage, hosts may take custody.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

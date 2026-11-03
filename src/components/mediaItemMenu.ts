@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * buildMediaItemMenu — the context-menu model for media cards, gated by item kind.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

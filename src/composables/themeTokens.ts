@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * themeTokens (S86) — the CLIENT half of the plugin-theme contract (built-in ids + the token grammar).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

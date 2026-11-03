@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useLibrariesStore — shared cache of the viewer’s display-sorted libraries.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

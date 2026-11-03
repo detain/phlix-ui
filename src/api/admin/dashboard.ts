@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin dashboard endpoints — now-playing, top users/media, storage summary and activity feed shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

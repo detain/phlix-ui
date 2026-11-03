@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Ambient types — vite/client + unplugin-icons references and the ‘*.vue’ module declaration.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Hub dashboard admin endpoints — fleet summaries and audit events for the hub’s server fleet.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

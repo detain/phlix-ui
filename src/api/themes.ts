@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Theme catalogue fetch (S85/S86) — the themes a server knows about.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

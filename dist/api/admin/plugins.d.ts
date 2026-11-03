@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * AdminPluginsApi (U6) — typed wrapper over the admin plugin-management endpoints, incl. settings schemas and secret status.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useResumeSync — keep local resume state aligned with the continue-watching rows.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

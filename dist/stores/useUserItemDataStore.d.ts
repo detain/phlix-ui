@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useUserItemDataStore — per-item favorite/rating/thumbs state, cached client-side.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

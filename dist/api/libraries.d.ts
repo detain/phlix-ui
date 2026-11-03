@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Public library listing — LibrarySummary rows + sort used by the Browse rails and per-library nav.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

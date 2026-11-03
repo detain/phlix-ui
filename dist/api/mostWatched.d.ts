@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Most-watched rail (S31) — the global all-time trending aggregate from `GET /api/v1/media/most-watched`.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

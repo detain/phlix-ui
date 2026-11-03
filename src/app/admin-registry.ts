@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin-label resolver seam (S528) — how the shell titles admin routes without importing the admin graph.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

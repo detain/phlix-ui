@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Primitive component barrel — the token-driven, a11y, theme-aware UI exports (R0.4).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

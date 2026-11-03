@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin update-check endpoints — the core-update status shape shared by both backends (S74/S75).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

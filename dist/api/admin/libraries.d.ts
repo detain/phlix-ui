@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * AdminLibrariesApi (RA.15) — typed wrapper over the library CRUD + async-scan endpoints.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

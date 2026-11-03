@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useItemInspector (S15) — shared open/target state for the Explore-item-data inspector modal.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

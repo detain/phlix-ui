@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin network-health endpoints — relay and health snapshots, incl. the S40 stale-state flags.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

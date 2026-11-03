@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * bindMediaStoreToRouter (R1.2) — two-way sync between media-store filters and the URL query.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

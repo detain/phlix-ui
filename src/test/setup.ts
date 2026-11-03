@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Vitest global setup — fetch stub, auto-unmount and wrapper hygiene (S178).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

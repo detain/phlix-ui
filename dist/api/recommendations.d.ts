@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Personalized recommendations — the because-you-watched engine rows (P4-S2).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

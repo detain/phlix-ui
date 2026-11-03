@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Always-on global ⌘K / Ctrl-K command-palette hotkey (R6.1b).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

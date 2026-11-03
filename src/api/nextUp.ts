@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Next-Up rail (S36) — per-series in-progress/recently-completed recommendations.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

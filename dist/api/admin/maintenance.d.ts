@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * AdminMaintenanceApi (S78) — typed wrapper over the admin maintenance-task endpoints (S77’s MaintenanceController).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

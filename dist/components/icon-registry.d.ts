@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * The Lucide icon registry behind Icon — the single source of truth for shipped icon names.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

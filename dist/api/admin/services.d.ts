@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin services endpoints — Trakt/Last.fm status and disconnect shapes, ported from the deleted React admin.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

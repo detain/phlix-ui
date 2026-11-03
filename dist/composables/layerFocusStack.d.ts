@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * LayerFocusStack — the shared focus-layer stack behind the trap (AD-9 adopt-leg, W115 S534).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

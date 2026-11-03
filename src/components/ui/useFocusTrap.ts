@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Focus-trap composable — focus-layer accounting for dialogs and modal overlays.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

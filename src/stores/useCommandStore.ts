@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Pinia command store — the ⌘K palette registry and its fuzzy matching.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

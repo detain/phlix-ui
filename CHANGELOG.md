@@ -12,6 +12,35 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui deferred lane m21 2026-11-04 (review writer m9): production file headers get real summaries
+
+- **M21 (production sweep).** The boilerplate first-line docblock summary
+  `Source file.` — a generator artifact that told a reader nothing — is
+  replaced with a real one-line summary (path-role + what the module owns,
+  S-number where the file's own prose carried one) across all **106**
+  production files that had it: 105 first-line headers plus `src/version.ts`,
+  whose stray trailing `Source file.` line (it already had a real summary) is
+  deleted. The measured repo split was 357 residue files = 106 production +
+  251 test files; the test-file headers are inert to every shipped artifact
+  (d.ts emit excludes `*.test.ts`/`src/test/**`) and stay queued as their own
+  mechanical pass — this item's "~102 files" subject is the production set.
+- **Cosmetic-only, proven (not asserted).** Rebuild after the sweep changed
+  exactly 205 dist files, and the churn is confined to comment carriers:
+  ZERO `.js`/`.cjs` chunk bytes changed (their content hashes didn't even
+  rename), 93 `.d.ts` + the rest of the `.map`s compare byte-identical after
+  JS-comment stripping (validated stripper: collapses comment-only diffs,
+  still detects code diffs, respects string literals). The four main-entry
+  maps (`phlix-ui.js/.umd.cjs`, `player.js/.umd.cjs`) do NOT fully collapse:
+  VLQ decoding pins the residue to a single module — `version.ts`, referenced
+  at exactly −2 source lines, the two deleted stray lines — a line-position
+  artifact of the map's `sourcesContent`, coherent with unchanged generated
+  code. Zero type or behavior churn: vue-tsc 0, eslint 0, FULL vitest serial
+  held 324 files / 6582 pass / 10 skip to the last digit, dist det ×2 (agg
+  `59a8a3a8`), dist:check green post-commit.
+- **Law-pin check ran first:** no suite anywhere counts `Source file.`
+  residues (the three test-file grep hits are their own unfixed headers), so
+  nothing rotated; no golden moved.
+
 ## Unreleased — ui deferred lane m15 2026-11-03 (review ui__secaudit m2): safeHref becomes an allow-list
 
 - **M-UI-15 (allow-list conversion).** `safeHref` rejected an enumerated set of

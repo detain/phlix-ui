@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Player keyboard-shortcut model — display rows, arrow mappings and the typing-target gate.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

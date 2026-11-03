@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Media-item domain types — payload mirrors; MediaType re-exported from @phlix/contracts (SSOT).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

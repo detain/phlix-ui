@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useSettingsPrefs — persists the user’s Advanced settings-mode preference.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

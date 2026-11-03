@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Index buckets — cache-keyed fetch of the A–Z jump-index buckets for a library field/order.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

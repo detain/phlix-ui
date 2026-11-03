@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin settings endpoints — SettingMeta UI hints, save responses and secret-status shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

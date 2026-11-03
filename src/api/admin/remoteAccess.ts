@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin remote-access endpoints — hub pairing status and subdomain claim shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

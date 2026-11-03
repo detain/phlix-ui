@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin server endpoints — server info and fleet-list shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

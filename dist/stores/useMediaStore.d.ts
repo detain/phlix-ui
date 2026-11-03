@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Pinia media store — the browse query state: filters, facets, sort and pagination.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

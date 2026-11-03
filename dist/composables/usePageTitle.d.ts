@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * usePageTitle (U1) — centralized `document.title` management for the SPA.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

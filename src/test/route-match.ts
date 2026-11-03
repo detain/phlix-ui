@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Test support (S193) — real route matching for the suites’ fetch doubles.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

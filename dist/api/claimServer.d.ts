@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * claimServer — links a media server to the signed-in hub user via its displayed claim code.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

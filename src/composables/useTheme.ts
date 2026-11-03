@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useTheme — apply theme/density/motion prefs to <html>, incl. plugin-theme tokens (S86).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

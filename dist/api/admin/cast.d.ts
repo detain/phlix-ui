@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * AdminCastApi (RA.8) — typed wrapper over the Chromecast + AirPlay device-management endpoints.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

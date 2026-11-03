@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useImageSrc — the component-facing resolver pair binding image attributes through the S241 rules.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useHeaderHideOnScroll — hide-on-scroll-down / reveal-on-scroll-up header chrome.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

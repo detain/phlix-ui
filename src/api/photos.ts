@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Photo API surface — albums, photos and slideshow shapes over `GET /api/v1/photo/*` (library_id required).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

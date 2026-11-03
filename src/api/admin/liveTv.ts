@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Live TV admin endpoints — tuner, channel, program, recording and series-rule shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

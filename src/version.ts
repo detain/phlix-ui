@@ -9,8 +9,6 @@
  * literal — observable programmatically via this export and in the field via
  * `window.__PHLIX_UI_VERSION__` (stamped by `createPhlixApp`).
  *
- * Source file.
- *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin users + profiles endpoints — account status, users, profiles and parental-control shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

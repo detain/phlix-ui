@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * usePreconnect (R6.2c) — warm cross-origin connections to asset hosts.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

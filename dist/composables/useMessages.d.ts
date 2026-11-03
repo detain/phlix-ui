@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useMessages — the i18n-readiness composable resolving strings through the catalog (R6.5c).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

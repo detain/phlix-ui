@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin metrics endpoints — snapshot, history-bucket, connection and per-route shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

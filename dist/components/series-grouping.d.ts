@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * series-grouping (R-series) — pure helpers turning flat series children into season groups.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

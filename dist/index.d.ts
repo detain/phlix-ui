@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * The package barrel — the public surface of @phlix/ui: every export a host app consumes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Pinia toast store — the notification queue, tones and auto-dismiss.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

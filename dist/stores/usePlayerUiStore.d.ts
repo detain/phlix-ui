@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * usePlayerUiStore (S34) — surfaces the in-window player’s theater state to the app shell.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

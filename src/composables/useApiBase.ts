@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useApiBase / useMediaApiBase — resolve the provided string-or-ref API bases inside components.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

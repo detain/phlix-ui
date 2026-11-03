@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Visual-harness entry mounting the media-detail screen for the playwright visual suite.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

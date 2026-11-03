@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin webhook endpoints — subscription rows, the event catalog and test-fire results.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

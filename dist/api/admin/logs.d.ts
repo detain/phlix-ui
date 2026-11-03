@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin log endpoints — log-file listing and tail shapes for the logs viewer.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

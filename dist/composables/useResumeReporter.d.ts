@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useResumeReporter — reports playback position to the server, incl. the final position on unmount (S506).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

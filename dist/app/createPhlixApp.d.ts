@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * createPhlixApp — the app factory: router, guards (public/auth/connect), menus and provider wiring.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

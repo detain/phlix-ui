@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useOnline — reactive `navigator.onLine`, SSR-safe (R5.3a).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

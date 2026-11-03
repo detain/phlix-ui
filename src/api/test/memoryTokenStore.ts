@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * In-memory TokenStore double + fetch-maker for suites that must not touch localStorage.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

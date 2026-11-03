@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * ApiClient — the REST transport: auth headers, token-store custody, error-envelope parsing and refresh.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

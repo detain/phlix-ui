@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin transcoding endpoints — hardware-accelerator probe results and preferences.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

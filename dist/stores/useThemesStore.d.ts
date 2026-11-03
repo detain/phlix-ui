@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useThemesStore (S86) — the server’s theme catalogue, fetched once per session (idempotent load).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

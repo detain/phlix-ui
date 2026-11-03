@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * LibraryQuery — the filter/sort params for library pages, incl. metadata-match status.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

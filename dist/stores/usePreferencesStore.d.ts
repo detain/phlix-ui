@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Pinia preferences store — theme, density, motion, view mode, filter presets and captions.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

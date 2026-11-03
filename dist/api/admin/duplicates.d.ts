@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * AdminDuplicatesApi (Feature 1.7) — typed wrapper over the admin duplicate-merge endpoints.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

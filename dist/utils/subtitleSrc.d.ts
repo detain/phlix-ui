@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * subtitleSrc (S242) — resolve payload-supplied WebVTT sidecar URLs against the payload’s base.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

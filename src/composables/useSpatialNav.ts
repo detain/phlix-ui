@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useSpatialNav — the TV/remote D-pad navigation engine; a no-op while gated off.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

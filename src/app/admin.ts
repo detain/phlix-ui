@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin routes + menu seam (RA/H0) — opt-in per-consumer admin page groups, labels and route building.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

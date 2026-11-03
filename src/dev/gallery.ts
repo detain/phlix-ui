@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Dev entry for the primitive gallery (R0.7) — served by vite via gallery.html.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

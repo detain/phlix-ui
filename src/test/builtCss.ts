@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Test support (S232) — read the SHIPPED stylesheet for CSS assertions, not the SFC source text.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

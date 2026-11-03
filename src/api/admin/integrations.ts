@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * AdminIntegrationsApi (RA.6) — typed wrapper over the admin integrations endpoints (Arr sync + auth providers).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

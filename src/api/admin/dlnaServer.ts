@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin DLNA CDS server status and control endpoints.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

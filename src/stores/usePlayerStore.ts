@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Pinia player store — queue, current item, resume thresholds and playback position.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

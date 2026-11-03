@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin backup endpoints — typed rows and inputs for listing, creating and scheduling server backups.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

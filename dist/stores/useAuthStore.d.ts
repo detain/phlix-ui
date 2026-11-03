@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Pinia auth store — session, sign-in/out, profile and token handoff around ApiClient.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * v-focusable — marks spatial-navigation targets for the TV D-pad engine; inert on desktop.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

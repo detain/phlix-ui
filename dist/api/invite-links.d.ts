@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * InviteLinksApi — typed surface over the invite-link endpoints (create, list, revoke).
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

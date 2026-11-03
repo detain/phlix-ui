@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * episode-order (U2) — pure helpers for one ordered playback sequence across a series’ seasons.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

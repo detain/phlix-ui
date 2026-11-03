@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * MCP token endpoints (S62 API, S243 UI) — hub personal-access-token CRUD, scopes and labels.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Watch-history admin endpoints — recently-watched rows and per-user history shapes.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

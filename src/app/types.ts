@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * PhlixAppConfig + shell config types — menu items, branding, home rows and connect candidates.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

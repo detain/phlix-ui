@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Admin collections endpoints — typed collection rows and CRUD inputs for the admin surface.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

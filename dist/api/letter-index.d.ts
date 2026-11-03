@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * Letter index — fetches one A–Z bucket (letter, offset, count) for library navigation.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

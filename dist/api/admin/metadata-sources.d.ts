@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * AdminMetadataSourcesApi (Feature 3.6) — typed wrapper over the admin metadata-source listing endpoint.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

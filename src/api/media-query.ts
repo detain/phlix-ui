@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * buildMediaQuery (R2.4) — serializes a library query into the `GET /api/v1/media` query string.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

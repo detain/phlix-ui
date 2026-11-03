@@ -1,5 +1,5 @@
 /**
- * Source file.
+ * useResolvePlayable (Feature 9) — turn a Play-pressed item into the item the player route actually opens.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
