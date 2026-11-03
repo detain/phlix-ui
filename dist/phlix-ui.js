@@ -1,22 +1,22 @@
-import { r as e } from "./AuthField-DelkpiPf.js";
+import { r as e } from "./AuthField-wAx1Mbzu.js";
 import { t } from "./IconButton-oCt4k5-3.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-FI3Uj9O8.js";
 import { n as c, t as l } from "./Icon-55iG1rR7.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-DrDMAwjz.js";
-import { i as h, n as g, r as _, t as v } from "./useMessages-D1_IM8ik.js";
-import { t as y } from "./useAuthStore-QU98jdIF.js";
-import { n as b, r as x, t as S } from "./useProfileStore-DImuYbKO.js";
+import { i as h, n as g, r as _, t as v } from "./useMessages-C3NKYi4Y.js";
+import { t as y } from "./useAuthStore-BUDbKWr8.js";
+import { n as b, r as x, t as S } from "./useProfileStore-veNgSDwm.js";
 import { i as C, n as w, r as T, t as E } from "./useImageSrc-CSM61b-l.js";
 import { i as ee, n as D, r as te, t as ne } from "./usePlayerStore-B7mnqLe3.js";
-import { n as re, t as ie } from "./ThumbRating-DQSqEOKH.js";
+import { n as re, t as ie } from "./ThumbRating-DzitBKVa.js";
 import { n as O, r as ae, t as oe } from "./useApiBase-DXTBY90j.js";
 import { i as se, o as ce, s as le } from "./shortcuts-BPpemCee.js";
-import { t as ue } from "./NetworkHealthIndicator-mSb4WoWe.js";
+import { t as ue } from "./NetworkHealthIndicator-BUGOrBu3.js";
 import { t as de } from "./useToastStore-Bu-iYU7r.js";
-import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-DkQQvyeY.js";
+import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-CGxGZ1xe.js";
 import { i as Ie, n as Le, r as Re, t as ze } from "./Kbd-B47x87jw.js";
 import { a as Be, i as Ve, n as He, o as Ue, r as We, t as Ge } from "./useLibrariesStore-DC6tlBJW.js";
-import { n as Ke, t as qe } from "./HomeRow-ByKZV_lq.js";
+import { n as Ke, t as qe } from "./HomeRow-BqWlUIiN.js";
 import { t as Je } from "./safeHref-CxjNgvYf.js";
 import { t as k } from "./EmptyState-DjfWh3kt.js";
 import { t as A } from "./Button-BLpPomsd.js";
@@ -28,21 +28,21 @@ import { t as M } from "./Badge-B_3IbdKb.js";
 import { t as jt } from "./Slider-Bj5BaBUu.js";
 import { t as Mt } from "./Switch-C607L4Vu.js";
 import { t as Nt } from "./Chip-eO7BYLEk.js";
-import { t as Pt } from "./Select-DgyDgK6d.js";
-import { t as Ft } from "./Combobox-D6YrmI8p.js";
-import { t as It } from "./Modal-CHIcB_qP.js";
-import { t as Lt } from "./ConfirmDialog-AvhwRU2h.js";
+import { t as Pt } from "./Select-CitBhHTF.js";
+import { t as Ft } from "./Combobox-DMDbFHSn.js";
+import { t as It } from "./Modal-DuyMtvc8.js";
+import { t as Lt } from "./ConfirmDialog-k-XTVqUk.js";
 import { t as Rt } from "./Tooltip-CaS-pDMB.js";
 import { t as N } from "./Skeleton-DDhrDRE7.js";
-import { t as zt } from "./Spinner-D5QuBNcY.js";
+import { t as zt } from "./Spinner-k0CA1X-_.js";
 import { t as Bt } from "./PageHint-BNwIsAdC.js";
 import { t as Vt } from "./Tabs-Dd1Z-m2P.js";
 import { t as Ht } from "./Menu-D1MRZDZu.js";
 import { t as Ut } from "./HelpText-Ctv3rP_Q.js";
-import { o as Wt, t as Gt } from "./MediaCard-D17yKYuw.js";
-import { t as Kt } from "./MediaGrid-CpPhlO6D.js";
-import { t as qt } from "./MediaRow-CL2rNEop.js";
-import { n as Jt, t as Yt } from "./metadata-sources-BjdyYDQ0.js";
+import { o as Wt, t as Gt } from "./MediaCard-D3Xh0GTJ.js";
+import { t as Kt } from "./MediaGrid-B1gMzjQF.js";
+import { t as qt } from "./MediaRow-bbWKEKTv.js";
+import { n as Jt, t as Yt } from "./metadata-sources-Dz-LuXDT.js";
 import { n as Xt, t as Zt } from "./logs-_zKk3C5E.js";
 import { t as Qt } from "./dashboard-BwN19iSq.js";
 import { a as $t, c as en, i as tn, l as nn, n as rn, o as an, r as on, s as sn, t as cn } from "./users-Dyp9EnDL.js";
@@ -63,13 +63,13 @@ import { i as On, n as kn, r as An, t as jn } from "./plugins-kZa-PXB4.js";
 import { n as Mn, r as Nn, t as Pn } from "./maintenance-CBNkxYQh.js";
 import { t as Fn } from "./hubDashboard-DCTkP-u4.js";
 import { n as In, t as Ln } from "./media-query-D7hrCu8r.js";
-import { t as Rn } from "./LoginForm-ZkDmiwvV.js";
-import { t as zn } from "./SignupForm-C0ySu-ZJ.js";
+import { t as Rn } from "./LoginForm-pNSjZK5z.js";
+import { t as zn } from "./SignupForm-j_w1iFfO.js";
 import { t as P } from "./hubHelpLinks-C396-WBg.js";
 import { a as Bn, i as Vn, n as Hn, o as Un, r as Wn, s as Gn, t as Kn } from "./plural-B3O2rVPV.js";
 import { n as qn, t as Jn } from "./debounce-BnRz-bwe.js";
 import { t as Yn } from "./Input-BsvG-hIx.js";
-import { i as Xn, n as Zn, r as Qn, t as $n } from "./MusicAlbumCard-DVMs27Pm.js";
+import { i as Xn, n as Zn, r as Qn, t as $n } from "./MusicAlbumCard-DcFL_nF6.js";
 import { t as er } from "./useMediaStore-DHwqPYF_.js";
 import { Fragment as F, Teleport as tr, Transition as nr, TransitionGroup as rr, computed as I, createApp as ir, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as ar, createTextVNode as V, createVNode as H, defineAsyncComponent as or, defineComponent as U, getCurrentScope as sr, inject as cr, nextTick as lr, normalizeClass as W, normalizeStyle as ur, onBeforeUnmount as dr, onMounted as G, onScopeDispose as fr, onUnmounted as pr, openBlock as K, provide as mr, readonly as hr, ref as q, renderList as J, renderSlot as gr, resolveComponent as _r, resolveDynamicComponent as vr, toDisplayString as Y, toValue as yr, unref as X, useId as br, vModelSelect as xr, vModelText as Sr, vShow as Cr, watch as Z, watchEffect as wr, withCtx as Q, withDirectives as Tr, withModifiers as Er } from "vue";
 import { createPinia as Dr, defineStore as Or } from "pinia";
@@ -910,7 +910,7 @@ var ha = ["src", "alt"], ga = { class: "brand-wordmark" }, _a = {
 		ta();
 		let n = Ie(), r = $(), i = Nr(), { t: a } = v(), o = ce(), s = I(() => i.meta?.fullBleed === !0 && o.theaterActive);
 		na();
-		let c = or(() => import("./CommandPalette-RyCwpJ7M.js")), u = q(!1);
+		let c = or(() => import("./CommandPalette-Bzu5HeyJ.js")), u = q(!1);
 		Z(() => n.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1268,111 +1268,111 @@ function so(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-DLFTdRY6.js")
+			component: () => import("./BrowsePage-B9f6ADCP.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-922tzt6k.js")
+			component: () => import("./MediaDetailPage-DVGHlgKW.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-RisA7Eim.js")
+			component: () => import("./SeasonPage-CuiQ22s3.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-B_ioeAvO.js")
+			component: () => import("./LibraryPage-DopBn3cH.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-3ihW8ICr.js")
+			component: () => import("./PlayerPage-DOvXJX5V.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-C6gywOAR.js")
+			component: () => import("./LoginPage-BixxPTy7.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CRrpixaT.js")
+			component: () => import("./SignupPage-BRIO_JX5.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-B7KiMS2N.js")
+			component: () => import("./ConnectPage-Cbf6I4f9.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-DYjuNLDM.js")
+			component: () => import("./SettingsPage-Dl6wkl-e.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-DraFDevG.js")
+			component: () => import("./ExplorePage-DfR27xFq.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-B9APi1TL.js")
+			component: () => import("./RecommendationsPage-BsV3xV-b.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-c9CTCQ-h.js")
+			component: () => import("./WatchHistoryPage-Dx2p1-4y.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-BSn82ZdQ.js")
+			component: () => import("./SyncPlayPage-Dm82W8iV.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-CUJG9ZIe.js")
+			component: () => import("./MusicLibraryPage-B_b_KUMA.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-XEz2dv5Y.js")
+			component: () => import("./ParentalControlsPage-Co_4t-sO.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-BsKbitG6.js")
+			component: () => import("./ProfilesPage-eNKB3xVN.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-DkX7ybKg.js")
+			component: () => import("./PlaylistsPage-v9o7VZ0J.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-DpIk-lDQ.js")
+			component: () => import("./PlaylistDetailPage-CcRL5yuI.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Za}`,
 		name: Xa,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-A47mw9sY.js")
+		component: () => import("./McpTokensPage-BN5atpNG.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1644,25 +1644,25 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-C1G_ZJ84.js")
+	component: () => import("./DashboardPage-CIxZhSOM.js")
 }, wo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-KMK79R7N.js")
+	component: () => import("./UsersPage-BsnX8ReK.js")
 }, To = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-Q6y-CoGE.js")
+	component: () => import("./LogsPage-DLN9djf-.js")
 }, Eo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-B9oLS4BE.js")
+	component: () => import("./WebhooksPage-yO6CieZL.js")
 }, Do = {
 	name: "admin-services",
 	path: "services",
@@ -1674,13 +1674,13 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-BGGyT_nh.js")
+	component: () => import("./IntegrationsPage-C9Ph82LW.js")
 }, ko = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-BL-PDVwO.js")
+	component: () => import("./BackupPage-f5duoRc1.js")
 }, Ao = {
 	name: "admin-cast",
 	path: "cast-devices",
@@ -1698,19 +1698,19 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-BuZSPv2q.js")
+	component: () => import("./RemoteAccessPage-D18UCjr9.js")
 }, No = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-CH7fw79r.js")
+	component: () => import("./LiveTvPage-BJi-Qifk.js")
 }, Po = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-PYwnX9ej.js")
+	component: () => import("./CollectionsPage-DoE3MZ2b.js")
 }, Fo = {
 	name: "admin-history",
 	path: "history",
@@ -1722,43 +1722,43 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-BLWWbz1O.js")
+	component: () => import("./SyncPlayPage-422yrXHX.js")
 }, Lo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-tiLvyNBs.js")
+	component: () => import("./LibrariesPage-DEKOrZwR.js")
 }, Ro = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-CmXi_CLL.js")
+	component: () => import("./DuplicatesPage-CCXr5s_W.js")
 }, zo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-BFIhKdiX.js")
+	component: () => import("./PluginsPage-CjT-xa_z.js")
 }, Bo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-sQQPiEZy.js")
+	component: () => import("./TasksPage-CroKMU4L.js")
 }, Vo = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-By5CQcG8.js")
+	component: () => import("./TranscodingSettingsPage-DLpHESpg.js")
 }, Ho = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-BmjUJ1Zb.js")
+	component: () => import("./SettingsPage-DDBwS93d.js")
 }, Uo = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1770,7 +1770,7 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-CTZLCSmb.js").then((e) => e.t)
+	component: () => import("./MetricsPage-CvJeeEZv.js").then((e) => e.t)
 }, Go = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -3344,8 +3344,8 @@ var Fs = {
 	__name: "ManageSharesPage",
 	props: { client: {} },
 	setup(e) {
-		let t = e.client ?? it, n = de(), r = q([]), i = q(!0), a = q(null);
-		async function o(e = !1) {
+		let t = e.client ?? it, n = de(), r = q([]), i = q(!0), a = q(null), { t: o } = v(), s = q(null);
+		async function c(e = !1) {
 			e && (i.value = !0), a.value = null;
 			try {
 				let e = await t.get("/api/v1/me/shares/");
@@ -3364,28 +3364,34 @@ var Fs = {
 				e && (i.value = !1);
 			}
 		}
-		async function s(e) {
+		async function l(e) {
 			try {
-				await t.delete(`/api/v1/me/shares/${e}`), n.success("Share revoked."), await o();
+				await t.delete(`/api/v1/me/shares/${e}`), n.success(o("shares.revoked")), await c();
 			} catch (e) {
-				n.error(j(e, "Failed to revoke share."));
+				n.error(j(e, o("shares.revokeFailed")));
+			} finally {
+				s.value = null;
 			}
 		}
-		function c(e) {
+		async function u() {
+			let e = s.value;
+			e !== null && await l(e);
+		}
+		function d(e) {
 			return e ? new Date(e).toLocaleString() : "—";
 		}
-		function l(e) {
+		function f(e) {
 			return e ? new Date(e) < /* @__PURE__ */ new Date() : !1;
 		}
-		function u(e) {
+		function p(e) {
 			switch (e) {
 				case "read": return "info";
 				case "write": return "success";
 				default: return "neutral";
 			}
 		}
-		return G(() => o(!0)), (e, t) => (K(), z("section", Rl, [
-			t[6] ||= B("header", { class: "shares__head" }, [B("h1", {
+		return G(() => c(!0)), (e, t) => (K(), z("section", Rl, [
+			t[7] ||= B("header", { class: "shares__head" }, [B("h1", {
 				id: "shares-heading",
 				class: "shares__title"
 			}, "Manage Shares"), B("p", { class: "shares__subtitle" }, "View and manage your shared libraries.")], -1),
@@ -3393,7 +3399,7 @@ var Fs = {
 				links: X(P)["manage-shares"].links,
 				details: X(P)["manage-shares"].details
 			}, {
-				default: Q(() => [...t[1] ||= [
+				default: Q(() => [...t[2] ||= [
 					V(" The libraries you have shared with other people, with the permission you granted and any expiry. ", -1),
 					B("strong", null, "Revoke", -1),
 					V(" ends a share immediately. Libraries others have shared with you appear under ", -1),
@@ -3415,9 +3421,9 @@ var Fs = {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "rewind",
-					onClick: t[0] ||= (e) => o(!0)
+					onClick: t[0] ||= (e) => c(!0)
 				}, {
-					default: Q(() => [...t[2] ||= [V("Retry", -1)]]),
+					default: Q(() => [...t[3] ||= [V("Retry", -1)]]),
 					_: 1
 				})]),
 				_: 1
@@ -3426,7 +3432,7 @@ var Fs = {
 				icon: "bookmark",
 				title: "No library shares",
 				description: "Libraries you share with others will appear here."
-			})) : (K(), z("div", Bl, [B("table", Vl, [t[5] ||= B("thead", null, [B("tr", null, [
+			})) : (K(), z("div", Bl, [B("table", Vl, [t[6] ||= B("thead", null, [B("tr", null, [
 				B("th", { scope: "col" }, "Library"),
 				B("th", { scope: "col" }, "Shared with"),
 				B("th", { scope: "col" }, "Permissions"),
@@ -3439,34 +3445,48 @@ var Fs = {
 			])], -1), B("tbody", null, [(K(!0), z(F, null, J(r.value, (e) => (K(), z("tr", { key: e.id }, [
 				B("td", null, [B("span", Hl, Y(e.library_name), 1)]),
 				B("td", null, Y(e.shared_with), 1),
-				B("td", null, [H(M, { tone: u(e.permissions) }, {
+				B("td", null, [H(M, { tone: p(e.permissions) }, {
 					default: Q(() => [V(Y(e.permissions), 1)]),
 					_: 2
 				}, 1032, ["tone"])]),
-				B("td", Ul, Y(c(e.created_at)), 1),
+				B("td", Ul, Y(d(e.created_at)), 1),
 				B("td", Wl, [B("span", {
 					class: "shares__expires",
 					"data-testid": `expires-${e.id}`
-				}, [V(Y(c(e.expires_at)) + " ", 1), l(e.expires_at) ? (K(), L(M, {
+				}, [V(Y(d(e.expires_at)) + " ", 1), f(e.expires_at) ? (K(), L(M, {
 					key: 0,
 					tone: "error"
 				}, {
-					default: Q(() => [...t[3] ||= [V("Expired", -1)]]),
+					default: Q(() => [...t[4] ||= [V("Expired", -1)]]),
 					_: 1
 				})) : R("", !0)], 8, Gl)]),
 				B("td", null, [B("div", Kl, [H(A, {
 					variant: "ghost",
 					size: "sm",
 					"aria-label": `Revoke share of ${e.library_name} with ${e.shared_with}`,
-					onClick: (t) => s(e.id)
+					onClick: (t) => s.value = e.id
 				}, {
-					default: Q(() => [...t[4] ||= [V(" Revoke ", -1)]]),
+					default: Q(() => [...t[5] ||= [V(" Revoke ", -1)]]),
 					_: 1
 				}, 8, ["aria-label", "onClick"])])])
-			]))), 128))])])]))
+			]))), 128))])])])),
+			H(Lt, {
+				open: s.value !== null,
+				message: X(o)("shares.revokeConfirm"),
+				"confirm-label": X(o)("shares.revokeLabel"),
+				danger: "",
+				"onUpdate:open": t[1] ||= (e) => {
+					e || (s.value = null);
+				},
+				onConfirm: u
+			}, null, 8, [
+				"open",
+				"message",
+				"confirm-label"
+			])
 		]));
 	}
-}), [["__scopeId", "data-v-68388211"]]), Jl = {
+}), [["__scopeId", "data-v-8ea95342"]]), Jl = {
 	class: "shared-with-me",
 	"aria-labelledby": "shared-with-me-heading"
 }, Yl = {
@@ -4026,25 +4046,25 @@ var Fs = {
 		}, {
 			value: "readwrite",
 			label: "Read/Write"
-		}], r = e.client ?? it, i = new Lu(r), a = new Ru(r), o = new zu(r), s = de(), c = q([]), l = q([]), u = q(!0), d = q(null), f = q(!1), p = q(!1), m = q(null), h = q(null), g = q(null), _ = q(null), v = q("read"), y = q(1), b = q(604800), x = q([]), S = q(!1), C = q(null), w = I(() => {
+		}], r = e.client ?? it, i = new Lu(r), a = new Ru(r), o = new zu(r), s = de(), c = q([]), l = q([]), u = q(!0), d = q(null), { t: f } = v(), p = q(null), m = q(!1), h = q(!1), g = q(null), _ = q(null), y = q(null), b = q(null), x = q("read"), S = q(1), C = q(604800), w = q([]), T = q(!1), E = q(null), ee = I(() => {
 			let e = /* @__PURE__ */ new Map();
 			for (let t of l.value) t.serverId && e.set(t.serverId, t.serverName ?? t.serverId);
 			return e;
-		}), T = I(() => {
+		}), D = I(() => {
 			let e = /* @__PURE__ */ new Map();
-			for (let t of x.value) e.set(t.id, t.name);
+			for (let t of w.value) e.set(t.id, t.name);
 			return e;
-		}), E = I(() => l.value.filter((e) => !!e.serverId).map((e) => ({
+		}), te = I(() => l.value.filter((e) => !!e.serverId).map((e) => ({
 			value: e.serverId,
 			label: e.serverName ?? e.serverId
-		}))), ee = I(() => [{
+		}))), ne = I(() => [{
 			value: "",
 			label: "All Libraries"
-		}, ...x.value.map((e) => ({
+		}, ...w.value.map((e) => ({
 			value: e.id,
 			label: e.name
 		}))]);
-		async function D(e = !1) {
+		async function re(e = !1) {
 			e && (u.value = !0), d.value = null;
 			try {
 				let e = await i.list();
@@ -4055,7 +4075,7 @@ var Fs = {
 				e && (u.value = !1);
 			}
 		}
-		async function te() {
+		async function ie() {
 			try {
 				let e = await a.list();
 				l.value = e.servers ?? [];
@@ -4063,136 +4083,142 @@ var Fs = {
 				s.error(j(e, "Failed to load servers."));
 			}
 		}
-		async function ne(e) {
-			S.value = !0, _.value = null;
+		async function O(e) {
+			T.value = !0, b.value = null;
 			try {
 				let t = await o.listByServer(e);
-				x.value = t.libraries ?? [];
+				w.value = t.libraries ?? [];
 			} catch (e) {
 				s.error(j(e, "Failed to load libraries."));
 			} finally {
-				S.value = !1;
+				T.value = !1;
 			}
 		}
-		async function re() {
-			if (!g.value) s.error("Select a server.");
+		async function ae() {
+			if (!y.value) s.error("Select a server.");
 			else {
-				p.value = !0;
+				h.value = !0;
 				try {
 					let e = await i.create({
-						server_id: g.value,
-						library_id: _.value || null,
-						permission: v.value,
-						max_uses: y.value,
-						expires_in: b.value
+						server_id: y.value,
+						library_id: b.value || null,
+						permission: x.value,
+						max_uses: S.value,
+						expires_in: C.value
 					});
-					m.value = e;
+					g.value = e;
 					try {
 						await navigator.clipboard.writeText(e.url), s.success("Invite link created and copied to clipboard.");
 					} catch {
 						s.success("Invite link created.");
 					}
-					await D();
+					await re();
 				} catch (e) {
 					s.error(j(e, "Failed to create invite link."));
 				} finally {
-					p.value = !1;
+					h.value = !1;
 				}
 			}
 		}
-		async function ie(e) {
+		async function oe(e) {
 			try {
-				await i.revoke(e), s.success("Invite link revoked."), await D();
+				await i.revoke(e), s.success(f("invite.revoked")), await re();
 			} catch (e) {
-				s.error(j(e, "Failed to revoke invite link."));
+				s.error(j(e, f("invite.revokeFailed")));
+			} finally {
+				p.value = null;
 			}
 		}
-		async function O(e) {
+		async function se() {
+			let e = p.value;
+			e !== null && await oe(e);
+		}
+		async function ce(e) {
 			if (e.url !== null) {
-				C.value = e.id;
+				E.value = e.id;
 				try {
 					await navigator.clipboard.writeText(e.url), s.success("Link copied to clipboard.");
 				} catch {
 					s.error("Failed to copy link.");
 				} finally {
-					C.value = null;
+					E.value = null;
 				}
 			}
 		}
-		async function ae() {
-			if (m.value) {
-				h.value = "url";
+		async function le() {
+			if (g.value) {
+				_.value = "url";
 				try {
-					await navigator.clipboard.writeText(m.value.url), s.success("Invite URL copied to clipboard.");
+					await navigator.clipboard.writeText(g.value.url), s.success("Invite URL copied to clipboard.");
 				} catch {
 					s.error("Failed to copy URL.");
 				} finally {
-					h.value = null;
+					_.value = null;
 				}
 			}
 		}
-		async function oe() {
-			let e = m.value?.token;
+		async function ue() {
+			let e = g.value?.token;
 			if (e) {
-				h.value = "token";
+				_.value = "token";
 				try {
 					await navigator.clipboard.writeText(e), s.success("Invite token copied to clipboard.");
 				} catch {
 					s.error("Failed to copy token.");
 				} finally {
-					h.value = null;
+					_.value = null;
 				}
 			}
 		}
-		async function se() {
-			le(), f.value = !0, await te();
+		async function fe() {
+			me(), m.value = !0, await ie();
 		}
-		function ce() {
-			f.value = !1, le();
+		function pe() {
+			m.value = !1, me();
 		}
-		function le() {
-			m.value = null, h.value = null, g.value = null, _.value = null, v.value = "read", y.value = 1, b.value = 604800, x.value = [];
+		function me() {
+			g.value = null, _.value = null, y.value = null, b.value = null, x.value = "read", S.value = 1, C.value = 604800, w.value = [];
 		}
-		function ue(e) {
-			e ? ne(String(e)) : (x.value = [], _.value = null);
-		}
-		function fe(e) {
-			return w.value.get(e) ?? e;
-		}
-		function pe(e) {
-			return e === null ? "All Libraries" : T.value.get(e) ?? e;
-		}
-		function me(e) {
-			return e === null ? "Never" : (/* @__PURE__ */ new Date(e * 1e3)).toLocaleDateString();
-		}
-		function he(e, t) {
-			return t === 0 ? `${e} / Unlimited` : `${e} / ${t}`;
+		function he(e) {
+			e ? O(String(e)) : (w.value = [], b.value = null);
 		}
 		function ge(e) {
+			return ee.value.get(e) ?? e;
+		}
+		function _e(e) {
+			return e === null ? "All Libraries" : D.value.get(e) ?? e;
+		}
+		function ve(e) {
+			return e === null ? "Never" : (/* @__PURE__ */ new Date(e * 1e3)).toLocaleDateString();
+		}
+		function ye(e, t) {
+			return t === 0 ? `${e} / Unlimited` : `${e} / ${t}`;
+		}
+		function be(e) {
 			switch (e) {
 				case "read": return "info";
 				case "readwrite": return "success";
 				default: return "neutral";
 			}
 		}
-		return G(() => D(!0)), (e, r) => (K(), z("section", Bu, [
-			B("header", Vu, [r[7] ||= B("div", { class: "invite-links__head-text" }, [B("h1", {
+		return G(() => re(!0)), (e, r) => (K(), z("section", Bu, [
+			B("header", Vu, [r[8] ||= B("div", { class: "invite-links__head-text" }, [B("h1", {
 				id: "invite-links-heading",
 				class: "invite-links__title"
 			}, "Invite Links"), B("p", { class: "invite-links__subtitle" }, "Create and manage invite links for sharing access to your servers.")], -1), H(A, {
 				variant: "solid",
 				size: "md",
 				"left-icon": "plus",
-				onClick: se
+				onClick: fe
 			}, {
-				default: Q(() => [...r[6] ||= [V(" New Invite ", -1)]]),
+				default: Q(() => [...r[7] ||= [V(" New Invite ", -1)]]),
 				_: 1
 			})]),
 			H(Bt, {
 				links: X(P)["invite-links"].links,
 				details: X(P)["invite-links"].details
 			}, {
-				default: Q(() => [...r[8] ||= [
+				default: Q(() => [...r[9] ||= [
 					V(" Give someone access to a library on one of your servers by sending them a URL. ", -1),
 					B("strong", null, "New Invite", -1),
 					V(" creates a link scoped to a server and permission, with an optional use limit and expiry. ", -1),
@@ -4224,9 +4250,9 @@ var Fs = {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "rewind",
-					onClick: r[0] ||= (e) => D(!0)
+					onClick: r[0] ||= (e) => re(!0)
 				}, {
-					default: Q(() => [...r[9] ||= [V("Retry", -1)]]),
+					default: Q(() => [...r[10] ||= [V("Retry", -1)]]),
 					_: 1
 				})]),
 				_: 1
@@ -4239,48 +4265,48 @@ var Fs = {
 				key: e.id,
 				class: "invite-link-card"
 			}, [B("div", Wu, [B("div", Gu, [
-				B("span", Ku, Y(fe(e.server_id)), 1),
-				r[10] ||= B("span", { class: "invite-link-card__separator" }, "›", -1),
-				B("span", qu, Y(pe(e.library_id)), 1)
+				B("span", Ku, Y(ge(e.server_id)), 1),
+				r[11] ||= B("span", { class: "invite-link-card__separator" }, "›", -1),
+				B("span", qu, Y(_e(e.library_id)), 1)
 			]), B("div", Ju, [
-				H(M, { tone: ge(e.permission) }, {
+				H(M, { tone: be(e.permission) }, {
 					default: Q(() => [V(Y(e.permission), 1)]),
 					_: 2
 				}, 1032, ["tone"]),
-				B("span", Yu, Y(he(e.use_count, e.max_uses)) + " uses", 1),
-				r[11] ||= B("span", { class: "invite-link-card__divider" }, "·", -1),
-				B("span", Xu, " Expires " + Y(me(e.expires_at)), 1)
+				B("span", Yu, Y(ye(e.use_count, e.max_uses)) + " uses", 1),
+				r[12] ||= B("span", { class: "invite-link-card__divider" }, "·", -1),
+				B("span", Xu, " Expires " + Y(ve(e.expires_at)), 1)
 			])]), B("div", Zu, [e.url ? (K(), L(A, {
 				key: 0,
 				variant: "ghost",
 				size: "sm",
-				loading: C.value === e.id,
-				onClick: (t) => O(e)
+				loading: E.value === e.id,
+				onClick: (t) => ce(e)
 			}, {
-				default: Q(() => [...r[12] ||= [V(" Copy URL ", -1)]]),
+				default: Q(() => [...r[13] ||= [V(" Copy URL ", -1)]]),
 				_: 1
 			}, 8, ["loading", "onClick"])) : (K(), z("span", Qu, "URL shown only at creation")), H(A, {
 				variant: "ghost",
 				size: "sm",
-				onClick: (t) => ie(e.id)
+				onClick: (t) => p.value = e.id
 			}, {
-				default: Q(() => [...r[13] ||= [V(" Revoke ", -1)]]),
+				default: Q(() => [...r[14] ||= [V(" Revoke ", -1)]]),
 				_: 1
 			}, 8, ["onClick"])])]))), 128))])),
-			(K(), L(tr, { to: "body" }, [f.value ? (K(), z("div", {
+			(K(), L(tr, { to: "body" }, [m.value ? (K(), z("div", {
 				key: 0,
 				class: "modal-backdrop",
-				onClick: Er(ce, ["self"])
+				onClick: Er(pe, ["self"])
 			}, [B("div", $u, [
-				B("header", { class: "modal__header" }, [r[15] ||= B("h2", {
+				B("header", { class: "modal__header" }, [r[16] ||= B("h2", {
 					id: "create-modal-title",
 					class: "modal__title"
 				}, "New Invite Link", -1), B("button", {
 					type: "button",
 					class: "modal__close",
 					"aria-label": "Close",
-					onClick: ce
-				}, [...r[14] ||= [B("svg", {
+					onClick: pe
+				}, [...r[15] ||= [B("svg", {
 					width: "20",
 					height: "20",
 					viewBox: "0 0 24 24",
@@ -4288,126 +4314,140 @@ var Fs = {
 					stroke: "currentColor",
 					"stroke-width": "2"
 				}, [B("path", { d: "M18 6L6 18M6 6l12 12" })], -1)]])]),
-				B("div", ed, [m.value ? (K(), z("div", td, [
-					r[20] ||= B("p", {
+				B("div", ed, [g.value ? (K(), z("div", td, [
+					r[21] ||= B("p", {
 						class: "invite-result__warning",
 						role: "alert"
 					}, [B("strong", null, "This is shown only once."), V(" The hub keeps just a one-way hash of the secret — once you close this dialog the URL can never be recovered. Copy it now and store it somewhere safe. ")], -1),
-					B("div", nd, [r[17] ||= B("span", {
+					B("div", nd, [r[18] ||= B("span", {
 						class: "form-label",
 						id: "created-url-label"
-					}, "Invite URL", -1), B("div", rd, [B("code", id, Y(m.value.url), 1), H(A, {
+					}, "Invite URL", -1), B("div", rd, [B("code", id, Y(g.value.url), 1), H(A, {
 						variant: "ghost",
 						size: "sm",
-						loading: h.value === "url",
-						onClick: ae
+						loading: _.value === "url",
+						onClick: le
 					}, {
-						default: Q(() => [...r[16] ||= [V(" Copy ", -1)]]),
+						default: Q(() => [...r[17] ||= [V(" Copy ", -1)]]),
 						_: 1
 					}, 8, ["loading"])])]),
-					m.value.token ? (K(), z("div", ad, [r[19] ||= B("span", {
+					g.value.token ? (K(), z("div", ad, [r[20] ||= B("span", {
 						class: "form-label",
 						id: "created-token-label"
-					}, "Secret token", -1), B("div", od, [B("code", sd, Y(m.value.token), 1), H(A, {
+					}, "Secret token", -1), B("div", od, [B("code", sd, Y(g.value.token), 1), H(A, {
 						variant: "ghost",
 						size: "sm",
-						loading: h.value === "token",
-						onClick: oe
+						loading: _.value === "token",
+						onClick: ue
 					}, {
-						default: Q(() => [...r[18] ||= [V(" Copy ", -1)]]),
+						default: Q(() => [...r[19] ||= [V(" Copy ", -1)]]),
 						_: 1
 					}, 8, ["loading"])])])) : R("", !0)
 				])) : (K(), z("div", cd, [
-					B("div", ld, [r[21] ||= B("label", {
+					B("div", ld, [r[22] ||= B("label", {
 						class: "form-label",
 						for: "server-select"
 					}, [V("Server "), B("span", { class: "form-required" }, "*")], -1), H(Pt, {
 						id: "server-select",
-						modelValue: g.value,
-						"onUpdate:modelValue": r[1] ||= (e) => g.value = e,
-						options: E.value,
+						modelValue: y.value,
+						"onUpdate:modelValue": r[1] ||= (e) => y.value = e,
+						options: te.value,
 						placeholder: "Select a server",
-						onChange: ue
+						onChange: he
 					}, null, 8, ["modelValue", "options"])]),
-					B("div", ud, [r[22] ||= B("label", {
+					B("div", ud, [r[23] ||= B("label", {
 						class: "form-label",
 						for: "library-select"
 					}, "Library", -1), H(Pt, {
 						id: "library-select",
-						modelValue: _.value,
-						"onUpdate:modelValue": r[2] ||= (e) => _.value = e,
-						options: ee.value,
-						disabled: !g.value || S.value,
-						placeholder: S.value ? "Loading..." : "All Libraries"
+						modelValue: b.value,
+						"onUpdate:modelValue": r[2] ||= (e) => b.value = e,
+						options: ne.value,
+						disabled: !y.value || T.value,
+						placeholder: T.value ? "Loading..." : "All Libraries"
 					}, null, 8, [
 						"modelValue",
 						"options",
 						"disabled",
 						"placeholder"
 					])]),
-					B("div", dd, [r[23] ||= B("label", {
+					B("div", dd, [r[24] ||= B("label", {
 						class: "form-label",
 						for: "permission-select"
 					}, "Permission", -1), H(Pt, {
 						id: "permission-select",
-						modelValue: v.value,
-						"onUpdate:modelValue": r[3] ||= (e) => v.value = e,
+						modelValue: x.value,
+						"onUpdate:modelValue": r[3] ||= (e) => x.value = e,
 						options: n
 					}, null, 8, ["modelValue"])]),
-					B("div", fd, [r[24] ||= B("label", {
+					B("div", fd, [r[25] ||= B("label", {
 						class: "form-label",
 						for: "max-uses"
 					}, "Max Uses", -1), Tr(B("input", {
 						id: "max-uses",
-						"onUpdate:modelValue": r[4] ||= (e) => y.value = e,
+						"onUpdate:modelValue": r[4] ||= (e) => S.value = e,
 						type: "number",
 						min: "0",
 						class: "form-input"
 					}, null, 512), [[
 						Sr,
-						y.value,
+						S.value,
 						void 0,
 						{ number: !0 }
 					]])]),
-					B("div", pd, [r[25] ||= B("label", {
+					B("div", pd, [r[26] ||= B("label", {
 						class: "form-label",
 						for: "expires-select"
 					}, "Expires In", -1), H(Pt, {
 						id: "expires-select",
-						modelValue: b.value,
-						"onUpdate:modelValue": r[5] ||= (e) => b.value = e,
+						modelValue: C.value,
+						"onUpdate:modelValue": r[5] ||= (e) => C.value = e,
 						options: t
 					}, null, 8, ["modelValue"])])
 				]))]),
-				B("footer", md, [m.value ? (K(), L(A, {
+				B("footer", md, [g.value ? (K(), L(A, {
 					key: 0,
 					variant: "solid",
 					size: "md",
-					onClick: ce
+					onClick: pe
 				}, {
-					default: Q(() => [...r[26] ||= [V("Done", -1)]]),
+					default: Q(() => [...r[27] ||= [V("Done", -1)]]),
 					_: 1
 				})) : (K(), z(F, { key: 1 }, [H(A, {
 					variant: "ghost",
 					size: "md",
-					onClick: ce
+					onClick: pe
 				}, {
-					default: Q(() => [...r[27] ||= [V("Cancel", -1)]]),
+					default: Q(() => [...r[28] ||= [V("Cancel", -1)]]),
 					_: 1
 				}), H(A, {
 					variant: "solid",
 					size: "md",
-					loading: p.value,
-					disabled: !g.value,
-					onClick: re
+					loading: h.value,
+					disabled: !y.value,
+					onClick: ae
 				}, {
-					default: Q(() => [...r[28] ||= [V(" Create Invite ", -1)]]),
+					default: Q(() => [...r[29] ||= [V(" Create Invite ", -1)]]),
 					_: 1
 				}, 8, ["loading", "disabled"])], 64))])
-			])])) : R("", !0)]))
+			])])) : R("", !0)])),
+			H(Lt, {
+				open: p.value !== null,
+				message: X(f)("invite.revokeConfirm"),
+				"confirm-label": X(f)("invite.revokeLabel"),
+				danger: "",
+				"onUpdate:open": r[6] ||= (e) => {
+					e || (p.value = null);
+				},
+				onConfirm: se
+			}, null, 8, [
+				"open",
+				"message",
+				"confirm-label"
+			])
 		]));
 	}
-}), [["__scopeId", "data-v-2f3f6c75"]]), gd = {
+}), [["__scopeId", "data-v-249cceba"]]), gd = {
 	class: "accept-invite",
 	"aria-labelledby": "accept-invite-heading"
 }, _d = { class: "accept-invite__card" }, vd = {
@@ -7429,7 +7469,17 @@ var $_ = {
 		expired: "Ese enlace de invitación ha caducado o se ha agotado.",
 		sessionExpired: "La sesión caducó. Inicia sesión de nuevo.",
 		invalidToken: "Token de invitación no válido.",
-		failed: "No se pudo aceptar la invitación."
+		failed: "No se pudo aceptar la invitación.",
+		revokeConfirm: "Este enlace de invitación dejará de funcionar de inmediato. No se puede restaurar.",
+		revokeLabel: "Revocar enlace",
+		revoked: "Enlace de invitación revocado.",
+		revokeFailed: "No se pudo revocar el enlace de invitación."
+	},
+	shares: {
+		revokeConfirm: "Esta persona perderá el acceso de inmediato. Se necesita un recurso nuevo para volver a concederlo.",
+		revokeLabel: "Revocar recurso",
+		revoked: "Recurso revocado.",
+		revokeFailed: "No se pudo revocar el recurso."
 	},
 	itemActions: {
 		addFavorite: "Añadir a mi lista",
@@ -7949,7 +7999,17 @@ var $_ = {
 		expired: "Ce lien d’invitation a expiré ou a été épuisé.",
 		sessionExpired: "Session expirée. Veuillez vous reconnecter.",
 		invalidToken: "Jeton d’invitation invalide.",
-		failed: "Échec de l’acceptation de l’invitation."
+		failed: "Échec de l’acceptation de l’invitation.",
+		revokeConfirm: "Ce lien d’invitation cessera immédiatement de fonctionner. Il ne peut pas être restauré.",
+		revokeLabel: "Révoquer le lien",
+		revoked: "Lien d’invitation révoqué.",
+		revokeFailed: "Échec de la révocation du lien d’invitation."
+	},
+	shares: {
+		revokeConfirm: "Cette personne perdra immédiatement l’accès. Un nouveau partage est nécessaire pour le redonner.",
+		revokeLabel: "Révoquer le partage",
+		revoked: "Partage révoqué.",
+		revokeFailed: "Échec de la révocation du partage."
 	},
 	itemActions: {
 		addFavorite: "Ajouter à ma liste",
@@ -8469,7 +8529,17 @@ var $_ = {
 		expired: "Dieser Einladungslink ist abgelaufen oder wurde aufgebraucht.",
 		sessionExpired: "Sitzung abgelaufen. Bitte melde dich erneut an.",
 		invalidToken: "Ungültiger Einladungs-Token.",
-		failed: "Die Einladung konnte nicht angenommen werden."
+		failed: "Die Einladung konnte nicht angenommen werden.",
+		revokeConfirm: "Dieser Einladungslink funktioniert sofort nicht mehr. Er kann nicht wiederhergestellt werden.",
+		revokeLabel: "Link widerrufen",
+		revoked: "Einladungslink widerrufen.",
+		revokeFailed: "Widerrufen des Einladungslinks fehlgeschlagen."
+	},
+	shares: {
+		revokeConfirm: "Diese Person verliert sofort den Zugriff. Für erneuten Zugriff ist eine neue Freigabe nötig.",
+		revokeLabel: "Freigabe widerrufen",
+		revoked: "Freigabe widerrufen.",
+		revokeFailed: "Widerrufen der Freigabe fehlgeschlagen."
 	},
 	itemActions: {
 		addFavorite: "Zu meiner Liste hinzufügen",
@@ -8989,7 +9059,17 @@ var $_ = {
 		expired: "Il link di invito è scaduto o esaurito.",
 		sessionExpired: "Sessione scaduta. Accedi di nuovo.",
 		invalidToken: "Token di invito non valido.",
-		failed: "Impossibile accettare l’invito."
+		failed: "Impossibile accettare l’invito.",
+		revokeConfirm: "Questo link di invio smetterà di funzionare immediatamente. Non può essere ripristinato.",
+		revokeLabel: "Revoca link",
+		revoked: "Link di invio revocato.",
+		revokeFailed: "Revoca del link di invio non riuscita."
+	},
+	shares: {
+		revokeConfirm: "Questa persona perderà immediatamente l’accesso. Per riottenerlo serve una nuova condivisione.",
+		revokeLabel: "Revoca condivisione",
+		revoked: "Condivisione revocata.",
+		revokeFailed: "Revoca della condivisione non riuscita."
 	},
 	itemActions: {
 		addFavorite: "Aggiungi alla mia lista",
@@ -9509,7 +9589,17 @@ var $_ = {
 		expired: "Esse link de convite expirou ou foi esgotado.",
 		sessionExpired: "Sessão expirada. Entre novamente.",
 		invalidToken: "Token de convite inválido.",
-		failed: "Falha ao aceitar o convite."
+		failed: "Falha ao aceitar o convite.",
+		revokeConfirm: "Este link de convite deixará de funcionar imediatamente. Ele não pode ser restaurado.",
+		revokeLabel: "Revogar link",
+		revoked: "Link de convite revogado.",
+		revokeFailed: "Falha ao revogar o link de convite."
+	},
+	shares: {
+		revokeConfirm: "Essa pessoa perde o acesso imediatamente. É necessário um novo compartilhamento para concedê-lo de novo.",
+		revokeLabel: "Revogar compartilhamento",
+		revoked: "Compartilhamento revogado.",
+		revokeFailed: "Falha ao revogar o compartilhamento."
 	},
 	itemActions: {
 		addFavorite: "Adicionar à minha lista",
@@ -10029,7 +10119,17 @@ var $_ = {
 		expired: "この招待リンクは期限切れか、使用済みです。",
 		sessionExpired: "セッションが切れました。もう一度サインインしてください。",
 		invalidToken: "招待トークンが無効です。",
-		failed: "招待を受け入れられませんでした。"
+		failed: "招待を受け入れられませんでした。",
+		revokeConfirm: "この招待リンクは即時に無効になります。元に戻せません。",
+		revokeLabel: "リンクを取り消す",
+		revoked: "招待リンクを取り消しました。",
+		revokeFailed: "招待リンクの取り消しに失敗しました。"
+	},
+	shares: {
+		revokeConfirm: "この相手はただちにはアクセスできなくなります。再度の共有には新しい共有が必要です。",
+		revokeLabel: "共有を取り消す",
+		revoked: "共有を取り消しました。",
+		revokeFailed: "共有の取り消しに失敗しました。"
 	},
 	itemActions: {
 		addFavorite: "マイリストに追加",
@@ -10291,7 +10391,7 @@ var $_ = {
 	it: nv,
 	pt_BR: rv,
 	ja: iv
-}, ov = or(() => import("./MediaDetail-D3LI6xeB.js").then((e) => e.n)), sv = or(() => import("./MetadataMatchModal-M7qroSBc.js").then((e) => e.n)), cv = or(() => import("./FilterBar-BxM49rxc.js").then((e) => e.n)), lv = or(() => import("./SearchPage-Cm2PiesN.js"));
+}, ov = or(() => import("./MediaDetail-De_mR6tv.js").then((e) => e.n)), sv = or(() => import("./MetadataMatchModal-CJwEcyqd.js").then((e) => e.n)), cv = or(() => import("./FilterBar-DKy8R7U-.js").then((e) => e.n)), lv = or(() => import("./SearchPage-B6wCruw4.js"));
 export { S as ACTIVE_PROFILE_KEY, Zt as ALL_LOGS, wd as AcceptInvitePage, mn as AdminBackupApi, hn as AdminCastApi, yn as AdminCollectionsApi, Qt as AdminDashboardApi, gn as AdminDlnaServerApi, bn as AdminHistoryApi, Fn as AdminHubDashboardApi, pn as AdminIntegrationsApi, wn as AdminLibrariesApi, vn as AdminLiveTvApi, Xt as AdminLogsApi, Pn as AdminMaintenanceApi, Yt as AdminMetadataSourcesApi, jn as AdminPluginsApi, _n as AdminRemoteAccessApi, fn as AdminServicesApi, Tn as AdminSettingsApi, xn as AdminSyncPlayApi, cn as AdminUsersApi, dn as AdminWebhooksApi, ft as ApiClient, mt as ApiError, e as AppBackdrop, Yr as AppLayout, zh as AudiobookDetailPage, yg as AudiobookPlayerPage, lh as AudiobooksPage, Se as BUILT_IN_THEME_IDS, M as Badge, Am as BookDetailPage, Jm as BookReaderPage, lm as BooksPage, A as Button, wt as CONNECTION_API_BASE_KEY, bt as CONNECTION_CONFIRMED_ORIGIN_KEY, Sa as CURRENT_SERVER_ID_KEY, Ca as CURRENT_SERVER_NAME_KEY, Nt as Chip, Ft as Combobox, Lt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, rn as DEFAULT_THROTTLE_BPS, tv as DE_MESSAGES, tt as ERROR_MESSAGES, lt as ERROR_TITLES, $_ as ES_MESSAGES, k as EmptyState, he as FOCUS_RING_MIN_CONTRAST, ev as FR_MESSAGES, ml as FederationPage, Ll as FederationSharesPage, cv as FilterBar, ot as GENERIC_ERROR_MESSAGE, Oa as HUB_SYNC_PLAY_PORT, _o as HelpPopover, Ut as HelpText, nv as IT_MESSAGES, l as Icon, t as IconButton, hd as InviteLinksPage, iv as JA_MESSAGES, ze as Kbd, Sn as LIBRARY_TYPES, av as LOCALE_MESSAGES, Os as LibraryScanPage, et as LocalStorageTokenStore, Rn as LoginForm, Mn as MAINTENANCE_ENDPOINTS, Nn as MAINTENANCE_TASK_NAMES, Ee as MAX_EXTENDS_DEPTH, Xa as MCP_TOKENS_ROUTE_NAME, Za as MCP_TOKENS_ROUTE_PATH, st as MUSIC_PAGE_SIZE, ql as ManageSharesPage, Gt as MediaCard, ov as MediaDetail, Kt as MediaGrid, qe as MediaHomeRow, qt as MediaRow, Ht as Menu, sv as MetadataMatchModal, It as Modal, Gd as MusicAlbumPage, Nf as MusicArtistPage, df as MusicArtistsPage, Yp as MusicPlayerPage, vp as MusicTracksPage, Js as MyServersPage, ht as NetworkError, kn as PLUGIN_SECRET_MASK, Kn as PLURAL_CATEGORIES, on as PROFILE_LAST_ERROR_CODE, tn as PROFILE_LAST_ERROR_TEXT, rv as PT_BR_MESSAGES, Bt as PageHint, uo as PageTransition, va as PhlixApp, t_ as PhotoAlbumPage, Bg as PhotoAlbumsPage, z_ as PhotoSlideshowPage, w_ as PhotoViewPage, gs as ProfileImageSettings, $t as RATING_LABELS, an as RATING_MAX, sn as RATING_OPTIONS, Jn as REQUEST_SEARCH_DEBOUNCE_MS, ne as RESUME_MAX_RATIO, D as RESUME_MIN_SECONDS, ke as RING_GROUND_KEYS, bo as RatingBadge, Iu as RequestsPage, lo as Reveal, Cn as SCAN_JOB_TYPES, En as SETTINGS_SECRET_MASK, Ve as SORT_TITLE_ARTICLES, ln as SUBSCRIBABLE_EVENTS, lv as SearchPage, Ae as SecuritySettingsPage, Pt as Select, tl as ServerDetailPage, su as SharedWithMePage, zr as Sheet, zn as SignupForm, N as Skeleton, jt as Slider, Jt as SourcePriorityEditor, zt as Spinner, Mt as Switch, _e as THEME_CACHE_KEY, Ce as THEME_TOKEN_ALLOWLIST, en as THROTTLE_BPS_LEVELS, nn as THROTTLE_BPS_OPTIONS, ut as TMDB_UNCONFIGURED_CODE, Vt as Tabs, ie as ThumbRating, $e as TimeoutError, Ui as ToastHost, Rt as Tooltip, So as UserRatingPicker, un as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, je as activeThemeStyle, is as adminMenu, ea as applyStoredThemeEarly, ve as applyThemeTokens, K_ as bestCandidate, B_ as bindMediaStoreToRouter, ts as buildAdminRoutes, rs as buildHubAdminRoutes, Na as buildHubRelayUrl, Ln as buildMediaQuery, In as buildMediaUrl, ns as buildServerAdminRoutes, ye as clearThemeTokens, Ha as closeHubRelayConnection, Xo as commonAdminPages, Be as compareByStrippedTitle, De as compositedContrastOver, co as createPhlixApp, _ as createTranslator, qn as debounce, Zi as deriveAccentVars, j as errMessage, rt as errorCodeMessage, nt as errorCodeTitle, He as fetchLibraries, Oe as fetchThemes, we as focusRingLawViolation, o as focusable, r as focusableRegistry, At as formatPageTitle, Le as fuzzyScore, ct as getDefaultApiHeaders, Ua as getHubRelaySocket, p as hasStoredPreferences, Qo as hubAdminPages, n as installFocusable, St as isAllowedBase, xe as isAllowedThemeToken, be as isBuiltInThemeId, Xe as isOffline, vt as isPlaintextPublic, Hn as isPluralTemplate, gt as isPrivateHost, Ze as isRegisteredErrorCode, w as isRewritableImagePath, me as isSafeThemeTokenValue, dt as isTmdbUnconfigured, Re as matchCommand, Qa as mcpTokensMenuItem, h as mergeMessages, xt as normalizeBase, Me as normalizeServerTheme, za as openHubRelayConnection, Ct as originOf, ja as parsePendingCommandFrame, Fe as parseThemeColor, xa as phlixUiVersion, An as pluginErrorCode, On as pluginValidationErrors, Wn as plural, Vn as pluralCategory, Bn as pluralCount, Un as pluralize, _t as probeServer, ge as readCachedTheme, d as readStoredPreferences, V_ as rectCenter, T as resolveImageSrc, C as resolveImageSrcset, Pe as resolveThemeBase, pe as resolveThemeTokens, Je as safeHref, fe as sanitizeThemeTokens, Gn as selectPluralTemplate, Zo as serverAdminPages, Ot as setAppName, at as setDefaultApiHeaders, pt as setDefaultTokenStore, kt as setPageTitle, We as sortLibraries, Ue as stripLeadingArticle, oe as useApiBase, y as useAuthStore, na as useCommandPaletteHotkey, Ie as useCommandStore, yt as useConnectionStore, i as useFocusTrap, E as useImageSrc, Ge as useLibrariesStore, O as useMediaApiBase, er as useMediaStore, v as useMessages, Q_ as useOnline, Dt as usePageTitle, ee as usePlayerStore, sa as usePreconnect, u as usePreferencesStore, Wt as usePrefetch, x as useProfileStore, da as useResumeReporter, Ke as useResumeSync, Da as useServerStore, Dn as useSettingsPrefsStore, Z_ as useSpatialNav, ta as useTheme, Te as useThemesStore, de as useToastStore, re as useUserItemDataStore, Tt as withScheme, Ne as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

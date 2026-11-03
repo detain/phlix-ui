@@ -293,6 +293,17 @@ describe('InviteLinksPage — create modal', () => {
   });
 });
 
+
+/**
+ * M8: the Revoke row button now ARMS a ConfirmDialog (teleported to
+ * document.body). Reach its affirmative like ProfilesPage.test does.
+ */
+function affirmConfirmDialog(): void {
+  const btn = document.body.querySelector<HTMLButtonElement>('[data-testid="confirm-dialog-affirmative"]');
+  if (!btn) throw new Error('ConfirmDialog affirmative not found');
+  btn.click();
+}
+
 describe('InviteLinksPage — copy + revoke', () => {
   it('Copy URL writes the link URL to the clipboard and toasts', async () => {
     const { client } = makeClient();
@@ -319,16 +330,33 @@ describe('InviteLinksPage — copy + revoke', () => {
     w.unmount();
   });
 
-  it('Revoke DELETEs the link, toasts, and reloads', async () => {
+  it('Revoke DELETEs the link, toasts, and reloads — once the confirm gate is affirmed', async () => {
     const { client, del, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     const before = get.mock.calls.length;
     await findBtnByText(w, 'Revoke')!.trigger('click');
     await flushPromises();
+    affirmConfirmDialog();
+    await flushPromises();
     expect(del).toHaveBeenCalledWith('/api/v1/me/invite-links/l1');
     expect(get.mock.calls.length).toBeGreaterThan(before);
     expect(useToastStore().toasts.some((t) => t.tone === 'success' && t.message === 'Invite link revoked.')).toBe(true);
+    w.unmount();
+  });
+
+  // M8's whole point: the row click alone must NOT mutate access.
+  it('the row Revoke arms the gate and sends no DELETE until affirmed', async () => {
+    const { client, del } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'Revoke')!.trigger('click');
+    await flushPromises();
+    expect(del).not.toHaveBeenCalled();
+    const cancel = document.body.querySelector<HTMLButtonElement>('[data-testid="confirm-dialog-cancel"]');
+    if (cancel) cancel.click();
+    await flushPromises();
+    expect(del).not.toHaveBeenCalled();
     w.unmount();
   });
 
@@ -338,6 +366,8 @@ describe('InviteLinksPage — copy + revoke', () => {
     const w = mountPage(client);
     await flushPromises();
     await findBtnByText(w, 'Revoke')!.trigger('click');
+    await flushPromises();
+    affirmConfirmDialog();
     await flushPromises();
     expect(useToastStore().toasts.some((t) => t.tone === 'error' && t.message === 'cannot revoke')).toBe(true);
     w.unmount();

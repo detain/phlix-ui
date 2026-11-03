@@ -300,6 +300,16 @@ export const PT_BR_MESSAGES = {
     sessionExpired: 'Sessão expirada. Entre novamente.',
     invalidToken: 'Token de convite inválido.',
     failed: 'Falha ao aceitar o convite.',
+    revokeConfirm: 'Este link de convite deixará de funcionar imediatamente. Ele não pode ser restaurado.',
+    revokeLabel: 'Revogar link',
+    revoked: 'Link de convite revogado.',
+    revokeFailed: 'Falha ao revogar o link de convite.',
+  },
+  shares: {
+    revokeConfirm: 'Essa pessoa perde o acesso imediatamente. É necessário um novo compartilhamento para concedê-lo de novo.',
+    revokeLabel: 'Revogar compartilhamento',
+    revoked: 'Compartilhamento revogado.',
+    revokeFailed: 'Falha ao revogar o compartilhamento.',
   },
   itemActions: {
     addFavorite: 'Adicionar à minha lista',

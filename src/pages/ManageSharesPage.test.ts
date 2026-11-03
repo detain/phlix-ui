@@ -201,13 +201,26 @@ describe('ManageSharesPage — permissions + expiry', () => {
   });
 });
 
+
+/**
+ * M8: the Revoke row button now ARMS a ConfirmDialog (teleported to
+ * document.body). Reach its affirmative like ProfilesPage.test does.
+ */
+function affirmConfirmDialog(): void {
+  const btn = document.body.querySelector<HTMLButtonElement>('[data-testid="confirm-dialog-affirmative"]');
+  if (!btn) throw new Error('ConfirmDialog affirmative not found');
+  btn.click();
+}
+
 describe('ManageSharesPage — revoke', () => {
-  it('revoke → DELETEs the share, toasts, and reloads', async () => {
+  it('revoke → DELETEs the share, toasts, and reloads — once the confirm gate is affirmed', async () => {
     const { client, del, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
     const before = get.mock.calls.length;
     await findBtn(w, 'Revoke share of Movies with bob@example.com')!.trigger('click');
+    await flushPromises();
+    affirmConfirmDialog();
     await flushPromises();
     expect(del).toHaveBeenCalledWith('/api/v1/me/shares/s1');
     expect(get.mock.calls.length).toBeGreaterThan(before);
@@ -222,6 +235,8 @@ describe('ManageSharesPage — revoke', () => {
     await flushPromises();
     await findBtn(w, 'Revoke share of Movies with bob@example.com')!.trigger('click');
     await flushPromises();
+    affirmConfirmDialog(); // M8: the DELETE only runs after the gate is affirmed
+    await flushPromises();
     expect(useToastStore().toasts.some((t) => t.tone === 'error' && t.message === 'not allowed')).toBe(true);
     w.unmount();
   });
@@ -232,6 +247,8 @@ describe('ManageSharesPage — revoke', () => {
     const w = mountPage(client);
     await flushPromises();
     await findBtn(w, 'Revoke share of Movies with bob@example.com')!.trigger('click');
+    await flushPromises();
+    affirmConfirmDialog();
     await flushPromises();
     expect(useToastStore().toasts.some((t) => t.message === 'Failed to revoke share.')).toBe(true);
     w.unmount();

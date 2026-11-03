@@ -301,6 +301,16 @@ export const JA_MESSAGES = {
     sessionExpired: 'セッションが切れました。もう一度サインインしてください。',
     invalidToken: '招待トークンが無効です。',
     failed: '招待を受け入れられませんでした。',
+    revokeConfirm: 'この招待リンクは即時に無効になります。元に戻せません。',
+    revokeLabel: 'リンクを取り消す',
+    revoked: '招待リンクを取り消しました。',
+    revokeFailed: '招待リンクの取り消しに失敗しました。',
+  },
+  shares: {
+    revokeConfirm: 'この相手はただちにはアクセスできなくなります。再度の共有には新しい共有が必要です。',
+    revokeLabel: '共有を取り消す',
+    revoked: '共有を取り消しました。',
+    revokeFailed: '共有の取り消しに失敗しました。',
   },
   itemActions: {
     addFavorite: 'マイリストに追加',

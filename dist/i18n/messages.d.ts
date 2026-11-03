@@ -311,6 +311,16 @@ export declare const DEFAULT_MESSAGES: {
         sessionExpired: string;
         invalidToken: string;
         failed: string;
+        revokeConfirm: string;
+        revokeLabel: string;
+        revoked: string;
+        revokeFailed: string;
+    };
+    shares: {
+        revokeConfirm: string;
+        revokeLabel: string;
+        revoked: string;
+        revokeFailed: string;
     };
     itemActions: {
         addFavorite: string;

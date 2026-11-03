@@ -17,6 +17,8 @@
 import { ref, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import { errMessage } from '../api/errors';
 import { unixToIso } from '../api/normalize';
 import Badge from '../components/ui/Badge.vue';
@@ -60,6 +62,13 @@ const toasts = useToastStore();
 const shares = ref<Share[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const { t } = useMessages();
+
+/**
+ * M8 (webux review): revoking a share silently removes a third party's access
+ * with no undo. Arm the shared confirm gate before the DELETE (R13-05 idiom).
+ */
+const revokeTarget = ref<string | null>(null);
 
 /**
  * Load shares. `initial` shows the full-page skeleton (mount / retry); the
@@ -93,11 +102,20 @@ async function loadShares(initial = false): Promise<void> {
 async function revokeShare(shareId: string): Promise<void> {
   try {
     await http.delete(`/api/v1/me/shares/${shareId}`);
-    toasts.success('Share revoked.');
+    toasts.success(t('shares.revoked'));
     await loadShares();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to revoke share.'));
+    toasts.error(errMessage(e, t('shares.revokeFailed')));
+  } finally {
+    revokeTarget.value = null;
   }
+}
+
+/** Execute the revocation the armed ConfirmDialog affirmed. */
+async function confirmRevoke(): Promise<void> {
+  const id = revokeTarget.value;
+  if (id === null) return;
+  await revokeShare(id);
 }
 
 function formatDate(dateStr: string | undefined): string {
@@ -190,7 +208,7 @@ onMounted(() => loadShares(true));
                   variant="ghost"
                   size="sm"
                   :aria-label="`Revoke share of ${share.library_name} with ${share.shared_with}`"
-                  @click="revokeShare(share.id)"
+                  @click="revokeTarget = share.id"
                 >
                   Revoke
                 </Button>
@@ -200,6 +218,14 @@ onMounted(() => loadShares(true));
         </tbody>
       </table>
     </div>
+    <ConfirmDialog
+      :open="revokeTarget !== null"
+      :message="t('shares.revokeConfirm')"
+      :confirm-label="t('shares.revokeLabel')"
+      danger
+      @update:open="(v: boolean) => { if (!v) revokeTarget = null; }"
+      @confirm="confirmRevoke"
+    />
   </section>
 </template>
 

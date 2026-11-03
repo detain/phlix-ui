@@ -3261,7 +3261,17 @@ var on = {
 		expired: "This invite link has expired or been exhausted.",
 		sessionExpired: "Session expired. Please sign in again.",
 		invalidToken: "Invalid invite token.",
-		failed: "Failed to accept invite."
+		failed: "Failed to accept invite.",
+		revokeConfirm: "This invite link stops working immediately. It cannot be restored.",
+		revokeLabel: "Revoke link",
+		revoked: "Invite link revoked.",
+		revokeFailed: "Failed to revoke invite link."
+	},
+	shares: {
+		revokeConfirm: "This person loses access immediately. A new share is needed to give it back.",
+		revokeLabel: "Revoke share",
+		revoked: "Share revoked.",
+		revokeFailed: "Failed to revoke share."
 	},
 	itemActions: {
 		addFavorite: "Add to My List",

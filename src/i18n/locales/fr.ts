@@ -304,6 +304,16 @@ export const FR_MESSAGES = {
     sessionExpired: 'Session expirée. Veuillez vous reconnecter.',
     invalidToken: 'Jeton d’invitation invalide.',
     failed: 'Échec de l’acceptation de l’invitation.',
+    revokeConfirm: 'Ce lien d’invitation cessera immédiatement de fonctionner. Il ne peut pas être restauré.',
+    revokeLabel: 'Révoquer le lien',
+    revoked: 'Lien d’invitation révoqué.',
+    revokeFailed: 'Échec de la révocation du lien d’invitation.',
+  },
+  shares: {
+    revokeConfirm: 'Cette personne perdra immédiatement l’accès. Un nouveau partage est nécessaire pour le redonner.',
+    revokeLabel: 'Révoquer le partage',
+    revoked: 'Partage révoqué.',
+    revokeFailed: 'Échec de la révocation du partage.',
   },
   itemActions: {
     addFavorite: 'Ajouter à ma liste',

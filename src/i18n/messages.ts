@@ -359,6 +359,19 @@ export const DEFAULT_MESSAGES = {
     sessionExpired: 'Session expired. Please sign in again.',
     invalidToken: 'Invalid invite token.',
     failed: 'Failed to accept invite.',
+    // M8 (webux review): one-click revocation armed a gate — scenario copy.
+    revokeConfirm: 'This invite link stops working immediately. It cannot be restored.',
+    revokeLabel: 'Revoke link',
+    revoked: 'Invite link revoked.',
+    revokeFailed: 'Failed to revoke invite link.',
+  },
+  // Member-facing library shares (ManageSharesPage) — M8 gate copy and the
+  // toasts that used to be inline English (webux m13 fold).
+  shares: {
+    revokeConfirm: 'This person loses access immediately. A new share is needed to give it back.',
+    revokeLabel: 'Revoke share',
+    revoked: 'Share revoked.',
+    revokeFailed: 'Failed to revoke share.',
   },
   itemActions: {
     addFavorite: 'Add to My List',

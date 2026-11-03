@@ -300,6 +300,16 @@ export const DE_MESSAGES = {
     sessionExpired: 'Sitzung abgelaufen. Bitte melde dich erneut an.',
     invalidToken: 'Ungültiger Einladungs-Token.',
     failed: 'Die Einladung konnte nicht angenommen werden.',
+    revokeConfirm: 'Dieser Einladungslink funktioniert sofort nicht mehr. Er kann nicht wiederhergestellt werden.',
+    revokeLabel: 'Link widerrufen',
+    revoked: 'Einladungslink widerrufen.',
+    revokeFailed: 'Widerrufen des Einladungslinks fehlgeschlagen.',
+  },
+  shares: {
+    revokeConfirm: 'Diese Person verliert sofort den Zugriff. Für erneuten Zugriff ist eine neue Freigabe nötig.',
+    revokeLabel: 'Freigabe widerrufen',
+    revoked: 'Freigabe widerrufen.',
+    revokeFailed: 'Widerrufen der Freigabe fehlgeschlagen.',
   },
   itemActions: {
     addFavorite: 'Zu meiner Liste hinzufügen',

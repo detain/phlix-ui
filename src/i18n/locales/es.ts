@@ -302,6 +302,16 @@ export const ES_MESSAGES = {
     sessionExpired: 'La sesión caducó. Inicia sesión de nuevo.',
     invalidToken: 'Token de invitación no válido.',
     failed: 'No se pudo aceptar la invitación.',
+    revokeConfirm: 'Este enlace de invitación dejará de funcionar de inmediato. No se puede restaurar.',
+    revokeLabel: 'Revocar enlace',
+    revoked: 'Enlace de invitación revocado.',
+    revokeFailed: 'No se pudo revocar el enlace de invitación.',
+  },
+  shares: {
+    revokeConfirm: 'Esta persona perderá el acceso de inmediato. Se necesita un recurso nuevo para volver a concederlo.',
+    revokeLabel: 'Revocar recurso',
+    revoked: 'Recurso revocado.',
+    revokeFailed: 'No se pudo revocar el recurso.',
   },
   itemActions: {
     addFavorite: 'Añadir a mi lista',

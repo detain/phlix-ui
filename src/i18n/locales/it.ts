@@ -300,6 +300,16 @@ export const IT_MESSAGES = {
     sessionExpired: 'Sessione scaduta. Accedi di nuovo.',
     invalidToken: 'Token di invito non valido.',
     failed: 'Impossibile accettare l’invito.',
+    revokeConfirm: 'Questo link di invio smetterà di funzionare immediatamente. Non può essere ripristinato.',
+    revokeLabel: 'Revoca link',
+    revoked: 'Link di invio revocato.',
+    revokeFailed: 'Revoca del link di invio non riuscita.',
+  },
+  shares: {
+    revokeConfirm: 'Questa persona perderà immediatamente l’accesso. Per riottenerlo serve una nuova condivisione.',
+    revokeLabel: 'Revoca condivisione',
+    revoked: 'Condivisione revocata.',
+    revokeFailed: 'Revoca della condivisione non riuscita.',
   },
   itemActions: {
     addFavorite: 'Aggiungi alla mia lista',

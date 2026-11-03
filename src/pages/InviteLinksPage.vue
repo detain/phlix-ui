@@ -38,6 +38,8 @@ import {
   type Library,
 } from '../api/invite-links';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import { errMessage } from '../api/errors';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
@@ -77,6 +79,15 @@ const links = ref<InviteLink[]>([]);
 const servers = ref<Server[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const { t } = useMessages();
+
+/**
+ * M8 (webux review): revoking an invite is consequential and one-way (the
+ * token is stored hashed — there is no un-revoke). The row button now ARMS this
+ * target; the shared ConfirmDialog executes it, matching every other
+ * destructive row in the library (R13-05 idiom).
+ */
+const revokeTarget = ref<string | null>(null);
 
 // ─── Create modal state ──────────────────────────────────────────────────────
 
@@ -219,11 +230,20 @@ async function createLink(): Promise<void> {
 async function revokeLink(id: string): Promise<void> {
   try {
     await inviteLinksApi.revoke(id);
-    toasts.success('Invite link revoked.');
+    toasts.success(t('invite.revoked'));
     await loadLinks();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to revoke invite link.'));
+    toasts.error(errMessage(e, t('invite.revokeFailed')));
+  } finally {
+    revokeTarget.value = null;
   }
+}
+
+/** Execute the revocation the armed ConfirmDialog affirmed. */
+async function confirmRevoke(): Promise<void> {
+  const id = revokeTarget.value;
+  if (id === null) return;
+  await revokeLink(id);
 }
 
 /**
@@ -427,7 +447,7 @@ onMounted(() => loadLinks(true));
           <Button
             variant="ghost"
             size="sm"
-            @click="revokeLink(link.id)"
+            @click="revokeTarget = link.id"
           >
             Revoke
           </Button>
@@ -568,6 +588,14 @@ onMounted(() => loadLinks(true));
         </div>
       </div>
     </Teleport>
+    <ConfirmDialog
+      :open="revokeTarget !== null"
+      :message="t('invite.revokeConfirm')"
+      :confirm-label="t('invite.revokeLabel')"
+      danger
+      @update:open="(v: boolean) => { if (!v) revokeTarget = null; }"
+      @confirm="confirmRevoke"
+    />
   </section>
 </template>
 
