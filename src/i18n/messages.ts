@@ -386,6 +386,10 @@ export const DEFAULT_MESSAGES = {
     watched: 'Watched',
     markWatchedAria: 'Mark as watched',
     markUnwatchedAria: 'Mark as unwatched',
+    resumeProgress: 'Resume {name}',
+    moreInfo: 'More info',
+    moreActions: 'More actions',
+    matchMetadata: 'Match metadata',
   },
   /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
   reader: {
@@ -398,6 +402,8 @@ export const DEFAULT_MESSAGES = {
   /** Hub-only MCP personal-access-token manager page title. */
   mcpTokens: {
     title: 'MCP tokens',
+    revokeSuccess: 'Revoked “{name}”.',
+    revokeFailed: 'Couldn’t revoke token.',
   },
   syncplay: {
     syncPlay: 'SyncPlay',
@@ -422,6 +428,7 @@ export const DEFAULT_MESSAGES = {
     errorCreate: 'Couldn’t create the room.',
     errorJoin: 'Couldn’t join the room.',
     errorLeave: 'Couldn’t leave the room.',
+    commandNotDelivered: 'Couldn’t deliver the SyncPlay command to the group.',
     yourRole: 'You are {role}',
     roleOwner: 'Owner',
     roleMember: 'Member',
@@ -454,6 +461,21 @@ export const DEFAULT_MESSAGES = {
     lockedRoom: 'Password-protected',
     /** M-UI-14: heading of the join listing — since M-UI-14 it carries locked rooms too, so the old "Public rooms" name would lie. */
     availableRooms: 'Rooms',
+  },
+  /** LibraryPage surfaces (m13/i18n routing): the page's toasts, count badge and empty-state title. */
+  library: {
+    // Display uses the pre-formatted {total} (house call-site idiom, cf. music.showingRange);
+    // {count} is passed numeric by every call site and drives Intl.PluralRules selection
+    // without ever rendering through it — grouped digits must not reach Number().
+    titlesCount: '{total} title | {total} titles',
+    posterUpdated: 'Updated poster for “{name}”.',
+    nothingToPlay: 'Nothing to play yet.',
+    markedWatched: 'Marked “{name}” as watched.',
+    markedUnwatched: 'Marked “{name}” as unwatched.',
+    itemRemoved: 'Removed “{name}”.',
+    itemRemoveFailed: 'Couldn’t remove “{name}”.',
+    unknownError: 'Unknown error',
+    loadTitlesError: 'Couldn’t load titles',
   },
   playlist: {
     loadError: "Couldn’t load this playlist.",

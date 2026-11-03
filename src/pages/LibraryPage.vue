@@ -53,6 +53,7 @@ import { useToastStore } from '../stores/useToastStore';
 import type { MediaItem } from '../types/media-item';
 import { fetchIndexBuckets, type IndexBucket } from '../api/index-buckets';
 import { usePageTitle } from '../composables/usePageTitle';
+import { useMessages } from '../composables/useMessages';
 
 // On the hub this is the relay-proxy base for the selected server (so the grid
 // browses that paired server inline); on the media server it is the app's own base.
@@ -65,6 +66,7 @@ const libraries = useLibrariesStore();
 const auth = useAuthStore();
 const player = usePlayerStore();
 const toasts = useToastStore();
+const { t } = useMessages();
 const userItemData = useUserItemDataStore();
 // Persisted view mode (S67). The FilterBar owns the toggle; this page only
 // reflects the chosen mode onto the single MediaGrid mount (see the template).
@@ -195,7 +197,7 @@ function onMatchApplied(): void {
 
 function onPosterApplied(updated: MediaItem): void {
   store.items = store.items.map((i) => (i.id === updated.id ? updated : i));
-  toasts.success(`Updated poster for “${updated.name}”.`);
+  toasts.success(t('library.posterUpdated', { name: updated.name }));
 }
 
 const libraryId = computed(() => {
@@ -341,13 +343,13 @@ async function onPlay(item: MediaItem): Promise<void> {
     );
     if (stale()) return;
     if (!resolved) {
-      toasts.info('Nothing to play yet.');
+      toasts.info(t('library.nothingToPlay'));
       return;
     }
     go('player', resolved.id);
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.info('Nothing to play yet.');
+    toasts.info(t('library.nothingToPlay'));
   }
 }
 function onWatchlist(): void {
@@ -363,9 +365,9 @@ function onInfo(item: MediaItem): void {
 // `onWatchlist`).
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked “${item.name}” as watched.`);
+    toasts.success(t('library.markedWatched', { name: item.name }));
   } else {
-    toasts.info(`Marked “${item.name}” as unwatched.`);
+    toasts.info(t('library.markedUnwatched', { name: item.name }));
   }
 }
 
@@ -398,11 +400,11 @@ async function confirmRemove(): Promise<void> {
     await client.deleteMediaItem(item.id);
     if (stale()) return;
     store.items = store.items.filter((i) => i.id !== item.id);
-    toasts.success(`Removed “${item.name}”.`);
+    toasts.success(t('library.itemRemoved', { name: item.name }));
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.error(`Failed to remove “${item.name}”.`, {
-      message: e instanceof Error ? e.message : 'Unknown error',
+    toasts.error(t('library.itemRemoveFailed', { name: item.name }), {
+      message: e instanceof Error ? e.message : t('library.unknownError'),
     });
   }
 }
@@ -420,7 +422,7 @@ async function confirmRemove(): Promise<void> {
     <section v-else class="library">
       <div class="library-header">
         <h1 class="library-title">{{ libraryName }}</h1>
-        <span class="library-count numeric">{{ store.total.toLocaleString() }} titles</span>
+        <span class="library-count numeric">{{ t('library.titlesCount', { count: store.total, total: store.total.toLocaleString() }) }}</span>
       </div>
 
       <FilterBar :show-artist-sort="isMusic" @change="onFilterChange" />
@@ -428,7 +430,7 @@ async function confirmRemove(): Promise<void> {
       <EmptyState
         v-if="store.error"
         icon="alert"
-        title="Couldn’t load titles"
+        :title="t('library.loadTitlesError')"
         :description="store.error"
       >
         <template #actions>

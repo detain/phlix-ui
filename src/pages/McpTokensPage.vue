@@ -67,6 +67,7 @@ import {
     type McpTokenMinted,
 } from '../api/mcp-tokens';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 import { errMessage } from '../api/errors';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
@@ -85,6 +86,7 @@ const props = defineProps<{
 const http = props.client ?? api;
 const tokensApi = new McpTokensApi(http);
 const toasts = useToastStore();
+const { t } = useMessages();
 
 // ─── List state ──────────────────────────────────────────────────────────────
 
@@ -337,11 +339,11 @@ async function confirmRevoke(): Promise<void> {
     revoking.value = true;
     try {
         await tokensApi.revoke(target.id);
-        toasts.success(`Revoked “${displayName(target)}”.`);
+        toasts.success(t('mcpTokens.revokeSuccess', { name: displayName(target) }));
         revokeTarget.value = null;
         await loadTokens();
     } catch (e) {
-        toasts.error(errMessage(e, 'Failed to revoke token.'));
+        toasts.error(errMessage(e, t('mcpTokens.revokeFailed')));
     } finally {
         revoking.value = false;
     }

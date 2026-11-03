@@ -335,6 +335,10 @@ export declare const DEFAULT_MESSAGES: {
         watched: string;
         markWatchedAria: string;
         markUnwatchedAria: string;
+        resumeProgress: string;
+        moreInfo: string;
+        moreActions: string;
+        matchMetadata: string;
     };
     /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
     reader: {
@@ -347,6 +351,8 @@ export declare const DEFAULT_MESSAGES: {
     /** Hub-only MCP personal-access-token manager page title. */
     mcpTokens: {
         title: string;
+        revokeSuccess: string;
+        revokeFailed: string;
     };
     syncplay: {
         syncPlay: string;
@@ -371,6 +377,7 @@ export declare const DEFAULT_MESSAGES: {
         errorCreate: string;
         errorJoin: string;
         errorLeave: string;
+        commandNotDelivered: string;
         yourRole: string;
         roleOwner: string;
         roleMember: string;
@@ -403,6 +410,18 @@ export declare const DEFAULT_MESSAGES: {
         lockedRoom: string;
         /** M-UI-14: heading of the join listing — since M-UI-14 it carries locked rooms too, so the old "Public rooms" name would lie. */
         availableRooms: string;
+    };
+    /** LibraryPage surfaces (m13/i18n routing): the page's toasts, count badge and empty-state title. */
+    library: {
+        titlesCount: string;
+        posterUpdated: string;
+        nothingToPlay: string;
+        markedWatched: string;
+        markedUnwatched: string;
+        itemRemoved: string;
+        itemRemoveFailed: string;
+        unknownError: string;
+        loadTitlesError: string;
     };
     playlist: {
         loadError: string;

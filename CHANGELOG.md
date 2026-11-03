@@ -12,6 +12,34 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ui fix lane m10-m13-m26 2026-11-03 (review i18n m10, m13 + docs m26): page chrome routes through the catalog
+
+- **m10 (MediaCard).** The card's aria-labels and tooltip texts were hardcoded
+  English while the component already held a translator: `Play`, the mark
+  watched/unwatched tooltip pair (the `itemActions.markWatchedAria`/
+  `markUnwatchedAria` keys existed but were never called), `More info`,
+  `More actions`, `Match metadata`, and the `Resume {name}` aria (folded — same
+  class, uncited in the review) now all resolve through `t()`. Four new
+  `itemActions` keys back them.
+- **m13 (LibraryPage, McpTokensPage, syncplay store).** Library toasts, the
+  poster-updated notice, the remove-failure envelope, the load-titles error
+  title and the item-count badge — a new `library` group (9 keys, the count
+  badge gaining true pluralization via a `{count}`-selected pipe form with a
+  separately formatted `{total}` display param, per the MusicPager precedent).
+  McpTokensPage's revoke success/failure toasts moved to `mcpTokens.revokeSuccess`/
+  `revokeFailed` (status labels like 'Revoked' stay out of scope). The
+  syncplay store's undelivered-command error becomes `syncplay.commandNotDelivered`;
+  its two law pins (actions suite + M-UI-12 error-channel suite) rotated to the
+  canonical voice, measured red at the old literal first.
+- **Catalog 492→508 keys / 24→25 groups** across EN and all six mirrors;
+  key-count prose trio (errors.ts, errors.test.ts, README) and the README
+  group-count line re-pinned from the measured red.
+- **m26 (docblock).** `src/index.ts`'s Admin-port note counted "all 16" admin
+  pages while `defaultAdminPages` holds 21 and counting; the sentence now says
+  "every page" — de-numbered, drift-proof.
+- **Dist.** Rebuilt twice deterministically (identical aggregate hash) and
+  committed in-lockstep; `dist:check` green.
+
 ## Unreleased — ui fix lane m23-m25 2026-11-03 (review copywriter m7, m8, m9): one voice, one punctuation policy, one segment name
 
 - **m23 (punctuation).** Same strings had drifted to two forms: `parental.loadErrorTags` and

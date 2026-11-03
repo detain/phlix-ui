@@ -459,7 +459,10 @@ describe('SyncPlayControls — a command that cannot reach the wire fails loudly
         await btn(w, 'Play for everyone').trigger('click');
         await flushPromises();
 
-        expect(store.error).toBe('SyncPlay command was not delivered to the group');
+        // m13: the message now routes through the i18n catalog
+        // (syncplay.commandNotDelivered); the LAW is that the error channel
+        // carries an honest, human-readable record of the undelivered command.
+        expect(store.error).toBe('Couldn’t deliver the SyncPlay command to the group.');
     });
 });
 

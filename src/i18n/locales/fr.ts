@@ -328,6 +328,10 @@ export const FR_MESSAGES = {
     watched: 'Vu',
     markWatchedAria: 'Marquer comme vu',
     markUnwatchedAria: 'Marquer comme non vu',
+    resumeProgress: 'Reprendre {name}',
+    moreInfo: 'Plus d’informations',
+    moreActions: 'Plus d’actions',
+    matchMetadata: 'Associer les métadonnées',
   },
   reader: {
     decreaseFont: 'Réduire la taille du texte',
@@ -338,6 +342,8 @@ export const FR_MESSAGES = {
   },
   mcpTokens: {
     title: 'Jetons MCP',
+    revokeSuccess: '« {name} » révoqué.',
+    revokeFailed: 'Impossible de révoquer le jeton.',
   },
   syncplay: {
     syncPlay: 'SyncPlay',
@@ -361,6 +367,7 @@ export const FR_MESSAGES = {
     errorCreate: 'Impossible de créer le salon.',
     errorJoin: 'Impossible de rejoindre le salon.',
     errorLeave: 'Impossible de quitter le salon.',
+    commandNotDelivered: 'Impossible de transmettre la commande SyncPlay au groupe.',
     yourRole: 'Vous êtes {role}',
     roleOwner: 'Propriétaire',
     roleMember: 'Membre',
@@ -385,6 +392,18 @@ export const FR_MESSAGES = {
     lockedRoomHint: 'Ce salon est protégé par mot de passe — saisissez le mot de passe pour le rejoindre.',
     lockedRoom: 'Protégé par mot de passe',
     availableRooms: 'Salons',
+  },
+  /** LibraryPage surfaces (m13/i18n routing): the page’s toasts, count badge and empty-state title. */
+  library: {
+    titlesCount: '{total} titre | {total} titres',
+    posterUpdated: 'Affiche de « {name} » mise à jour.',
+    nothingToPlay: 'Rien à lire pour l’instant.',
+    markedWatched: '« {name} » marqué comme vu.',
+    markedUnwatched: '« {name} » marqué comme non vu.',
+    itemRemoved: '« {name} » supprimé.',
+    itemRemoveFailed: 'Impossible de supprimer « {name} ».',
+    unknownError: 'Erreur inconnue',
+    loadTitlesError: 'Impossible de charger les titres',
   },
   playlist: {
     loadError: "Impossible de charger cette playlist.",

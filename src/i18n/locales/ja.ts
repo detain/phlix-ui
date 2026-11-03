@@ -325,6 +325,10 @@ export const JA_MESSAGES = {
     watched: '視聴済み',
     markWatchedAria: '視聴済みとしてマーク',
     markUnwatchedAria: '未視聴としてマーク',
+    resumeProgress: '{name}を再開',
+    moreInfo: '詳細情報',
+    moreActions: 'その他の操作',
+    matchMetadata: 'メタデータを一致させる',
   },
   reader: {
     decreaseFont: 'フォントサイズを小さくする',
@@ -335,6 +339,8 @@ export const JA_MESSAGES = {
   },
   mcpTokens: {
     title: 'MCPトークン',
+    revokeSuccess: '「{name}」を取り消しました。',
+    revokeFailed: 'トークンを取り消せませんでした。',
   },
   syncplay: {
     syncPlay: 'SyncPlay',
@@ -358,6 +364,7 @@ export const JA_MESSAGES = {
     errorCreate: 'ルームを作成できませんでした。',
     errorJoin: 'ルームに参加できませんでした。',
     errorLeave: 'ルームから退出できませんでした。',
+    commandNotDelivered: 'SyncPlayコマンドをグループに送信できませんでした。',
     yourRole: 'あなたの役割：{role}',
     roleOwner: 'オーナー',
     roleMember: 'メンバー',
@@ -382,6 +389,18 @@ export const JA_MESSAGES = {
     lockedRoomHint: 'このルームはパスワードで保護されています。参加するにはパスワードを入力してください。',
     lockedRoom: 'パスワード保護',
     availableRooms: 'ルーム',
+  },
+  /** LibraryPage surfaces (m13/i18n routing): the page’s toasts, count badge and empty-state title. */
+  library: {
+    titlesCount: '{total} 件のタイトル',
+    posterUpdated: '「{name}」のポスターを更新しました。',
+    nothingToPlay: '再生できるものがまだありません。',
+    markedWatched: '「{name}」を視聴済みにしました。',
+    markedUnwatched: '「{name}」を未視聴にしました。',
+    itemRemoved: '「{name}」を削除しました。',
+    itemRemoveFailed: '「{name}」を削除できませんでした。',
+    unknownError: '不明なエラー',
+    loadTitlesError: 'タイトルを読み込めませんでした',
   },
   playlist: {
     loadError: "このプレイリストを読み込めませんでした。",

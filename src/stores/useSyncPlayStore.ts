@@ -612,7 +612,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     };
     // P8: Send via WebSocket using @phlix/syncplay protocol — not REST.
     if (!sendSyncPlayCommand(command)) {
-      error.value = 'SyncPlay command was not delivered to the group';
+      error.value = t('syncplay.commandNotDelivered');
       throw new SyncPlayCommandNotDeliveredError(type);
     }
   }

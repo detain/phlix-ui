@@ -588,7 +588,7 @@ describe('useSyncPlayStore.sendCommand', () => {
 
         expect(() => store.sendCommand(BASE, 'play')).toThrow(SyncPlayCommandNotDeliveredError);
         expect(socket().sent).toHaveLength(0);
-        expect(store.error).toBe('SyncPlay command was not delivered to the group');
+        expect(store.error).toBe('Couldn’t deliver the SyncPlay command to the group.');
     });
 
     it('the throw carries the command type, not a placeholder string', async () => {

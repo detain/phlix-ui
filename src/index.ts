@@ -175,7 +175,7 @@ export { default as SourcePriorityEditor } from './components/SourcePriorityEdit
 // Admin port (RA) — server admin surfaces + their mount seam. NOTE: the admin
 // PAGE components are intentionally NOT re-exported here — they are lazy-loaded
 // chunks via `buildAdminRoutes()` (below), so re-exporting them statically would
-// pull all 16 into the main bundle and defeat the code-splitting (Rollup's
+// pull every page into the main bundle and defeat the code-splitting (Rollup's
 // INEFFECTIVE_DYNAMIC_IMPORT warning). Consumers mount admin via buildAdminRoutes.
 export { AdminLogsApi, ALL_LOGS } from './api/admin/logs';
 export type { LogFile, LogTail, LogTailAll } from './api/admin/logs';

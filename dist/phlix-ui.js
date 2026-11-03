@@ -1,22 +1,22 @@
-import { i as e } from "./safeRedirect-wN1v5PI_.js";
+import { i as e } from "./safeRedirect-B72jGAdw.js";
 import { t } from "./IconButton-oCt4k5-3.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-FI3Uj9O8.js";
 import { n as c, t as l } from "./Icon-55iG1rR7.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-DrDMAwjz.js";
-import { i as h, n as g, r as _, t as v } from "./useMessages-Di1nivC1.js";
-import { t as y } from "./useAuthStore-Bq44-pgB.js";
-import { n as b, r as x, t as S } from "./useProfileStore-CTQKANFh.js";
+import { i as h, n as g, r as _, t as v } from "./useMessages-DtoFalt8.js";
+import { t as y } from "./useAuthStore-DuBXAERb.js";
+import { n as b, r as x, t as S } from "./useProfileStore-CZH4pbDT.js";
 import { i as C, n as w, r as T, t as E } from "./useImageSrc-CSM61b-l.js";
 import { i as D, n as ee, r as te, t as ne } from "./usePlayerStore-B7mnqLe3.js";
-import { n as re, t as ie } from "./ThumbRating-DtgYe_xm.js";
+import { n as re, t as ie } from "./ThumbRating-C_JaHta-.js";
 import { n as O, r as ae, t as oe } from "./useApiBase-DXTBY90j.js";
 import { i as se, o as ce, s as le } from "./shortcuts-BPpemCee.js";
-import { t as ue } from "./NetworkHealthIndicator-Gq4xyoa1.js";
+import { t as ue } from "./NetworkHealthIndicator-Bfb-XVFh.js";
 import { t as de } from "./useToastStore-Bu-iYU7r.js";
-import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-Dzzwr4g3.js";
+import { C as fe, S as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-BjenG0ko.js";
 import { i as Ie, n as Le, r as Re, t as ze } from "./Kbd-B47x87jw.js";
 import { a as Be, i as Ve, n as He, o as Ue, r as We, t as Ge } from "./useLibrariesStore-DC6tlBJW.js";
-import { n as Ke, t as qe } from "./HomeRow-Cep0tfcR.js";
+import { n as Ke, t as qe } from "./HomeRow-nXYcxOyL.js";
 import { t as Je } from "./safeHref-CxjNgvYf.js";
 import { t as k } from "./EmptyState-DjfWh3kt.js";
 import { t as A } from "./Button-BLpPomsd.js";
@@ -28,21 +28,21 @@ import { t as M } from "./Badge-B_3IbdKb.js";
 import { t as jt } from "./Slider-Bj5BaBUu.js";
 import { t as Mt } from "./Switch-C607L4Vu.js";
 import { t as Nt } from "./Chip-eO7BYLEk.js";
-import { t as Pt } from "./Select-MmHubc64.js";
-import { t as Ft } from "./Combobox-CHGcqhGe.js";
-import { t as It } from "./Modal-CHRGgFSy.js";
-import { t as Lt } from "./ConfirmDialog-CXryojqB.js";
+import { t as Pt } from "./Select-NVHytrmC.js";
+import { t as Ft } from "./Combobox-B06AbEeD.js";
+import { t as It } from "./Modal-B2OjuO3h.js";
+import { t as Lt } from "./ConfirmDialog-DkzSMGSy.js";
 import { t as Rt } from "./Tooltip-CaS-pDMB.js";
 import { t as N } from "./Skeleton-DDhrDRE7.js";
-import { t as zt } from "./Spinner-s7z0Fn9h.js";
+import { t as zt } from "./Spinner-B42umhUt.js";
 import { t as Bt } from "./PageHint-BNwIsAdC.js";
 import { t as Vt } from "./Tabs-Dd1Z-m2P.js";
 import { t as Ht } from "./Menu-D1MRZDZu.js";
 import { t as Ut } from "./HelpText-Ctv3rP_Q.js";
-import { o as Wt, t as Gt } from "./MediaCard-3W5SSKRi.js";
-import { t as Kt } from "./MediaGrid-D_dyyjGB.js";
-import { t as qt } from "./MediaRow-DLl0tg73.js";
-import { n as Jt, t as Yt } from "./metadata-sources-BN_xg_03.js";
+import { o as Wt, t as Gt } from "./MediaCard-CSUGpAXf.js";
+import { t as Kt } from "./MediaGrid-DFoGGGld.js";
+import { t as qt } from "./MediaRow-BdxGhlFK.js";
+import { n as Jt, t as Yt } from "./metadata-sources-B15f4j4r.js";
 import { n as Xt, t as Zt } from "./logs-_zKk3C5E.js";
 import { t as Qt } from "./dashboard-BwN19iSq.js";
 import { a as $t, c as en, i as tn, l as nn, n as rn, o as an, r as on, s as sn, t as cn } from "./users-Dyp9EnDL.js";
@@ -63,13 +63,13 @@ import { i as On, n as kn, r as An, t as jn } from "./plugins-kZa-PXB4.js";
 import { n as Mn, r as Nn, t as Pn } from "./maintenance-CBNkxYQh.js";
 import { t as Fn } from "./hubDashboard-DCTkP-u4.js";
 import { n as In, t as Ln } from "./media-query-D7hrCu8r.js";
-import { t as Rn } from "./LoginForm-BUaxtgOD.js";
-import { t as zn } from "./SignupForm-DgvbuVgy.js";
+import { t as Rn } from "./LoginForm-DrbNqXBK.js";
+import { t as zn } from "./SignupForm-CDicz9u4.js";
 import { t as P } from "./hubHelpLinks-BNMhK6oW.js";
 import { a as Bn, i as Vn, n as Hn, o as Un, r as Wn, s as Gn, t as Kn } from "./plural-B3O2rVPV.js";
 import { n as qn, t as Jn } from "./debounce-BnRz-bwe.js";
 import { t as Yn } from "./Input-BsvG-hIx.js";
-import { i as Xn, n as Zn, r as Qn, t as $n } from "./MusicAlbumCard-Kbaag1xQ.js";
+import { i as Xn, n as Zn, r as Qn, t as $n } from "./MusicAlbumCard-C7nqKLfZ.js";
 import { t as er } from "./useMediaStore-DHwqPYF_.js";
 import { Fragment as F, Teleport as tr, Transition as nr, TransitionGroup as rr, computed as I, createApp as ir, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as ar, createTextVNode as V, createVNode as H, defineAsyncComponent as or, defineComponent as U, getCurrentScope as sr, inject as cr, nextTick as lr, normalizeClass as W, normalizeStyle as ur, onBeforeUnmount as dr, onMounted as G, onScopeDispose as fr, onUnmounted as pr, openBlock as K, provide as mr, readonly as hr, ref as q, renderList as J, renderSlot as gr, resolveComponent as _r, resolveDynamicComponent as vr, toDisplayString as Y, toValue as yr, unref as X, useId as br, vModelSelect as xr, vModelText as Sr, vShow as Cr, watch as Z, watchEffect as wr, withCtx as Q, withDirectives as Tr, withModifiers as Er } from "vue";
 import { createPinia as Dr, defineStore as Or } from "pinia";
@@ -910,7 +910,7 @@ var ha = ["src", "alt"], ga = { class: "brand-wordmark" }, _a = {
 		ta();
 		let n = Ie(), r = $(), i = Nr(), { t: a } = v(), o = ce(), s = I(() => i.meta?.fullBleed === !0 && o.theaterActive);
 		na();
-		let c = or(() => import("./CommandPalette-AV11J0_b.js")), u = q(!1);
+		let c = or(() => import("./CommandPalette-DGRYXU4g.js")), u = q(!1);
 		Z(() => n.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1268,111 +1268,111 @@ function so(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-BJWclJC8.js")
+			component: () => import("./BrowsePage-DjXfc3OR.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-9Q1v-B8z.js")
+			component: () => import("./MediaDetailPage-Bbhk1SeU.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-C7fBIwAs.js")
+			component: () => import("./SeasonPage-C5N73HgE.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-D66mxabk.js")
+			component: () => import("./LibraryPage-DTIa0FZ7.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-xc-9EEEQ.js")
+			component: () => import("./PlayerPage-jwOsgLd9.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-BszCBBn1.js")
+			component: () => import("./LoginPage-FDMCrTF4.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CS7ZbPkI.js")
+			component: () => import("./SignupPage-BQvX6oxg.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-CBnurLio.js")
+			component: () => import("./ConnectPage-9NVrQl3S.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-BFM8WMbp.js")
+			component: () => import("./SettingsPage-DshZOPwq.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-DINGxD-h.js")
+			component: () => import("./ExplorePage-DoiHq8U-.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-BwEJopN7.js")
+			component: () => import("./RecommendationsPage-CXx1wJx7.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-CWfTc8p-.js")
+			component: () => import("./WatchHistoryPage-BYTQFq0n.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-DxGdXUoK.js")
+			component: () => import("./SyncPlayPage-BdMV3bwj.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-Ck4fCd32.js")
+			component: () => import("./MusicLibraryPage-5e7QPpRt.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-DQwwfwci.js")
+			component: () => import("./ParentalControlsPage-BT9MrYL_.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-CjA3fRrc.js")
+			component: () => import("./ProfilesPage-CF9G-AOV.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-CnJP70yh.js")
+			component: () => import("./PlaylistsPage-DkyXawdY.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-Dc-z9HY4.js")
+			component: () => import("./PlaylistDetailPage-DYB2_h48.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${Za}`,
 		name: Xa,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-B6Rhh1_k.js")
+		component: () => import("./McpTokensPage-q7wqs414.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1644,25 +1644,25 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-ButlGZ-9.js")
+	component: () => import("./DashboardPage-CmG8Od5U.js")
 }, wo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-ap5E2xgE.js")
+	component: () => import("./UsersPage-Bqfm0OpJ.js")
 }, To = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-BnTyOhzg.js")
+	component: () => import("./LogsPage-yLt9H2Dq.js")
 }, Eo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-CD8pM-PR.js")
+	component: () => import("./WebhooksPage-C_fyX2gI.js")
 }, Do = {
 	name: "admin-services",
 	path: "services",
@@ -1674,13 +1674,13 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-DnE108iG.js")
+	component: () => import("./IntegrationsPage-D9ktW08D.js")
 }, ko = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-C3GrTEY0.js")
+	component: () => import("./BackupPage-CStT4Eje.js")
 }, Ao = {
 	name: "admin-cast",
 	path: "cast-devices",
@@ -1698,19 +1698,19 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-c_KXMZCu.js")
+	component: () => import("./RemoteAccessPage-BZjHVh73.js")
 }, No = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-C5DHEdoV.js")
+	component: () => import("./LiveTvPage-D3RZqPUe.js")
 }, Po = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-DSABtTeq.js")
+	component: () => import("./CollectionsPage-DH-lB17_.js")
 }, Fo = {
 	name: "admin-history",
 	path: "history",
@@ -1722,43 +1722,43 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-35xdJr0K.js")
+	component: () => import("./SyncPlayPage-Ckm17O_h.js")
 }, Lo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-DH4U80v8.js")
+	component: () => import("./LibrariesPage-Dzt8JwKr.js")
 }, Ro = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-BalPkVXh.js")
+	component: () => import("./DuplicatesPage-oqwR7cy9.js")
 }, zo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-cN0L2JZK.js")
+	component: () => import("./PluginsPage-Dnx45-Z6.js")
 }, Bo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-DFW1W4lh.js")
+	component: () => import("./TasksPage-BD-6q46K.js")
 }, Vo = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-BshmV7RV.js")
+	component: () => import("./TranscodingSettingsPage-CGtrq-Pw.js")
 }, Ho = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-DLZFcA5A.js")
+	component: () => import("./SettingsPage-Dz-pbFDh.js")
 }, Uo = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1770,7 +1770,7 @@ var lo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-xQKup3Jh.js").then((e) => e.t)
+	component: () => import("./MetricsPage-DuVuD_LK.js").then((e) => e.t)
 }, Go = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -7496,7 +7496,11 @@ var Q_ = {
 		markWatched: "Marcar como visto",
 		watched: "Visto",
 		markWatchedAria: "Marcar como visto",
-		markUnwatchedAria: "Marcar como no visto"
+		markUnwatchedAria: "Marcar como no visto",
+		resumeProgress: "Retomar {name}",
+		moreInfo: "Más información",
+		moreActions: "Más acciones",
+		matchMetadata: "Emparejar metadatos"
 	},
 	reader: {
 		decreaseFont: "Reducir el tamaño de la fuente",
@@ -7505,7 +7509,11 @@ var Q_ = {
 		sepiaMode: "Modo sepia",
 		darkMode: "Modo oscuro"
 	},
-	mcpTokens: { title: "Tokens de MCP" },
+	mcpTokens: {
+		title: "Tokens de MCP",
+		revokeSuccess: "“{name}” revocado.",
+		revokeFailed: "No se pudo revocar el token."
+	},
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "En una sala SyncPlay",
@@ -7528,6 +7536,7 @@ var Q_ = {
 		errorCreate: "No se pudo crear la sala.",
 		errorJoin: "No se pudo unir a la sala.",
 		errorLeave: "No se pudo salir de la sala.",
+		commandNotDelivered: "No se pudo entregar el comando de SyncPlay al grupo.",
 		yourRole: "Eres {role}",
 		roleOwner: "Propietario",
 		roleMember: "Miembro",
@@ -7552,6 +7561,17 @@ var Q_ = {
 		lockedRoomHint: "Esta sala está protegida con contraseña: introduce la contraseña para unirte.",
 		lockedRoom: "Protegida con contraseña",
 		availableRooms: "Salas"
+	},
+	library: {
+		titlesCount: "{total} título | {total} títulos",
+		posterUpdated: "Póster de “{name}” actualizado.",
+		nothingToPlay: "Nada para reproducir todavía.",
+		markedWatched: "“{name}” marcado como visto.",
+		markedUnwatched: "“{name}” marcado como no visto.",
+		itemRemoved: "“{name}” eliminado.",
+		itemRemoveFailed: "No se pudo eliminar “{name}”.",
+		unknownError: "Error desconocido",
+		loadTitlesError: "No se pudieron cargar los títulos"
 	},
 	playlist: { loadError: "No se pudo cargar esta lista de reproducción." },
 	music: {
@@ -8027,7 +8047,11 @@ var Q_ = {
 		markWatched: "Marquer comme vu",
 		watched: "Vu",
 		markWatchedAria: "Marquer comme vu",
-		markUnwatchedAria: "Marquer comme non vu"
+		markUnwatchedAria: "Marquer comme non vu",
+		resumeProgress: "Reprendre {name}",
+		moreInfo: "Plus d’informations",
+		moreActions: "Plus d’actions",
+		matchMetadata: "Associer les métadonnées"
 	},
 	reader: {
 		decreaseFont: "Réduire la taille du texte",
@@ -8036,7 +8060,11 @@ var Q_ = {
 		sepiaMode: "Mode sépia",
 		darkMode: "Mode sombre"
 	},
-	mcpTokens: { title: "Jetons MCP" },
+	mcpTokens: {
+		title: "Jetons MCP",
+		revokeSuccess: "« {name} » révoqué.",
+		revokeFailed: "Impossible de révoquer le jeton."
+	},
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "Dans un salon SyncPlay",
@@ -8059,6 +8087,7 @@ var Q_ = {
 		errorCreate: "Impossible de créer le salon.",
 		errorJoin: "Impossible de rejoindre le salon.",
 		errorLeave: "Impossible de quitter le salon.",
+		commandNotDelivered: "Impossible de transmettre la commande SyncPlay au groupe.",
 		yourRole: "Vous êtes {role}",
 		roleOwner: "Propriétaire",
 		roleMember: "Membre",
@@ -8083,6 +8112,17 @@ var Q_ = {
 		lockedRoomHint: "Ce salon est protégé par mot de passe — saisissez le mot de passe pour le rejoindre.",
 		lockedRoom: "Protégé par mot de passe",
 		availableRooms: "Salons"
+	},
+	library: {
+		titlesCount: "{total} titre | {total} titres",
+		posterUpdated: "Affiche de « {name} » mise à jour.",
+		nothingToPlay: "Rien à lire pour l’instant.",
+		markedWatched: "« {name} » marqué comme vu.",
+		markedUnwatched: "« {name} » marqué comme non vu.",
+		itemRemoved: "« {name} » supprimé.",
+		itemRemoveFailed: "Impossible de supprimer « {name} ».",
+		unknownError: "Erreur inconnue",
+		loadTitlesError: "Impossible de charger les titres"
 	},
 	playlist: { loadError: "Impossible de charger cette playlist." },
 	music: {
@@ -8558,7 +8598,11 @@ var Q_ = {
 		markWatched: "Als gesehen markieren",
 		watched: "Gesehen",
 		markWatchedAria: "Als gesehen markieren",
-		markUnwatchedAria: "Als ungesehen markieren"
+		markUnwatchedAria: "Als ungesehen markieren",
+		resumeProgress: "{name} fortsetzen",
+		moreInfo: "Mehr Informationen",
+		moreActions: "Weitere Aktionen",
+		matchMetadata: "Metadaten abgleichen"
 	},
 	reader: {
 		decreaseFont: "Schriftgröße verringern",
@@ -8567,7 +8611,11 @@ var Q_ = {
 		sepiaMode: "Sepia-Modus",
 		darkMode: "Dunkler Modus"
 	},
-	mcpTokens: { title: "MCP-Tokens" },
+	mcpTokens: {
+		title: "MCP-Tokens",
+		revokeSuccess: "«{name}» wurde widerrufen.",
+		revokeFailed: "Token konnte nicht widerrufen werden."
+	},
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "In einem SyncPlay-Raum",
@@ -8590,6 +8638,7 @@ var Q_ = {
 		errorCreate: "Raum konnte nicht erstellt werden.",
 		errorJoin: "Raum konnte nicht beigetreten werden.",
 		errorLeave: "Raum konnte nicht verlassen werden.",
+		commandNotDelivered: "SyncPlay-Befehl konnte nicht an die Gruppe übermittelt werden.",
 		yourRole: "Du bist {role}",
 		roleOwner: "Eigentümer",
 		roleMember: "Mitglied",
@@ -8614,6 +8663,17 @@ var Q_ = {
 		lockedRoomHint: "Dieser Raum ist passwortgeschützt — gib das Passwort ein, um beizutreten.",
 		lockedRoom: "Passwortgeschützt",
 		availableRooms: "Räume"
+	},
+	library: {
+		titlesCount: "{total} Titel | {total} Titel",
+		posterUpdated: "Poster für «{name}» aktualisiert.",
+		nothingToPlay: "Noch nichts zum Abspielen.",
+		markedWatched: "«{name}» als gesehen markiert.",
+		markedUnwatched: "«{name}» als ungesehen markiert.",
+		itemRemoved: "«{name}» wurde entfernt.",
+		itemRemoveFailed: "«{name}» konnte nicht entfernt werden.",
+		unknownError: "Unbekannter Fehler",
+		loadTitlesError: "Titel konnten nicht geladen werden"
 	},
 	playlist: { loadError: "Die Playlist konnte nicht geladen werden." },
 	music: {
@@ -9089,7 +9149,11 @@ var Q_ = {
 		markWatched: "Segna come visto",
 		watched: "Visto",
 		markWatchedAria: "Segna come visto",
-		markUnwatchedAria: "Segna come non visto"
+		markUnwatchedAria: "Segna come non visto",
+		resumeProgress: "Riprendi {name}",
+		moreInfo: "Più informazioni",
+		moreActions: "Altre azioni",
+		matchMetadata: "Abbina metadati"
 	},
 	reader: {
 		decreaseFont: "Riduci dimensione del testo",
@@ -9098,7 +9162,11 @@ var Q_ = {
 		sepiaMode: "Tema seppia",
 		darkMode: "Tema scuro"
 	},
-	mcpTokens: { title: "Token MCP" },
+	mcpTokens: {
+		title: "Token MCP",
+		revokeSuccess: "“{name}” revocato.",
+		revokeFailed: "Impossibile revocare il token."
+	},
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "In una sala SyncPlay",
@@ -9121,6 +9189,7 @@ var Q_ = {
 		errorCreate: "Impossibile creare la sala.",
 		errorJoin: "Impossibile unirsi alla sala.",
 		errorLeave: "Impossibile uscire dalla sala.",
+		commandNotDelivered: "Impossibile inviare il comando SyncPlay al gruppo.",
 		yourRole: "Sei {role}",
 		roleOwner: "Proprietario",
 		roleMember: "Membro",
@@ -9145,6 +9214,17 @@ var Q_ = {
 		lockedRoomHint: "Questa sala è protetta da password — inserisci la password per unirti.",
 		lockedRoom: "Protetta da password",
 		availableRooms: "Sale"
+	},
+	library: {
+		titlesCount: "{total} titolo | {total} titoli",
+		posterUpdated: "Poster di “{name}” aggiornato.",
+		nothingToPlay: "Ancora niente da riprodurre.",
+		markedWatched: "“{name}” segnato come visto.",
+		markedUnwatched: "“{name}” segnato come non visto.",
+		itemRemoved: "“{name}” rimosso.",
+		itemRemoveFailed: "Impossibile rimuovere “{name}”.",
+		unknownError: "Errore sconosciuto",
+		loadTitlesError: "Impossibile caricare i titoli"
 	},
 	playlist: { loadError: "Impossibile caricare questa playlist." },
 	music: {
@@ -9620,7 +9700,11 @@ var Q_ = {
 		markWatched: "Marcar como assistido",
 		watched: "Assistido",
 		markWatchedAria: "Marcar como assistido",
-		markUnwatchedAria: "Marcar como não assistido"
+		markUnwatchedAria: "Marcar como não assistido",
+		resumeProgress: "Retomar {name}",
+		moreInfo: "Mais informações",
+		moreActions: "Mais ações",
+		matchMetadata: "Corresponder metadados"
 	},
 	reader: {
 		decreaseFont: "Diminuir tamanho da fonte",
@@ -9629,7 +9713,11 @@ var Q_ = {
 		sepiaMode: "Modo sépia",
 		darkMode: "Modo escuro"
 	},
-	mcpTokens: { title: "Tokens MCP" },
+	mcpTokens: {
+		title: "Tokens MCP",
+		revokeSuccess: "“{name}” revogado.",
+		revokeFailed: "Não foi possível revogar o token."
+	},
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "Em uma sala SyncPlay",
@@ -9652,6 +9740,7 @@ var Q_ = {
 		errorCreate: "Falha ao criar a sala.",
 		errorJoin: "Falha ao entrar na sala.",
 		errorLeave: "Falha ao sair da sala.",
+		commandNotDelivered: "Não foi possível entregar o comando do SyncPlay ao grupo.",
 		yourRole: "Você é {role}",
 		roleOwner: "Proprietário",
 		roleMember: "Membro",
@@ -9676,6 +9765,17 @@ var Q_ = {
 		lockedRoomHint: "Esta sala é protegida por senha — digite a senha para entrar.",
 		lockedRoom: "Protegida por senha",
 		availableRooms: "Salas"
+	},
+	library: {
+		titlesCount: "{total} título | {total} títulos",
+		posterUpdated: "Poster de “{name}” atualizado.",
+		nothingToPlay: "Nada para reproduzir ainda.",
+		markedWatched: "“{name}” marcado como assistido.",
+		markedUnwatched: "“{name}” marcado como não assistido.",
+		itemRemoved: "“{name}” removido.",
+		itemRemoveFailed: "Não foi possível remover “{name}”.",
+		unknownError: "Erro desconhecido",
+		loadTitlesError: "Não foi possível carregar os títulos"
 	},
 	playlist: { loadError: "Não foi possível carregar esta playlist." },
 	music: {
@@ -10151,7 +10251,11 @@ var Q_ = {
 		markWatched: "視聴済みにする",
 		watched: "視聴済み",
 		markWatchedAria: "視聴済みとしてマーク",
-		markUnwatchedAria: "未視聴としてマーク"
+		markUnwatchedAria: "未視聴としてマーク",
+		resumeProgress: "{name}を再開",
+		moreInfo: "詳細情報",
+		moreActions: "その他の操作",
+		matchMetadata: "メタデータを一致させる"
 	},
 	reader: {
 		decreaseFont: "フォントサイズを小さくする",
@@ -10160,7 +10264,11 @@ var Q_ = {
 		sepiaMode: "セピアモード",
 		darkMode: "ダークモード"
 	},
-	mcpTokens: { title: "MCPトークン" },
+	mcpTokens: {
+		title: "MCPトークン",
+		revokeSuccess: "「{name}」を取り消しました。",
+		revokeFailed: "トークンを取り消せませんでした。"
+	},
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "SyncPlayルームに参加中",
@@ -10183,6 +10291,7 @@ var Q_ = {
 		errorCreate: "ルームを作成できませんでした。",
 		errorJoin: "ルームに参加できませんでした。",
 		errorLeave: "ルームから退出できませんでした。",
+		commandNotDelivered: "SyncPlayコマンドをグループに送信できませんでした。",
 		yourRole: "あなたの役割：{role}",
 		roleOwner: "オーナー",
 		roleMember: "メンバー",
@@ -10207,6 +10316,17 @@ var Q_ = {
 		lockedRoomHint: "このルームはパスワードで保護されています。参加するにはパスワードを入力してください。",
 		lockedRoom: "パスワード保護",
 		availableRooms: "ルーム"
+	},
+	library: {
+		titlesCount: "{total} 件のタイトル",
+		posterUpdated: "「{name}」のポスターを更新しました。",
+		nothingToPlay: "再生できるものがまだありません。",
+		markedWatched: "「{name}」を視聴済みにしました。",
+		markedUnwatched: "「{name}」を未視聴にしました。",
+		itemRemoved: "「{name}」を削除しました。",
+		itemRemoveFailed: "「{name}」を削除できませんでした。",
+		unknownError: "不明なエラー",
+		loadTitlesError: "タイトルを読み込めませんでした"
 	},
 	playlist: { loadError: "このプレイリストを読み込めませんでした。" },
 	music: {
@@ -10401,7 +10521,7 @@ var Q_ = {
 	it: tv,
 	pt_BR: nv,
 	ja: rv
-}, av = or(() => import("./MediaDetail-CJ1vgETv.js").then((e) => e.n)), ov = or(() => import("./MetadataMatchModal-BpB-y98k.js").then((e) => e.n)), sv = or(() => import("./FilterBar-D0KGqnkZ.js").then((e) => e.n)), cv = or(() => import("./SearchPage-BB9eYrg4.js"));
+}, av = or(() => import("./MediaDetail-BeARiPN2.js").then((e) => e.n)), ov = or(() => import("./MetadataMatchModal-Cbgbe1HW.js").then((e) => e.n)), sv = or(() => import("./FilterBar-1x3Zxba_.js").then((e) => e.n)), cv = or(() => import("./SearchPage-L7HIfSE8.js"));
 export { S as ACTIVE_PROFILE_KEY, Zt as ALL_LOGS, Cd as AcceptInvitePage, mn as AdminBackupApi, hn as AdminCastApi, yn as AdminCollectionsApi, Qt as AdminDashboardApi, gn as AdminDlnaServerApi, bn as AdminHistoryApi, Fn as AdminHubDashboardApi, pn as AdminIntegrationsApi, wn as AdminLibrariesApi, vn as AdminLiveTvApi, Xt as AdminLogsApi, Pn as AdminMaintenanceApi, Yt as AdminMetadataSourcesApi, jn as AdminPluginsApi, _n as AdminRemoteAccessApi, fn as AdminServicesApi, Tn as AdminSettingsApi, xn as AdminSyncPlayApi, cn as AdminUsersApi, dn as AdminWebhooksApi, ft as ApiClient, mt as ApiError, e as AppBackdrop, Yr as AppLayout, Rh as AudiobookDetailPage, vg as AudiobookPlayerPage, ch as AudiobooksPage, Se as BUILT_IN_THEME_IDS, M as Badge, km as BookDetailPage, qm as BookReaderPage, cm as BooksPage, A as Button, wt as CONNECTION_API_BASE_KEY, bt as CONNECTION_CONFIRMED_ORIGIN_KEY, Sa as CURRENT_SERVER_ID_KEY, Ca as CURRENT_SERVER_NAME_KEY, Nt as Chip, Ft as Combobox, Lt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, rn as DEFAULT_THROTTLE_BPS, ev as DE_MESSAGES, tt as ERROR_MESSAGES, lt as ERROR_TITLES, Q_ as ES_MESSAGES, k as EmptyState, he as FOCUS_RING_MIN_CONTRAST, $_ as FR_MESSAGES, ml as FederationPage, Ll as FederationSharesPage, sv as FilterBar, ot as GENERIC_ERROR_MESSAGE, Oa as HUB_SYNC_PLAY_PORT, _o as HelpPopover, Ut as HelpText, tv as IT_MESSAGES, l as Icon, t as IconButton, md as InviteLinksPage, rv as JA_MESSAGES, ze as Kbd, Sn as LIBRARY_TYPES, iv as LOCALE_MESSAGES, Os as LibraryScanPage, et as LocalStorageTokenStore, Rn as LoginForm, Mn as MAINTENANCE_ENDPOINTS, Nn as MAINTENANCE_TASK_NAMES, Ee as MAX_EXTENDS_DEPTH, Xa as MCP_TOKENS_ROUTE_NAME, Za as MCP_TOKENS_ROUTE_PATH, st as MUSIC_PAGE_SIZE, ql as ManageSharesPage, Gt as MediaCard, av as MediaDetail, Kt as MediaGrid, qe as MediaHomeRow, qt as MediaRow, Ht as Menu, ov as MetadataMatchModal, It as Modal, Wd as MusicAlbumPage, Mf as MusicArtistPage, uf as MusicArtistsPage, Jp as MusicPlayerPage, _p as MusicTracksPage, Js as MyServersPage, ht as NetworkError, kn as PLUGIN_SECRET_MASK, Kn as PLURAL_CATEGORIES, on as PROFILE_LAST_ERROR_CODE, tn as PROFILE_LAST_ERROR_TEXT, nv as PT_BR_MESSAGES, Bt as PageHint, uo as PageTransition, va as PhlixApp, e_ as PhotoAlbumPage, zg as PhotoAlbumsPage, R_ as PhotoSlideshowPage, C_ as PhotoViewPage, gs as ProfileImageSettings, $t as RATING_LABELS, an as RATING_MAX, sn as RATING_OPTIONS, Jn as REQUEST_SEARCH_DEBOUNCE_MS, ne as RESUME_MAX_RATIO, ee as RESUME_MIN_SECONDS, ke as RING_GROUND_KEYS, bo as RatingBadge, Iu as RequestsPage, lo as Reveal, Cn as SCAN_JOB_TYPES, En as SETTINGS_SECRET_MASK, Ve as SORT_TITLE_ARTICLES, ln as SUBSCRIBABLE_EVENTS, cv as SearchPage, Ae as SecuritySettingsPage, Pt as Select, tl as ServerDetailPage, su as SharedWithMePage, zr as Sheet, zn as SignupForm, N as Skeleton, jt as Slider, Jt as SourcePriorityEditor, zt as Spinner, Mt as Switch, _e as THEME_CACHE_KEY, Ce as THEME_TOKEN_ALLOWLIST, en as THROTTLE_BPS_LEVELS, nn as THROTTLE_BPS_OPTIONS, ut as TMDB_UNCONFIGURED_CODE, Vt as Tabs, ie as ThumbRating, $e as TimeoutError, Ui as ToastHost, Rt as Tooltip, So as UserRatingPicker, un as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, je as activeThemeStyle, is as adminMenu, ea as applyStoredThemeEarly, ve as applyThemeTokens, G_ as bestCandidate, z_ as bindMediaStoreToRouter, ts as buildAdminRoutes, rs as buildHubAdminRoutes, Na as buildHubRelayUrl, Ln as buildMediaQuery, In as buildMediaUrl, ns as buildServerAdminRoutes, ye as clearThemeTokens, Ha as closeHubRelayConnection, Xo as commonAdminPages, Be as compareByStrippedTitle, De as compositedContrastOver, co as createPhlixApp, _ as createTranslator, qn as debounce, Zi as deriveAccentVars, j as errMessage, rt as errorCodeMessage, nt as errorCodeTitle, He as fetchLibraries, Oe as fetchThemes, we as focusRingLawViolation, o as focusable, r as focusableRegistry, At as formatPageTitle, Le as fuzzyScore, ct as getDefaultApiHeaders, Ua as getHubRelaySocket, p as hasStoredPreferences, Qo as hubAdminPages, n as installFocusable, St as isAllowedBase, xe as isAllowedThemeToken, be as isBuiltInThemeId, Xe as isOffline, vt as isPlaintextPublic, Hn as isPluralTemplate, gt as isPrivateHost, Ze as isRegisteredErrorCode, w as isRewritableImagePath, me as isSafeThemeTokenValue, dt as isTmdbUnconfigured, Re as matchCommand, Qa as mcpTokensMenuItem, h as mergeMessages, xt as normalizeBase, Me as normalizeServerTheme, za as openHubRelayConnection, Ct as originOf, ja as parsePendingCommandFrame, Fe as parseThemeColor, xa as phlixUiVersion, An as pluginErrorCode, On as pluginValidationErrors, Wn as plural, Vn as pluralCategory, Bn as pluralCount, Un as pluralize, _t as probeServer, ge as readCachedTheme, d as readStoredPreferences, B_ as rectCenter, T as resolveImageSrc, C as resolveImageSrcset, Pe as resolveThemeBase, pe as resolveThemeTokens, Je as safeHref, fe as sanitizeThemeTokens, Gn as selectPluralTemplate, Zo as serverAdminPages, Ot as setAppName, at as setDefaultApiHeaders, pt as setDefaultTokenStore, kt as setPageTitle, We as sortLibraries, Ue as stripLeadingArticle, oe as useApiBase, y as useAuthStore, na as useCommandPaletteHotkey, Ie as useCommandStore, yt as useConnectionStore, i as useFocusTrap, E as useImageSrc, Ge as useLibrariesStore, O as useMediaApiBase, er as useMediaStore, v as useMessages, Z_ as useOnline, Dt as usePageTitle, D as usePlayerStore, sa as usePreconnect, u as usePreferencesStore, Wt as usePrefetch, x as useProfileStore, da as useResumeReporter, Ke as useResumeSync, Da as useServerStore, Dn as useSettingsPrefsStore, X_ as useSpatialNav, ta as useTheme, Te as useThemesStore, de as useToastStore, re as useUserItemDataStore, Tt as withScheme, Ne as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

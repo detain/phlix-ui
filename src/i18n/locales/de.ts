@@ -324,6 +324,10 @@ export const DE_MESSAGES = {
     watched: 'Gesehen',
     markWatchedAria: 'Als gesehen markieren',
     markUnwatchedAria: 'Als ungesehen markieren',
+    resumeProgress: '{name} fortsetzen',
+    moreInfo: 'Mehr Informationen',
+    moreActions: 'Weitere Aktionen',
+    matchMetadata: 'Metadaten abgleichen',
   },
   reader: {
     decreaseFont: 'Schriftgröße verringern',
@@ -334,6 +338,8 @@ export const DE_MESSAGES = {
   },
   mcpTokens: {
     title: 'MCP-Tokens',
+    revokeSuccess: '«{name}» wurde widerrufen.',
+    revokeFailed: 'Token konnte nicht widerrufen werden.',
   },
   syncplay: {
     syncPlay: 'SyncPlay',
@@ -357,6 +363,7 @@ export const DE_MESSAGES = {
     errorCreate: 'Raum konnte nicht erstellt werden.',
     errorJoin: 'Raum konnte nicht beigetreten werden.',
     errorLeave: 'Raum konnte nicht verlassen werden.',
+    commandNotDelivered: 'SyncPlay-Befehl konnte nicht an die Gruppe übermittelt werden.',
     yourRole: 'Du bist {role}',
     roleOwner: 'Eigentümer',
     roleMember: 'Mitglied',
@@ -381,6 +388,18 @@ export const DE_MESSAGES = {
     lockedRoomHint: 'Dieser Raum ist passwortgeschützt — gib das Passwort ein, um beizutreten.',
     lockedRoom: 'Passwortgeschützt',
     availableRooms: 'Räume',
+  },
+  /** LibraryPage surfaces (m13/i18n routing): the page’s toasts, count badge and empty-state title. */
+  library: {
+    titlesCount: '{total} Titel | {total} Titel',
+    posterUpdated: 'Poster für «{name}» aktualisiert.',
+    nothingToPlay: 'Noch nichts zum Abspielen.',
+    markedWatched: '«{name}» als gesehen markiert.',
+    markedUnwatched: '«{name}» als ungesehen markiert.',
+    itemRemoved: '«{name}» wurde entfernt.',
+    itemRemoveFailed: '«{name}» konnte nicht entfernt werden.',
+    unknownError: 'Unbekannter Fehler',
+    loadTitlesError: 'Titel konnten nicht geladen werden',
   },
   playlist: {
     loadError: "Die Playlist konnte nicht geladen werden.",

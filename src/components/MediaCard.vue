@@ -542,7 +542,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
         :aria-valuenow="Math.round(resumeRatio * 100)"
         aria-valuemin="0"
         aria-valuemax="100"
-        :aria-label="`Resume ${item.name}`"
+        :aria-label="t('itemActions.resumeProgress', { name: item.name })"
       >
         <i :style="{ width: `${resumeRatio * 100}%` }" />
       </div>
@@ -583,11 +583,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
              (or on touch). CSS reveal still animates opacity/pointer-events. -->
         <div v-if="actionsVisible" class="media-card__actions">
           <!-- [ Play ] -->
-          <Tooltip text="Play">
+          <Tooltip :text="t('player.play')">
             <button
               type="button"
               class="media-card__iconbtn media-card__iconbtn--play"
-              aria-label="Play"
+              :aria-label="t('player.play')"
               @click.stop.prevent="emit('play', item)"
             >
               <Icon name="play" />
@@ -624,12 +624,12 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           <!-- [ Watched ] — eye toggle. Open eye = watched, closed (slashed) eye =
                not watched. Click flips the per-user watched flag (store optimistic
                + one write). -->
-          <Tooltip :text="isWatched ? 'Mark as unwatched' : 'Mark as watched'">
+          <Tooltip :text="isWatched ? t('itemActions.markUnwatchedAria') : t('itemActions.markWatchedAria')">
             <button
               type="button"
               class="media-card__iconbtn media-card__iconbtn--watched"
               :class="{ 'is-active': isWatched }"
-              :aria-label="isWatched ? 'Mark as unwatched' : 'Mark as watched'"
+              :aria-label="isWatched ? t('itemActions.markUnwatchedAria') : t('itemActions.markWatchedAria')"
               :aria-pressed="isWatched ? 'true' : 'false'"
               @click.stop.prevent="onWatched"
             >
@@ -638,11 +638,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           </Tooltip>
 
           <!-- [ Info ] -->
-          <Tooltip text="More info">
+          <Tooltip :text="t('itemActions.moreInfo')">
             <button
               type="button"
               class="media-card__iconbtn"
-              aria-label="More info"
+              :aria-label="t('itemActions.moreInfo')"
               @click.stop.prevent="emit('info', item)"
             >
               <Icon name="info" />
@@ -656,11 +656,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
                menu would never open. -->
           <Menu v-model:open="menuOpen" :items="menuItems" @select="onMenuSelect">
             <template #default="{ toggle }">
-              <Tooltip text="More actions">
+              <Tooltip :text="t('itemActions.moreActions')">
                 <button
                   type="button"
                   class="media-card__iconbtn"
-                  aria-label="More actions"
+                  :aria-label="t('itemActions.moreActions')"
                   :aria-expanded="menuOpen ? 'true' : 'false'"
                   aria-haspopup="menu"
                   @click.stop.prevent="toggle"
@@ -672,11 +672,11 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
           </Menu>
 
           <!-- [ Match(admin) ] -->
-          <Tooltip v-if="canMatch" text="Match metadata">
+          <Tooltip v-if="canMatch" :text="t('itemActions.matchMetadata')">
             <button
               type="button"
               class="media-card__iconbtn"
-              aria-label="Match metadata"
+              :aria-label="t('itemActions.matchMetadata')"
               @click.stop.prevent="emit('match', item)"
             >
               <Icon name="search" />

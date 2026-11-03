@@ -3284,7 +3284,11 @@ var an = {
 		markWatched: "Mark watched",
 		watched: "Watched",
 		markWatchedAria: "Mark as watched",
-		markUnwatchedAria: "Mark as unwatched"
+		markUnwatchedAria: "Mark as unwatched",
+		resumeProgress: "Resume {name}",
+		moreInfo: "More info",
+		moreActions: "More actions",
+		matchMetadata: "Match metadata"
 	},
 	reader: {
 		decreaseFont: "Decrease font size",
@@ -3293,7 +3297,11 @@ var an = {
 		sepiaMode: "Sepia mode",
 		darkMode: "Dark mode"
 	},
-	mcpTokens: { title: "MCP tokens" },
+	mcpTokens: {
+		title: "MCP tokens",
+		revokeSuccess: "Revoked “{name}”.",
+		revokeFailed: "Couldn’t revoke token."
+	},
 	syncplay: {
 		syncPlay: "SyncPlay",
 		inRoom: "In SyncPlay room",
@@ -3316,6 +3324,7 @@ var an = {
 		errorCreate: "Couldn’t create the room.",
 		errorJoin: "Couldn’t join the room.",
 		errorLeave: "Couldn’t leave the room.",
+		commandNotDelivered: "Couldn’t deliver the SyncPlay command to the group.",
 		yourRole: "You are {role}",
 		roleOwner: "Owner",
 		roleMember: "Member",
@@ -3340,6 +3349,17 @@ var an = {
 		lockedRoomHint: "This room is password-protected — enter the password to join.",
 		lockedRoom: "Password-protected",
 		availableRooms: "Rooms"
+	},
+	library: {
+		titlesCount: "{total} title | {total} titles",
+		posterUpdated: "Updated poster for “{name}”.",
+		nothingToPlay: "Nothing to play yet.",
+		markedWatched: "Marked “{name}” as watched.",
+		markedUnwatched: "Marked “{name}” as unwatched.",
+		itemRemoved: "Removed “{name}”.",
+		itemRemoveFailed: "Couldn’t remove “{name}”.",
+		unknownError: "Unknown error",
+		loadTitlesError: "Couldn’t load titles"
 	},
 	playlist: { loadError: "Couldn’t load this playlist." },
 	music: {
@@ -9973,14 +9993,14 @@ var gp = class extends Error {
 			});
 		}
 	}
-	function D(e, t, r) {
+	function D(t, r, i) {
 		if (n.value && !pp({
-			type: t,
-			position: r?.position === void 0 ? void 0 : r.position * 1e3,
-			rate: r?.rate,
+			type: r,
+			position: i?.position === void 0 ? void 0 : i.position * 1e3,
+			rate: i?.rate,
 			issuedBy: n.value.createdBy,
 			issuedAt: (/* @__PURE__ */ new Date()).toISOString()
-		})) throw o.value = "SyncPlay command was not delivered to the group", new gp(t);
+		})) throw o.value = e("syncplay.commandNotDelivered"), new gp(r);
 	}
 	async function O(e) {
 		if (n.value) try {
