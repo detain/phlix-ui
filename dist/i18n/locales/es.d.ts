@@ -323,6 +323,11 @@ export declare const ES_MESSAGES: {
         moreInfo: string;
         moreActions: string;
         matchMetadata: string;
+        favoriteAddError: string;
+        favoriteRemoveError: string;
+        markWatchedError: string;
+        markUnwatchedError: string;
+        ratingSaveError: string;
     };
     reader: {
         decreaseFont: string;

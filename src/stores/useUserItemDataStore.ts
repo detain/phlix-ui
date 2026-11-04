@@ -11,6 +11,7 @@ import { ApiClient } from '../api/client';
 import { errMessage } from '../api/errors';
 import { useToastStore } from './useToastStore';
 import { useProfileStore } from './useProfileStore';
+import { useMessages } from '../composables/useMessages';
 import type { MediaDetail, MediaListItem } from '../types/media-item';
 
 /**
@@ -55,6 +56,11 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       entries.value = new Map();
     },
   );
+
+  // UI-m49 (review ui__webux): the failure toasts speak the catalog — the same
+  // seam useAuthStore adopted under M-UI-10 (PhlixAppConfig.messages honored
+  // inside an app context, English defaults outside one).
+  const { t } = useMessages();
 
   /**
    * Lazily-constructed, long-lived ApiClient — reused across all calls (mirrors
@@ -131,13 +137,13 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
         await api.removeFavorite(id);
       }
     } catch (e) {
-      // Roll back the optimistic flip and tell the user. We keep the action
-      // context ("add to"/"remove from favorites") in the toast and append the
-      // underlying error detail, since errMessage() prefers the Error's own
-      // (often opaque) message over any fallback.
+      // Roll back the optimistic flip and tell the user. UI-m49: the action
+      // context rides the catalog ('my list' worded, both arms); the appended
+      // error detail stays the raw errMessage channel — that class is its own
+      // registered wave (INFO-UI-33), not this fix.
       setEntry(id, { favorite: previous });
-      const verb = next ? 'add to' : 'remove from';
-      useToastStore().error(`Failed to ${verb} favorites: ${errMessage(e)}`);
+      const copy = next ? t('itemActions.favoriteAddError') : t('itemActions.favoriteRemoveError');
+      useToastStore().error(`${copy}: ${errMessage(e)}`);
     }
   }
 
@@ -162,8 +168,9 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       }
     } catch (e) {
       setEntry(id, { watched: previous });
-      const verb = next ? 'watched' : 'unwatched';
-      useToastStore().error(`Failed to mark ${verb}: ${errMessage(e)}`);
+      // UI-m49: catalog copy both arms (see toggleFavorite).
+      const copy = next ? t('itemActions.markWatchedError') : t('itemActions.markUnwatchedError');
+      useToastStore().error(`${copy}: ${errMessage(e)}`);
     }
   }
 
@@ -191,10 +198,10 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       await client(apiBase).setLikeLevel(id, next);
     } catch (e) {
       // Roll back the optimistic change to the precise prior level and tell the
-      // user. errMessage() prefers the Error's own message, so we prepend the
-      // action context ourselves.
+      // user. UI-m49: the action context rides the catalog; errMessage detail
+      // stays on the raw channel (INFO-UI-33's own wave).
       setEntry(id, { like_level: previous });
-      useToastStore().error(`Failed to set rating: ${errMessage(e)}`);
+      useToastStore().error(`${t('itemActions.ratingSaveError')}: ${errMessage(e)}`);
     }
   }
 

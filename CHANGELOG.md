@@ -12,6 +12,29 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — optimistic-toast catalog lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U1)
+
+### Fixed
+
+- **U1 — the store's optimistic write-failure toasts route through the catalog
+  (UI-m49, review ui__webux).** `useUserItemDataStore` shipped three raw English
+  literals — `Failed to add to favorites: …`, `Failed to mark watched: …`,
+  `Failed to set rating: …` — the only untranslated user-visible strings in the
+  i18n center itself, shipped verbatim into all six locales it serves. Cure: five
+  `itemActions` keys (`favoriteAddError`/`favoriteRemoveError`/
+  `markWatchedError`/`markUnwatchedError`/`ratingSaveError`, 'Couldn’t …' voice
+  per the m24 deprecation law, 'my list' wording per the group's own vocabulary)
+  in ALL SEVEN locale files, with the store resolving them through the same
+  `useMessages()` seam useAuthStore adopted under M-UI-10. The appended
+  `errMessage` detail stays on the raw channel — that estate-wide class is its
+  own registered wave (INFO-UI-33), deliberately not folded here.
+  Pins: 4 committed failure-toast assertions were bug-encoding/loose
+  (they asserted the English literal or a substring surviving both voices) —
+  rotated IN PLACE to exact catalog strings, all 4 measured RED at the parent
+  implementation, plus 1 new unwatched-arm pin (5 reds total, zero collateral);
+  catalog grows 517→522 keys and the measured prose trio
+  (`errors.ts`/`errors.test.ts`/`README.md`) rotated from the tripwire's own red.
+
 ## Unreleased — ToastHost doc-truth lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U3)
 
 ### Fixed

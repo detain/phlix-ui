@@ -11,6 +11,7 @@ import { nextTick } from 'vue';
 import { useUserItemDataStore } from './useUserItemDataStore';
 import { useProfileStore } from './useProfileStore';
 import { useToastStore } from './useToastStore';
+import { DEFAULT_MESSAGES } from '../i18n/messages';
 import type { MediaDetail } from '../types/media-item';
 import { isRoute } from '../test/route-match';
 
@@ -152,7 +153,10 @@ describe('useUserItemDataStore', () => {
       // Rolled back to the original (false) state.
       expect(store.isFavorite('m1')).toBe(false);
       expect(toastSpy).toHaveBeenCalledTimes(1);
-      expect(toastSpy.mock.calls[0]![0]).toContain('add to favorites');
+      // UI-m49 (review ui__webux): the action context speaks the catalog — the
+      // exact English default plus the preserved error-detail suffix (the raw
+      // `Failed to …` literals shipped untranslated to all six locales).
+      expect(toastSpy.mock.calls[0]![0]).toBe(`${DEFAULT_MESSAGES.itemActions.favoriteAddError}: network down`);
     });
 
     it('rolls back a remove (back to favorited) and toasts on failure', async () => {
@@ -165,7 +169,8 @@ describe('useUserItemDataStore', () => {
       await store.toggleFavorite('m1', '');
 
       expect(store.isFavorite('m1')).toBe(true);
-      expect(toastSpy.mock.calls[0]![0]).toContain('remove from favorites');
+      // UI-m49 rotated (bug-encoding): exact catalog string, remove arm.
+      expect(toastSpy.mock.calls[0]![0]).toBe(`${DEFAULT_MESSAGES.itemActions.favoriteRemoveError}: boom`);
     });
 
     it('preserves rating and like_level across a toggle', async () => {
@@ -256,7 +261,22 @@ describe('useUserItemDataStore', () => {
 
       expect(store.isWatched('m1')).toBe(false);
       expect(toastSpy).toHaveBeenCalledTimes(1);
-      expect(toastSpy.mock.calls[0]![0]).toContain('watched');
+      // UI-m49 rotated (loose containment → exact catalog string): mark-watched arm.
+      expect(toastSpy.mock.calls[0]![0]).toBe(`${DEFAULT_MESSAGES.itemActions.markWatchedError}: network down`);
+    });
+
+    it('toasts the catalog unwatched-failure copy (UI-m49, new arm)', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+      const toasts = useToastStore();
+      const toastSpy = vi.spyOn(toasts, 'error');
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 0, watched: true }));
+
+      await store.toggleWatched('m1', '');
+
+      expect(store.isWatched('m1')).toBe(true);
+      expect(toastSpy).toHaveBeenCalledTimes(1);
+      expect(toastSpy.mock.calls[0]![0]).toBe(`${DEFAULT_MESSAGES.itemActions.markUnwatchedError}: network down`);
     });
 
     it('preserves favorite/rating/like_level across a watched toggle', async () => {
@@ -356,7 +376,8 @@ describe('useUserItemDataStore', () => {
       // 2 → −1 optimistically, then rolled back to 2 on the rejected write.
       expect(store.likeLevel('m1')).toBe(2);
       expect(toastSpy).toHaveBeenCalledTimes(1);
-      expect(toastSpy.mock.calls[0]![0]).toContain('rating');
+      // UI-m49 rotated (loose containment → exact catalog string): rating arm.
+      expect(toastSpy.mock.calls[0]![0]).toBe(`${DEFAULT_MESSAGES.itemActions.ratingSaveError}: network down`);
     });
 
     it('preserves favorite and rating across a rating change', async () => {

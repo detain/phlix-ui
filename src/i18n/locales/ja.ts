@@ -330,6 +330,11 @@ export const JA_MESSAGES = {
     moreInfo: '詳細情報',
     moreActions: 'その他の操作',
     matchMetadata: 'メタデータを一致させる',
+    favoriteAddError: 'マイリストに追加できませんでした。',
+    favoriteRemoveError: 'マイリストから削除できませんでした。',
+    markWatchedError: '視聴済みとしてマークできませんでした。',
+    markUnwatchedError: '未視聴としてマークできませんでした。',
+    ratingSaveError: '評価を保存できませんでした。',
   },
   reader: {
     decreaseFont: 'フォントサイズを小さくする',

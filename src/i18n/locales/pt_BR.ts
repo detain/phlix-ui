@@ -329,6 +329,11 @@ export const PT_BR_MESSAGES = {
     moreInfo: 'Mais informações',
     moreActions: 'Mais ações',
     matchMetadata: 'Corresponder metadados',
+    favoriteAddError: 'Não foi possível adicionar à minha lista.',
+    favoriteRemoveError: 'Não foi possível remover da minha lista.',
+    markWatchedError: 'Não foi possível marcar como assistido.',
+    markUnwatchedError: 'Não foi possível marcar como não assistido.',
+    ratingSaveError: 'Não foi possível salvar a avaliação.',
   },
   reader: {
     decreaseFont: 'Diminuir tamanho da fonte',

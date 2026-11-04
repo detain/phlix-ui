@@ -391,6 +391,15 @@ export const DEFAULT_MESSAGES = {
     moreInfo: 'More info',
     moreActions: 'More actions',
     matchMetadata: 'Match metadata',
+    // UI-m49 (review ui__webux): the optimistic write-failure toasts of
+    // useUserItemDataStore — previously raw English literals shipped to all six
+    // locales. 'Couldn’t …' voice per the m24 deprecation law, 'my list' word
+    // with addFavorite/removeFavorite above.
+    favoriteAddError: 'Couldn’t add to my list.',
+    favoriteRemoveError: 'Couldn’t remove from my list.',
+    markWatchedError: 'Couldn’t mark as watched.',
+    markUnwatchedError: 'Couldn’t mark as unwatched.',
+    ratingSaveError: 'Couldn’t save rating.',
   },
   /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
   reader: {

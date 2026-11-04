@@ -329,6 +329,11 @@ export const IT_MESSAGES = {
     moreInfo: 'Più informazioni',
     moreActions: 'Altre azioni',
     matchMetadata: 'Abbina metadati',
+    favoriteAddError: 'Aggiunta alla mia lista non riuscita.',
+    favoriteRemoveError: 'Rimozione dalla mia lista non riuscita.',
+    markWatchedError: 'Contrassegnare come visto non riuscito.',
+    markUnwatchedError: 'Contrassegnare come non visto non riuscito.',
+    ratingSaveError: 'Salvataggio della valutazione non riuscito.',
   },
   reader: {
     decreaseFont: 'Riduci dimensione del testo',

@@ -333,6 +333,11 @@ export const FR_MESSAGES = {
     moreInfo: 'Plus d’informations',
     moreActions: 'Plus d’actions',
     matchMetadata: 'Associer les métadonnées',
+    favoriteAddError: 'Impossible d’ajouter à ma liste.',
+    favoriteRemoveError: 'Impossible de retirer de ma liste.',
+    markWatchedError: 'Impossible de marquer comme vu.',
+    markUnwatchedError: 'Impossible de marquer comme non vu.',
+    ratingSaveError: 'Impossible d’enregistrer la note.',
   },
   reader: {
     decreaseFont: 'Réduire la taille du texte',

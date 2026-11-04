@@ -340,6 +340,11 @@ export declare const DEFAULT_MESSAGES: {
         moreInfo: string;
         moreActions: string;
         matchMetadata: string;
+        favoriteAddError: string;
+        favoriteRemoveError: string;
+        markWatchedError: string;
+        markUnwatchedError: string;
+        ratingSaveError: string;
     };
     /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
     reader: {

@@ -329,6 +329,11 @@ export const DE_MESSAGES = {
     moreInfo: 'Mehr Informationen',
     moreActions: 'Weitere Aktionen',
     matchMetadata: 'Metadaten abgleichen',
+    favoriteAddError: 'Hinzufügen zu meiner Liste fehlgeschlagen.',
+    favoriteRemoveError: 'Entfernen aus meiner Liste fehlgeschlagen.',
+    markWatchedError: 'Als gesehen markieren fehlgeschlagen.',
+    markUnwatchedError: 'Als ungesehen markieren fehlgeschlagen.',
+    ratingSaveError: 'Speichern der Bewertung fehlgeschlagen.',
   },
   reader: {
     decreaseFont: 'Schriftgröße verringern',
