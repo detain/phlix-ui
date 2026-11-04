@@ -32,6 +32,7 @@ export declare const DE_MESSAGES: {
         loading: string;
         notifications: string;
         noMatches: string;
+        detailsUnavailable: string;
         missingMediaId: string;
         missingSeasonId: string;
         searchPlaceholder: string;
@@ -461,6 +462,9 @@ export declare const DE_MESSAGES: {
         trackListing: string;
         searchTracksAria: string;
         musicTracksAria: string;
+    };
+    search: {
+        showingOf: string;
     };
     settings: {
         theme: string;

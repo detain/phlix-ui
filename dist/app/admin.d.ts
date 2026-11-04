@@ -21,17 +21,19 @@ import type { IconName } from '../components/Icon.vue';
  * **Page groups (H0).** Admin pages are exported as three registries so each app
  * mounts only the surfaces it has a backend for:
  * - {@link commonAdminPages} — portable to BOTH apps: Users, Logs, Settings.
- * - {@link serverAdminPages} — media-server-only: Dashboard, Webhooks, Services,
- *   Integrations, Backup, Cast Devices, DLNA, Remote Access, Live TV, Collections,
- *   History, SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Tasks.
- * - {@link hubAdminPages} — hub-only: Hub Dashboard, Audit Logs.
+ * - {@link serverAdminPages} — media-server-only (18): Dashboard, Server Traffic,
+ *   Webhooks, Services, Integrations, Backup, Cast Devices, DLNA, Remote Access,
+ *   Live TV, Collections, History, SyncPlay, Libraries, Duplicates, Plugins,
+ *   Transcoding, Tasks.
+ * - {@link hubAdminPages} — hub-only: Hub Dashboard, Server Traffic, Audit Logs,
+ *   Request Queue.
  *
  * `buildAdminRoutes(base)` with no `pages` argument yields the **server pages in
  * their original sidebar order** (Dashboard first), so the server's admin landing
  * page and sidebar ordering are unchanged (U6 adds Plugins after Libraries).
  * `buildServerAdminRoutes` is the explicit synonym for that default;
- * `buildHubAdminRoutes` mounts the hub set (Hub Dashboard, Users, Logs, Settings,
- * Audit Logs). Each child keeps a stable `admin-*` route name and resolves to
+ * `buildHubAdminRoutes` mounts the hub set (Hub Dashboard, Server Traffic, Users,
+ * Logs, Settings, Audit Logs, Request Queue). Each child keeps a stable `admin-*` route name and resolves to
  * `<base>/admin/<segment>`.
  *
  * Building routes here also **self-registers** the label seam

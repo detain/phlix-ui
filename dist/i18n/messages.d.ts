@@ -45,6 +45,7 @@ export declare const DEFAULT_MESSAGES: {
         loading: string;
         notifications: string;
         noMatches: string;
+        detailsUnavailable: string;
         missingMediaId: string;
         missingSeasonId: string;
         searchPlaceholder: string;
@@ -515,6 +516,16 @@ export declare const DEFAULT_MESSAGES: {
         trackListing: string;
         searchTracksAria: string;
         musicTracksAria: string;
+    };
+    /** SearchPage (`/app/search`) surfaces (ui__webux M5). */
+    search: {
+        /**
+         * The cap line: the endpoint serves one capped page but the wire `total`
+         * is the full match count, so a partial list must say so instead of
+         * reading like the complete answer. Both numbers arrive pre-formatted at
+         * the call site (house idiom, cf. music.showingRange).
+         */
+        showingOf: string;
     };
     settings: {
         theme: string;
