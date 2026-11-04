@@ -11659,7 +11659,7 @@ var Om = { class: "player__stage" }, km = ["src", "poster"], Am = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-5479ff65"]]), gh = "0.99.15", _h = ["aria-label"], vh = ["src", "poster"], yh = { class: "mini__body" }, bh = { class: "mini__title" }, xh = { class: "mini__controls" }, Sh = ["aria-label"], Ch = ["aria-label", "aria-pressed"], wh = ["aria-label"], Th = ["aria-label"], Eh = {
+}), [["__scopeId", "data-v-5479ff65"]]), gh = "0.99.16", _h = ["aria-label"], vh = ["src", "poster"], yh = { class: "mini__body" }, bh = { class: "mini__title" }, xh = { class: "mini__controls" }, Sh = ["aria-label"], Ch = ["aria-label", "aria-pressed"], wh = ["aria-label"], Th = ["aria-label"], Eh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Dh = /*#__PURE__*/ X(/* @__PURE__ */ d({

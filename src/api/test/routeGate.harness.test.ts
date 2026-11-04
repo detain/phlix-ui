@@ -88,10 +88,12 @@ describe('route gate server — control', () => {
     });
 
     it('pins the manifest provenance — server sha + generator, never hand-edited', () => {
-        // Canonical contracts export vendored from the v0.5.3-era bytes, identical
-        // in the current v0.5.5 tag tree (trio md5s frozen; regen #35,
+        // Canonical contracts export vendored from the v0.5.3-era bytes, held
+        // identical through the v0.5.5 tag tree (trio md5s frozen then; regen #35,
         // content-derived at phlix-server 758f9149; full-literal sha + md5 pins
-        // live in routeGate.api.test.ts's currency block).
+        // live in routeGate.api.test.ts's currency block). The v0.5.6 tag moved
+        // the manifest payload (regen #36); this copy tracks the v0.5.5-era bytes
+        // until the separately scheduled re-vendor wave.
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toMatch(/^[0-9a-f]{40}$/);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.generator).toBe(
             'scripts/generate-server-route-manifest.mjs',

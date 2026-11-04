@@ -2,7 +2,7 @@
  * S447 — `@phlix/contracts` dependency-pin guard.
  *
  * The estate ruling retires the stale nested/`v0.4.5` copy: ui's own
- * `package.json` must pin the contracts tag `#v0.5.5` (a TAG pin, never a bare
+ * `package.json` must pin the contracts tag `#v0.5.6` (a TAG pin, never a bare
  * commit sha), and `package-lock.json` must resolve `@phlix/contracts` to the
  * commit that tag peels to — pinned below as `PINNED_CONTRACTS_PEEL`, the single
  * source of that literal — with EXACTLY ONE such resolution in the whole tree.
@@ -24,8 +24,8 @@ const lockfile = JSON.parse(readFileSync(path.join(REPO_ROOT, 'package-lock.json
 const packageJson = JSON.parse(readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'));
 
 const CONTRACTS = '@phlix/contracts';
-// The commit the `v0.5.5` annotated tag peels to (verified against `git ls-remote
-// refs/tags/v0.5.5^{}` at this cut — this is the integrity anchor, not a hand-edit).
+// The commit the `v0.5.6` annotated tag peels to (verified against `git ls-remote
+// refs/tags/v0.5.6^{}` at this cut — this is the integrity anchor, not a hand-edit).
 // SKEW LINEAGE NOTE (skew ENDED at v0.5.2, alignment HELD at v0.5.3): the estate
 // release-identity precedent kept contracts' package.json `version` FIELD frozen at
 // `0.4.7` through both the v0.5.0 and v0.5.1 tag trees (the tag NAME is the release
@@ -33,13 +33,13 @@ const CONTRACTS = '@phlix/contracts';
 // `"version": "0.4.7"` on the lock entry under those pins and the #421-era guard
 // deliberately anchored only the TAG pin and the tag PEEL sha in `resolved`, never
 // the version field. The v0.5.2 release finally advanced the field to `0.5.2` —
-// field/tag alignment — and v0.5.5 carries the aligned field forward (`0.5.5`), so
-// the lock entry honestly reads `0.5.4` and the version-equality assertion below
+// field/tag alignment — and v0.5.6 carries the aligned field forward (`0.5.6`), so
+// the lock entry honestly reads `0.5.6` and the version-equality assertion below
 // holds. It is safe ONLY in this aligned era: if a future contracts tag re-skews
 // its field, relax that assertion again — the tag-pin and peel anchors never depend
 // on it.
-const PINNED_CONTRACTS_PEEL = 'e21598166a7be27e305c205097630e9b635fcd99';
-const PINNED_CONTRACTS_VERSION = '0.5.5';
+const PINNED_CONTRACTS_PEEL = 'c89c8420cd4d50e51f232885754cb74c92a9e05c';
+const PINNED_CONTRACTS_VERSION = '0.5.6';
 
 // S491 survival token — the peel-cite/identifier honesty pass on this guard; used at RUNTIME below.
 const S491_PEEL_TOKEN = 'S491UIPEELFIXX9R6';
@@ -56,16 +56,16 @@ const contractResolutions = Object.entries<{ resolved?: string; version?: string
 );
 
 describe(`@phlix/contracts pin guard [${S447_GUARD_TOKEN}] [${S491_PEEL_TOKEN}]`, () => {
-    it('declares the dependency as a v0.5.5 TAG pin (not a commit sha)', () => {
+    it('declares the dependency as a v0.5.6 TAG pin (not a commit sha)', () => {
         const declared = packageJson.dependencies[CONTRACTS] as string;
-        expect(declared).toMatch(/github:detain\/phlix-contracts#v0\.5\.5$/);
+        expect(declared).toMatch(/github:detain\/phlix-contracts#v0\.5\.6$/);
     });
 
     it('resolves @phlix/contracts exactly once — no stale nested copy', () => {
         expect(contractResolutions).toHaveLength(1);
     });
 
-    it('resolves the single copy to the v0.5.5 tag peel', () => {
+    it('resolves the single copy to the v0.5.6 tag peel', () => {
         const [, entry] = contractResolutions[0] ?? [];
         if (!entry?.resolved) {
             throw new Error('S447: @phlix/contracts lock entry has no resolved ref');
@@ -73,13 +73,13 @@ describe(`@phlix/contracts pin guard [${S447_GUARD_TOKEN}] [${S491_PEEL_TOKEN}]`
         expect(entry.resolved.endsWith(`#${PINNED_CONTRACTS_PEEL}`)).toBe(true);
     });
 
-    it('records the honest 0.5.5 version field on the lock entry (aligned since v0.5.2)', () => {
+    it('records the honest 0.5.6 version field on the lock entry (aligned since v0.5.2)', () => {
         const [, entry] = contractResolutions[0] ?? [];
         if (!entry?.version) {
             throw new Error('S447: @phlix/contracts lock entry has no version field');
         }
-        // Equality-era assertion: the v0.5.5 tag tree's package.json version FIELD
-        // reads `0.5.5`, matching the tag — alignment held since v0.5.2. See the
+        // Equality-era assertion: the v0.5.6 tag tree's package.json version FIELD
+        // reads `0.5.6`, matching the tag — alignment held since v0.5.2. See the
         // SKEW LINEAGE NOTE above before weakening this.
         expect(entry.version).toBe(PINNED_CONTRACTS_VERSION);
     });

@@ -12,6 +12,46 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## 0.99.16 - 2026-11-04
+
+### Release — pin-advance cut: the single content change is `@phlix/contracts` `#v0.5.5` → `#v0.5.6` (github TAG pin); `@phlix/syncplay` `#v0.1.7` verified already-current (untouched). No Unreleased blocks pending — nothing folded; history below verbatim.
+
+- Tag pin ls-remote-verified at this cut: contracts `v0.5.6` = tag object `9f04fc50…`
+  peeling to `c89c8420cd4d50e51f232885754cb74c92a9e05c…` (= contracts origin master at
+  the cut). v0.5.6 is the wave-5 contracts cut: the route-manifest regen #36 re-vendor
+  (412→415 tuples, content-derived at phlix-server `58530ec2…`) plus the WAVE-3/WAVE-4
+  errors.ts cite-currency docblock waves — payload-and-comment only: the registry
+  (`dist/error-codes.json`) bytes are HELD md5-identical (`5d1783a7…`, 205 codes /
+  37 domains), so the `ErrorCode` union is byte-held and NO consumer TS2741 blast
+  radius exists at this pin.
+- **Lock** surgical via `NPM_CONFIG_USERCONFIG=/dev/null npx --yes npm@11 install
+  --package-lock-only`: 5+/5− — 2 own version echoes (0.99.15→0.99.16), 1 root
+  dependency-spec echo, the contracts node's `version` + `resolved` (peel `c89c8420…`),
+  zero unrelated churn; git-dep nodes carry no integrity line in the npm11 lockshape.
+  Materializing install removed the package directory first (v0.99.15 venue lesson:
+  npm's git cache can reuse stale bytes) and is proven: the installed `dist/` compares
+  byte-identical (`diff -r` exit 0) to the `v0.5.6` tag tree; trio md5s error-codes
+  `5d1783a7…` (HELD) / route-manifest `90b79e35…` (moved) / mcp-scopes `8c92c070…` (HELD).
+- **Era rotations measured red at the pin, then cured (S447 guard 3 reds → 4/4):**
+  `contractsPin.test.ts` advanced its tag-pin regex, peel anchor and version anchor to
+  `v0.5.6` / `c89c8420…` / `0.5.6` (its single-resolution law untouched, green before
+  and after); the `errors.test.ts` registry-parity title, `LoginForm.test.ts` registry
+  comment and README.md pin prose rotated for currency — every assertion in those files
+  (205-code parity etc.) stayed green UNMODIFIED, the registry bytes being unchanged.
+- **Vendored route-manifest deliberately NOT re-vendored here.** The gate fixture
+  (`src/api/test/server-route-manifest.json`, 412 tuples, regen #35) keeps its md5/sha
+  pins green — the contracts plan ruling decouples those bytes from the npm pin (they
+  track the cs-cascade, not the tag). v0.5.6's tag tree moves the payload (regen #36,
+  415 tuples); the re-vendor is a separately scheduled wave. The routeGate docblocks now
+  say that honestly instead of claiming current-tag identity.
+- `dist/` rebuilt in the release commit — the M-UI-23 version stamp embeds the version
+  string, so the bundles move with any version bump (the stamp's 2 reds measured between
+  bump and rebuild are the law working, cured by the rebuild, not by rotation). The
+  contracts payload itself is NOT bundled into the ui dist (type-side consumption only);
+  the version literal is the only semantic change. Build ×2 deterministic (aggregate md5
+  `find dist -type f | sort | xargs md5sum | md5sum` = `eb3aea77c89a6314b000c42094304f8d`,
+  886 files); 8 dist paths modified, zero chunk renames.
+
 ## 0.99.15 - 2026-11-04
 
 ### Release — 42 commits since the `v0.99.14` cut (`a437b995`): the review→fix campaign's ui tail — the webux behavior wave (W6/W7/W8: wire-error survivors, Input number-clearing, ToastHost truth + docblock, optimistic-toast catalog, optimistic-rollback server truth, bounded toast stack M18, retry-wired MusicAlbumPage m21, honest library-delete scope m26, confirmed SyncPlay leave m25), the copy/docs cure lanes (W4CURE disclosure, W5 wire truths + aria naming + volume-seed pins, MIN1/MIN2W/MIN3W hardening, escape-completeness, auth-listener lifecycle), the behavior-minors wave (m19/m27 cluster) and the docs-minors + info batch — folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`; the category headers inside the 2026-11-04-era blocks stay `###`, matching the 0.99.12-era fold), plus the D1 pre-release dependency step: `@phlix/syncplay` `#v0.1.6`→`#v0.1.7` (block below). `dist/` rebuilt in the release commit (the M-UI-23 version stamp embeds the version string; the syncplay bump is independently bundle-affecting).

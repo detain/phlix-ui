@@ -91,7 +91,10 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * `phlix-contracts/dist/server-route-manifest.json` at the `v0.5.5` tag
      * (regen #35 — 412 tuples, CONTENT re-derivation at phlix-server
      * `758f9149…` closing the cs#47 hold: the M-6 book-progress pair), and the
-     * sha pin is the server-currency proof.
+     * sha pin is the server-currency proof. Era note at the `#v0.5.6` pin: that
+     * tag ADVANCED the manifest payload (regen #36 — 415 tuples), so this copy
+     * deliberately tracks the older v0.5.5-tag bytes until the separately
+     * scheduled re-vendor wave — the md5 below is the proof of THAT identity.
      */
     const VENDORED_MANIFEST_MD5 = '915796837d38a77733c169996d97640c';
     const VENDORED_MANIFEST_SERVER_SHA = '758f91496c068551b310f1078093335f79c20e04';
