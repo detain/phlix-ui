@@ -14,6 +14,19 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 ## Unreleased — webux majors lane 2026-11-04 (ui__webux)
 
+### Fixed — webux M19 (Input accessible error channel)
+
+- **Input.vue gained the inline-error channel the auth form already shipped**
+  (webux M19): the generic text field rendered no validation message and set
+  no `aria-invalid`/`aria-describedby`, so field failures could only surface as
+  a toast disconnected from the control. The primitive now takes an `error`
+  prop and mirrors AuthField exactly: invalid border + focus ring on the
+  `--error` tokens, `aria-invalid`, `aria-describedby` wired to an `aria-live`
+  polite message line under the field. Four new pins
+  (src/components/ui/Input.test.ts), measured red on the old component.
+  Consumer adoption (McpTokensPage / RequestsPage / ParentalControlsPage
+  field-validation paths) is page work that follows this primitive cure.
+
 ### Fixed (review-round 2026-11-04)
 
 - **Search results said nothing about the cap** (webux M5): `SearchPage` typed
