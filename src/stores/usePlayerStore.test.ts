@@ -624,6 +624,30 @@ describe('ui-min2w — a corrupted volume can never poison the player store', ()
     expect(p.volume).toBe(1);
   });
 
+  // ui__webux trio review (Info): the persisted blob is foreign JSON — its
+  // defaultVolume can arrive as a string or null even though the store's own
+  // type says number. normalizeVolume's `typeof v !== 'number'` branch is the
+  // refusal for exactly that shape; these two pins cover the branch the
+  // d6420130 NaN/±Infinity pair could not reach (both are typeof number).
+  it('seedFromPreferences refuses a STRING persisted defaultVolume', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setVolume(0.25);
+    // '0.7' is what a hand-edited localStorage blob or a 0–100-era extension stores.
+    prefs.defaultVolume = '0.7' as unknown as number;
+    p.seedFromPreferences();
+    expect(p.volume).toBe(0.25); // refused whole — never coerced to 0.7, never NaN-poisoned
+  });
+
+  it('seedFromPreferences refuses a NULL persisted defaultVolume', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setVolume(0.25);
+    prefs.defaultVolume = null as unknown as number; // JSON null from a key-cleared prefs write
+    p.seedFromPreferences();
+    expect(p.volume).toBe(0.25);
+  });
+
   it('seedFromPreferences still seeds well-formed values (no behavior drift)', () => {
     const prefs = usePreferencesStore();
     prefs.defaultVolume = 0.5;

@@ -12,6 +12,21 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — volume seed refusal pins lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U1)
+
+### Tests
+
+- **U1 — the volume-seed typeof branch gets its pins.** `d6420130` shipped
+  `normalizeVolume`'s `typeof v !== 'number'` refusal and pinned the NaN /
+  ±Infinity shapes (both are typeof number, so the non-finite arm covered
+  them); a persisted `defaultVolume` arriving as a STRING or NULL — foreign
+  JSON: a hand-edited blob, a key-cleared write — refused correctly but
+  UNPINNED (trio review, Info). Two new seed pins close the gap. Disclosed
+  green-at-parent: the behavior already exists; teeth proven by mutation —
+  replacing the guard with a raw coerce-and-clamp reddens exactly the five
+  refusal pins (3 pre-existing + 2 new), zero collateral. Test-only commit;
+  dist unchanged (specs are not bundled).
+
 ## Unreleased — player-error catalog rail lane 2026-11-04 (FIX-UI-MIN3W.md, ui-min3 U3)
 
 ### Fixed
