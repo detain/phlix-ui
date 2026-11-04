@@ -421,13 +421,13 @@ async function onPlay(item: MediaItem): Promise<void> {
     );
     if (stale()) return;
     if (!resolved) {
-      toasts.info('Nothing to play yet.');
+      toasts.info(t('library.nothingToPlay'));
       return;
     }
     go('player', resolved.id);
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.info('Nothing to play yet.');
+    toasts.info(t('library.nothingToPlay'));
   }
 }
 // The card's favorite/bookmark button ALREADY toggled the store optimistically

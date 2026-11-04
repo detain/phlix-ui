@@ -23,6 +23,7 @@ import { ref, computed, onMounted } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
 import { errMessage } from '../api/errors';
+import { useMessages } from '../composables/useMessages';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -39,6 +40,7 @@ const props = defineProps<{
 
 const http: Pick<ApiClient, 'get' | 'post' | 'delete'> = props.client ?? api;
 const toasts = useToastStore();
+const { t } = useMessages();
 
 const activeTab = ref<'incoming' | 'outgoing'>('incoming');
 const incoming = ref<IncomingOffer[]>([]);
@@ -139,10 +141,10 @@ async function revokeShare(id: string): Promise<void> {
   processingIds.value.add(id);
   try {
     await http.delete(`/api/v1/me/federation/library-shares/outgoing/${id}`);
-    toasts.success('Share revoked.');
+    toasts.success(t('shares.revoked'));
     await loadAll();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to revoke share.'));
+    toasts.error(errMessage(e, t('shares.revokeFailed')));
   } finally {
     processingIds.value.delete(id);
   }

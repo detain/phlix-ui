@@ -14,6 +14,7 @@ import { onMounted, computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
+import { useMessages } from '../composables/useMessages';
 import { ApiClient } from '../api/client';
 import type { ApiClient as ApiClientType } from '../api/client';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -42,6 +43,7 @@ const injectedClient = useMediaApiBase();
  *  them against the same (possibly relay-proxied) base the payload came from. */
 const { imgSrc } = useImageSrc();
 const toasts = useToastStore();
+const { t } = useMessages();
 const player = usePlayerStore();
 const profiles = useProfileStore();
 
@@ -146,13 +148,13 @@ async function onPlay(item: MediaItem): Promise<void> {
       player.resumeMap,
     );
     if (!resolved) {
-      toasts.info('Nothing to play yet.');
+      toasts.info(t('library.nothingToPlay'));
       return;
     }
     go('player', resolved.id);
   } catch (e) {
     if (isAbort(e)) return;
-    toasts.info('Nothing to play yet.');
+    toasts.info(t('library.nothingToPlay'));
   }
 }
 

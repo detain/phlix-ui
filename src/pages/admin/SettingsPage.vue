@@ -447,7 +447,7 @@ async function loadSettings(): Promise<void> {
       currentTab.value = tabs.value[0].value;
     }
   } catch (e) {
-    error.value = errMessage(e, 'Failed to load settings.');
+    error.value = errMessage(e, t('settings.loadFailed'));
     toasts.error(error.value);
   } finally {
     loading.value = false;
