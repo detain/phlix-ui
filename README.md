@@ -22,13 +22,13 @@ Vue app.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
-- ⚡ **Code-split + lazy-routed** — the entry bundle is ~384 kB raw (~92 kB gzipped); routes, the
+- ⚡ **Code-split + lazy-routed** — the entry bundle is ~382 kB raw (~94 kB gzipped); routes, the
   player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme, full keyboard support, honored
   reduced-motion, an i18n-readiness seam.
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v0.99.13`. Pre-1.0, so minor releases may include breaking changes. See
+> **Status:** `v0.99.14`. Pre-1.0, so minor releases may include breaking changes. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -60,7 +60,7 @@ Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v0.99.13"
+    "@phlix/ui": "github:detain/phlix-ui#v0.99.14"
   }
 }
 ```
@@ -386,7 +386,7 @@ nothing-matched label).
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
 515-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
-equality on every ui tag since the `v0.99.5` era (now `v0.99.13`-era) — ~150 registry strings
+equality on every ui tag since the `v0.99.5` era (now `v0.99.14`-era) — ~150 registry strings
 would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
 DERIVED from contracts (`Record<ErrorCode, string>` makes adding/removing a
@@ -573,7 +573,7 @@ deliberately keeps them out so the main bundle stays lean, and the entry's CSS p
 
 > **⚠ Dual-entry state duplication.** The player build lists `@phlix/ui` as external, but that
 > specifier never matches its own imports, so every shared module (`ApiClient`, `usePlayerStore`, …)
-> is **inlined a second time** into `dist/player.js` (≈421 kB vs the ≈384 kB main entry —
+> is **inlined a second time** into `dist/player.js` (≈413 kB vs the ≈382 kB main entry —
 > `vite.player.config.ts` head comment). Composing pages from root building blocks while mounting
 > `Player` from `@phlix/ui/player` therefore yields **two singleton store/ApiClient instances with
 > silently divergent playback state**. Until that is fixed or the entry retired, pick ONE entry per
@@ -643,8 +643,9 @@ const dispose = commands.register({
 The server admin pages — Dashboard, Server Traffic, Users, Logs, Webhooks, Services, Integrations,
 Backup, Cast Devices, DLNA Server, Remote Access, Live TV / DVR, Collections, Watch History,
 SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Tasks, Settings — are produced as lazy routes, with
-no static JS in the entry. `defaultAdminPages` in `src/app/admin.ts` is the source of truth for that
-list and its sidebar order; `buildHubAdminRoutes` mounts the smaller hub set instead.
+no static JS in the entry. The `pages` default of `buildAdminRoutes()`/`adminMenu()` in
+`src/app/admin.ts` is the source of truth for that list and its sidebar order (the backing
+registry `defaultAdminPages` is module-private); `buildHubAdminRoutes` mounts the smaller hub set instead.
 
 ```ts
 import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';
@@ -726,7 +727,7 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
 
 | Output | Notes |
 | --- | --- |
-| `dist/phlix-ui.js` | ESM entry (~384 kB raw / ~92 kB gzipped; routes/player/palette split into lazy chunks). |
+| `dist/phlix-ui.js` | ESM entry (~382 kB raw / ~94 kB gzipped; routes/player/palette split into lazy chunks). |
 | `dist/phlix-ui.umd.cjs` | UMD/CJS build for `require()`. |
 | `dist/style.css` | Tokens + component styles. |
 | `dist/fonts/` | `fonts.css` + three variable `.woff2` files. |
