@@ -78,13 +78,13 @@ async function onPlay(item: MediaItem): Promise<void> {
       player.resumeMap,
     );
     if (!resolved) {
-      toasts.info('Nothing to play yet.');
+      toasts.info(t('library.nothingToPlay'));
       return;
     }
     go('player', resolved.id);
   } catch (e) {
     if (isAbort(e)) return;
-    toasts.info('Nothing to play yet.');
+    toasts.info(t('library.nothingToPlay'));
   }
 }
 

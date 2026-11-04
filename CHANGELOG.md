@@ -12,6 +12,40 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — copydocs CURE lane 2026-11-04 (review FINDINGS on the copy/docs lane)
+
+### Fixed (review 2026-11-04 FINDINGS — REVIEW-UI-COPYDOCS.md F1-F4)
+
+- **F1 — the 4 surviving inline 'Nothing to play yet.' toasts are routed**
+  (copywriter review F1): ExplorePage :125/:131 and RecommendationsPage :81/:87
+  still called toasts.info with the raw English literal while their six
+  Browse/MediaDetail/WatchHistory siblings rendered through the existing key
+  library.nothingToPlay — the same toast was catalog-backed on three pages and
+  hardcoded on two. All four now call t('library.nothingToPlay'); both pages
+  already imported useMessages (their detailsUnavailable lines used it). Four
+  new source-level pins (two per page test) — routed-count equality 2 and a
+  no-raw-copy assertion — measured red on the pre-fix sources (0 routed,
+  literal present) before the cure. No catalog value moved.
+- **F2 — claim/ID drift forward-correction (new note; the artifacts below stay
+  verbatim).** Truthful mapping of the copy/docs lane's citations against the
+  finding register (FIX-UI-COPYDOCS.md) and the review's heading numbering
+  (ui__copywriter.md): (a) commit 89686327's message and its CHANGELOG bullet
+  say 'five' toast sites — the diff converts SIX (Browse ×2, MediaDetail ×2,
+  WatchHistory ×2); the remaining four survivors (Explore/Recommendations) are
+  the F1 cure above. (b) commit 16d88de6 cites 'ui__copywriter Minor-2' for the
+  dead-`t(??)`-fallback deletion — that finding is Minor-1 (first Minor
+  heading); Minor-2 is coming-soon. (c) commit 026a6bf2 cites 'Minor-3' for
+  coming-soon — it is Minor-2. (d) the copy/docs lane CHANGELOG bullets label
+  the same two items 'copywriter M2' (dead fallbacks) and 'copywriter M6'
+  (coming-soon); in this register the M-class prefix means Major — the truthful
+  mapping is Minor-1 (m1) and Minor-2 (m2) respectively. The fix-lane ledger
+  itself (FIX-UI-COPYDOCS.md) maps m1/m2/m3 correctly; the mis-cites lived only
+  in the commit/CHANGELOG artifacts.
+
+**Gates (this lane):** vitest --no-file-parallelism — targeted 23/23 green on
+the two page test files; full serial run + vue-tsc/eslint recorded at close.
+No dist rebuild in this lane (src touches re-vendored at the release batch).
+
 ## Unreleased — webux majors lane 2026-11-04 (ui__webux)
 
 ### Fixed — webux M19 (Input accessible error channel)

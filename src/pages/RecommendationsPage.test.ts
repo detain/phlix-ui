@@ -6,6 +6,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
@@ -218,5 +221,29 @@ describe('RecommendationsPage — Edit metadata / Explore item data (S15)', () =
     const panes = document.body.querySelectorAll('[data-test="item-json"]');
     expect(panes.length).toBe(1);
     expect(panes[0].textContent).toContain('"id": "r1"');
+  });
+});
+
+/**
+ * Review 2026-11-04 ui__copywriter F1 — same-class sweep law for THIS page.
+ *
+ * Mirror of the ExplorePage pin: 89686327 left both onPlay toast sites here raw
+ * while routing the WatchHistory/Browse/MediaDetail siblings. Both are routed
+ * to library.nothingToPlay now; a re-inline reddens these pins (measured on the
+ * pre-fix source: 0 routed / literal present).
+ */
+describe('RecommendationsPage — nothingToPlay catalog routing (review ui__copywriter F1)', () => {
+  const src = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), './RecommendationsPage.vue'),
+    'utf8',
+  );
+
+  it('routes both onPlay toast sites through t(\'library.nothingToPlay\')', () => {
+    const routed = src.split("t('library.nothingToPlay')").length - 1;
+    expect(routed).toBe(2);
+  });
+
+  it('carries no raw copy of the catalog sentence', () => {
+    expect(src).not.toContain("'Nothing to play yet.'");
   });
 });

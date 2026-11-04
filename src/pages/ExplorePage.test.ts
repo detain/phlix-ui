@@ -6,6 +6,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
@@ -231,5 +234,36 @@ describe('ExplorePage — Edit metadata / Explore item data (S15)', () => {
     const panes = document.body.querySelectorAll('[data-test="item-json"]');
     expect(panes.length).toBe(1);
     expect(panes[0].textContent).toContain('"id": "s1"');
+  });
+});
+
+/**
+ * Review 2026-11-04 ui__copywriter F1 — same-class sweep law for THIS page.
+ *
+ * The batch 89686327 converted six 'Nothing to play yet.' call-sites to the
+ * catalog key library.nothingToPlay but left both onPlay sites here (and in
+ * RecommendationsPage) as raw English — three pages routed the toast, two stayed
+ * hardcoded. Both sites are routed now; these pins make a re-inline red.
+ * Measured-from-red 2026-11-04: run against the pre-fix source, the count pin
+ * failed (0 routed of 2) and the literal pin failed (raw sentence present).
+ *
+ * Source-scan form (house idiom, cf. BrowsePage.test.ts S09 block): the toast
+ * fires only when resolvePlayable returns null or the call aborts mid-flight —
+ * a mount-driving fixture for both branches would test the composable stub,
+ * not the routing. The routing IS a source-level fact.
+ */
+describe('ExplorePage — nothingToPlay catalog routing (review ui__copywriter F1)', () => {
+  const src = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), './ExplorePage.vue'),
+    'utf8',
+  );
+
+  it('routes both onPlay toast sites through t(\'library.nothingToPlay\')', () => {
+    const routed = src.split("t('library.nothingToPlay')").length - 1;
+    expect(routed).toBe(2);
+  });
+
+  it('carries no raw copy of the catalog sentence', () => {
+    expect(src).not.toContain("'Nothing to play yet.'");
   });
 });
