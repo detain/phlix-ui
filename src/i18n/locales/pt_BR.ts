@@ -359,7 +359,7 @@ export const PT_BR_MESSAGES = {
     join: 'Entrar',
     cancel: 'Cancelar',
     loading: 'Carregando…',
-    noRooms: 'Nenhuma sala pública disponível',
+    noRooms: 'Nenhuma sala disponível',
     errorCreate: 'Falha ao criar a sala.',
     errorJoin: 'Falha ao entrar na sala.',
     errorLeave: 'Falha ao sair da sala.',
@@ -398,7 +398,7 @@ export const PT_BR_MESSAGES = {
     markedUnwatched: '“{name}” marcado como não assistido.',
     itemRemoved: '“{name}” removido.',
     itemRemoveFailed: 'Não foi possível remover “{name}”.',
-    unknownError: 'Erro desconhecido',
+    unknownError: 'Algo deu errado.',
     loadTitlesError: 'Não foi possível carregar os títulos',
   },
   playlist: {

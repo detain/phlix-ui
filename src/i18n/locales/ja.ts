@@ -360,7 +360,7 @@ export const JA_MESSAGES = {
     join: '参加',
     cancel: 'キャンセル',
     loading: '読み込み中…',
-    noRooms: '公開ルームはありません',
+    noRooms: '利用可能なルームはありません',
     errorCreate: 'ルームを作成できませんでした。',
     errorJoin: 'ルームに参加できませんでした。',
     errorLeave: 'ルームから退出できませんでした。',
@@ -399,7 +399,7 @@ export const JA_MESSAGES = {
     markedUnwatched: '「{name}」を未視聴にしました。',
     itemRemoved: '「{name}」を削除しました。',
     itemRemoveFailed: '「{name}」を削除できませんでした。',
-    unknownError: '不明なエラー',
+    unknownError: '問題が発生しました。',
     loadTitlesError: 'タイトルを読み込めませんでした',
   },
   playlist: {

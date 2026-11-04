@@ -361,7 +361,7 @@ export const ES_MESSAGES = {
     join: 'Unirse',
     cancel: 'Cancelar',
     loading: 'Cargando…',
-    noRooms: 'No hay salas públicas disponibles',
+    noRooms: 'No hay salas disponibles',
     errorCreate: 'No se pudo crear la sala.',
     errorJoin: 'No se pudo unir a la sala.',
     errorLeave: 'No se pudo salir de la sala.',
@@ -400,7 +400,7 @@ export const ES_MESSAGES = {
     markedUnwatched: '“{name}” marcado como no visto.',
     itemRemoved: '“{name}” eliminado.',
     itemRemoveFailed: 'No se pudo eliminar “{name}”.',
-    unknownError: 'Error desconocido',
+    unknownError: 'Algo salió mal.',
     loadTitlesError: 'No se pudieron cargar los títulos',
   },
   playlist: {

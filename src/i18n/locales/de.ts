@@ -359,7 +359,7 @@ export const DE_MESSAGES = {
     join: 'Beitreten',
     cancel: 'Abbrechen',
     loading: 'Wird geladen…',
-    noRooms: 'Keine öffentlichen Räume verfügbar',
+    noRooms: 'Keine Räume verfügbar',
     errorCreate: 'Raum konnte nicht erstellt werden.',
     errorJoin: 'Raum konnte nicht beigetreten werden.',
     errorLeave: 'Raum konnte nicht verlassen werden.',
@@ -398,7 +398,7 @@ export const DE_MESSAGES = {
     markedUnwatched: '«{name}» als ungesehen markiert.',
     itemRemoved: '«{name}» wurde entfernt.',
     itemRemoveFailed: '«{name}» konnte nicht entfernt werden.',
-    unknownError: 'Unbekannter Fehler',
+    unknownError: 'Etwas ist schiefgelaufen.',
     loadTitlesError: 'Titel konnten nicht geladen werden',
   },
   playlist: {

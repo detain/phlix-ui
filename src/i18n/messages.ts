@@ -424,7 +424,7 @@ export const DEFAULT_MESSAGES = {
     join: 'Join',
     cancel: 'Cancel',
     loading: 'Loading…',
-    noRooms: 'No public rooms available',
+    noRooms: 'No rooms available',
     errorCreate: 'Couldn’t create the room.',
     errorJoin: 'Couldn’t join the room.',
     errorLeave: 'Couldn’t leave the room.',
@@ -474,7 +474,7 @@ export const DEFAULT_MESSAGES = {
     markedUnwatched: 'Marked “{name}” as unwatched.',
     itemRemoved: 'Removed “{name}”.',
     itemRemoveFailed: 'Couldn’t remove “{name}”.',
-    unknownError: 'Unknown error',
+    unknownError: 'Something went wrong.',
     loadTitlesError: 'Couldn’t load titles',
   },
   playlist: {

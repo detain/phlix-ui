@@ -363,7 +363,7 @@ export const FR_MESSAGES = {
     join: 'Rejoindre',
     cancel: 'Annuler',
     loading: 'Chargement…',
-    noRooms: 'Aucun salon public disponible',
+    noRooms: 'Aucun salon disponible',
     errorCreate: 'Impossible de créer le salon.',
     errorJoin: 'Impossible de rejoindre le salon.',
     errorLeave: 'Impossible de quitter le salon.',
@@ -402,7 +402,7 @@ export const FR_MESSAGES = {
     markedUnwatched: '« {name} » marqué comme non vu.',
     itemRemoved: '« {name} » supprimé.',
     itemRemoveFailed: 'Impossible de supprimer « {name} ».',
-    unknownError: 'Erreur inconnue',
+    unknownError: 'Une erreur est survenue.',
     loadTitlesError: 'Impossible de charger les titres',
   },
   playlist: {

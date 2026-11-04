@@ -359,7 +359,7 @@ export const IT_MESSAGES = {
     join: 'Unisciti',
     cancel: 'Annulla',
     loading: 'Caricamento…',
-    noRooms: 'Nessuna sala pubblica disponibile',
+    noRooms: 'Nessuna sala disponibile',
     errorCreate: 'Impossibile creare la sala.',
     errorJoin: 'Impossibile unirsi alla sala.',
     errorLeave: 'Impossibile uscire dalla sala.',
@@ -398,7 +398,7 @@ export const IT_MESSAGES = {
     markedUnwatched: '“{name}” segnato come non visto.',
     itemRemoved: '“{name}” rimosso.',
     itemRemoveFailed: 'Impossibile rimuovere “{name}”.',
-    unknownError: 'Errore sconosciuto',
+    unknownError: 'Qualcosa è andato storto.',
     loadTitlesError: 'Impossibile caricare i titoli',
   },
   playlist: {
