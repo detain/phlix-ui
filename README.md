@@ -589,7 +589,8 @@ deliberately keeps them out so the main bundle stays lean, and the entry's CSS p
 > **⚠ Dual-entry state duplication.** The player build lists `@phlix/ui` as external, but that
 > specifier never matches its own imports, so every shared module (`ApiClient`, `usePlayerStore`, …)
 > is **inlined a second time** into `dist/player.js` (≈413 kB vs the ≈382 kB main entry —
-> `vite.player.config.ts` head comment). Composing pages from root building blocks while mounting
+> measured from the committed `dist/` at the release era; the mechanism is documented by the
+> DUAL-ENTRY caveat heading `vite.player.config.ts`). Composing pages from root building blocks while mounting
 > `Player` from `@phlix/ui/player` therefore yields **two singleton store/ApiClient instances with
 > silently divergent playback state**. Until that is fixed or the entry retired, pick ONE entry per
 > app instance.
