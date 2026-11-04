@@ -154,13 +154,18 @@ interface RawLine {
 }
 
 /**
- * Escape HTML special characters.
+ * Escape HTML special characters. Both quote families are covered because the
+ * output is concatenated into HTML strings fed to `v-html`: text position is
+ * safe without them, single-quoted attribute interpolation would not be
+ * (UI-m19; enforced repo-wide by `__tests__/escape-html-quotes.test.ts`).
  */
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**

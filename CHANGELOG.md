@@ -12,6 +12,26 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — escape-completeness lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U2)
+
+### Hardening
+
+- **U2 — every local `escapeHtml` now escapes BOTH quote families, pinned
+  at the source.** The two SFC helpers (admin `LogsPage`, `MetadataMatch
+  Modal`) fed `v-html` strings while omitting the apostrophe — inert today
+  (all call sites are text position) but one future single-quoted attribute
+  interpolation of an attacker-influenceable log path would wake it
+  (review ui__secaudit, UI-m19; the review's premise also UNDERSTATED
+  `LogsPage`, which was missing `"` as well — both gaps closed). DOM-level
+  tests cannot observe the cure (entity serialization decodes back), so
+  the law is pinned where it lives: a new grep-gate tripwire
+  (`__tests__/escape-html-quotes.test.ts`, the s241/3a152e07 posture)
+  enumerates every `escapeHtml` body under `src/` from disk and demands
+  all five entities — a non-compliant copy reddens CI, an empty corpus is
+  itself a failure. 3 pins: 2 measured RED on the parent (one per helper,
+  attributed by path), 1 corpus-size anti-vacuity pin. Both components'
+  existing suites re-ran green — no text-position rendering change.
+
 ## Unreleased — auth-listener lifecycle lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U1)
 
 ### Fixed

@@ -87,8 +87,11 @@ function isAbort(e: unknown): boolean {
   return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
 }
 
+// Both quote families (UI-m19, review ui__secaudit): `&#39;` closes the gap the
+// apostrophe opened for future single-quoted attribute interpolation of log
+// file paths; enforced repo-wide by `__tests__/escape-html-quotes.test.ts`.
 function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function pathBreadcrumb(path: string): string {
