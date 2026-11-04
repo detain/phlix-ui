@@ -1087,7 +1087,7 @@ var ga = ["src", "alt"], _a = { class: "brand-wordmark" }, va = {
 			_: 1
 		}, 8, ["title", "description"])]));
 	}
-}), [["__scopeId", "data-v-c6233715"]]), Sa = "0.99.14", Ca = "phlix.currentServerId", wa = "phlix.currentServerName", Ta = "phlix.currentServerUrl";
+}), [["__scopeId", "data-v-c6233715"]]), Sa = "0.99.15", Ca = "phlix.currentServerId", wa = "phlix.currentServerName", Ta = "phlix.currentServerUrl";
 function Ea(e) {
 	if (typeof window > "u") return null;
 	try {
@@ -1300,7 +1300,7 @@ function co(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-DezcTHKE.js")
+			component: () => import("./PlayerPage-CqB1S9eW.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1348,7 +1348,7 @@ function co(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-DUCCCFjp.js")
+			component: () => import("./SyncPlayPage-BLOzs-Zz.js")
 		},
 		{
 			path: `${t}/music`,

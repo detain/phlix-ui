@@ -12,7 +12,40 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U3)
+## 0.99.15 - 2026-11-04
+
+### Release — 42 commits since the `v0.99.14` cut (`a437b995`): the review→fix campaign's ui tail — the webux behavior wave (W6/W7/W8: wire-error survivors, Input number-clearing, ToastHost truth + docblock, optimistic-toast catalog, optimistic-rollback server truth, bounded toast stack M18, retry-wired MusicAlbumPage m21, honest library-delete scope m26, confirmed SyncPlay leave m25), the copy/docs cure lanes (W4CURE disclosure, W5 wire truths + aria naming + volume-seed pins, MIN1/MIN2W/MIN3W hardening, escape-completeness, auth-listener lifecycle), the behavior-minors wave (m19/m27 cluster) and the docs-minors + info batch — folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`; the category headers inside the 2026-11-04-era blocks stay `###`, matching the 0.99.12-era fold), plus the D1 pre-release dependency step: `@phlix/syncplay` `#v0.1.6`→`#v0.1.7` (block below). `dist/` rebuilt in the release commit (the M-UI-23 version stamp embeds the version string; the syncplay bump is independently bundle-affecting).
+
+### Dependency pins — D1 pre-bump: `@phlix/syncplay` `#v0.1.6` → `#v0.1.7` (github TAG pin); `@phlix/contracts` `#v0.5.5` verified already-current (untouched)
+
+- Tag pin ls-remote-verified at this cut: syncplay `v0.1.7` = tag object `fe687f27…`
+  peeling to `1a80b1d1cbb6d63aa4d3dce0001ff21ac5e85b4d…`. v0.1.7 is the review→fix
+  vein atop v0.1.6: the lib guard wave (boundary frame law — malformed frames DROP
+  at the decoder instead of folding fabricated defaults into typed state; additive
+  `onFrameDropped` / `destroy()` seams, host-eviction `onMemberLeft`), the tooling
+  wave (true-UMD dual-format dist, ES2017 target, types-first exports), and three
+  SPEC/README prose waves. **The wire surface toward server/hub is unchanged** —
+  zero frame-type or error-code deltas, so no contracts-registry or TS2741 hazard
+  class exists at this pin (the public surface grew additively only); the ui-side
+  behavior defaults hold (`onFrameDropped` is opt-in), but the bundled decoder code
+  moves, making this rebuild independently bundle-affecting.
+- **Lock** surgical via `NPM_CONFIG_USERCONFIG=/dev/null npx --yes npm@11 install
+  --package-lock-only`: 5+/5− — 2 own version echoes (0.99.14→0.99.15), 1 root
+  dependency-spec echo, the syncplay node's `version` + `resolved` (peel
+  `1a80b1d1…`), zero unrelated churn; git-dep nodes carry no integrity line in the
+  npm11 lockshape. Disclosed venue catch: the follow-up materializing install
+  initially REUSED stale v0.1.6 bytes from npm's git cache despite the lock
+  recording `0.1.7`/`1a80b1d1` — cured by removing the package directory and
+  re-installing, then proven: the installed `dist/` compares byte-identical
+  (`diff -r` exit 0) to the `v0.1.7` tag tree.
+- **Era rotation: none required, measured.** A repo-wide grep (excluding the
+  verbatim CHANGELOG history and the lock) finds zero `0.1.6`/`0816877…`
+  references in src/, tests/, scripts/, README or docs — unlike the contracts
+  S447 guard, the syncplay pin carries no version-pinning test.
+- Full serial gates on the settled tree: vitest `--no-file-parallelism`, vue-tsc,
+  repo eslint, `dist:check`, and a twice-built byte-identical `dist/` — figures in
+  the release commit record.
+### webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U3)
 
 ### Changed
 
@@ -35,7 +68,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   4F/39P), including a cancel leg proving the dialog's `v-if` genuinely
   removes the teleported panel.
 
-## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U2)
+### webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U2)
 
 ### Changed
 
@@ -53,7 +86,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   (count stated / count never invented, 2F/97P at parent). Copy stays raw
   English literals per the admin page's documented inline convention.
 
-## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U1)
+### webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U1)
 
 ### Changed
 
@@ -69,7 +102,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   retry clears `.album-page__error` and renders the header — the message-only
   parent is convicted at the retry-existence assertion (1F/18P targeted).
 
-## Unreleased — bounded toast stack lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U3)
+### bounded toast stack lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U3)
 
 ### Changed
 
@@ -95,7 +128,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   `MAX_VISIBLE_TOASTS` binding without importing it (TypeError-red whole file);
   the named import added. 47+12 across the toast suites green, zero collateral.
 
-## Unreleased — optimistic-rollback server-truth lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U2)
+### optimistic-rollback server-truth lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U2)
 
 ### Fixed
 
@@ -118,7 +151,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   absent-truth fallback; 35/35 suite, 649/649 across the nine consumer
   suites, zero collateral.
 
-## Unreleased — optimistic-toast catalog lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U1)
+### optimistic-toast catalog lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U1)
 
 ### Fixed
 
@@ -141,7 +174,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   catalog grows 517→522 keys and the measured prose trio
   (`errors.ts`/`errors.test.ts`/`README.md`) rotated from the tripwire's own red.
 
-## Unreleased — ToastHost doc-truth lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U3)
+### ToastHost doc-truth lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U3)
 
 ### Fixed
 
@@ -155,7 +188,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   src/** moved (SFC script comment edits ARE bundle-affecting): dist rebuilt
   in this commit, deterministic x2 (aggregate md5 113506b5).
 
-## Unreleased — Input number-clearing lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U2)
+### Input number-clearing lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U2)
 
 ### Fixed
 
@@ -176,7 +209,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   parent. src moved: dist rebuilt in this commit, deterministic x2 (aggregate
   md5 6d001c5c).
 
-## Unreleased — Settings-family wire-error survivor lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U1)
+### Settings-family wire-error survivor lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U1)
 
 ### Fixed
 
@@ -199,7 +232,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   channel; the member SettingsPage is a localStorage-only editor with no
   network failure path. src moved: dist rebuilt in this commit, deterministic
   x2 (aggregate md5 0958d205).
-## Unreleased — wire-error survivor-class disclosure lane 2026-11-04 (FIX-UI-W4CURE.md, ui-w4cure U2+U3)
+### wire-error survivor-class disclosure lane 2026-11-04 (FIX-UI-W4CURE.md, ui-w4cure U2+U3)
 
 ### Fixed (disclosure only; no src/** or dist changes)
 
@@ -229,7 +262,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   message and the original register are immutable history — corrections
   ride new notes on top.
 
-## Unreleased — ServerDetail hub-wire-truth lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U3)
+### ServerDetail hub-wire-truth lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U3)
 
 ### Fixed
 
@@ -249,7 +282,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   7305c31e). Report-only: heartbeat `received_at` nullability (controller
   docblock says int|null; page types number) — untouched, out of this unit.
 
-## Unreleased — search accessible-name lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U2)
+### search accessible-name lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U2)
 
 ### Fixed
 
@@ -264,7 +297,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   errors.test.ts / README.md). src moved: dist rebuilt in this commit,
   deterministic ×2 (aggregate md5 50c5e956).
 
-## Unreleased — volume seed refusal pins lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U1)
+### volume seed refusal pins lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U1)
 
 ### Tests
 
@@ -279,7 +312,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   refusal pins (3 pre-existing + 2 new), zero collateral. Test-only commit;
   dist unchanged (specs are not bundled).
 
-## Unreleased — player-error catalog rail lane 2026-11-04 (FIX-UI-MIN3W.md, ui-min3 U3)
+### player-error catalog rail lane 2026-11-04 (FIX-UI-MIN3W.md, ui-min3 U3)
 
 ### Fixed
 
@@ -302,7 +335,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   asserting the catalog sentence renders and a `RAW-SERVER-DEBUG-TEXT`
   sentinel does NOT.
 
-## Unreleased — escape-completeness lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U2)
+### escape-completeness lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U2)
 
 ### Hardening
 
@@ -322,7 +355,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   attributed by path), 1 corpus-size anti-vacuity pin. Both components'
   existing suites re-ran green — no text-position rendering change.
 
-## Unreleased — auth-listener lifecycle lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U1)
+### auth-listener lifecycle lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U1)
 
 ### Fixed
 
@@ -340,7 +373,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   that a dispatch on the live store still clears `isLoggedIn` — disclosed
   as a preservation pin, not new behavior.
 
-## Unreleased — volume-finiteness lane 2026-11-04 (FIX-UI-MIN2W.md, ui-min2w)
+### volume-finiteness lane 2026-11-04 (FIX-UI-MIN2W.md, ui-min2w)
 
 ### Fixed
 
@@ -368,7 +401,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   (c5a3a66a's error-channel block; `setCurrent`'s isFinite duration
   guard, already pinned) — evidence in FIX-UI-MIN2W.md.
 
-## Unreleased — behavior-minors wave 2026-11-04 (FIX-QUEUE UI-M6 / UI-m27)
+### behavior-minors wave 2026-11-04 (FIX-QUEUE UI-M6 / UI-m27)
 
 ### Fixed
 
@@ -393,7 +426,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   already follow. New pin measured RED on the committed source (exactly 1
   failure) before the cure; `hubRelay.ts` needed no change (verified guarded).
 
-## Unreleased — docs-minors wave-1 lane 2026-11-04 (FIX-QUEUE UI-m15 / UI-m11 residual / UI-m39)
+### docs-minors wave-1 lane 2026-11-04 (FIX-QUEUE UI-m15 / UI-m11 residual / UI-m39)
 
 ### Fixed (README truth pass; no src/** changes)
 
@@ -426,7 +459,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   `preferredAudioQuality`. `data-tv` joins the `useTheme()` reflection list
   (it is written there).
 
-## Unreleased — copydocs CURE lane 2026-11-04 (review FINDINGS on the copy/docs lane)
+### copydocs CURE lane 2026-11-04 (review FINDINGS on the copy/docs lane)
 
 ### Fixed (review 2026-11-04 FINDINGS — REVIEW-UI-COPYDOCS.md F1-F4)
 
@@ -501,7 +534,7 @@ rule and was reworded). No dist rebuild in this lane (release batch owns it;
 src/** moved — F1/F4 copy paths — so the endgame re-vendor is REQUIRED before
 consumers render the new strings).
 
-## Unreleased — webux majors lane 2026-11-04 (ui__webux)
+### webux majors lane 2026-11-04 (ui__webux)
 
 ### Fixed — webux M19 (Input accessible error channel)
 
@@ -529,7 +562,7 @@ consumers render the new strings).
   claim + groups claim — rotated from the measured reds). An absent or
   non-numeric wire `total` degrades to null, never `NaN`.
 
-## Unreleased — copy/docs review lane 2026-11-04 (ui__copywriter + ui__writer + ui__pm)
+### copy/docs review lane 2026-11-04 (ui__copywriter + ui__writer + ui__pm)
 
 ### Fixed (review-round 2026-11-04)
 
