@@ -12,6 +12,29 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — player-error catalog rail lane 2026-11-04 (FIX-UI-MIN3W.md, ui-min3 U3)
+
+### Fixed
+
+- **U3 — PlayerPage's generic load-failure card now routes a REGISTERED
+  wire error code through the contracts catalog.** The 403/429 arm already
+  localized via `playbackBlockingMessage` (W4), but the general catch stored
+  `e.message` — the server's English debug text — straight into the
+  member-facing `EmptyState` description, breaking the error-code doctrine
+  the adjacent comment itself cites (components localize the stable code,
+  never the server text; same law as `browseErrors`/`AcceptInvitePage`).
+  A new pure `mediaLoadErrorMessage` (the `playerErrors.ts` sibling, unit-
+  testable without the heavy SFC) consults the catalog for registered codes
+  and keeps pre-existing behavior verbatim for everything else — unregistered
+  code, network `TypeError`, non-Error throw — so every existing raw-text
+  pin in the 56-case PlayerPage suite stayed green untouched. Disclosed
+  one-line improvement: a message-less `Error` previously stored `''` (the
+  error card silently vanished); it now falls back to the page's own string.
+  5 pins, 5 measured RED on the parent: 4 unit (catalog routing, unknown
+  passthrough, TypeError passthrough, page fallback) + 1 mount conviction
+  asserting the catalog sentence renders and a `RAW-SERVER-DEBUG-TEXT`
+  sentinel does NOT.
+
 ## Unreleased — escape-completeness lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U2)
 
 ### Hardening

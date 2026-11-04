@@ -21,6 +21,7 @@ import { usePlayerUiStore } from '../stores/usePlayerUiStore';
 import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 import { isRoute, hasQuery, pathnameOf } from '../test/route-match';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 /** Server playback-info shape (markers + chapters; NO stream url). */
 interface PlaybackInfo {
@@ -1638,5 +1639,35 @@ describe('PlayerPage — a superseded applyItem() must not write the new item’
     await flushPromises();
     expect(w2.text()).toContain('Failed to load media item');
     expect(w2.findComponent(Player).exists()).toBe(false);
+  });
+});
+
+/**
+ * ui-min3 U3 — the generic by-id failure card must route a REGISTERED wire
+ * code through the contracts catalog (error-code doctrine W4: components
+ * localize the stable code, never the server's English debug text). The 503
+ * deliberately bypasses the 403/429 hard-block arm; the raw sentinel string
+ * proves WHICH text reached the card. Unregistered/unknown shapes keep the
+ * pre-existing behavior, pinned by the existing suite untouched.
+ */
+describe('PlayerPage generic load-failure catalog routing', () => {
+  it('a registered wire code localizes through the catalog instead of echoing server debug text', async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const u = String(url);
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (isById(u, 'm1')) {
+        return Promise.resolve(
+          errorResponse(503, { error: 'RAW-SERVER-DEBUG-TEXT', code: 'server.relay_unavailable' }),
+        );
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    expect(w.text()).toContain(ERROR_MESSAGES.en['server.relay_unavailable']);
+    expect(w.text()).not.toContain('RAW-SERVER-DEBUG-TEXT');
+    expect(w.findComponent(Player).exists()).toBe(false);
   });
 });

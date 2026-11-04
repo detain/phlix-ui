@@ -9,7 +9,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { playbackBlockingMessage } from './playerErrors';
+import { playbackBlockingMessage, mediaLoadErrorMessage } from './playerErrors';
+import { ApiError } from '../api/errors';
 import { ERROR_MESSAGES } from '../i18n/errors';
 
 describe('playbackBlockingMessage', () => {
@@ -72,5 +73,35 @@ describe('playbackBlockingMessage', () => {
     ]) {
       expect(playbackBlockingMessage(body), JSON.stringify(body)).toBeNull();
     }
+  });
+});
+
+/**
+ * The generic media-load failure rail (ui-min3 U3): a REGISTERED wire code
+ * must localize through the contracts catalog — the server's English debug
+ * text is doctrine-ineligible for member-facing copy — while every shape the
+ * catalog does not name keeps the page's pre-existing behavior verbatim.
+ */
+describe('mediaLoadErrorMessage', () => {
+  it('routes a registered wire code through the catalog, never the server English', () => {
+    const e = new ApiError('TUNNEL DEBUG TEXT', 503, {
+      error: 'TUNNEL DEBUG TEXT',
+      code: 'server.relay_unavailable',
+    });
+    expect(mediaLoadErrorMessage(e)).toBe(ERROR_MESSAGES.en['server.relay_unavailable']);
+  });
+
+  it('keeps the Error message for an unregistered code (unknowns behave as before)', () => {
+    const e = new ApiError('Weird proxy text', 502, { error: 'Weird proxy text', code: 'proxy.nope' });
+    expect(mediaLoadErrorMessage(e)).toBe('Weird proxy text');
+  });
+
+  it('passes a network TypeError message through (blips stay as informative as before)', () => {
+    expect(mediaLoadErrorMessage(new TypeError('fetch failed'))).toBe('fetch failed');
+  });
+
+  it('falls back to the page string for non-Error throws and message-less Errors', () => {
+    expect(mediaLoadErrorMessage({})).toBe('Failed to load media');
+    expect(mediaLoadErrorMessage(new Error(''))).toBe('Failed to load media');
   });
 });

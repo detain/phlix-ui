@@ -21,6 +21,7 @@
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
+import { ApiError } from '../api/errors';
 import { errorCodeMessage, isRegisteredErrorCode } from '../i18n/errors';
 import type { PhlixErrorLocale } from '../i18n/errors';
 
@@ -57,4 +58,29 @@ export function playbackBlockingMessage(
     return 'Stream limit reached. Stop another stream to continue watching.';
   }
   return null;
+}
+
+/**
+ * Copy for the GENERIC media-load failure card (the non-403/429 arm of
+ * PlayerPage's by-id catch). Error-code doctrine (W4): a REGISTERED wire
+ * `code` localizes through the contracts catalog — the server's English
+ * debug text is never what a member reads. Anything the catalog doesn't
+ * name (unregistered code, plain network `TypeError`, or a non-Error throw)
+ * keeps the page's pre-existing behavior verbatim: the Error's own message
+ * when it has one, else the page's own 'Failed to load media' string.
+ * Pure, like {@link playbackBlockingMessage}, so the rail is unit-testable
+ * without mounting the heavy SFC.
+ */
+export function mediaLoadErrorMessage(
+  e: unknown,
+  locale?: PhlixErrorLocale | null,
+): string {
+  if (e instanceof ApiError) {
+    const wireCode = readWireString(e.body, 'code');
+    if (wireCode !== null && isRegisteredErrorCode(wireCode)) {
+      return errorCodeMessage(wireCode, locale);
+    }
+  }
+  const message = e instanceof Error ? e.message : '';
+  return message !== '' ? message : 'Failed to load media';
 }

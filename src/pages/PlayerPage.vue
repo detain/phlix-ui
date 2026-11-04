@@ -37,7 +37,7 @@ import { buildMediaUrl } from '../api/media-query';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
-import { playbackBlockingMessage } from './playerErrors';
+import { playbackBlockingMessage, mediaLoadErrorMessage } from './playerErrors';
 import type { PhlixAppConfig } from '../app/types';
 import Player from '../components/Player.vue';
 import type { Chapter } from '../components/player/Scrubber.vue';
@@ -502,7 +502,7 @@ async function load(): Promise<void> {
       applyItem(client, cached.item, run);
       return;
     }
-    error.value = e instanceof Error ? e.message : 'Failed to load media';
+    error.value = mediaLoadErrorMessage(e, config?.locale);
     loading.value = false;
     return;
   }
