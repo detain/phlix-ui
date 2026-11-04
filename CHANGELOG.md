@@ -26,6 +26,24 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   new source-level pins (two per page test) — routed-count equality 2 and a
   no-raw-copy assertion — measured red on the pre-fix sources (0 routed,
   literal present) before the cure. No catalog value moved.
+- **F4 — the Title Case survivors inside the catalog are sentence-cased**
+  (copywriter review F4): 'My List' and 'For You' stayed Title Case while
+  0a435412 sentence-cased the rails the reviewer named. The whole noun family
+  moved together — itemActions.{watchlist,inFavorites,addFavorite,removeFavorite,
+  addedToList,removedFromList} + the season group's four echoes → 'My list' /
+  'In my list' / 'Add to my list' / 'Remove from my list' / 'Added “{name}” to
+  my list.' / 'Removed “{name}” from my list.', and shell.recommendations +
+  recommendations.title + the RecommendationsPage h1 → 'For you' — so rail,
+  button, toast and page title agree (a watchlist-only flip would have left
+  the rail saying 'My list' under buttons saying 'Add to My List', reproducing
+  the same-class-split defect F1 was about). The m9 brand exception in
+  pageTitles.test.ts is RETIRED (empty allow-list; the mechanism stays for a
+  future honest case). Non-en locales already carried sentence-case values
+  ('Mi lista', 'Für dich', …) — parity held, no mirror churn. 32 measured-red
+  pins rotated across nine test files (PhlixApp/MediaCard/MediaDetail/Player/
+  MiniPlayer/SeriesDetail/BrowsePage/SeasonPage/pageTitles) + two truthful
+  fixture/selector cases; src/dev/mockups untouched (design-time artifact,
+  config-ignored, still carrying pre-0a435412 casing).
 - **F2 — claim/ID drift forward-correction (new note; the artifacts below stay
   verbatim).** Truthful mapping of the copy/docs lane's citations against the
   finding register (FIX-UI-COPYDOCS.md) and the review's heading numbering

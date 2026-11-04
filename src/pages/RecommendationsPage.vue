@@ -138,7 +138,7 @@ onMounted(() => {
 <template>
   <div class="recommendations-page">
     <div class="recommendations-header">
-      <h1 class="recommendations-title">For You</h1>
+      <h1 class="recommendations-title">For you</h1>
       <p class="recommendations-subtitle">Because you watched…</p>
     </div>
 

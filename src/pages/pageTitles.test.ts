@@ -33,9 +33,12 @@ function isSentenceCase(text: string): boolean {
   return true;
 }
 
-// 'For You' is the sanctioned rail brand name (copywriter m9: nav, router meta
-// and h1 all agree on it). An exception list, not a silent hole in the law.
-const SENTENCE_CASE_EXCEPTIONS = new Set(['For You']);
+// 'For You' previously rode here as a sanctioned rail brand name (copywriter
+// m9). Review 2026-11-04 FINDINGS F4 retired the exception: the value is
+// sentence-cased across nav/router-meta/h1 like every other surface, so the
+// law now has an empty allow-list — the mechanism stays for a future honest
+// exception, but there is none today.
+const SENTENCE_CASE_EXCEPTIONS = new Set<string>([]);
 
 describe('page titles (copywriter m6 — sentence-case law, enforced)', () => {
   it('every static page h1 is sentence case', () => {
@@ -87,7 +90,7 @@ describe('page titles (copywriter m6 — sentence-case law, enforced)', () => {
   });
 
   it('the recommendations h1 matches the nav rail name (copywriter m9: one surface, one name)', () => {
-    expect(readFileSync(join(PAGES, 'RecommendationsPage.vue'), 'utf8')).toContain('>For You</h1>');
+    expect(readFileSync(join(PAGES, 'RecommendationsPage.vue'), 'utf8')).toContain('>For you</h1>');
   });
 
   it('the cited catalog titles are sentence case', () => {

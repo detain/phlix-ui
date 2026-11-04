@@ -789,7 +789,7 @@ describe('MediaDetail — actions & similar', () => {
       const toggle = vi.spyOn(store, 'toggleFavorite').mockResolvedValue();
       const btn = favButton(w);
       expect(btn.attributes('aria-pressed')).toBe('false');
-      expect(btn.attributes('aria-label')).toBe('Add to My List');
+      expect(btn.attributes('aria-label')).toBe('Add to my list');
       await btn.trigger('click');
       // exactly one toggle + one persist, with the item id + injected apiBase ('' in test)
       expect(toggle).toHaveBeenCalledTimes(1);
@@ -804,9 +804,9 @@ describe('MediaDetail — actions & similar', () => {
       const w = mount(MediaDetail, { props: { item: media({ id: 'm1' }) } });
       const btn = favButton(w);
       expect(btn.attributes('aria-pressed')).toBe('true');
-      expect(btn.attributes('aria-label')).toBe('Remove from My List');
+      expect(btn.attributes('aria-label')).toBe('Remove from my list');
       expect(btn.classes()).toContain('is-active');
-      expect(btn.text()).toContain('In My List');
+      expect(btn.text()).toContain('In my list');
     });
 
     it('toggles exactly once per click on an already-favorited item (favorited → remove)', async () => {

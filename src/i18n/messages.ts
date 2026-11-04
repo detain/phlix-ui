@@ -77,7 +77,7 @@ export const DEFAULT_MESSAGES = {
     openCommandPalette: 'Open command palette ({chord})',
     browse: 'Browse',
     explore: 'Explore',
-    recommendations: 'For You',
+    recommendations: 'For you',
     watchHistory: 'Watch history',
     settings: 'Settings',
     themeToggleLabel: 'Theme: {current} (switch to {next})',
@@ -376,13 +376,13 @@ export const DEFAULT_MESSAGES = {
     revokeFailed: 'Couldn’t revoke the share.',
   },
   itemActions: {
-    addFavorite: 'Add to My List',
-    removeFavorite: 'Remove from My List',
-    inFavorites: 'In My List',
-    watchlist: 'My List',
+    addFavorite: 'Add to my list',
+    removeFavorite: 'Remove from my list',
+    inFavorites: 'In my list',
+    watchlist: 'My list',
     /** M-UI-02 — the card/detail favorite toggle's delivery toast (one word with the rail heading). */
-    addedToList: 'Added “{name}” to My List.',
-    removedFromList: 'Removed “{name}” from My List.',
+    addedToList: 'Added “{name}” to my list.',
+    removedFromList: 'Removed “{name}” from my list.',
     markWatched: 'Mark watched',
     watched: 'Watched',
     markWatchedAria: 'Mark as watched',
@@ -664,7 +664,7 @@ export const DEFAULT_MESSAGES = {
     title: 'Explore similar titles',
   },
   recommendations: {
-    title: 'For You',
+    title: 'For you',
   },
   history: {
     title: 'Watch history',
@@ -672,10 +672,10 @@ export const DEFAULT_MESSAGES = {
   season: {
     // Season page top actions (whole-season Play + per-season-row user data)
     play: 'Play',
-    watchlist: 'My List',
-    inFavorites: 'In My List',
-    addFavorite: 'Add to My List',
-    removeFavorite: 'Remove from My List',
+    watchlist: 'My list',
+    inFavorites: 'In my list',
+    addFavorite: 'Add to my list',
+    removeFavorite: 'Remove from my list',
     markWatched: 'Mark watched',
     watched: 'Watched',
     markWatchedAria: 'Mark as watched',

@@ -391,9 +391,9 @@ function continueRow(w: ReturnType<typeof mountPage>) {
 }
 
 function favoritesRow(w: ReturnType<typeof mountPage>) {
-  // S07: the favorites rail is now displayed under the title "My List" (label-only
+  // S07: the favorites rail is now displayed under the title "My list" (label-only
   // rename; the underlying favorites store/API/client are unchanged).
-  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'My List');
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'My list');
 }
 
 function recommendedRow(w: ReturnType<typeof mountPage>) {
@@ -563,7 +563,7 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     await flushPromises();
     const titles = w.findAllComponents(MediaRow).map((r) => r.props('title'));
     const ci = titles.indexOf('Continue watching');
-    const fav = titles.indexOf('My List'); // S07: favorites rail now titled "My List"
+    const fav = titles.indexOf('My list'); // S07: favorites rail now titled "My list"
     expect(ci).toBeGreaterThanOrEqual(0);
     expect(fav).toBe(ci + 1);
   });
@@ -789,7 +789,7 @@ describe('BrowsePage — Next Up row (S37)', () => {
     expect(fn.mock.calls.some(([u]) => isNextUpUrl(u))).toBe(true);
   });
 
-  it('places Next Up immediately after Continue Watching (and before My List)', async () => {
+  it('places Next Up immediately after Continue Watching (and before My list)', async () => {
     // S37 AC: the rail must sit directly after Continue Watching. Seed both CW and
     // Next Up (and a favorite) so all three rails render, then assert the order.
     stubFetch({
@@ -805,11 +805,11 @@ describe('BrowsePage — Next Up row (S37)', () => {
     const titles = w.findAllComponents(MediaRow).map((r) => r.props('title'));
     const ci = titles.indexOf('Continue watching');
     const nu = titles.indexOf('Next up');
-    const fav = titles.indexOf('My List');
+    const fav = titles.indexOf('My list');
     expect(ci).toBeGreaterThanOrEqual(0);
     // Next Up is the very next rail after Continue Watching...
     expect(nu).toBe(ci + 1);
-    // ...and it precedes My List (which used to be CW+1).
+    // ...and it precedes My list (which used to be CW+1).
     expect(fav).toBeGreaterThan(nu);
   });
 

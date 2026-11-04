@@ -2656,7 +2656,7 @@ describe('Player — favorite + rating controls (Feature 16.1)', () => {
     const fav = favBtn(w);
     expect(fav.exists()).toBe(true);
     expect(fav.attributes('aria-pressed')).toBe('false');
-    expect(fav.attributes('aria-label')).toBe('Add to My List');
+    expect(fav.attributes('aria-label')).toBe('Add to my list');
     // outline bookmark when not favorited
     expect(fav.findComponent(Icon).props('name')).toBe('bookmark-plus');
     const lb = love(w);
@@ -2672,7 +2672,7 @@ describe('Player — favorite + rating controls (Feature 16.1)', () => {
     await nextTick();
     const fav = favBtn(w);
     expect(fav.attributes('aria-pressed')).toBe('true');
-    expect(fav.attributes('aria-label')).toBe('Remove from My List');
+    expect(fav.attributes('aria-label')).toBe('Remove from my list');
     expect(fav.findComponent(Icon).props('name')).toBe('bookmark'); // filled bookmark
     expect(love(w).props('level')).toBe(2);
   });

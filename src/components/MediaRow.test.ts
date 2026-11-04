@@ -110,7 +110,7 @@ describe('MediaRow', () => {
   });
 
   it('renders an EmptyState when settled with no items', () => {
-    const w = mount(MediaRow, { props: { title: 'My List', items: [], emptyText: 'Nothing saved.' } });
+    const w = mount(MediaRow, { props: { title: 'My list', items: [], emptyText: 'Nothing saved.' } });
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
     expect(w.text()).toContain('Nothing saved.');
