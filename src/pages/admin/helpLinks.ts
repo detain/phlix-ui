@@ -190,7 +190,7 @@ export const adminPageHelp = {
       'source and is refreshed on demand rather than continuously, so a stale guide usually means ' +
       'Refresh Guide has not run recently. Note that a series rule is currently only STORED — ' +
       'nothing yet matches it against the guide to schedule episodes automatically, so keep using ' +
-      'Schedule Recording for anything you actually need captured.',
+      'Schedule recording for anything you actually need captured.',
   },
   collections: {
     links: [

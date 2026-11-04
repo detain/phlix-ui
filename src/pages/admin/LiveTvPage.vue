@@ -544,7 +544,7 @@ onMounted(() => {
       <strong>Scan for Tuners</strong> finds devices on your network, which you can then enable or
       remove. The <strong>Guide</strong> shows what's on — pick a day and
       <strong>Refresh Guide</strong> to update listings. <strong>Recordings</strong> lists what's
-      scheduled or captured (<strong>Schedule Recording</strong> adds one manually), and
+      scheduled or captured (<strong>Schedule recording</strong> adds one manually), and
       <strong>Series Rules</strong> stores a per-show rule — see below before relying on it.
     </PageHint>
 
@@ -785,7 +785,7 @@ onMounted(() => {
             </button>
           </div>
           <Button variant="solid" size="sm" left-icon="plus" @click="openScheduleModal">
-            Schedule Recording
+            Schedule recording
           </Button>
         </div>
 
@@ -909,7 +909,7 @@ onMounted(() => {
     </section>
 
     <!-- ── Schedule Recording modal ─────────────────────────────────────── -->
-    <Modal v-model="scheduleOpen" title="Schedule Recording" @close="closeScheduleModal">
+    <Modal v-model="scheduleOpen" title="Schedule recording" @close="closeScheduleModal">
       <form class="admin-livetv__form" @submit.prevent="submitSchedule">
         <label class="admin-livetv__field">
           <span class="admin-livetv__label">Title</span>
@@ -943,13 +943,13 @@ onMounted(() => {
       <template #footer>
         <Button variant="ghost" size="sm" @click="closeScheduleModal">Cancel</Button>
         <Button variant="solid" size="sm" :loading="schedSubmitting" @click="submitSchedule">
-          Schedule Recording
+          Schedule recording
         </Button>
       </template>
     </Modal>
 
     <!-- ── Add Rule modal ───────────────────────────────────────────────── -->
-    <Modal v-model="ruleOpen" title="Add Series Rule" @close="closeRuleModal">
+    <Modal v-model="ruleOpen" title="Add series rule" @close="closeRuleModal">
       <form class="admin-livetv__form" @submit.prevent="submitRule">
         <label class="admin-livetv__field">
           <span class="admin-livetv__label">Title Pattern</span>

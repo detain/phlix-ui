@@ -418,12 +418,12 @@ describe('LiveTvPage — Recordings', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    await findBtn(w, 'Schedule Recording')!.trigger('click');
+    await findBtn(w, 'Schedule recording')!.trigger('click');
     await flushPromises();
     expect(get).toHaveBeenCalledWith('/api/v1/admin/livetv/channels');
     const panel = modalPanel();
     // submit with no title/dates -> validation toast, no POST
-    await findBtnIn(w, panel, 'Schedule Recording')!.trigger('click');
+    await findBtnIn(w, panel, 'Schedule recording')!.trigger('click');
     await flushPromises();
     expect(post).not.toHaveBeenCalledWith('/api/v1/admin/livetv/recordings', expect.anything());
     const toasts = useToastStore();
@@ -435,7 +435,7 @@ describe('LiveTvPage — Recordings', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    await findBtn(w, 'Schedule Recording')!.trigger('click');
+    await findBtn(w, 'Schedule recording')!.trigger('click');
     await flushPromises();
     const panel = modalPanel();
     const inputs = panel.querySelectorAll<HTMLInputElement>('input');
@@ -450,7 +450,7 @@ describe('LiveTvPage — Recordings', () => {
     await setInput(inputs[2]!, '18:00');
     await setInput(inputs[3]!, '2026-06-02');
     await setInput(inputs[4]!, '18:30');
-    await findBtnIn(w, modalPanel(), 'Schedule Recording')!.trigger('click');
+    await findBtnIn(w, modalPanel(), 'Schedule recording')!.trigger('click');
     await flushPromises();
     expect(post).toHaveBeenCalledWith(
       '/api/v1/admin/livetv/recordings',
@@ -465,7 +465,7 @@ describe('LiveTvPage — Recordings', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    await findBtn(w, 'Schedule Recording')!.trigger('click');
+    await findBtn(w, 'Schedule recording')!.trigger('click');
     await flushPromises();
     const panel = modalPanel();
     const inputs = panel.querySelectorAll<HTMLInputElement>('input');
@@ -479,7 +479,7 @@ describe('LiveTvPage — Recordings', () => {
     await setInput(inputs[2]!, '18:00');
     await setInput(inputs[3]!, '2026-06-02');
     await setInput(inputs[4]!, '17:00');
-    await findBtnIn(w, modalPanel(), 'Schedule Recording')!.trigger('click');
+    await findBtnIn(w, modalPanel(), 'Schedule recording')!.trigger('click');
     await flushPromises();
     expect(post).not.toHaveBeenCalledWith('/api/v1/admin/livetv/recordings', expect.anything());
   });
@@ -861,7 +861,7 @@ describe('LiveTvPage — mutation failure toasts', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    await findBtn(w, 'Schedule Recording')!.trigger('click');
+    await findBtn(w, 'Schedule recording')!.trigger('click');
     await flushPromises();
     const inputs = modalPanel().querySelectorAll<HTMLInputElement>('input');
     const setInput = async (el: HTMLInputElement, val: string) => {
@@ -874,7 +874,7 @@ describe('LiveTvPage — mutation failure toasts', () => {
     await setInput(inputs[2]!, '18:00');
     await setInput(inputs[3]!, '2026-06-02');
     await setInput(inputs[4]!, '18:30');
-    await findBtnIn(w, modalPanel(), 'Schedule Recording')!.trigger('click');
+    await findBtnIn(w, modalPanel(), 'Schedule recording')!.trigger('click');
     await flushPromises();
     const toasts = useToastStore();
     expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === 'schedule boom')).toBe(true);
@@ -925,9 +925,9 @@ describe('LiveTvPage — form validation guards', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    await findBtn(w, 'Schedule Recording')!.trigger('click');
+    await findBtn(w, 'Schedule recording')!.trigger('click');
     await flushPromises();
-    await findBtnIn(w, modalPanel(), 'Schedule Recording')!.trigger('click');
+    await findBtnIn(w, modalPanel(), 'Schedule recording')!.trigger('click');
     await flushPromises();
     expect(post).not.toHaveBeenCalledWith('/api/v1/admin/livetv/recordings', expect.anything());
     const toasts = useToastStore();
@@ -939,13 +939,13 @@ describe('LiveTvPage — form validation guards', () => {
     const w = mountPage(client);
     await flushPromises();
     await expandSection(w, 'Recordings');
-    await findBtn(w, 'Schedule Recording')!.trigger('click');
+    await findBtn(w, 'Schedule recording')!.trigger('click');
     await flushPromises();
     const titleInput = modalPanel().querySelector<HTMLInputElement>('input[type="text"]')!;
     titleInput.value = 'Only a title';
     titleInput.dispatchEvent(new Event('input', { bubbles: true }));
     await flushPromises();
-    await findBtnIn(w, modalPanel(), 'Schedule Recording')!.trigger('click');
+    await findBtnIn(w, modalPanel(), 'Schedule recording')!.trigger('click');
     await flushPromises();
     expect(post).not.toHaveBeenCalledWith('/api/v1/admin/livetv/recordings', expect.anything());
     const toasts = useToastStore();

@@ -18,7 +18,7 @@ import { LIBRARY, CONTINUE } from './mock-data';
 
 <template>
   <div class="vh-browse">
-    <MediaRow title="Continue Watching" :items="CONTINUE" />
+    <MediaRow title="Continue watching" :items="CONTINUE" />
     <section class="vh-browse__grid">
       <h2 class="vh-browse__heading">All titles</h2>
       <MediaGrid :items="LIBRARY" :overscan="24" />

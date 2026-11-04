@@ -162,7 +162,7 @@ function selectLibrary(id: string): void {
         </EmptyState>
 
         <!-- No library selected -->
-        <EmptyState v-else-if="showLibraryPicker" icon="image" title="Select a Photo Library">
+        <EmptyState v-else-if="showLibraryPicker" icon="image" title="Select a photo library">
             <p>Choose a photo library to browse:</p>
             <div class="library-picker">
                 <Button

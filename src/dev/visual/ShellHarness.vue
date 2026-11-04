@@ -52,7 +52,7 @@ import { CONTINUE } from './mock-data';
 
     <div class="vh-page">
       <h1 class="vh-page__title">Browse</h1>
-      <MediaRow title="Continue Watching" :items="CONTINUE" />
+      <MediaRow title="Continue watching" :items="CONTINUE" />
     </div>
   </AppLayout>
 </template>

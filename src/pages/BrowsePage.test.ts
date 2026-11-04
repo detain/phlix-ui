@@ -387,7 +387,7 @@ afterEach(() => {
 });
 
 function continueRow(w: ReturnType<typeof mountPage>) {
-  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Continue Watching');
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Continue watching');
 }
 
 function favoritesRow(w: ReturnType<typeof mountPage>) {
@@ -404,13 +404,13 @@ function recommendedRow(w: ReturnType<typeof mountPage>) {
 function mostWatchedRow(w: ReturnType<typeof mountPage>) {
   // S32: the Most Watched rail reuses the existing GET /api/v1/media/most-watched
   // endpoint (S31; GLOBAL server-wide trending aggregate).
-  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Most Watched');
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Most watched');
 }
 
 function nextUpRow(w: ReturnType<typeof mountPage>) {
   // S37: the Next Up rail consumes GET /api/v1/users/me/next-up (S36; per-user
   // next-unwatched-episode picks), positioned immediately after Continue Watching.
-  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Next Up');
+  return w.findAllComponents(MediaRow).find((c) => c.props('title') === 'Next up');
 }
 
 describe('BrowsePage — per-library sections', () => {
@@ -562,7 +562,7 @@ describe('BrowsePage — Favorites row (Feature 17.5)', () => {
     const w = mountPage();
     await flushPromises();
     const titles = w.findAllComponents(MediaRow).map((r) => r.props('title'));
-    const ci = titles.indexOf('Continue Watching');
+    const ci = titles.indexOf('Continue watching');
     const fav = titles.indexOf('My List'); // S07: favorites rail now titled "My List"
     expect(ci).toBeGreaterThanOrEqual(0);
     expect(fav).toBe(ci + 1);
@@ -803,8 +803,8 @@ describe('BrowsePage — Next Up row (S37)', () => {
     const w = mountPage();
     await flushPromises();
     const titles = w.findAllComponents(MediaRow).map((r) => r.props('title'));
-    const ci = titles.indexOf('Continue Watching');
-    const nu = titles.indexOf('Next Up');
+    const ci = titles.indexOf('Continue watching');
+    const nu = titles.indexOf('Next up');
     const fav = titles.indexOf('My List');
     expect(ci).toBeGreaterThanOrEqual(0);
     // Next Up is the very next rail after Continue Watching...

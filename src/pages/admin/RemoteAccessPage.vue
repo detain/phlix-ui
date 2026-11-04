@@ -1094,7 +1094,7 @@ onMounted(() => {
     </section>
 
     <!-- Pairing modal -->
-    <Modal v-model="showPairModal" title="Initiate Hub Pairing" @close="closePairModal">
+    <Modal v-model="showPairModal" title="Initiate hub pairing" @close="closePairModal">
       <div v-if="pairingClaimCode" class="admin-remote__claim">
         <p>Enter this claim code on the hub:</p>
         <p class="admin-remote__claim-code">{{ pairingClaimCode }}</p>

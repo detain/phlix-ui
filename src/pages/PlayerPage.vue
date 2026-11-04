@@ -686,7 +686,7 @@ function onBlockingErrorOk(): void {
     </div>
 
     <!-- P5-S5: AccessScheduled / StreamLimitExceeded blocking-error modal -->
-    <Modal v-model="blockingErrorVisible" title="Cannot Play" size="sm" :dismissible="false" hide-close>
+    <Modal v-model="blockingErrorVisible" title="Can’t start playback" size="sm" :dismissible="false" hide-close>
       <p class="player-page__blocking-error">{{ blockingError }}</p>
       <template #footer>
         <Button variant="solid" @click="onBlockingErrorOk">OK</Button>

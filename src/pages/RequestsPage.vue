@@ -360,7 +360,7 @@ onUnmounted(() => applySearch.cancel());
     </template>
 
     <!-- Create Request Modal -->
-    <Modal v-model="showCreateModal" title="New Media Request" size="md" @close="resetForm">
+    <Modal v-model="showCreateModal" title="New media request" size="md" @close="resetForm">
       <form class="request-form" @submit.prevent="createRequest">
         <div class="request-form__row">
           <div class="request-form__field">

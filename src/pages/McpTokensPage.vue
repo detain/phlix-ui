@@ -440,7 +440,7 @@ onMounted(() => loadTokens(true));
     <!-- Create modal -->
     <Modal
       :model-value="showCreateModal"
-      title="New MCP Token"
+      title="New MCP token"
       @update:model-value="closeCreateModal"
     >
       <div class="mcp-tokens__form">

@@ -526,7 +526,7 @@ function onSeeAll(row: HomeRowConfig): void {
 
     <MediaRow
       v-if="continueItems.length"
-      title="Continue Watching"
+      title="Continue watching"
       :items="continueItems"
       :can-match="auth.isAdmin"
       hide-when-empty
@@ -550,7 +550,7 @@ function onSeeAll(row: HomeRowConfig): void {
          them but never hydrates (S32 state-wipe lesson). -->
     <MediaRow
       v-if="showNextUp"
-      title="Next Up"
+      title="Next up"
       :items="nextUpItems"
       :can-match="auth.isAdmin"
       hide-when-empty
@@ -615,7 +615,7 @@ function onSeeAll(row: HomeRowConfig): void {
          up — hide-when-empty handles the empty case gracefully. -->
     <MediaRow
       v-if="showMostWatched"
-      title="Most Watched"
+      title="Most watched"
       :items="mostWatchedItems"
       :can-match="auth.isAdmin"
       hide-when-empty
