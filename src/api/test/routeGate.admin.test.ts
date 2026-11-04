@@ -13,7 +13,9 @@
  *   is hub-only by the module's own docblock (S41/S42/S43) and is asserted in
  *   the hub partition.
  * - `servers.ts` — `GET /api/v1/servers` is server-registered; the fleet
- *   detail `GET /api/v1/servers/{id}` is hub-only.
+ *   detail `GET /api/v1/servers/{id}` joined the server surface at contracts
+ *   regen #36 (the server answers ONLY its own id — xrepo__server-ui cure) and
+ *   is gated with the list below.
  * - `hubDashboard.ts` — the hub app's dashboard page: `activity` is a shared
  *   server route, `summary` is hub-only.
  *
@@ -548,12 +550,13 @@ describe('route gate — admin/remoteAccess.ts (AdminRemoteAccessApi)', () => {
     });
 });
 
-describe('route gate — admin/servers.ts (AdminServersApi, server-addressed half)', () => {
-    it('listServers issues exactly GET /api/v1/servers', async () => {
+describe('route gate — admin/servers.ts (AdminServersApi)', () => {
+    it('issues 2 distinct urls, every one a registered server route', async () => {
         const server = makeRouteGateServer(BASE);
         const api = new AdminServersApi(makeClient(server));
         await driveGated(server, 'listServers', () => api.listServers());
-        expectGateClean(server, ['GET /api/v1/servers'], 1);
+        await driveGated(server, 'getServerInfo', () => api.getServerInfo(ID));
+        expectGateClean(server, ['GET /api/v1/servers', 'GET /api/v1/servers/{id}'], 2);
     });
 });
 
@@ -763,7 +766,11 @@ describe('route gate — hub-addressed + unserved admin URLs (enumerated; W18 fo
      *
      * 1. HUB-addressed — the HUB's HTTP surface, not the media server's:
      *    `users.ts` relay bandwidth trio (hub-only per the module docblock,
-     *    S41/S42/S43), `servers.ts` fleet detail, `hubDashboard.ts` summary.
+     *    S41/S42/S43), `hubDashboard.ts` summary. (`servers.ts` fleet detail
+     *    lived here until the regen #36 manifest registered
+     *    `GET /api/v1/servers/{id}` server-side (xrepo__server-ui: the server
+     *    answers ONLY its own id) — the W18 law fired exactly as written and
+     *    the method moved into the gated set above.)
      *    Their gate is the HUB's route contract, a named W18 follow-up.
      * 2. Server-addressed but UNREGISTERED — `transcoding.ts`
      *    `setPreferredAccelerator` PUTs a route the server never registered (no
@@ -780,7 +787,6 @@ describe('route gate — hub-addressed + unserved admin URLs (enumerated; W18 fo
         'GET /api/v1/admin/users/{id}/bandwidth',
         'PUT /api/v1/admin/users/{id}/throttle',
         'PUT /api/v1/admin/users/{id}/quota',
-        'GET /api/v1/servers/{id}',
         'GET /api/v1/admin/dashboard/summary',
         // server-addressed but unregistered (W18: server gains the routes)
         'PUT /api/v1/admin/transcoding/accelerators',

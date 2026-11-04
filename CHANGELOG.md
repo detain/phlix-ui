@@ -12,6 +12,39 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — wave-5 routeGate fixture re-vendor 2026-11-04 (W5UIGATE)
+
+- **The owed regen #36 re-vendor lands: `src/api/test/server-route-manifest.json` is now the
+  `@phlix/contracts#v0.5.6` tag tree's `dist/server-route-manifest.json` BYTE-IDENTICAL**
+  (md5 `90b79e35…`, 415 tuples, content-derived at phlix-server `58530ec2…`; proven
+  byte-for-byte against a codeload download of the tag AND the installed node_modules copy —
+  never hand-edited). Regen #36 adds three tuples, removes zero: `GET /api/v1/me/history`,
+  `GET /api/v1/servers/{id}`, `GET /api/v1/users/me/history`.
+- **Pin rotations in the same commit** (measured red at the un-rotated fixture first —
+  exactly 3 convictions: md5 / size / provenance-total — then green): `routeGate.api.test.ts`
+  `VENDORED_MANIFEST_MD5` + `VENDORED_MANIFEST_SERVER_SHA` + length + currency docblock
+  (identity is current-tag again; the v0.99.16 decoupling ruling stays verbatim in the
+  entry below), `routeGate.harness.test.ts` size title/pin + provenance total + the union
+  source split (375/48 → 376/50), `routeGateServer.ts` header prose (re-vendor no longer owed).
+- **The W18 law fired exactly as written:** `routeGate.admin.test.ts`'s negative pin
+  `GET /api/v1/servers/{id}` reds the moment the server registers the route — it did at
+  regen #36 (xrepo__server-ui cure: the server answers ONLY its own id and 404s every
+  other). The method moved from the unserved partition into the gated set: the
+  `AdminServersApi` drive now pins 2 distinct urls (`GET /api/v1/servers` +
+  `GET /api/v1/servers/{id}`), with header/docblock prose recording the move.
+- **Dist INERT — proven, not asserted.** The fixture and every gate file live under
+  `src/api/test/**`, which `tsconfig.build.json` excludes and no app entry reaches; a full
+  `npm run build` after the re-vendor left `git status --porcelain dist/` at ZERO entries
+  and `npm run dist:check` exit 0. No bundle or declaration moves.
+- Battery: the 8-file targeted gate set (`routeGate.{api,harness,enumeration,app,admin,hub}`
+  + `contractsPin` + `admin/webhooks`), serial `--no-file-parallelism`: 95/95 pass at BOTH
+  the parent cut and this tip — zero test-count delta. Full 329-file battery not re-run:
+  every moved line is inside files the targeted set covers exhaustively, and the manifest's
+  importer set is mechanically pinned by `routeGate.enumeration.test.ts`; eslint exit 0 on
+  the modified files.
+- This rides UNTAGGED ahead of `v0.99.16`: consumers pin tag-form (`#v0.99.16` / the tag
+  tarball), so no consumer resolves these bytes until the next cut — zero cascade impact.
+
 ## 0.99.16 - 2026-11-04
 
 ### Release — pin-advance cut: the single content change is `@phlix/contracts` `#v0.5.5` → `#v0.5.6` (github TAG pin); `@phlix/syncplay` `#v0.1.7` verified already-current (untouched). No Unreleased blocks pending — nothing folded; history below verbatim.

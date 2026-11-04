@@ -83,27 +83,26 @@ describe('route gate server — control', () => {
         expect(server.requests[0]!.template).toBe('/api/v1/media');
     });
 
-    it('pins the manifest size — 412 tuples, no more', () => {
-        expect(SERVER_ROUTE_MANIFEST).toHaveLength(412);
+    it('pins the manifest size — 415 tuples, no more', () => {
+        expect(SERVER_ROUTE_MANIFEST).toHaveLength(415);
     });
 
     it('pins the manifest provenance — server sha + generator, never hand-edited', () => {
-        // Canonical contracts export vendored from the v0.5.3-era bytes, held
-        // identical through the v0.5.5 tag tree (trio md5s frozen then; regen #35,
-        // content-derived at phlix-server 758f9149; full-literal sha + md5 pins
-        // live in routeGate.api.test.ts's currency block). The v0.5.6 tag moved
-        // the manifest payload (regen #36); this copy tracks the v0.5.5-era bytes
-        // until the separately scheduled re-vendor wave.
+        // Canonical contracts export vendored from the v0.5.6 tag tree (regen
+        // #36 — 415 tuples, content-derived at phlix-server 58530ec2; the
+        // wave-5 re-vendor advanced this copy off the v0.5.5-era regen #35
+        // bytes the v0.99.16 cut shipped; full-literal sha + md5 pins live
+        // in routeGate.api.test.ts's currency block).
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toMatch(/^[0-9a-f]{40}$/);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.generator).toBe(
             'scripts/generate-server-route-manifest.mjs',
         );
-        expect(SERVER_ROUTE_MANIFEST_PROVENANCE.total).toBe(412);
+        expect(SERVER_ROUTE_MANIFEST_PROVENANCE.total).toBe(415);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.shared).toBe(11);
-        // The union source split — 375 Application + 48 WebPortal, 11 shared.
+        // The union source split — 376 Application + 50 WebPortal, 11 shared.
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.sources).toEqual([
-            { file: 'tests/Unit/Server/Core/ApplicationRouterWirePathGuardTest.php', count: 375 },
-            { file: 'tests/Unit/Server/WebPortal/WebPortalRouterWirePathGuardTest.php', count: 48 },
+            { file: 'tests/Unit/Server/Core/ApplicationRouterWirePathGuardTest.php', count: 376 },
+            { file: 'tests/Unit/Server/WebPortal/WebPortalRouterWirePathGuardTest.php', count: 50 },
         ]);
     });
 
