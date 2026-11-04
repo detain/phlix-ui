@@ -12,6 +12,24 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — auth-listener lifecycle lane 2026-11-04 (FIX-UI-MIN1.md, ui-min3 U1)
+
+### Fixed
+
+- **U1 — the `phlix:auth-expired` binding now follows the LIVE store.**
+  `useAuthStore` registered its window listener on EVERY store instantiation
+  with no detach path anywhere in the estate, so hosts that re-create Pinia
+  (profile switch, re-auth, TV remount) accumulated one closure per dead
+  store — each pinning its stale refs and firing on every dispatch
+  (review ui__fedev, UI-m41). A module-level latest-wins sentinel plus the
+  `onScopeDispose` arm (the `usePreferencesStore` pagehide-pairing idiom)
+  now own the binding: a fresh instantiation detaches its predecessor
+  first, and `disposePinia`/app-unmount removes the last one. 3 new pins:
+  2 measured RED on the parent (a superseded store survives the dispatch;
+  disposal performs the `removeEventListener`), 1 green-at-parent law pin
+  that a dispatch on the live store still clears `isLoggedIn` — disclosed
+  as a preservation pin, not new behavior.
+
 ## Unreleased — volume-finiteness lane 2026-11-04 (FIX-UI-MIN2W.md, ui-min2w)
 
 ### Fixed

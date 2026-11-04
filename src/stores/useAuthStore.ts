@@ -6,7 +6,7 @@
  */
 
 import { defineStore } from 'pinia';
-import { ref, computed, watch, inject, type ComputedRef } from 'vue';
+import { ref, computed, watch, inject, onScopeDispose, type ComputedRef } from 'vue';
 import { ApiClient, defaultTokenStore, type AuthUser } from '../api/client';
 import { ApiError } from '../api/errors';
 import { useApiBase } from '../composables/useApiBase';
@@ -32,6 +32,18 @@ function parseErrorCode(e: unknown): string | null {
     }
     return String((e.body as { code?: unknown }).code ?? '') || null;
 }
+
+/**
+ * UI-m41 (review ui__fedev): the store's ONE live `phlix:auth-expired`
+ * listener. The `window` binding is host-scoped while stores are pinia-scoped,
+ * so a plain per-instantiation `addEventListener` accumulates one closure per
+ * re-created store on hosts that rebuild Pinia (profile switch, re-auth, TV
+ * remount): each dead closure pins its stale refs and fires on every dispatch.
+ * Latest-wins — a fresh instantiation detaches its predecessor immediately,
+ * and scope disposal (`disposePinia` / app unmount → the `onScopeDispose` arm,
+ * the `usePreferencesStore` pagehide-pairing idiom) removes the last one.
+ */
+let activeAuthExpired: (() => void) | null = null;
 
 export const useAuthStore = defineStore('auth', () => {
     // R-UI-10: resolve the store IN EFFECT at this store's creation (the pinia
@@ -85,9 +97,20 @@ export const useAuthStore = defineStore('auth', () => {
     // error fields: the router guards/pages own the UX (fetchUser-clears-state
     // precedent: the store owns the reactive vars, nothing louder).
     if (typeof window !== 'undefined') {
-        window.addEventListener('phlix:auth-expired', () => {
+        if (activeAuthExpired) {
+            window.removeEventListener('phlix:auth-expired', activeAuthExpired);
+        }
+        const onAuthExpired = () => {
             accessToken.value = null;
             user.value = null;
+        };
+        window.addEventListener('phlix:auth-expired', onAuthExpired);
+        activeAuthExpired = onAuthExpired;
+        onScopeDispose(() => {
+            window.removeEventListener('phlix:auth-expired', onAuthExpired);
+            if (activeAuthExpired === onAuthExpired) {
+                activeAuthExpired = null;
+            }
         });
     }
 

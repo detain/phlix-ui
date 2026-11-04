@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { setActivePinia, createPinia } from 'pinia';
+import { setActivePinia, createPinia, disposePinia } from 'pinia';
 import { useAuthStore } from './useAuthStore';
 import { ApiError } from '../api/errors';
 import { isRoute } from '../test/route-match';
@@ -72,6 +72,58 @@ describe('useAuthStore', () => {
     expect(s.isLoggedIn).toBe(false);
     expect(s.isAdmin).toBe(false);
     expect(s.user).toBeNull();
+  });
+
+  // UI-m41 (review ui__fedev): the phlix:auth-expired binding follows the LIVE
+  // store — one listener per module, replaced on re-instantiation, detached on
+  // scope disposal. Hosts that rebuild Pinia (profile switch, re-auth, TV
+  // remount) must never accumulate closures firing through dead refs.
+  it('re-instantiation over a fresh Pinia replaces the auth-expired listener', () => {
+    const pinia1 = createPinia();
+    setActivePinia(pinia1);
+    const s1 = useAuthStore();
+    s1.setTokens('TOK-ONE', 'REF-ONE');
+
+    const pinia2 = createPinia();
+    setActivePinia(pinia2);
+    const s2 = useAuthStore();
+    s2.setTokens('TOK-TWO', 'REF-TWO');
+
+    window.dispatchEvent(new Event('phlix:auth-expired'));
+
+    // The superseded store keeps its state: its closure was detached when the
+    // live one registered. Before the cure BOTH fired — the accumulation this
+    // pin exists to prevent.
+    expect(s1.isLoggedIn).toBe(true);
+    expect(s2.isLoggedIn).toBe(false);
+    disposePinia(pinia1);
+    disposePinia(pinia2);
+  });
+
+  it('scope disposal detaches the auth-expired listener', () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const s = useAuthStore();
+    s.setTokens('TOK-D', 'REF-D');
+
+    const spy = vi.spyOn(window, 'removeEventListener');
+    disposePinia(pinia);
+    expect(spy.mock.calls.some(([type]) => type === 'phlix:auth-expired')).toBe(true);
+    spy.mockRestore();
+
+    // A dispatch after disposal must not reach the orphaned store either.
+    window.dispatchEvent(new Event('phlix:auth-expired'));
+    expect(s.isLoggedIn).toBe(true);
+  });
+
+  it('a dispatch on the live store still clears tokens and login state', () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const s = useAuthStore();
+    s.setTokens('TOK-L', 'REF-L');
+    window.dispatchEvent(new Event('phlix:auth-expired'));
+    expect(s.isLoggedIn).toBe(false);
+    disposePinia(pinia);
   });
 
   it('login stores tokens, fetches the user, and flips isLoggedIn/isAdmin', async () => {
