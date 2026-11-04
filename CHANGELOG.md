@@ -44,6 +44,23 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   MiniPlayer/SeriesDetail/BrowsePage/SeasonPage/pageTitles) + two truthful
   fixture/selector cases; src/dev/mockups untouched (design-time artifact,
   config-ignored, still carrying pre-0a435412 casing).
+- **F3 — the catalog-routing grep-gate now exists** (copywriter review F3): the
+  reviewer's recommended mechanical enforcement of 'catalog-backed sentences
+  appear only via t()' shipped as src/i18n/catalogRouting.test.ts — 20 tests
+  scanning eight reviewed surfaces for (1) any quoted literal or static-h1 text
+  that exactly duplicates a multi-word DEFAULT_MESSAGES value, and (2) the
+  routed call-site counts this batch established, closing also the
+  detailsUnavailable ×4 zero-pin gap the review named (the substring-only
+  toContain('matching') pin has no teeth against re-inlining; the routing pins
+  do). Limits documented in its own header: a scoped TRIPWIRE, not a whole-repo
+  i18n law — exact multi-word matches only (the 'Failed to' voice is banned
+  from the catalog, so the ~200 documented errMessage fallbacks can never
+  collide), single-word values excluded as collision-prone, interpolated
+  templates are the documented-skip class, and the ALLOW-LIST is explicit +
+  self-auditing (a stale or reasonless exception reddens the meta-test; today:
+  the two static-h1 headings, pageTitles' own surface). Teeth proven by
+  mutation: re-inlining one 'Nothing to play yet.' reddened exactly the
+  sentence-duplication test and that page's routing pin (2 reds), restored after.
 - **F2 — claim/ID drift forward-correction (new note; the artifacts below stay
   verbatim).** Truthful mapping of the copy/docs lane's citations against the
   finding register (FIX-UI-COPYDOCS.md) and the review's heading numbering
@@ -60,9 +77,15 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   itself (FIX-UI-COPYDOCS.md) maps m1/m2/m3 correctly; the mis-cites lived only
   in the commit/CHANGELOG artifacts.
 
-**Gates (this lane):** vitest --no-file-parallelism — targeted 23/23 green on
-the two page test files; full serial run + vue-tsc/eslint recorded at close.
-No dist rebuild in this lane (src touches re-vendored at the release batch).
+**Gates (this lane, close 2026-11-04):** FULL serial vitest 326 files /
+6,615 passed / 10 skipped — the copy/docs-era 324/6,583/10 baseline plus the
+previously-landed webux lane (+1 Input.test.ts file / +8 tests, disclosed in
+its own block) plus THIS lane's +4 F1 pins / +20 F3 gate tests; vue-tsc 0
+errors; eslint clean on every touched file (this gate even ate its own dogfood:
+the first draft's 'site(s)' title tripped the repo's no-hand-rolled-plural
+rule and was reworded). No dist rebuild in this lane (release batch owns it;
+src/** moved — F1/F4 copy paths — so the endgame re-vendor is REQUIRED before
+consumers render the new strings).
 
 ## Unreleased — webux majors lane 2026-11-04 (ui__webux)
 
