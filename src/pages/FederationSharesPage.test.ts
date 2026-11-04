@@ -13,6 +13,8 @@ import Button from '../components/ui/Button.vue';
 import Badge from '../components/ui/Badge.vue';
 import { useToastStore } from '../stores/useToastStore';
 import type { ApiClient } from '../api/client';
+import { ApiError } from '../api/errors';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 const incomingOffer = {
   id: 'in1',
@@ -259,6 +261,40 @@ describe('FederationSharesPage — outgoing status vocabulary (real DB enum)', (
     await flushPromises();
     await openOutgoingTab(w);
     expect(findBtnByLabel(w, 'Revoke share of Shows')).toBeTruthy();
+    w.unmount();
+  });
+});
+
+// Wire-error survivor law (review ui__webux): both loaders rendered raw
+// server `error` text; codes now localize, raw text never survives.
+describe('FederationSharesPage — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('localizes a code-carrying incoming ApiError through the catalog', async () => {
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint.endsWith('/incoming')) throw new ApiError(RAW, 503, { error: RAW, code: 'server.offline' });
+      return { outgoing_shares: [] };
+    });
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    expect(w.text()).toContain(ERROR_MESSAGES.en['server.offline']);
+    expect(w.text()).not.toContain('SQLSTATE');
+    expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline'])).toBe(true);
+    w.unmount();
+  });
+
+  it('drops raw server text for a code-less outgoing ApiError (generic line)', async () => {
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint.endsWith('/incoming')) return { incoming_offers: [] };
+      if (endpoint.endsWith('/outgoing')) throw new ApiError(RAW, 500, { error: RAW });
+      throw new Error(`unexpected GET ${endpoint}`);
+    });
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    await openOutgoingTab(w);
+    expect(w.text()).toContain('Failed to load outgoing shares.');
+    expect(w.text()).not.toContain('SQLSTATE');
     w.unmount();
   });
 });

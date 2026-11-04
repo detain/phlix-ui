@@ -45,6 +45,7 @@ import { fetchRecommendations } from '../api/recommendations';
 import { fetchMostWatched } from '../api/mostWatched';
 import { fetchNextUp } from '../api/nextUp';
 import { libraryLoadErrorInfo } from './browseErrors';
+import { wireErrorLine } from '../utils/wireErrors';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig, HomeRow as HomeRowConfig } from '../app/types';
@@ -186,7 +187,10 @@ async function loadNextUp(): Promise<void> {
     // rating badges via an all-false REPLACE that races the other loaders.
     remember(items);
   } catch (e) {
-    nextUpError.value = e instanceof Error ? e.message : 'Failed to load next up';
+    // Wire-error law (review ui__webux survivor class): never store the
+    // server's raw `error` text in UI state — registered codes localize, the
+    // rest keeps the generic line (typed client errors keep their copy).
+    nextUpError.value = wireErrorLine(e, 'Failed to load next up', config?.locale);
   } finally {
     nextUpLoading.value = false;
   }
@@ -228,7 +232,7 @@ async function loadFavorites(): Promise<void> {
     items.forEach((i) => userItemData.hydrate(i));
     remember(items);
   } catch (e) {
-    favoritesError.value = e instanceof Error ? e.message : 'Failed to load favorites';
+    favoritesError.value = wireErrorLine(e, 'Failed to load favorites', config?.locale);
   } finally {
     favoritesLoading.value = false;
   }
@@ -268,7 +272,7 @@ async function loadRecommendations(): Promise<void> {
     recommendedItems.value = items;
     remember(items);
   } catch (e) {
-    recommendationsError.value = e instanceof Error ? e.message : 'Failed to load recommendations';
+    recommendationsError.value = wireErrorLine(e, 'Failed to load recommendations', config?.locale);
   } finally {
     recommendationsLoading.value = false;
   }
@@ -321,7 +325,7 @@ async function loadMostWatched(): Promise<void> {
     // remember() for admin match/poster reconciliation — mirroring loadRecommendations.
     remember(items);
   } catch (e) {
-    mostWatchedError.value = e instanceof Error ? e.message : 'Failed to load most watched';
+    mostWatchedError.value = wireErrorLine(e, 'Failed to load most watched', config?.locale);
   } finally {
     mostWatchedLoading.value = false;
   }
@@ -501,7 +505,9 @@ async function confirmRemove(): Promise<void> {
   } catch (e) {
     if (stale() || isAbort(e)) return;
     toasts.error(`Failed to remove “${item.name}”.`, {
-      message: e instanceof Error ? e.message : 'Unknown error',
+      // Wire-error law: catalog copy for registered codes, generic line for
+      // raw server text, own message for typed client errors.
+      message: wireErrorLine(e, 'Unknown error', config?.locale),
     });
   }
 }

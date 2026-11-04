@@ -67,6 +67,8 @@ import type { MediaItem } from '../types/media-item';
 import type { LibrarySummary } from '../api/libraries';
 import type { PhlixAppConfig } from '../app/types';
 import { isRoute, hasQuery } from '../test/route-match';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
   return {
@@ -1333,5 +1335,52 @@ describe('BrowsePage — profile switch re-reads per-user rails (S82)', () => {
 
     const after = fn.mock.calls.filter(([u]) => isRoute(String(u), MOST_WATCHED_PATH)).length;
     expect(after).toBe(before); // global leaderboard — not re-scoped
+  });
+});
+
+// Wire-error survivor law (review ui__webux): the remove-failure toast body
+// rendered the raw thrown text (server debug prose included). Codes now
+// localize through the contracts catalog; raw text never survives.
+describe('BrowsePage — wire-error survivor law (remove toast)', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  function stubDeleteError(status: number, body: unknown): void {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      ok: false,
+      status,
+      headers: { get: () => 'application/json' } as unknown as Headers,
+      json: async () => body,
+      text: async () => JSON.stringify(body),
+    } as unknown as Response)));
+  }
+
+  it('localizes a code-carrying ApiError through the catalog', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'w1', name: 'Dune' })], total: 1 } });
+    const w = mountPage();
+    await flushPromises();
+    stubDeleteError(503, { error: RAW, code: 'server.offline' });
+    w.findComponent(HomeRow).vm.$emit('remove', media({ id: 'w1', name: 'Dune' }));
+    await nextTick();
+    w.findComponent(ConfirmDialog).vm.$emit('confirm');
+    await flushPromises();
+    const toast = useToastStore().toasts.find((t) => t.tone === 'error' && (t.title ?? '').includes('Dune'));
+    expect(toast).toBeDefined();
+    expect(toast?.message).toBe(ERROR_MESSAGES.en['server.offline']);
+    expect(toast?.message).not.toContain('SQLSTATE');
+  });
+
+  it('drops raw server text for a code-less ApiError (generic body)', async () => {
+    stubFetch({ libraries: ONE_LIBRARY, media: { items: [media({ id: 'w2', name: 'Arrival' })], total: 1 } });
+    const w = mountPage();
+    await flushPromises();
+    stubDeleteError(500, { error: RAW });
+    w.findComponent(HomeRow).vm.$emit('remove', media({ id: 'w2', name: 'Arrival' }));
+    await nextTick();
+    w.findComponent(ConfirmDialog).vm.$emit('confirm');
+    await flushPromises();
+    const toast = useToastStore().toasts.find((t) => t.tone === 'error' && (t.title ?? '').includes('Arrival'));
+    expect(toast).toBeDefined();
+    expect(toast?.message).toBe('Unknown error');
+    expect(toast?.message).not.toContain('SQLSTATE');
   });
 });

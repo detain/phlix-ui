@@ -15,10 +15,11 @@
  *
  * `client` is an injectable test seam; it defaults to the shared `api` singleton.
  */
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
-import { errMessage } from '../api/errors';
+import { wireErrorLine } from '../utils/wireErrors';
+import type { PhlixAppConfig } from '../app/types';
 import Badge from '../components/ui/Badge.vue';
 import PageHint from '../components/ui/PageHint.vue';
 import Button from '../components/ui/Button.vue';
@@ -58,6 +59,8 @@ const props = defineProps<{
 
 const http: Pick<ApiClient, 'get'> = props.client ?? api;
 const toasts = useToastStore();
+// Locale seam for the wire-error classifier (same idiom as BrowsePage/SearchPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 const logs = ref<AuditLog[]>([]);
 const loading = ref(true);
@@ -89,7 +92,9 @@ async function loadLogs(pageNum = 1): Promise<void> {
     page.value = pageNum;
     totalPages.value = Math.max(1, Math.ceil((data.total || 0) / limit));
   } catch (e) {
-    error.value = errMessage(e, 'Failed to load audit logs.');
+    // Wire-error law (review ui__webux survivor class): registered codes
+    // localize through the contracts catalog, raw server text never renders.
+    error.value = wireErrorLine(e, 'Failed to load audit logs.', config?.locale);
     toasts.error(error.value);
   } finally {
     loading.value = false;

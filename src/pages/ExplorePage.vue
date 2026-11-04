@@ -9,7 +9,7 @@
  * Route: /app/explore?item={mediaId}
  * Calls GET /api/v1/media/{id}/similar?limit=20 and displays as a MediaGrid.
  */
-import { onMounted, watch, computed, ref } from 'vue';
+import { onMounted, watch, computed, ref, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useMessages } from '../composables/useMessages';
@@ -27,6 +27,8 @@ import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { resolvePlayable } from '../composables/useResolvePlayable';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import type { MediaItem } from '../types/media-item';
+import type { PhlixAppConfig } from '../app/types';
+import { wireErrorLine } from '../utils/wireErrors';
 
 /** Similar item from the similar-items engine (P4-S1). */
 interface SimilarItem {
@@ -45,6 +47,8 @@ const toasts = useToastStore();
 const { t } = useMessages();
 const auth = useAuthStore();
 const userItemData = useUserItemDataStore();
+// Locale seam for the wire-error classifier (same idiom as BrowsePage/SearchPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const player = usePlayerStore();
 
 // The selected media item id — from route query `?item=xxx`
@@ -97,7 +101,9 @@ async function load(): Promise<void> {
     total.value = items.value.length;
     hasMore.value = false;
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load similar items';
+    // Wire-error law (review ui__webux survivor class): registered codes
+    // localize through the contracts catalog, raw server text never renders.
+    error.value = wireErrorLine(e, 'Failed to load similar items', config?.locale);
   } finally {
     loading.value = false;
   }

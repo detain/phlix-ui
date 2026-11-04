@@ -1,4 +1,8 @@
 /**
+ * Browse's error-classification wrapper over the shared
+ * {@link wireErrorInfo} (src/utils/wireErrors.ts — the promoted shape of
+ * this file and `searchErrors.ts`, review ui__webux survivor class).
+ *
  * Maps a library-load failure `code` (from `useLibrariesStore.errorCode`, sourced
  * from the hub relay proxy's 503 `ApiError` body) to an actionable EmptyState
  * `{title, description}` for the Browse surface.
@@ -23,7 +27,7 @@
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
-import { errorCodeMessage, errorCodeTitle } from '../i18n/errors';
+import { wireErrorInfo } from '../utils/wireErrors';
 import type { PhlixErrorLocale } from '../i18n/errors';
 
 export function libraryLoadErrorInfo(
@@ -31,9 +35,5 @@ export function libraryLoadErrorInfo(
   fallbackDescription: string,
   locale?: PhlixErrorLocale | null,
 ): { title: string; description: string } {
-  const title = errorCodeTitle(code, locale);
-  if (title !== null) {
-    return { title, description: errorCodeMessage(code, locale) };
-  }
-  return { title: "Couldn’t load your libraries", description: fallbackDescription };
+  return wireErrorInfo(code, { title: "Couldn’t load your libraries", description: fallbackDescription }, locale);
 }

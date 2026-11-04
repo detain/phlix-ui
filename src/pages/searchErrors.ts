@@ -1,4 +1,8 @@
 /**
+ * Search's error-classification wrapper over the shared wire layer
+ * (src/utils/wireErrors.ts — the promoted shape of this file and
+ * `browseErrors.ts`, review ui__webux survivor class).
+ *
  * Maps a search-request failure to an actionable EmptyState `{title,
  * description}` — the SearchPage half of the error-classification law Browse
  * follows through `browseErrors.ts` (review ui__webux M6).
@@ -19,38 +23,25 @@
  * pre-existing behavior: the generic "Search failed" title with the thrown
  * error's own message as the description.
  *
- * {@link searchErrorCode} parses the wire code off a thrown value (contracts-
- * law envelope `{error, code}` carried in `ApiError.body`), mirroring how
- * `useAuthStore.parseErrorCode` and `isTmdbUnconfigured` read the same slot.
+ * {@link searchErrorCode} is the shared `wireErrorCode` parse kept under this
+ * file's name (contracts-law envelope `{error, code}` carried in
+ * `ApiError.body`, mirroring how `useAuthStore.parseErrorCode` and
+ * `isTmdbUnconfigured` read the same slot).
  *
  * Pure + side-effect free so it is trivially unit-testable without mounting
  * the SearchPage SFC.
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
-import { ApiError } from '../api/errors';
-import { errorCodeMessage, errorCodeTitle } from '../i18n/errors';
+import { wireErrorInfo } from '../utils/wireErrors';
 import type { PhlixErrorLocale } from '../i18n/errors';
 
-/** The wire error code carried by a thrown value, or `null` when there is none. */
-export function searchErrorCode(e: unknown): string | null {
-  if (e instanceof ApiError) {
-    const body = e.body;
-    if (body !== null && typeof body === 'object' && typeof (body as { code?: unknown }).code === 'string') {
-      return (body as { code: string }).code;
-    }
-  }
-  return null;
-}
+export { wireErrorCode as searchErrorCode } from '../utils/wireErrors';
 
 export function searchErrorInfo(
   code: string | null,
   fallbackDescription: string,
   locale?: PhlixErrorLocale | null,
 ): { title: string; description: string } {
-  const title = errorCodeTitle(code, locale);
-  if (title !== null) {
-    return { title, description: errorCodeMessage(code, locale) };
-  }
-  return { title: 'Search failed', description: fallbackDescription };
+  return wireErrorInfo(code, { title: 'Search failed', description: fallbackDescription }, locale);
 }

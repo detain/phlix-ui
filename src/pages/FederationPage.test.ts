@@ -13,6 +13,8 @@ import Button from '../components/ui/Button.vue';
 import Badge from '../components/ui/Badge.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { api, type ApiClient } from '../api/client';
+import { ApiError } from '../api/errors';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 // Raw peer shape from GET /api/v1/me/federation/peers (snake_case). The hub
 // enriches each peer with shared_library_count; last_sync maps from
@@ -340,6 +342,33 @@ describe('FederationPage — add peer (createPeer)', () => {
     await w.find('.federation__form').trigger('submit');
     await flushPromises();
     expect(useToastStore().toasts.some((t) => t.message === 'Failed to add peer.')).toBe(true);
+    w.unmount();
+  });
+});
+
+// Wire-error survivor law (review ui__webux): the peers loader used to render
+// the relay's raw `error` text into the EmptyState + toast. Registered codes
+// localize through the contracts catalog; raw text never survives.
+describe('FederationPage — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('localizes a code-carrying ApiError through the catalog', async () => {
+    const get = vi.fn().mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }));
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    expect(w.text()).toContain(ERROR_MESSAGES.en['server.offline']);
+    expect(w.text()).not.toContain('SQLSTATE');
+    expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline'])).toBe(true);
+    w.unmount();
+  });
+
+  it('drops raw server text for a code-less ApiError (generic line)', async () => {
+    const get = vi.fn().mockRejectedValue(new ApiError(RAW, 500, { error: RAW }));
+    const w = mountPage({ get, post: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.text()).toContain('Failed to load federation peers.');
+    expect(w.text()).not.toContain('SQLSTATE');
     w.unmount();
   });
 });

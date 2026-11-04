@@ -22,6 +22,7 @@ import Spinner from '../components/ui/Spinner.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 /**
  * The seed item every test here explores from (`?item=`), and the exact
@@ -265,5 +266,57 @@ describe('ExplorePage — nothingToPlay catalog routing (review ui__copywriter F
 
   it('carries no raw copy of the catalog sentence', () => {
     expect(src).not.toContain("'Nothing to play yet.'");
+  });
+});
+
+/** A non-2xx JSON response — the shape `ApiClient.handleResponse` throws an
+ *  `ApiError` (with `.body`) from. */
+function stubFetchErrorBody(status: number, body: unknown): void {
+  const fn = vi.fn((url: unknown) => {
+    const u = typeof url === 'string' ? url : '';
+    if (isRoute(u, SIMILAR_PATH)) {
+      return Promise.resolve({
+        ok: false,
+        status,
+        headers: { get: () => 'application/json' } as unknown as Headers,
+        json: async () => body,
+        text: async () => JSON.stringify(body),
+      } as unknown as Response);
+    }
+    return Promise.resolve(jsonResponse({ items: [] }));
+  });
+  vi.stubGlobal('fetch', fn);
+}
+
+// Wire-error survivor law (review ui__webux): the catch rendered the raw
+// server `error` text as the EmptyState description. Registered codes now
+// localize through the contracts catalog at the CONFIGURED locale; raw text
+// never survives.
+describe('ExplorePage — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('localizes a code-carrying ApiError through the catalog', async () => {
+    stubFetchErrorBody(503, { error: RAW, code: 'server.offline' });
+    const w = await mountPage({ query: { item: 'm1' } });
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.props('description')).toBe(ERROR_MESSAGES.en['server.offline']);
+    expect(w.text()).not.toContain('SQLSTATE');
+  });
+
+  it('honors the app-configured locale', async () => {
+    stubFetchErrorBody(503, { error: RAW, code: 'server.offline' });
+    const w = await mountPage({ query: { item: 'm1' }, config: { locale: 'de' } });
+    await flushPromises();
+    expect(w.findComponent(EmptyState).props('description')).toBe(ERROR_MESSAGES.de['server.offline']);
+  });
+
+  it('drops raw server text for a code-less ApiError (generic line)', async () => {
+    stubFetchErrorBody(500, { error: RAW });
+    const w = await mountPage({ query: { item: 'm1' } });
+    await flushPromises();
+    expect(w.findComponent(EmptyState).props('description')).toBe('Failed to load similar items');
+    expect(w.text()).not.toContain('SQLSTATE');
   });
 });

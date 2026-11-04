@@ -20,10 +20,12 @@
  *
  * `client` is an injectable test seam; it defaults to the shared `api` singleton.
  */
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
 import { errMessage } from '../api/errors';
+import { wireErrorLine } from '../utils/wireErrors';
+import type { PhlixAppConfig } from '../app/types';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
@@ -59,6 +61,8 @@ const props = defineProps<{
 
 const http: Pick<ApiClient, 'get' | 'post' | 'delete'> = props.client ?? api;
 const toasts = useToastStore();
+// Locale seam for the wire-error classifier (same idiom as BrowsePage/SearchPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 const peers = ref<FederationPeer[]>([]);
 const loading = ref(true);
@@ -88,7 +92,9 @@ async function loadPeers(initial = false): Promise<void> {
       last_sync: p.last_connected_at ?? p.last_seen_at ?? undefined,
     }));
   } catch (e) {
-    error.value = errMessage(e, 'Failed to load federation peers.');
+    // Wire-error law (review ui__webux survivor class): registered codes
+    // localize through the contracts catalog, raw server text never renders.
+    error.value = wireErrorLine(e, 'Failed to load federation peers.', config?.locale);
     toasts.error(error.value);
   } finally {
     if (initial) loading.value = false;

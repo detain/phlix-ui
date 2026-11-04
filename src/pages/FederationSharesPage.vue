@@ -19,10 +19,12 @@
  *
  * `client` is an injectable test seam; it defaults to the shared `api` singleton.
  */
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, inject } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
 import { errMessage } from '../api/errors';
+import { wireErrorLine } from '../utils/wireErrors';
+import type { PhlixAppConfig } from '../app/types';
 import { useMessages } from '../composables/useMessages';
 import Badge from '../components/ui/Badge.vue';
 import Button from '../components/ui/Button.vue';
@@ -41,6 +43,8 @@ const props = defineProps<{
 const http: Pick<ApiClient, 'get' | 'post' | 'delete'> = props.client ?? api;
 const toasts = useToastStore();
 const { t } = useMessages();
+// Locale seam for the wire-error classifier (same idiom as BrowsePage/SearchPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 const activeTab = ref<'incoming' | 'outgoing'>('incoming');
 const incoming = ref<IncomingOffer[]>([]);
@@ -72,7 +76,9 @@ async function loadIncoming(): Promise<void> {
       accepted_by: o.accepted_by ?? null,
     }));
   } catch (e) {
-    errorIncoming.value = errMessage(e, 'Failed to load incoming share offers.');
+    // Wire-error law (review ui__webux survivor class): registered codes
+    // localize through the contracts catalog, raw server text never renders.
+    errorIncoming.value = wireErrorLine(e, 'Failed to load incoming share offers.', config?.locale);
     toasts.error(errorIncoming.value);
   } finally {
     loadingIncoming.value = false;
@@ -97,7 +103,7 @@ async function loadOutgoing(): Promise<void> {
       revoked_at: s.revoked_at ?? null,
     }));
   } catch (e) {
-    errorOutgoing.value = errMessage(e, 'Failed to load outgoing shares.');
+    errorOutgoing.value = wireErrorLine(e, 'Failed to load outgoing shares.', config?.locale);
     toasts.error(errorOutgoing.value);
   } finally {
     loadingOutgoing.value = false;

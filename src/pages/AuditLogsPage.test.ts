@@ -13,6 +13,8 @@ import Button from '../components/ui/Button.vue';
 import Badge from '../components/ui/Badge.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { api, type ApiClient } from '../api/client';
+import { ApiError } from '../api/errors';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 // Matches the page's PAGE_SIZE constant.
 const PAGE_SIZE = 50;
@@ -231,6 +233,46 @@ describe('AuditLogsPage — pagination (limit/offset)', () => {
     await flushPromises();
     expect((findBtnByText(w, 'Next')!.element as HTMLButtonElement).disabled).toBe(true);
     expect((findBtnByText(w, 'Previous')!.element as HTMLButtonElement).disabled).toBe(false);
+    w.unmount();
+  });
+});
+
+// Wire-error survivor law (review ui__webux): the admin surfaces used to
+// render the hub-relay proxy's raw `error` text (SQLSTATE-style debug prose)
+// straight into the EmptyState + toast. Registered codes now localize through
+// the contracts catalog; raw text never survives.
+describe('AuditLogsPage — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('localizes a code-carrying ApiError through the catalog', async () => {
+    const get = vi.fn().mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }));
+    const w = mountPage({ get } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    expect(w.text()).toContain(ERROR_MESSAGES.en['server.offline']);
+    expect(w.text()).not.toContain('SQLSTATE');
+    expect(toasts.toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline'])).toBe(true);
+    w.unmount();
+  });
+
+  it('drops raw server text for a code-less ApiError (generic line)', async () => {
+    const get = vi.fn().mockRejectedValue(new ApiError(RAW, 500, { error: RAW }));
+    const w = mountPage({ get } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.text()).toContain('Failed to load audit logs.');
+    expect(w.text()).not.toContain('SQLSTATE');
+    w.unmount();
+  });
+
+  it('honors the app-configured locale', async () => {
+    const get = vi.fn().mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }));
+    const w = mount(AuditLogsPage, {
+      props: { client: { get } as unknown as ApiClient },
+      global: { provide: { phlixConfig: { locale: 'de' } } },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    expect(w.text()).toContain(ERROR_MESSAGES.de['server.offline']);
     w.unmount();
   });
 });
