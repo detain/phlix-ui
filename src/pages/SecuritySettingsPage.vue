@@ -11,7 +11,7 @@
  *      /api/v1/auth/webauthn/register/options (start registration)
  *      /api/v1/auth/webauthn/register/verify (finish registration)
  */
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { ApiClient } from '../api/client';
 import EmptyState from '../components/ui/EmptyState.vue';
@@ -22,6 +22,8 @@ import Icon, { type IconName } from '../components/Icon.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useMessages } from '../composables/useMessages';
+import { wireErrorLine } from '../utils/wireErrors';
+import type { PhlixAppConfig } from '../app/types';
 
 interface Credential {
     credential_id: string;
@@ -51,6 +53,8 @@ const injectedClient = useMediaApiBase();
 const toasts = useToastStore();
 const auth = useAuthStore();
 const { t } = useMessages();
+// Locale seam for the wire-error classifier (same idiom as FederationPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 function getClient(): ApiClient {
     return new ApiClient({ baseUrl: injectedClient.value });
@@ -152,7 +156,10 @@ async function loadCredentials(): Promise<void> {
         const data = await client.get<{ credentials: Credential[] }>('/api/v1/me/webauthn/credentials');
         credentials.value = data.credentials ?? [];
     } catch (e) {
-        error.value = e instanceof Error ? e.message : 'Failed to load credentials';
+        // Wire-error survivor law: the server's `error` text is debug prose
+        // (relay/SQL flavored); registered codes localize through the contracts
+        // catalog, everything else keeps the generic line.
+        error.value = wireErrorLine(e, 'Failed to load credentials', config?.locale);
     } finally {
         loading.value = false;
     }
@@ -178,7 +185,7 @@ async function confirmDelete(): Promise<void> {
         toasts.success('Passkey deleted successfully.');
         await loadCredentials();
     } catch (e) {
-        toasts.error(e instanceof Error ? e.message : 'Failed to delete passkey');
+        toasts.error(wireErrorLine(e, 'Failed to delete passkey', config?.locale));
     } finally {
         deletingId.value = null;
     }
@@ -287,7 +294,7 @@ async function handleRegister(): Promise<void> {
             statusLine.value = 'Registration was cancelled or timed out — try again.';
         } else if (e instanceof Error) {
             statusLine.value = null;
-            toasts.error(e.message);
+            toasts.error(wireErrorLine(e, 'Couldn’t register the passkey.', config?.locale));
         }
     } finally {
         registering.value = false;

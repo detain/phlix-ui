@@ -10,6 +10,7 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import SecuritySettingsPage from './SecuritySettingsPage.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { ERROR_MESSAGES } from '../i18n/errors';
 import { isRoute } from '../test/route-match';
 
 /**
@@ -62,6 +63,12 @@ function credential(over: Partial<Credential> = {}): Credential {
 function stubFetch(opts: {
   credentials?: Credential[];
   listError?: boolean;
+  /** Fail the collection GET with a wire envelope (real non-2xx JSON response). */
+  listErrorBody?: { status: number; body: unknown };
+  /** Fail the per-credential DELETE with a wire envelope. */
+  deleteErrorBody?: { status: number; body: unknown };
+  /** Fail the registration-options POST with a wire envelope. */
+  registerOptionsErrorBody?: { status: number; body: unknown };
 } = {}) {
   const fn = vi.fn((url: unknown, init?: RequestInit) => {
     const u = typeof url === 'string' ? url : '';
@@ -70,12 +77,19 @@ function stubFetch(opts: {
     // matched against the ids this stub actually seeded so a mutated path cannot
     // self-match.
     const target = (opts.credentials ?? []).find((c) => isRoute(u, credentialPath(c.credential_id)));
-    if (method === 'DELETE' && target) return Promise.resolve(jsonResponse({ success: true }));
+    if (method === 'DELETE' && target) {
+      if (opts.deleteErrorBody) return Promise.resolve(jsonResponse(opts.deleteErrorBody.body, opts.deleteErrorBody.status));
+      return Promise.resolve(jsonResponse({ success: true }));
+    }
     if (isRoute(u, CREDENTIALS_PATH)) {
       if (opts.listError) return Promise.reject(new Error('creds down'));
+      if (opts.listErrorBody) return Promise.resolve(jsonResponse(opts.listErrorBody.body, opts.listErrorBody.status));
       return Promise.resolve(jsonResponse({ credentials: opts.credentials ?? [] }));
     }
     if (isRoute(u, REGISTER_OPTIONS_PATH)) {
+      if (opts.registerOptionsErrorBody) {
+        return Promise.resolve(jsonResponse(opts.registerOptionsErrorBody.body, opts.registerOptionsErrorBody.status));
+      }
       return Promise.resolve(jsonResponse({
         challenge: btoa('challenge-bytes'),
         user: { id: btoa('user-id') },
@@ -398,6 +412,67 @@ describe('SecuritySettingsPage', () => {
     expect(raw).toBeTruthy();
     const meta = JSON.parse(raw!) as Record<string, { nickname?: string }>;
     expect(meta['echoed-cred-id']?.nickname).toBe('Phone passkey');
+    w.unmount();
+  });
+});
+
+// ── Wire-error survivor law (REVIEW-UI-MIN2W follow-on, ui behavior wave-6) ──
+// The credentials loader + the delete toast rendered the RAW server `error`
+// text (SqlSTATE-style relay prose) exactly like pre-cure SearchPage. Registered
+// codes localize through the contracts catalog; raw text never survives.
+describe('SecuritySettingsPage — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('localizes a code-carrying ApiError on the credentials loader', async () => {
+    stubFetch({ listErrorBody: { status: 503, body: { error: RAW, code: 'server.offline' } } });
+    const w = mountPage();
+    await flushPromises();
+    expect(w.text()).toContain(ERROR_MESSAGES.en['server.offline']);
+    expect(w.text()).not.toContain('SQLSTATE');
+    w.unmount();
+  });
+
+  it('drops raw server text for a code-less ApiError (generic line)', async () => {
+    stubFetch({ listErrorBody: { status: 500, body: { error: RAW } } });
+    const w = mountPage();
+    await flushPromises();
+    expect(w.text()).toContain('Failed to load credentials');
+    expect(w.text()).not.toContain('SQLSTATE');
+    w.unmount();
+  });
+
+  it('routes a code-carrying delete rejection through the catalog', async () => {
+    stubFetch({
+      credentials: [credential({ credential_id: 'survivorDelete0123456789' })],
+      deleteErrorBody: { status: 503, body: { error: RAW, code: 'server.offline' } },
+    });
+    const w = mountPage();
+    await flushPromises();
+    const toasts = useToastStore();
+    await w.find('.credential-item__delete').trigger('click');
+    await flushPromises();
+    await clickDialogButton(true);
+    await flushPromises();
+    expect(
+      toasts.toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline']),
+    ).toBe(true);
+    expect(toasts.toasts.some((t) => t.tone === 'error' && t.message.includes('SQLSTATE'))).toBe(false);
+    w.unmount();
+  });
+
+  it('localizes a code-carrying registration-options failure (third arm)', async () => {
+    stubFetch({ registerOptionsErrorBody: { status: 503, body: { error: RAW, code: 'server.offline' } } });
+    const w = mountPage();
+    await flushPromises();
+    const toasts = useToastStore();
+    const register = w.findAll('button').find((b) => b.text().toLowerCase().includes('add passkey'));
+    expect(register).toBeTruthy();
+    await register!.trigger('click');
+    await flushPromises();
+    expect(
+      toasts.toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline']),
+    ).toBe(true);
+    expect(toasts.toasts.some((t) => t.tone === 'error' && t.message.includes('SQLSTATE'))).toBe(false);
     w.unmount();
   });
 });

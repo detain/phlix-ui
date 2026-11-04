@@ -42,7 +42,6 @@
 import { ref, computed, reactive, onMounted, onBeforeUnmount, inject, type ComputedRef } from 'vue';
 import { onBeforeRouteLeave, matchedRouteKey } from 'vue-router';
 import { ApiClient, ApiError } from '../../api/client';
-import { errMessage } from '../../api/errors';
 import {
   AdminSettingsApi,
   type SecretStatus,
@@ -50,6 +49,9 @@ import {
 } from '../../api/admin/settings';
 import { useToastStore } from '../../stores/useToastStore';
 import { useSettingsPrefsStore } from '../../stores/useSettingsPrefs';
+import { wireErrorCode, wireErrorLine } from '../../utils/wireErrors';
+import { errorCodeMessage } from '../../i18n/errors';
+import type { PhlixAppConfig } from '../../app/types';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
 import { adminPageHelp } from './helpLinks';
@@ -87,6 +89,8 @@ const api = new AdminSettingsApi(apiClient);
 const toasts = useToastStore();
 const settingsPrefsStore = useSettingsPrefsStore();
 const { t } = useMessages();
+// Locale seam for the wire-error classifier (same idiom as FederationPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 /** Group assigned to every key when the server sent no `meta` at all. */
 const FALLBACK_GROUP = 'other';
@@ -447,7 +451,10 @@ async function loadSettings(): Promise<void> {
       currentTab.value = tabs.value[0].value;
     }
   } catch (e) {
-    error.value = errMessage(e, t('settings.loadFailed'));
+    // Wire-error survivor law: registered codes localize through the contracts
+    // catalog, code-less ApiError text (relay/SQL prose) is dropped for the
+    // generic line, client-written throws keep their message.
+    error.value = wireErrorLine(e, t('settings.loadFailed'), config?.locale);
     toasts.error(error.value);
   } finally {
     loading.value = false;
@@ -681,7 +688,7 @@ async function restartServer(): Promise<void> {
       );
     }
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to restart server.'));
+    toasts.error(wireErrorLine(e, 'Failed to restart server.', config?.locale));
   } finally {
     restarting.value = false;
   }
@@ -896,9 +903,11 @@ async function handleSubmit(): Promise<void> {
       if (rejection.inlineErrors) fieldErrors.value = rejection.inlineErrors;
       toasts.error(rejection.message);
     } else {
-      // Genuine failures (5xx, transport) keep their raw message — there is no
-      // machine reason to translate and the server text is the only diagnosis.
-      toasts.error(e instanceof ApiError ? e.message : 'Failed to save settings.');
+      // Survivor class (wire-error law): even the "genuine failure" arm must
+      // never show raw server debug text — a registered code localizes, a
+      // code-less ApiError gets the generic line (the response stays in the
+      // server log), and non-ApiError throws keep this page's prior generic.
+      toasts.error(errorCodeMessage(wireErrorCode(e), config?.locale, 'Failed to save settings.'));
     }
   } finally {
     submitting.value = false;

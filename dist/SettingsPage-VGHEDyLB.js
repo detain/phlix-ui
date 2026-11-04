@@ -5,7 +5,7 @@ import { t as r } from "./Select-C_evKWXz.js";
 import { t as i } from "./Button-BLpPomsd.js";
 import { n as a, t as o } from "./Icon-55iG1rR7.js";
 import { a as ee } from "./usePreferencesStore-DrDMAwjz.js";
-import { S as s, n as te, t as c, x as ne } from "./SecuritySettingsPage-C9arztPG.js";
+import { S as s, n as te, t as c, x as ne } from "./SecuritySettingsPage-BTGRX3mc.js";
 import { t as re } from "./useToastStore-Bu-iYU7r.js";
 import { t as l } from "./useMessages-DWyC670G.js";
 import { t as ie } from "./useApiBase-DXTBY90j.js";
@@ -482,4 +482,4 @@ var de = {
 }), [["__scopeId", "data-v-cddf466d"]]);
 export { W as default };
 
-//# sourceMappingURL=SettingsPage-BFkLq-H0.js.map
+//# sourceMappingURL=SettingsPage-VGHEDyLB.js.map

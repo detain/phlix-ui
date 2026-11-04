@@ -32,6 +32,8 @@ import ProfileImageSettings from './ProfileImageSettings.vue';
 import Button from './ui/Button.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { ApiError } from '../api/errors';
+import { ERROR_MESSAGES } from '../i18n/errors';
 
 let objectUrlSeq = 0;
 const created: File[] = [];
@@ -494,5 +496,44 @@ describe('ProfileImageSettings — re-entrancy guards behind the disabled button
     await flushPromises();
     expect(upload).not.toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── Wire-error survivor law (REVIEW-UI-MIN2W follow-on, ui behavior wave-6) ──
+// Avatar upload/remove toasts rendered the raw server `error` text for
+// ApiError throws. Registered codes localize; code-less raw is dropped for
+// the page generic; plain-Error/network arms keep their messages (arm-3 law).
+describe('ProfileImageSettings — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('upload: a code-carrying ApiError localizes through the catalog', async () => {
+    const { w, upload } = mountSettings();
+    upload.mockRejectedValue(new ApiError(RAW, 500, { error: RAW, code: 'server.offline' }));
+    await selectFile(w, PNG());
+    await primary(w).trigger('click');
+    await flushPromises();
+    expect(useToastStore().toasts.map((t) => t.message)).toEqual([ERROR_MESSAGES.en['server.offline']]);
+    w.unmount();
+  });
+
+  it('upload: a code-less ApiError drops the raw text (generic line)', async () => {
+    const { w, upload } = mountSettings();
+    upload.mockRejectedValue(new ApiError(RAW, 500, { error: RAW }));
+    await selectFile(w, PNG());
+    await primary(w).trigger('click');
+    await flushPromises();
+    const messages = useToastStore().toasts.map((t) => t.message);
+    expect(messages).toEqual(['Avatar upload failed.']);
+    expect(messages.some((m) => m.includes('SQLSTATE'))).toBe(false);
+    w.unmount();
+  });
+
+  it('remove: a code-carrying ApiError localizes through the catalog', async () => {
+    const a = mountSettings({ name: 'A B', avatar_url: '/a.png' });
+    a.remove.mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }));
+    await secondary(a.w).trigger('click');
+    await flushPromises();
+    expect(useToastStore().toasts.map((t) => t.message)).toEqual([ERROR_MESSAGES.en['server.offline']]);
+    a.w.unmount();
   });
 });

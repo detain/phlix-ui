@@ -33,6 +33,7 @@ import Switch from '../../components/ui/Switch.vue';
 import Button from '../../components/ui/Button.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import { ApiError } from '../../api/errors';
+import { ERROR_MESSAGES } from '../../i18n/errors';
 import { useToastStore } from '../../stores/useToastStore';
 import type { ApiClient } from '../../api/client';
 import type {
@@ -238,19 +239,22 @@ describe('TranscodingSettingsPage — load', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('TranscodingSettingsPage — load failure', () => {
-  it('shows the error EmptyState carrying the thrown message and toasts it', async () => {
+  it('shows the generic EmptyState for a code-less ApiError and toasts it (raw text dropped)', async () => {
     const { client } = makeClient({ getAccelError: new ApiError('accelerator probe timed out', 504) });
     const w = await mountPage(client);
 
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
     expect(empty.props('title')).toBe("Couldn’t load transcoding settings");
-    expect(empty.props('description')).toBe('accelerator probe timed out');
+    // Wire-error survivor law: the raw relay/server sentence (formerly pinned
+    // verbatim here) is dropped for the generic line; registered codes, not
+    // statuses, decide localization.
+    expect(empty.props('description')).toBe('Failed to load transcoding settings.');
     expect(w.find('form').exists()).toBe(false);
 
     const toasts = useToastStore();
     expect(toasts.toasts.map((t) => [t.tone, t.message])).toEqual([
-      ['error', 'accelerator probe timed out'],
+      ['error', 'Failed to load transcoding settings.'],
     ]);
   });
 
@@ -463,7 +467,7 @@ describe('TranscodingSettingsPage — save fan-out', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe('TranscodingSettingsPage — save failure', () => {
-  it('surfaces an ApiError\'s OWN message', async () => {
+  it('drops a code-less ApiError for the generic line (wire-error survivor law)', async () => {
     const { client } = makeClient({ putToneError: new ApiError('accelerator is busy', 409) });
     const w = await mountPage(client);
     await w.findComponent(Switch).vm.$emit('update:modelValue', true);
@@ -472,14 +476,16 @@ describe('TranscodingSettingsPage — save failure', () => {
     await flushPromises();
 
     const toasts = useToastStore();
+    // Formerly pinned the raw passthrough ('accelerator is busy'). With no
+    // machine code to route on, the server sentence is dropped for the generic.
     expect(toasts.toasts.map((t) => [t.tone, t.message])).toEqual([
-      ['error', 'accelerator is busy'],
+      ['error', 'Failed to save transcoding settings.'],
     ]);
   });
 
   it('uses the GENERIC copy for a non-ApiError, which is the other arm of the same ternary', async () => {
-    // The pair matters: with only one of these, `e instanceof ApiError` could be
-    // inverted or deleted and one test would still pass.
+    // The pair matters: with only one of these, the code-vs-generic split could
+    // be inverted or deleted and one test would still pass.
     const { client } = makeClient({ putToneError: new TypeError('fetch exploded') });
     const w = await mountPage(client);
     await w.findComponent(Switch).vm.$emit('update:modelValue', true);
@@ -565,5 +571,46 @@ describe('TranscodingSettingsPage — the `apiBase` injection seam', () => {
     // Control against the ComputedRef case above: a mutation that always reads
     // `.value` yields `undefined` here and this assertion reds.
     expect(urls.some((u) => u.startsWith('undefined'))).toBe(false);
+  });
+});
+
+// ── Wire-error survivor law (REVIEW-UI-MIN2W follow-on, ui behavior wave-6) ──
+// Loader + save fall-through rendered raw ApiError text; registered codes now
+// localize through the contracts catalog. Plain Error/TypeError arms unchanged.
+describe('TranscodingSettingsPage — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('loader: a code-carrying ApiError localizes into the card', async () => {
+    const { client } = makeClient({ getAccelError: new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }) });
+    const w = await mountPage(client);
+    expect(w.findComponent(EmptyState).props('description')).toBe(ERROR_MESSAGES.en['server.offline']);
+    expect(w.text()).not.toContain('SQLSTATE');
+    w.unmount();
+  });
+
+  it('loader: a code-less ApiError drops the raw text (generic line)', async () => {
+    const { client } = makeClient({ getAccelError: new ApiError(RAW, 500, { error: RAW }) });
+    const w = await mountPage(client);
+    expect(w.findComponent(EmptyState).props('description')).toBe('Failed to load transcoding settings.');
+    expect(w.text()).not.toContain('SQLSTATE');
+    w.unmount();
+  });
+
+  it('save: a registered code on the rejection localizes (fall-through arm)', async () => {
+    const { client } = makeClient({
+      putToneError: new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }),
+    });
+    const w = await mountPage(client);
+    await w.findComponent(Switch).vm.$emit('update:modelValue', true);
+    await flushPromises();
+    await w.find('form').trigger('submit');
+    await flushPromises();
+    expect(
+      useToastStore().toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline']),
+    ).toBe(true);
+    expect(
+      useToastStore().toasts.some((t) => t.tone === 'error' && t.message.includes('SQLSTATE')),
+    ).toBe(false);
+    w.unmount();
   });
 });

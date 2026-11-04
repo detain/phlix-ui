@@ -23,6 +23,7 @@ import { useSettingsPrefsStore } from '../../stores/useSettingsPrefs';
 import { ApiError } from '../../api/client';
 import type { ApiClient } from '../../api/client';
 import type { SettingMeta } from '../../api/admin/settings';
+import { ERROR_MESSAGES } from '../../i18n/errors';
 
 /**
  * Fixtures mirror the REAL `GET /api/v1/admin/settings` contract — see
@@ -1388,7 +1389,7 @@ describe('Admin SettingsPage — save error paths', () => {
     w.unmount();
   });
 
-  it('toasts the ApiError message on a 500', async () => {
+  it('toasts the generic line on a code-less 500 — raw server text dropped (wire-error survivor law)', async () => {
     const putImpl = vi.fn().mockRejectedValue(new ApiError('Internal server error', 500));
     const { client } = makeClient({ putImpl });
     const w = mountPage(client);
@@ -1399,7 +1400,10 @@ describe('Admin SettingsPage — save error paths', () => {
     await saveBtn(w).trigger('click');
     await flushPromises();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message === 'Internal server error')).toBe(true);
+    // Formerly pinned the RAW passthrough ('Internal server error' — server
+    // debug prose, the exact class REVIEW-UI-MIN2W survivor law expunges).
+    expect(toasts.toasts.some((t) => t.message === 'Failed to save settings.')).toBe(true);
+    expect(toasts.toasts.some((t) => t.message === 'Internal server error')).toBe(false);
     w.unmount();
   });
 
@@ -1754,7 +1758,10 @@ describe('Admin SettingsPage — restart banner (§3.35)', () => {
     await w.find('.settings-restart-banner__btn').trigger('click');
     await flushPromises();
     const toasts = useToastStore();
-    expect(toasts.toasts.some((t) => t.message === 'Restart not permitted')).toBe(true);
+    // Wire-error survivor law: a code-less ApiError never reaches the toast as
+    // raw server text — the generic restart line renders and the banner stands.
+    expect(toasts.toasts.some((t) => t.message === 'Failed to restart server.')).toBe(true);
+    expect(toasts.toasts.some((t) => t.message === 'Restart not permitted')).toBe(false);
     expect(restartBanner(w).exists()).toBe(true);
     w.unmount();
   });
@@ -2281,6 +2288,73 @@ describe('Admin SettingsPage — R13-02 dirty visibility + leave guards', () => 
     await router.push('/other');
     expect(router.currentRoute.value.path).toBe('/other');
     confirmSpy.mockRestore();
+    w.unmount();
+  });
+});
+
+// ── Wire-error survivor law (REVIEW-UI-MIN2W follow-on, ui behavior wave-6) ──
+// The settings loader rendered the raw relay/server `error` text into the
+// EmptyState + toast, and the save fall-through arm showed raw ApiError text
+// for non-rejection statuses. Registered codes localize; raw text never
+// survives. Non-ApiError throws keep the page's prior arms verbatim.
+describe('Admin SettingsPage — wire-error survivor law', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('localizes a code-carrying loader ApiError (card + mirrored toast)', async () => {
+    const get = vi.fn().mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }));
+    const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.text()).toContain(ERROR_MESSAGES.en['server.offline']);
+    expect(empty.text()).not.toContain('SQLSTATE');
+    expect(
+      useToastStore().toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline']),
+    ).toBe(true);
+    w.unmount();
+  });
+
+  it('drops raw server text for a code-less loader ApiError (generic line)', async () => {
+    const get = vi.fn().mockRejectedValue(new ApiError(RAW, 500, { error: RAW }));
+    const w = mountPage({ get, post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.findComponent(EmptyState).text()).toContain('Couldn’t load settings.');
+    expect(w.text()).not.toContain('SQLSTATE');
+    w.unmount();
+  });
+
+  it('save: a registered code on a non-rejection status localizes (fall-through arm)', async () => {
+    const { client } = makeClient({
+      putImpl: vi.fn().mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' })),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Port Forward');
+    await fieldSwitch(w, 'Enable UPnP port forwarding').vm.$emit('update:modelValue', false);
+    await flushPromises();
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    expect(
+      useToastStore().toasts.some((t) => t.tone === 'error' && t.message === ERROR_MESSAGES.en['server.offline']),
+    ).toBe(true);
+    expect(
+      useToastStore().toasts.some((t) => t.tone === 'error' && t.message.includes('SQLSTATE')),
+    ).toBe(false);
+    w.unmount();
+  });
+
+  it('save: a plain transport Error keeps the page generic — the suppression law held', async () => {
+    const { client } = makeClient({ putImpl: vi.fn().mockRejectedValue(new TypeError('fetch exploded')) });
+    const w = mountPage(client);
+    await flushPromises();
+    await selectTab(w, 'Port Forward');
+    await fieldSwitch(w, 'Enable UPnP port forwarding').vm.$emit('update:modelValue', false);
+    await flushPromises();
+    await saveBtn(w).trigger('click');
+    await flushPromises();
+    const errorToast = useToastStore().toasts.find((t) => t.tone === 'error');
+    expect(errorToast?.message).toBe('Failed to save settings.');
+    expect(errorToast?.message).not.toContain('fetch exploded');
     w.unmount();
   });
 });

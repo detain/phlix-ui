@@ -13,7 +13,7 @@ import { n as k, r as ie, t as ae } from "./useApiBase-DXTBY90j.js";
 import { i as oe, o as se, s as ce } from "./shortcuts-BPpemCee.js";
 import { t as le } from "./NetworkHealthIndicator-CeKHaV1j.js";
 import { t as ue } from "./useToastStore-Bu-iYU7r.js";
-import { C as de, S as fe, _ as pe, a as me, b as he, c as ge, d as _e, f as ve, g as ye, h as be, i as xe, l as Se, m as Ce, n as we, o as Te, p as Ee, r as De, s as Oe, t as ke, u as Ae, v as je, w as Me, x as Ne, y as Pe } from "./SecuritySettingsPage-C9arztPG.js";
+import { C as de, S as fe, _ as pe, a as me, b as he, c as ge, d as _e, f as ve, g as ye, h as be, i as xe, l as Se, m as Ce, n as we, o as Te, p as Ee, r as De, s as Oe, t as ke, u as Ae, v as je, w as Me, x as Ne, y as Pe } from "./SecuritySettingsPage-BTGRX3mc.js";
 import { i as Fe, n as Ie, r as Le, t as Re } from "./Kbd-B47x87jw.js";
 import { a as ze, i as Be, n as Ve, o as He, r as Ue, t as We } from "./useLibrariesStore-D1e4YWGm.js";
 import { n as Ge, t as Ke } from "./HomeRow-CF4vPKY4.js";
@@ -65,9 +65,9 @@ import { t as Pn } from "./hubDashboard-CEe3y3ZG.js";
 import { n as Fn, t as In } from "./media-query-D7hrCu8r.js";
 import { t as Ln } from "./LoginForm-pu4d6kQ0.js";
 import { t as Rn } from "./SignupForm-CBV7UEn6.js";
-import { t as zn } from "./hubHelpLinks-BNMhK6oW.js";
-import { a as Bn, i as Vn, n as Hn, o as Un, r as Wn, s as Gn, t as Kn } from "./plural-B3O2rVPV.js";
-import { r as qn } from "./wireErrors-BEWfE19X.js";
+import { r as zn } from "./wireErrors-BEWfE19X.js";
+import { t as Bn } from "./hubHelpLinks-BNMhK6oW.js";
+import { a as Vn, i as Hn, n as Un, o as Wn, r as Gn, s as Kn, t as qn } from "./plural-B3O2rVPV.js";
 import { n as Jn, t as Yn } from "./debounce-BnRz-bwe.js";
 import { t as Xn } from "./Input-DrnhzzLE.js";
 import { i as Zn, n as Qn, r as $n, t as er } from "./MusicAlbumCard-1czaQhGU.js";
@@ -1314,7 +1314,7 @@ function co(e) {
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-BFkLq-H0.js")
+			component: () => import("./SettingsPage-VGHEDyLB.js")
 		},
 		{
 			path: `${t}/explore`,
@@ -1753,13 +1753,13 @@ var uo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-CAl6bx0r.js")
+	component: () => import("./TranscodingSettingsPage-BAtqyqPC.js")
 }, Uo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-DVzrpQaw.js")
+	component: () => import("./SettingsPage-HQ2614pO.js")
 }, Wo = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1926,77 +1926,77 @@ var os = { class: "pis" }, ss = { class: "pis__group" }, cs = { class: "pis__ava
 			"image/png",
 			"image/jpeg",
 			"image/webp"
-		], r = y(), i = ue(), a = q(null), o = q(null), s = q(null), c = q(!1), l = q(!1);
-		function u() {
-			s.value &&= (URL.revokeObjectURL(s.value), null);
-		}
-		fr(u);
+		], r = y(), i = ue(), a = lr("phlixConfig", null), o = q(null), s = q(null), c = q(null), l = q(!1), u = q(!1);
 		function d() {
-			a.value?.click();
+			c.value &&= (URL.revokeObjectURL(c.value), null);
 		}
-		function f(e) {
+		fr(d);
+		function f() {
+			o.value?.click();
+		}
+		function p(e) {
 			let t = e.currentTarget.files?.[0] ?? null;
-			t && (n.includes(t.type) ? t.size > gs ? (i.error("File is too large. Maximum size is 5 MB."), p()) : (u(), o.value = t, s.value = URL.createObjectURL(t)) : (i.error("Select a PNG, JPEG, or WEBP image."), p()));
-		}
-		function p() {
-			a.value && (a.value.value = ""), o.value = null;
+			t && (n.includes(t.type) ? t.size > gs ? (i.error("File is too large. Maximum size is 5 MB."), m()) : (d(), s.value = t, c.value = URL.createObjectURL(t)) : (i.error("Select a PNG, JPEG, or WEBP image."), m()));
 		}
 		function m() {
-			u(), o.value = null, p();
+			o.value && (o.value.value = ""), s.value = null;
 		}
-		let h = I(() => s.value ? s.value : r.user?.avatar_url ? r.user.avatar_url : null), g = I(() => {
+		function h() {
+			d(), s.value = null, m();
+		}
+		let g = I(() => c.value ? c.value : r.user?.avatar_url ? r.user.avatar_url : null), _ = I(() => {
 			let e = (r.user?.name ?? r.user?.username ?? "").trim().split(/\s+/).filter(Boolean);
 			return e.length === 0 ? "?" : e.length === 1 ? e[0].slice(0, 2).toUpperCase() : (e[0][0] + e[e.length - 1][0]).toUpperCase();
-		}), _ = I(() => r.user?.avatar_url != null);
-		async function v() {
-			if (o.value && !c.value) {
-				c.value = !0;
-				try {
-					await r.uploadAvatar(o.value), i.success("Avatar updated successfully."), o.value = null;
-				} catch (e) {
-					i.error(e instanceof Error ? e.message : "Avatar upload failed.");
-				} finally {
-					c.value = !1;
-				}
-			}
-		}
+		}), v = I(() => r.user?.avatar_url != null);
 		async function b() {
-			if (!l.value) {
+			if (s.value && !l.value) {
 				l.value = !0;
 				try {
-					await r.deleteAvatar(), i.success("Avatar removed."), m();
+					await r.uploadAvatar(s.value), i.success("Avatar updated successfully."), s.value = null;
 				} catch (e) {
-					i.error(e instanceof Error ? e.message : "Avatar removal failed.");
+					i.error(zn(e, "Avatar upload failed.", a?.locale));
 				} finally {
 					l.value = !1;
 				}
 			}
 		}
-		let x = I(() => c.value || l.value);
+		async function x() {
+			if (!u.value) {
+				u.value = !0;
+				try {
+					await r.deleteAvatar(), i.success("Avatar removed."), h();
+				} catch (e) {
+					i.error(zn(e, "Avatar removal failed.", a?.locale));
+				} finally {
+					u.value = !1;
+				}
+			}
+		}
+		let S = I(() => l.value || u.value);
 		return (e, n) => (K(), z("div", os, [B("section", ss, [
 			n[2] ||= B("h3", { class: "pis__title" }, "Profile Image", -1),
-			B("div", cs, [B("div", ls, [h.value ? (K(), z("img", {
+			B("div", cs, [B("div", ls, [g.value ? (K(), z("img", {
 				key: 0,
-				src: X(t)(h.value),
+				src: X(t)(g.value),
 				alt: "Your profile image",
 				class: "pis__avatar-img"
-			}, null, 8, us)) : (K(), z("span", ds, Y(g.value), 1))]), o.value ? (K(), z("div", fs, [B("p", ps, Y(o.value.name), 1), B("p", ms, Y((o.value.size / 1024).toFixed(1)) + " KB", 1)])) : R("", !0)]),
+			}, null, 8, us)) : (K(), z("span", ds, Y(_.value), 1))]), s.value ? (K(), z("div", fs, [B("p", ps, Y(s.value.name), 1), B("p", ms, Y((s.value.size / 1024).toFixed(1)) + " KB", 1)])) : R("", !0)]),
 			B("input", {
 				ref_key: "fileInput",
-				ref: a,
+				ref: o,
 				type: "file",
 				accept: "image/png,image/jpeg,image/webp",
 				class: "pis__file-input",
-				onChange: f
+				onChange: p
 			}, null, 544),
 			B("div", hs, [H(j, {
 				variant: "solid",
-				"left-icon": o.value ? "arrow-up" : "image",
-				loading: c.value,
-				disabled: x.value,
-				onClick: n[0] ||= (e) => o.value ? v() : d()
+				"left-icon": s.value ? "arrow-up" : "image",
+				loading: l.value,
+				disabled: S.value,
+				onClick: n[0] ||= (e) => s.value ? b() : f()
 			}, {
-				default: Q(() => [V(Y(o.value ? "Upload" : "Choose Image"), 1)]),
+				default: Q(() => [V(Y(s.value ? "Upload" : "Choose Image"), 1)]),
 				_: 1
 			}, 8, [
 				"left-icon",
@@ -2004,12 +2004,12 @@ var os = { class: "pis" }, ss = { class: "pis__group" }, cs = { class: "pis__ava
 				"disabled"
 			]), H(j, {
 				variant: "ghost",
-				"left-icon": (o.value, "x"),
-				loading: l.value,
-				disabled: x.value || !o.value && !_.value,
-				onClick: n[1] ||= (e) => o.value ? m() : b()
+				"left-icon": (s.value, "x"),
+				loading: u.value,
+				disabled: S.value || !s.value && !v.value,
+				onClick: n[1] ||= (e) => s.value ? h() : x()
 			}, {
-				default: Q(() => [V(Y(o.value ? "Cancel" : "Remove"), 1)]),
+				default: Q(() => [V(Y(s.value ? "Cancel" : "Remove"), 1)]),
 				_: 1
 			}, 8, [
 				"left-icon",
@@ -2019,7 +2019,7 @@ var os = { class: "pis" }, ss = { class: "pis__group" }, cs = { class: "pis__ava
 			n[3] ||= B("p", { class: "pis__hint" }, "PNG, JPEG, or WEBP — max 5 MB.", -1)
 		])]));
 	}
-}), [["__scopeId", "data-v-5f9ae8ed"]]), vs = {
+}), [["__scopeId", "data-v-b52f31e2"]]), vs = {
 	class: "library-scan",
 	"aria-labelledby": "library-scan-heading"
 }, ys = {
@@ -2353,8 +2353,8 @@ var Is = {
 				_: 1
 			})]),
 			H(zt, {
-				links: X(zn)["my-servers"].links,
-				details: X(zn)["my-servers"].details
+				links: X(Bn)["my-servers"].links,
+				details: X(Bn)["my-servers"].details
 			}, {
 				default: Q(() => [...t[6] ||= [
 					V(" The Phlix servers you have claimed to your hub account. ", -1),
@@ -2651,8 +2651,8 @@ var Is = {
 				_: 1
 			})]),
 			H(zt, {
-				links: X(zn)["server-detail"].links,
-				details: X(zn)["server-detail"].details
+				links: X(Bn)["server-detail"].links,
+				details: X(Bn)["server-detail"].details
 			}, {
 				default: Q(() => [...t[4] ||= [
 					V(" One server's status in detail: its version and reachability, the current ", -1),
@@ -2746,7 +2746,7 @@ var Is = {
 					_: 1
 				})) : R("", !0)])]), B("dl", Lc, [
 					B("div", Rc, [t[21] ||= B("dt", { class: "server-detail__info-label" }, "Domain", -1), B("dd", zc, Y(r.value.fqdn), 1)]),
-					B("div", Bc, [t[22] ||= B("dt", { class: "server-detail__info-label" }, "Expiry", -1), B("dd", Vc, [B("span", { class: W({ "server-detail__expired": o.value.expiry_days_remaining <= 0 }) }, Y(o.value.expiry_days_remaining > 0 ? `${X(Bn)(o.value.expiry_days_remaining, "day", "days")} remaining` : "Expired!"), 3)])]),
+					B("div", Bc, [t[22] ||= B("dt", { class: "server-detail__info-label" }, "Expiry", -1), B("dd", Vc, [B("span", { class: W({ "server-detail__expired": o.value.expiry_days_remaining <= 0 }) }, Y(o.value.expiry_days_remaining > 0 ? `${X(Vn)(o.value.expiry_days_remaining, "day", "days")} remaining` : "Expired!"), 3)])]),
 					B("div", Hc, [t[23] ||= B("dt", { class: "server-detail__info-label" }, "Certificate", -1), B("dd", Uc, Y(o.value.cert_path), 1)]),
 					B("div", Wc, [t[24] ||= B("dt", { class: "server-detail__info-label" }, "Key", -1), B("dd", Gc, Y(o.value.key_path), 1)])
 				])])) : R("", !0),
@@ -2816,7 +2816,7 @@ var Is = {
 					last_sync: e.last_connected_at ?? e.last_seen_at ?? void 0
 				}));
 			} catch (e) {
-				o.value = qn(e, "Failed to load federation peers.", r?.locale), n.error(o.value);
+				o.value = zn(e, "Failed to load federation peers.", r?.locale), n.error(o.value);
 			} finally {
 				e && (a.value = !1);
 			}
@@ -2879,8 +2879,8 @@ var Is = {
 				class: "federation__title"
 			}, "Federation"), B("p", { class: "federation__subtitle" }, "Connect with other Phlix servers to share libraries.")], -1),
 			H(zt, {
-				links: X(zn).federation.links,
-				details: X(zn).federation.details
+				links: X(Bn).federation.links,
+				details: X(Bn).federation.details
 			}, {
 				default: Q(() => [...t[5] ||= [
 					V(" Federation links whole servers together as ", -1),
@@ -3064,7 +3064,7 @@ var Is = {
 					accepted_by: e.accepted_by ?? null
 				}));
 			} catch (e) {
-				u.value = qn(e, "Failed to load incoming share offers.", i?.locale), n.error(u.value);
+				u.value = zn(e, "Failed to load incoming share offers.", i?.locale), n.error(u.value);
 			} finally {
 				c.value = !1;
 			}
@@ -3084,7 +3084,7 @@ var Is = {
 					revoked_at: e.revoked_at ?? null
 				}));
 			} catch (e) {
-				d.value = qn(e, "Failed to load outgoing shares.", i?.locale), n.error(d.value);
+				d.value = zn(e, "Failed to load outgoing shares.", i?.locale), n.error(d.value);
 			} finally {
 				l.value = !1;
 			}
@@ -3168,8 +3168,8 @@ var Is = {
 				class: "fed-shares__title"
 			}, "Federation library shares"), B("p", { class: "fed-shares__subtitle" }, "Manage library share offers between your federation peers.")], -1),
 			H(zt, {
-				links: X(zn)["federation-shares"].links,
-				details: X(zn)["federation-shares"].details
+				links: X(Bn)["federation-shares"].links,
+				details: X(Bn)["federation-shares"].details
 			}, {
 				default: Q(() => [...t[2] ||= [
 					V(" Library shares that flow between federated servers. ", -1),
@@ -3394,8 +3394,8 @@ var Is = {
 				class: "shares__title"
 			}, "Manage shares"), B("p", { class: "shares__subtitle" }, "View and manage your shared libraries.")], -1),
 			H(zt, {
-				links: X(zn)["manage-shares"].links,
-				details: X(zn)["manage-shares"].details
+				links: X(Bn)["manage-shares"].links,
+				details: X(Bn)["manage-shares"].details
 			}, {
 				default: Q(() => [...t[2] ||= [
 					V(" The libraries you have shared with other people, with the permission you granted and any expiry. ", -1),
@@ -3539,8 +3539,8 @@ var Is = {
 				class: "shared-with-me__title"
 			}, "Shared with me"), B("p", { class: "shared-with-me__subtitle" }, " Libraries shared with you by other users. ")], -1),
 			H(zt, {
-				links: X(zn)["shared-with-me"].links,
-				details: X(zn)["shared-with-me"].details
+				links: X(Bn)["shared-with-me"].links,
+				details: X(Bn)["shared-with-me"].details
 			}, {
 				default: Q(() => [...t[1] ||= [
 					V(" Libraries other people have shared with you. Each card shows the owner, the server the library lives on, and whether you have ", -1),
@@ -3752,8 +3752,8 @@ var Is = {
 				_: 1
 			})]),
 			H(zt, {
-				links: X(zn).requests.links,
-				details: X(zn).requests.details
+				links: X(Bn).requests.links,
+				details: X(Bn).requests.details
 			}, {
 				default: Q(() => [...n[14] ||= [
 					V(" Ask a server owner to add a specific movie or show. ", -1),
@@ -4210,8 +4210,8 @@ var Is = {
 				_: 1
 			})]),
 			H(zt, {
-				links: X(zn)["invite-links"].links,
-				details: X(zn)["invite-links"].details
+				links: X(Bn)["invite-links"].links,
+				details: X(Bn)["invite-links"].details
 			}, {
 				default: Q(() => [...r[9] ||= [
 					V(" Give someone access to a library on one of your servers by sending them a URL. ", -1),
@@ -6385,7 +6385,7 @@ var Cg = { class: "photo-albums-page" }, wg = { class: "page-header" }, Tg = { c
 			});
 		}
 		function h(e) {
-			return Bn(e, "photo", "photos");
+			return Vn(e, "photo", "photos");
 		}
 		G(async () => {
 			await r.load(t.value), o.value && p();
@@ -6531,7 +6531,7 @@ var Cg = { class: "photo-albums-page" }, wg = { class: "page-header" }, Tg = { c
 				default: Q(() => [H(l, { name: "arrow-left" }), t[0] ||= V(" Back to Albums ", -1)]),
 				_: 1
 			}),
-			B("div", Wg, [B("h1", Gg, Y(s.value ? X(xg)(s.value) : "Album"), 1), s.value ? (K(), z("p", Kg, Y(s.value.photo_count) + " " + Y(X(Un)(s.value.photo_count, "photo", "photos")), 1)) : R("", !0)]),
+			B("div", Wg, [B("h1", Gg, Y(s.value ? X(xg)(s.value) : "Album"), 1), s.value ? (K(), z("p", Kg, Y(s.value.photo_count) + " " + Y(X(Wn)(s.value.photo_count, "photo", "photos")), 1)) : R("", !0)]),
 			s.value && s.value.photos.length > 0 ? (K(), L(j, {
 				key: 0,
 				variant: "subtle",
@@ -10586,6 +10586,6 @@ var $_ = {
 	pt_BR: rv,
 	ja: iv
 }, ov = sr(() => import("./MediaDetail-DsltgqUO.js").then((e) => e.n)), sv = sr(() => import("./MetadataMatchModal-SUgnXk91.js").then((e) => e.n)), cv = sr(() => import("./FilterBar-erNtSiEW.js").then((e) => e.n)), lv = sr(() => import("./SearchPage-EWd4SL0Z.js"));
-export { S as ACTIVE_PROFILE_KEY, Xt as ALL_LOGS, wd as AcceptInvitePage, pn as AdminBackupApi, mn as AdminCastApi, vn as AdminCollectionsApi, Zt as AdminDashboardApi, hn as AdminDlnaServerApi, yn as AdminHistoryApi, Pn as AdminHubDashboardApi, fn as AdminIntegrationsApi, Cn as AdminLibrariesApi, _n as AdminLiveTvApi, Yt as AdminLogsApi, Nn as AdminMaintenanceApi, Jt as AdminMetadataSourcesApi, An as AdminPluginsApi, gn as AdminRemoteAccessApi, dn as AdminServicesApi, wn as AdminSettingsApi, bn as AdminSyncPlayApi, sn as AdminUsersApi, un as AdminWebhooksApi, dt as ApiClient, pt as ApiError, e as AppBackdrop, Xr as AppLayout, zh as AudiobookDetailPage, yg as AudiobookPlayerPage, lh as AudiobooksPage, xe as BUILT_IN_THEME_IDS, N as Badge, Am as BookDetailPage, Jm as BookReaderPage, lm as BooksPage, j as Button, Ct as CONNECTION_API_BASE_KEY, yt as CONNECTION_CONFIRMED_ORIGIN_KEY, Ca as CURRENT_SERVER_ID_KEY, wa as CURRENT_SERVER_NAME_KEY, Mt as Chip, Pt as Combobox, It as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, nn as DEFAULT_THROTTLE_BPS, tv as DE_MESSAGES, et as ERROR_MESSAGES, ct as ERROR_TITLES, $_ as ES_MESSAGES, A as EmptyState, me as FOCUS_RING_MIN_CONTRAST, ev as FR_MESSAGES, hl as FederationPage, Rl as FederationSharesPage, cv as FilterBar, at as GENERIC_ERROR_MESSAGE, ka as HUB_SYNC_PLAY_PORT, vo as HelpPopover, Ht as HelpText, nv as IT_MESSAGES, l as Icon, t as IconButton, hd as InviteLinksPage, iv as JA_MESSAGES, Re as Kbd, xn as LIBRARY_TYPES, av as LOCALE_MESSAGES, ks as LibraryScanPage, $e as LocalStorageTokenStore, Ln as LoginForm, jn as MAINTENANCE_ENDPOINTS, Mn as MAINTENANCE_TASK_NAMES, Te as MAX_EXTENDS_DEPTH, Za as MCP_TOKENS_ROUTE_NAME, Qa as MCP_TOKENS_ROUTE_PATH, ot as MUSIC_PAGE_SIZE, Jl as ManageSharesPage, Wt as MediaCard, ov as MediaDetail, Gt as MediaGrid, Ke as MediaHomeRow, Kt as MediaRow, Vt as Menu, sv as MetadataMatchModal, Ft as Modal, Gd as MusicAlbumPage, Nf as MusicArtistPage, df as MusicArtistsPage, Yp as MusicPlayerPage, vp as MusicTracksPage, Ys as MyServersPage, mt as NetworkError, On as PLUGIN_SECRET_MASK, Kn as PLURAL_CATEGORIES, an as PROFILE_LAST_ERROR_CODE, en as PROFILE_LAST_ERROR_TEXT, rv as PT_BR_MESSAGES, zt as PageHint, fo as PageTransition, ya as PhlixApp, t_ as PhotoAlbumPage, Bg as PhotoAlbumsPage, z_ as PhotoSlideshowPage, w_ as PhotoViewPage, _s as ProfileImageSettings, Qt as RATING_LABELS, rn as RATING_MAX, on as RATING_OPTIONS, Yn as REQUEST_SEARCH_DEBOUNCE_MS, te as RESUME_MAX_RATIO, O as RESUME_MIN_SECONDS, Oe as RING_GROUND_KEYS, xo as RatingBadge, Lu as RequestsPage, uo as Reveal, Sn as SCAN_JOB_TYPES, Tn as SETTINGS_SECRET_MASK, Be as SORT_TITLE_ARTICLES, cn as SUBSCRIBABLE_EVENTS, lv as SearchPage, ke as SecuritySettingsPage, Nt as Select, nl as ServerDetailPage, cu as SharedWithMePage, Br as Sheet, Rn as SignupForm, P as Skeleton, At as Slider, qt as SourcePriorityEditor, Rt as Spinner, jt as Switch, ge as THEME_CACHE_KEY, Se as THEME_TOKEN_ALLOWLIST, $t as THROTTLE_BPS_LEVELS, tn as THROTTLE_BPS_OPTIONS, lt as TMDB_UNCONFIGURED_CODE, Bt as Tabs, re as ThumbRating, Qe as TimeoutError, Wi as ToastHost, Lt as Tooltip, Co as UserRatingPicker, ln as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, Ae as activeThemeStyle, as as adminMenu, ta as applyStoredThemeEarly, _e as applyThemeTokens, K_ as bestCandidate, B_ as bindMediaStoreToRouter, ns as buildAdminRoutes, is as buildHubAdminRoutes, Pa as buildHubRelayUrl, In as buildMediaQuery, Fn as buildMediaUrl, rs as buildServerAdminRoutes, ve as clearThemeTokens, Ua as closeHubRelayConnection, Zo as commonAdminPages, ze as compareByStrippedTitle, Ee as compositedContrastOver, lo as createPhlixApp, _ as createTranslator, Jn as debounce, Qi as deriveAccentVars, M as errMessage, nt as errorCodeMessage, tt as errorCodeTitle, Ve as fetchLibraries, De as fetchThemes, Ce as focusRingLawViolation, o as focusable, r as focusableRegistry, kt as formatPageTitle, Ie as fuzzyScore, st as getDefaultApiHeaders, Wa as getHubRelaySocket, p as hasStoredPreferences, $o as hubAdminPages, n as installFocusable, xt as isAllowedBase, be as isAllowedThemeToken, ye as isBuiltInThemeId, Ye as isOffline, _t as isPlaintextPublic, Hn as isPluralTemplate, ht as isPrivateHost, Xe as isRegisteredErrorCode, w as isRewritableImagePath, pe as isSafeThemeTokenValue, ut as isTmdbUnconfigured, Le as matchCommand, $a as mcpTokensMenuItem, h as mergeMessages, bt as normalizeBase, je as normalizeServerTheme, Ba as openHubRelayConnection, St as originOf, Ma as parsePendingCommandFrame, Pe as parseThemeColor, Sa as phlixUiVersion, kn as pluginErrorCode, Dn as pluginValidationErrors, Wn as plural, Vn as pluralCategory, Bn as pluralCount, Un as pluralize, gt as probeServer, he as readCachedTheme, d as readStoredPreferences, V_ as rectCenter, T as resolveImageSrc, C as resolveImageSrcset, Ne as resolveThemeBase, fe as resolveThemeTokens, qe as safeHref, de as sanitizeThemeTokens, Gn as selectPluralTemplate, Qo as serverAdminPages, Dt as setAppName, it as setDefaultApiHeaders, ft as setDefaultTokenStore, Ot as setPageTitle, Ue as sortLibraries, He as stripLeadingArticle, ae as useApiBase, y as useAuthStore, ra as useCommandPaletteHotkey, Fe as useCommandStore, vt as useConnectionStore, i as useFocusTrap, E as useImageSrc, We as useLibrariesStore, k as useMediaApiBase, tr as useMediaStore, v as useMessages, Q_ as useOnline, Et as usePageTitle, D as usePlayerStore, ca as usePreconnect, u as usePreferencesStore, Ut as usePrefetch, x as useProfileStore, fa as useResumeReporter, Ge as useResumeSync, Oa as useServerStore, En as useSettingsPrefsStore, Z_ as useSpatialNav, na as useTheme, we as useThemesStore, ue as useToastStore, ne as useUserItemDataStore, wt as withScheme, Me as writeCachedTheme };
+export { S as ACTIVE_PROFILE_KEY, Xt as ALL_LOGS, wd as AcceptInvitePage, pn as AdminBackupApi, mn as AdminCastApi, vn as AdminCollectionsApi, Zt as AdminDashboardApi, hn as AdminDlnaServerApi, yn as AdminHistoryApi, Pn as AdminHubDashboardApi, fn as AdminIntegrationsApi, Cn as AdminLibrariesApi, _n as AdminLiveTvApi, Yt as AdminLogsApi, Nn as AdminMaintenanceApi, Jt as AdminMetadataSourcesApi, An as AdminPluginsApi, gn as AdminRemoteAccessApi, dn as AdminServicesApi, wn as AdminSettingsApi, bn as AdminSyncPlayApi, sn as AdminUsersApi, un as AdminWebhooksApi, dt as ApiClient, pt as ApiError, e as AppBackdrop, Xr as AppLayout, zh as AudiobookDetailPage, yg as AudiobookPlayerPage, lh as AudiobooksPage, xe as BUILT_IN_THEME_IDS, N as Badge, Am as BookDetailPage, Jm as BookReaderPage, lm as BooksPage, j as Button, Ct as CONNECTION_API_BASE_KEY, yt as CONNECTION_CONFIRMED_ORIGIN_KEY, Ca as CURRENT_SERVER_ID_KEY, wa as CURRENT_SERVER_NAME_KEY, Mt as Chip, Pt as Combobox, It as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, nn as DEFAULT_THROTTLE_BPS, tv as DE_MESSAGES, et as ERROR_MESSAGES, ct as ERROR_TITLES, $_ as ES_MESSAGES, A as EmptyState, me as FOCUS_RING_MIN_CONTRAST, ev as FR_MESSAGES, hl as FederationPage, Rl as FederationSharesPage, cv as FilterBar, at as GENERIC_ERROR_MESSAGE, ka as HUB_SYNC_PLAY_PORT, vo as HelpPopover, Ht as HelpText, nv as IT_MESSAGES, l as Icon, t as IconButton, hd as InviteLinksPage, iv as JA_MESSAGES, Re as Kbd, xn as LIBRARY_TYPES, av as LOCALE_MESSAGES, ks as LibraryScanPage, $e as LocalStorageTokenStore, Ln as LoginForm, jn as MAINTENANCE_ENDPOINTS, Mn as MAINTENANCE_TASK_NAMES, Te as MAX_EXTENDS_DEPTH, Za as MCP_TOKENS_ROUTE_NAME, Qa as MCP_TOKENS_ROUTE_PATH, ot as MUSIC_PAGE_SIZE, Jl as ManageSharesPage, Wt as MediaCard, ov as MediaDetail, Gt as MediaGrid, Ke as MediaHomeRow, Kt as MediaRow, Vt as Menu, sv as MetadataMatchModal, Ft as Modal, Gd as MusicAlbumPage, Nf as MusicArtistPage, df as MusicArtistsPage, Yp as MusicPlayerPage, vp as MusicTracksPage, Ys as MyServersPage, mt as NetworkError, On as PLUGIN_SECRET_MASK, qn as PLURAL_CATEGORIES, an as PROFILE_LAST_ERROR_CODE, en as PROFILE_LAST_ERROR_TEXT, rv as PT_BR_MESSAGES, zt as PageHint, fo as PageTransition, ya as PhlixApp, t_ as PhotoAlbumPage, Bg as PhotoAlbumsPage, z_ as PhotoSlideshowPage, w_ as PhotoViewPage, _s as ProfileImageSettings, Qt as RATING_LABELS, rn as RATING_MAX, on as RATING_OPTIONS, Yn as REQUEST_SEARCH_DEBOUNCE_MS, te as RESUME_MAX_RATIO, O as RESUME_MIN_SECONDS, Oe as RING_GROUND_KEYS, xo as RatingBadge, Lu as RequestsPage, uo as Reveal, Sn as SCAN_JOB_TYPES, Tn as SETTINGS_SECRET_MASK, Be as SORT_TITLE_ARTICLES, cn as SUBSCRIBABLE_EVENTS, lv as SearchPage, ke as SecuritySettingsPage, Nt as Select, nl as ServerDetailPage, cu as SharedWithMePage, Br as Sheet, Rn as SignupForm, P as Skeleton, At as Slider, qt as SourcePriorityEditor, Rt as Spinner, jt as Switch, ge as THEME_CACHE_KEY, Se as THEME_TOKEN_ALLOWLIST, $t as THROTTLE_BPS_LEVELS, tn as THROTTLE_BPS_OPTIONS, lt as TMDB_UNCONFIGURED_CODE, Bt as Tabs, re as ThumbRating, Qe as TimeoutError, Wi as ToastHost, Lt as Tooltip, Co as UserRatingPicker, ln as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, Ae as activeThemeStyle, as as adminMenu, ta as applyStoredThemeEarly, _e as applyThemeTokens, K_ as bestCandidate, B_ as bindMediaStoreToRouter, ns as buildAdminRoutes, is as buildHubAdminRoutes, Pa as buildHubRelayUrl, In as buildMediaQuery, Fn as buildMediaUrl, rs as buildServerAdminRoutes, ve as clearThemeTokens, Ua as closeHubRelayConnection, Zo as commonAdminPages, ze as compareByStrippedTitle, Ee as compositedContrastOver, lo as createPhlixApp, _ as createTranslator, Jn as debounce, Qi as deriveAccentVars, M as errMessage, nt as errorCodeMessage, tt as errorCodeTitle, Ve as fetchLibraries, De as fetchThemes, Ce as focusRingLawViolation, o as focusable, r as focusableRegistry, kt as formatPageTitle, Ie as fuzzyScore, st as getDefaultApiHeaders, Wa as getHubRelaySocket, p as hasStoredPreferences, $o as hubAdminPages, n as installFocusable, xt as isAllowedBase, be as isAllowedThemeToken, ye as isBuiltInThemeId, Ye as isOffline, _t as isPlaintextPublic, Un as isPluralTemplate, ht as isPrivateHost, Xe as isRegisteredErrorCode, w as isRewritableImagePath, pe as isSafeThemeTokenValue, ut as isTmdbUnconfigured, Le as matchCommand, $a as mcpTokensMenuItem, h as mergeMessages, bt as normalizeBase, je as normalizeServerTheme, Ba as openHubRelayConnection, St as originOf, Ma as parsePendingCommandFrame, Pe as parseThemeColor, Sa as phlixUiVersion, kn as pluginErrorCode, Dn as pluginValidationErrors, Gn as plural, Hn as pluralCategory, Vn as pluralCount, Wn as pluralize, gt as probeServer, he as readCachedTheme, d as readStoredPreferences, V_ as rectCenter, T as resolveImageSrc, C as resolveImageSrcset, Ne as resolveThemeBase, fe as resolveThemeTokens, qe as safeHref, de as sanitizeThemeTokens, Kn as selectPluralTemplate, Qo as serverAdminPages, Dt as setAppName, it as setDefaultApiHeaders, ft as setDefaultTokenStore, Ot as setPageTitle, Ue as sortLibraries, He as stripLeadingArticle, ae as useApiBase, y as useAuthStore, ra as useCommandPaletteHotkey, Fe as useCommandStore, vt as useConnectionStore, i as useFocusTrap, E as useImageSrc, We as useLibrariesStore, k as useMediaApiBase, tr as useMediaStore, v as useMessages, Q_ as useOnline, Et as usePageTitle, D as usePlayerStore, ca as usePreconnect, u as usePreferencesStore, Ut as usePrefetch, x as useProfileStore, fa as useResumeReporter, Ge as useResumeSync, Oa as useServerStore, En as useSettingsPrefsStore, Z_ as useSpatialNav, na as useTheme, we as useThemesStore, ue as useToastStore, ne as useUserItemDataStore, wt as withScheme, Me as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

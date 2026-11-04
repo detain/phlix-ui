@@ -8,7 +8,8 @@ import { t as c } from "./Spinner-Ce5nc_O0.js";
 import { t as l } from "./EmptyState-DjfWh3kt.js";
 import { t as u } from "./Button-BLpPomsd.js";
 import { t as ee } from "./ConfirmDialog-C2YORkzs.js";
-import { Fragment as d, computed as f, createBlock as p, createCommentVNode as te, createElementBlock as m, createElementVNode as h, createStaticVNode as ne, createTextVNode as g, createVNode as _, defineComponent as v, onMounted as re, openBlock as y, ref as b, renderList as x, toDisplayString as S, vModelRadio as ie, vModelText as ae, withCtx as C, withDirectives as w } from "vue";
+import { r as d } from "./wireErrors-BEWfE19X.js";
+import { Fragment as f, computed as te, createBlock as p, createCommentVNode as ne, createElementBlock as m, createElementVNode as h, createStaticVNode as re, createTextVNode as g, createVNode as _, defineComponent as v, inject as ie, onMounted as ae, openBlock as y, ref as b, renderList as x, toDisplayString as S, vModelRadio as oe, vModelText as se, withCtx as C, withDirectives as w } from "vue";
 import { defineStore as T } from "pinia";
 // src/composables/themeTokens.ts
 var E = [
@@ -126,43 +127,43 @@ function Z(e) {
 	});
 	return .2126 * t[0] + .7152 * t[1] + .0722 * t[2];
 }
-function oe(e, t) {
+function ce(e, t) {
 	let n = Z(e), r = Z(t);
 	return (Math.max(n, r) + .05) / (Math.min(n, r) + .05);
 }
-function se(e, t) {
+function Q(e, t) {
 	let n = X(e), r = X(t);
 	if (n === null || r === null || r.alpha < 1) return null;
 	let i = (e) => Math.round(n.alpha * n.rgb[e] + (1 - n.alpha) * r.rgb[e]);
-	return oe([
+	return ce([
 		i(0),
 		i(1),
 		i(2)
 	], r.rgb);
 }
-function ce(e) {
+function le(e) {
 	let t = e["--accent-ring"];
 	if (t === void 0) return null;
 	for (let n of Y) {
 		let r = e[n];
 		if (r === void 0) continue;
-		let i = se(t, r);
+		let i = Q(t, r);
 		if (!(i === null || i >= 3)) return `--accent-ring ${t} composited to ${i.toFixed(2)}:1 on ${n} (${r}) is below the 3:1 WCAG 1.4.11 floor for the focus indicator`;
 	}
 	return null;
 }
-function le(e, t) {
-	let n = ce(t);
+function ue(e, t) {
+	let n = le(t);
 	for (let [r, i] of Object.entries(t)) A(r) && L(i) && (r === "--accent-ring" && n !== null ? console.warn(`[phlix:theme] ${n}; falling back to the base theme's ring`) : e.style.setProperty(r, i));
 }
-function ue(e) {
+function de(e) {
 	for (let t of O) e.style.removeProperty(t);
 }
-var Q = "phlix.theme.active";
-function de() {
+var $ = "phlix.theme.active";
+function fe() {
 	if (typeof localStorage > "u") return null;
 	try {
-		let e = localStorage.getItem(Q);
+		let e = localStorage.getItem($);
 		if (e === null) return null;
 		let t = JSON.parse(e);
 		if (typeof t != "object" || !t || Array.isArray(t)) return null;
@@ -178,13 +179,13 @@ function de() {
 		return null;
 	}
 }
-function fe(e) {
+function pe(e) {
 	if (typeof localStorage < "u") try {
-		e === null ? localStorage.removeItem(Q) : localStorage.setItem(Q, JSON.stringify(e));
+		e === null ? localStorage.removeItem($) : localStorage.setItem($, JSON.stringify(e));
 	} catch {}
 }
 // src/api/themes.ts
-async function $(e, t) {
+async function me(e, t) {
 	let n = await new r({ baseUrl: e }).get("/api/v1/themes", void 0, t), i = Array.isArray(n.themes) ? n.themes : [], a = [];
 	for (let e of i) {
 		let t = H(e);
@@ -193,12 +194,12 @@ async function $(e, t) {
 	return a;
 }
 // src/stores/useThemesStore.ts
-var pe = T("themes", () => {
+var he = T("themes", () => {
 	let e = b([]), t = b(!1), n = b(!1), r = b(null), a = null;
 	async function o(o, s = !1) {
 		if (o !== null && (!n.value || s)) return a || (t.value = !0, r.value = null, a = (async () => {
 			try {
-				e.value = await $(o), n.value = !0;
+				e.value = await me(o), n.value = !0;
 			} catch (e) {
 				r.value = i(e, "Failed to load themes");
 			} finally {
@@ -206,7 +207,7 @@ var pe = T("themes", () => {
 			}
 		})(), a);
 	}
-	let s = f(() => e.value.filter((e) => !e.builtIn));
+	let s = te(() => e.value.filter((e) => !e.builtIn));
 	function c(t) {
 		return e.value.find((e) => e.id === t);
 	}
@@ -223,14 +224,14 @@ var pe = T("themes", () => {
 		byId: c,
 		styleFor: l
 	};
-}), me = { class: "security-settings-page" }, he = { class: "security-settings-page__card" }, ge = { class: "security-settings-page__card-body" }, _e = {
+}), ge = { class: "security-settings-page" }, _e = { class: "security-settings-page__card" }, ve = { class: "security-settings-page__card-body" }, ye = {
 	key: 3,
 	class: "credentials-list"
-}, ve = { class: "credential-item__icon" }, ye = { class: "credential-item__info" }, be = { class: "credential-item__id" }, xe = { class: "credential-item__meta" }, Se = { class: "security-settings-page__card-footer" }, Ce = { class: "register-form" }, we = { class: "register-form__field" }, Te = { class: "register-form__choice" }, Ee = { class: "register-form__segments" }, De = ["value"], Oe = {
+}, be = { class: "credential-item__icon" }, xe = { class: "credential-item__info" }, Se = { class: "credential-item__id" }, Ce = { class: "credential-item__meta" }, we = { class: "security-settings-page__card-footer" }, Te = { class: "register-form" }, Ee = { class: "register-form__field" }, De = { class: "register-form__choice" }, Oe = { class: "register-form__segments" }, ke = ["value"], Ae = {
 	key: 0,
 	class: "security-settings-page__status",
 	role: "status"
-}, ke = /*#__PURE__*/ e(/* @__PURE__ */ v({
+}, je = /*#__PURE__*/ e(/* @__PURE__ */ v({
 	__name: "SecuritySettingsPage",
 	setup(e) {
 		let i = [
@@ -246,96 +247,96 @@ var pe = T("themes", () => {
 				value: "cross-platform",
 				label: "Security key"
 			}
-		], f = a(), v = s(), T = o(), { t: E } = n();
-		function D() {
-			return new r({ baseUrl: f.value });
+		], te = a(), v = s(), T = o(), { t: E } = n(), D = ie("phlixConfig", null);
+		function O() {
+			return new r({ baseUrl: te.value });
 		}
-		let O = b([]), k = b(!0), A = b(null), j = b(!1), M = b(null), N = b(""), P = b("auto"), F = b(null), I = b({});
-		function L() {
+		let k = b([]), A = b(!0), j = b(null), M = b(!1), N = b(null), P = b(""), F = b("auto"), I = b(null), L = b({});
+		function R() {
 			let e = T.user?.id;
 			return e ? `phlix.passkey-meta.${e}` : "phlix.passkey-meta";
 		}
-		function R() {
+		function z() {
 			try {
-				let e = localStorage.getItem(L()), t = e ? JSON.parse(e) : {};
-				I.value = t && typeof t == "object" ? t : {};
+				let e = localStorage.getItem(R()), t = e ? JSON.parse(e) : {};
+				L.value = t && typeof t == "object" ? t : {};
 			} catch {
-				I.value = {};
+				L.value = {};
 			}
 		}
-		function z(e, t) {
-			I.value = {
-				...I.value,
+		function B(e, t) {
+			L.value = {
+				...L.value,
 				[e]: t
 			};
 			try {
-				localStorage.setItem(L(), JSON.stringify(I.value));
-			} catch {}
-		}
-		function B(e) {
-			if (!(e in I.value)) return;
-			let t = { ...I.value };
-			delete t[e], I.value = t;
-			try {
-				localStorage.setItem(L(), JSON.stringify(t));
+				localStorage.setItem(R(), JSON.stringify(L.value));
 			} catch {}
 		}
 		function V(e) {
-			return I.value[e];
+			if (!(e in L.value)) return;
+			let t = { ...L.value };
+			delete t[e], L.value = t;
+			try {
+				localStorage.setItem(R(), JSON.stringify(t));
+			} catch {}
 		}
 		function H(e) {
-			return V(e.credential_id)?.nickname || `${e.credential_id.substring(0, 20)}…`;
+			return L.value[e];
 		}
 		function U(e) {
-			if (e.device_type === "platform" || e.device_type === "cross-platform") return e.device_type;
-			let t = V(e.credential_id)?.attachment;
-			return t === "platform" || t === "cross-platform" ? t : null;
+			return H(e.credential_id)?.nickname || `${e.credential_id.substring(0, 20)}…`;
 		}
 		function W(e) {
+			if (e.device_type === "platform" || e.device_type === "cross-platform") return e.device_type;
+			let t = H(e.credential_id)?.attachment;
+			return t === "platform" || t === "cross-platform" ? t : null;
+		}
+		function G(e) {
 			return (/* @__PURE__ */ new Date(e * 1e3)).toLocaleDateString(void 0, {
 				year: "numeric",
 				month: "short",
 				day: "numeric"
 			});
 		}
-		function G(e) {
+		function K(e) {
 			return e === "platform" ? "monitor" : "key";
 		}
-		function K(e) {
+		function q(e) {
 			return e === "platform" ? "Platform authenticator" : e === "cross-platform" ? "Security key" : "Passkey";
 		}
-		async function q() {
-			k.value = !0, A.value = null;
+		async function J() {
+			A.value = !0, j.value = null;
 			try {
-				let e = await D().get("/api/v1/me/webauthn/credentials");
-				O.value = e.credentials ?? [];
+				let e = await O().get("/api/v1/me/webauthn/credentials");
+				k.value = e.credentials ?? [];
 			} catch (e) {
-				A.value = e instanceof Error ? e.message : "Failed to load credentials";
+				j.value = d(e, "Failed to load credentials", D?.locale);
 			} finally {
-				k.value = !1;
+				A.value = !1;
 			}
 		}
-		let J = b(null);
-		function Y(e) {
-			J.value = e;
+		let Y = b(null);
+		function X(e) {
+			Y.value = e;
 		}
-		async function X() {
-			let e = J.value;
-			if (J.value = null, e) {
-				M.value = e;
+		async function Z() {
+			let e = Y.value;
+			if (Y.value = null, e) {
+				N.value = e;
 				try {
-					await D().delete(`/api/v1/me/webauthn/credentials/${encodeURIComponent(e)}`), B(e), v.success("Passkey deleted successfully."), await q();
+					await O().delete(`/api/v1/me/webauthn/credentials/${encodeURIComponent(e)}`), V(e), v.success("Passkey deleted successfully."), await J();
 				} catch (e) {
-					v.error(e instanceof Error ? e.message : "Failed to delete passkey");
+					v.error(d(e, "Failed to delete passkey", D?.locale));
 				} finally {
-					M.value = null;
+					N.value = null;
 				}
 			}
 		}
-		async function Z() {
-			j.value = !0, F.value = null;
+		async function ce() {
+			M.value = !0, I.value = null;
 			try {
-				let e = D(), t = await e.post("/api/v1/auth/webauthn/register/options", {}), n = t.user.name ?? T.user?.username ?? T.user?.email ?? "phlix user", r = t.user.displayName ?? T.user?.name ?? T.user?.username ?? n, i = {
+				let e = O(), t = await e.post("/api/v1/auth/webauthn/register/options", {}), n = t.user.name ?? T.user?.username ?? T.user?.email ?? "phlix user", r = t.user.displayName ?? T.user?.name ?? T.user?.username ?? n, i = {
 					challenge: Uint8Array.from(atob(t.challenge), (e) => e.charCodeAt(0)),
 					rp: { name: "PHLIX" },
 					pubKeyCredParams: [{
@@ -357,7 +358,7 @@ var pe = T("themes", () => {
 					timeout: 6e4,
 					attestation: "none",
 					authenticatorSelection: {
-						...P.value === "auto" ? {} : { authenticatorAttachment: P.value },
+						...F.value === "auto" ? {} : { authenticatorAttachment: F.value },
 						residentKey: "preferred",
 						userVerification: "preferred"
 					}
@@ -373,68 +374,68 @@ var pe = T("themes", () => {
 				}, l = await e.post("/api/v1/auth/webauthn/register/verify", {
 					credential: c,
 					challenge: t.challenge
-				}), u = N.value.trim();
-				l.credential_id && (u || P.value !== "auto") && z(l.credential_id, {
+				}), u = P.value.trim();
+				l.credential_id && (u || F.value !== "auto") && B(l.credential_id, {
 					...u ? { nickname: u } : {},
-					...P.value === "auto" ? {} : { attachment: P.value }
-				}), N.value = "", F.value = "Passkey registered successfully.", v.success("Passkey registered successfully."), await q();
+					...F.value === "auto" ? {} : { attachment: F.value }
+				}), P.value = "", I.value = "Passkey registered successfully.", v.success("Passkey registered successfully."), await J();
 			} catch (e) {
-				e instanceof Error && e.name === "NotAllowedError" ? F.value = "Registration was cancelled or timed out — try again." : e instanceof Error && (F.value = null, v.error(e.message));
+				e instanceof Error && e.name === "NotAllowedError" ? I.value = "Registration was cancelled or timed out — try again." : e instanceof Error && (I.value = null, v.error(d(e, "Couldn’t register the passkey.", D?.locale)));
 			} finally {
-				j.value = !1;
+				M.value = !1;
 			}
 		}
-		function oe() {
-			q();
+		function Q() {
+			J();
 		}
-		return re(() => {
-			R(), q();
-		}), (e, n) => (y(), m("div", me, [
+		return ae(() => {
+			z(), J();
+		}), (e, n) => (y(), m("div", ge, [
 			n[9] ||= h("header", { class: "security-settings-page__head" }, [
 				h("p", { class: "security-settings-page__eyebrow" }, "Account Security"),
 				h("h1", { class: "security-settings-page__title" }, "Passkey settings"),
 				h("p", { class: "security-settings-page__desc" }, " Manage your passkeys (WebAuthn/FIDO2 credentials) for passwordless login. ")
 			], -1),
-			h("section", he, [
+			h("section", _e, [
 				n[8] ||= h("header", { class: "security-settings-page__card-header" }, [h("h2", { class: "security-settings-page__card-title" }, "Registered Passkeys")], -1),
-				h("div", ge, [k.value ? (y(), p(c, {
+				h("div", ve, [A.value ? (y(), p(c, {
 					key: 0,
 					label: "Loading credentials..."
-				})) : A.value ? (y(), p(l, {
+				})) : j.value ? (y(), p(l, {
 					key: 1,
 					icon: "alert",
 					title: "Couldn’t load passkeys",
-					description: A.value
+					description: j.value
 				}, {
 					actions: C(() => [_(u, {
 						variant: "solid",
 						size: "sm",
 						"left-icon": "refresh",
-						onClick: oe
+						onClick: Q
 					}, {
 						default: C(() => [...n[3] ||= [g(" Retry ", -1)]]),
 						_: 1
 					})]),
 					_: 1
-				}, 8, ["description"])) : O.value.length === 0 ? (y(), p(l, {
+				}, 8, ["description"])) : k.value.length === 0 ? (y(), p(l, {
 					key: 2,
 					icon: "key",
 					title: "No passkeys registered",
 					description: "Add a passkey to enable passwordless login on your devices."
-				})) : (y(), m("ul", _e, [(y(!0), m(d, null, x(O.value, (e) => (y(), m("li", {
+				})) : (y(), m("ul", ye, [(y(!0), m(f, null, x(k.value, (e) => (y(), m("li", {
 					key: e.credential_id,
 					class: "credential-item"
 				}, [
-					h("div", ve, [_(t, { name: G(U(e)) }, null, 8, ["name"])]),
-					h("div", ye, [h("span", be, S(H(e)), 1), h("span", xe, S(K(U(e))) + " · Registered " + S(W(e.registered_at)), 1)]),
+					h("div", be, [_(t, { name: K(W(e)) }, null, 8, ["name"])]),
+					h("div", xe, [h("span", Se, S(U(e)), 1), h("span", Ce, S(q(W(e))) + " · Registered " + S(G(e.registered_at)), 1)]),
 					_(u, {
 						variant: "ghost",
 						size: "sm",
 						class: "credential-item__delete",
-						disabled: M.value === e.credential_id,
-						onClick: (t) => Y(e.credential_id)
+						disabled: N.value === e.credential_id,
+						onClick: (t) => X(e.credential_id)
 					}, {
-						default: C(() => [M.value === e.credential_id ? (y(), p(c, {
+						default: C(() => [N.value === e.credential_id ? (y(), p(c, {
 							key: 0,
 							size: "xs"
 						})) : (y(), p(t, {
@@ -444,33 +445,33 @@ var pe = T("themes", () => {
 						_: 2
 					}, 1032, ["disabled", "onClick"])
 				]))), 128))]))]),
-				h("footer", Se, [
-					h("div", Ce, [h("label", we, [n[4] ||= h("span", { class: "register-form__label" }, "Nickname (optional)", -1), w(h("input", {
-						"onUpdate:modelValue": n[0] ||= (e) => N.value = e,
+				h("footer", we, [
+					h("div", Te, [h("label", Ee, [n[4] ||= h("span", { class: "register-form__label" }, "Nickname (optional)", -1), w(h("input", {
+						"onUpdate:modelValue": n[0] ||= (e) => P.value = e,
 						type: "text",
 						class: "register-form__input",
 						placeholder: "e.g. Work laptop",
 						maxlength: "60",
 						autocomplete: "off"
-					}, null, 512), [[ae, N.value]])]), h("fieldset", Te, [n[5] ||= h("legend", { class: "register-form__label" }, "Authenticator type", -1), h("div", Ee, [(y(), m(d, null, x(i, (e) => h("label", {
+					}, null, 512), [[se, P.value]])]), h("fieldset", De, [n[5] ||= h("legend", { class: "register-form__label" }, "Authenticator type", -1), h("div", Oe, [(y(), m(f, null, x(i, (e) => h("label", {
 						key: e.value,
 						class: "register-form__segment"
 					}, [w(h("input", {
-						"onUpdate:modelValue": n[1] ||= (e) => P.value = e,
+						"onUpdate:modelValue": n[1] ||= (e) => F.value = e,
 						type: "radio",
 						name: "passkey-attachment",
 						value: e.value
-					}, null, 8, De), [[ie, P.value]]), h("span", null, S(e.label), 1)])), 64))])])]),
-					F.value ? (y(), m("p", Oe, S(F.value), 1)) : te("", !0),
+					}, null, 8, ke), [[oe, F.value]]), h("span", null, S(e.label), 1)])), 64))])])]),
+					I.value ? (y(), m("p", Ae, S(I.value), 1)) : ne("", !0),
 					_(u, {
 						variant: "solid",
-						disabled: j.value,
-						onClick: Z
+						disabled: M.value,
+						onClick: ce
 					}, {
-						default: C(() => [j.value ? (y(), m(d, { key: 0 }, [_(c, {
+						default: C(() => [M.value ? (y(), m(f, { key: 0 }, [_(c, {
 							size: "xs",
 							class: "mr-2"
-						}), n[6] ||= g(" Starting... ", -1)], 64)) : (y(), m(d, { key: 1 }, [_(t, {
+						}), n[6] ||= g(" Starting... ", -1)], 64)) : (y(), m(f, { key: 1 }, [_(t, {
 							name: "plus",
 							class: "mr-2"
 						}), n[7] ||= g(" Add Passkey ", -1)], 64))]),
@@ -478,20 +479,20 @@ var pe = T("themes", () => {
 					}, 8, ["disabled"])
 				])
 			]),
-			n[10] ||= ne("<section class=\"security-settings-page__info\" data-v-5097b4ab><h3 class=\"security-settings-page__info-title\" data-v-5097b4ab>What is a passkey?</h3><p data-v-5097b4ab> A passkey is a FIDO2/WebAuthn credential that allows you to log in securely without a password. It uses public-key cryptography to protect your account from phishing and credential theft attacks. </p></section><section class=\"security-settings-page__notes\" data-v-5097b4ab><h3 class=\"security-settings-page__notes-title\" data-v-5097b4ab>Security Notes</h3><ul class=\"security-settings-page__notes-list\" data-v-5097b4ab><li data-v-5097b4ab>Passkeys are unique to each device and cannot be reused if lost.</li><li data-v-5097b4ab>Keep backup codes or alternative login methods in a safe place.</li><li data-v-5097b4ab>Deleting a passkey is permanent and cannot be undone.</li><li data-v-5097b4ab>Platform authenticators (like Touch ID or Windows Hello) require the specific device.</li></ul></section>", 2),
+			n[10] ||= re("<section class=\"security-settings-page__info\" data-v-9f3b487c><h3 class=\"security-settings-page__info-title\" data-v-9f3b487c>What is a passkey?</h3><p data-v-9f3b487c> A passkey is a FIDO2/WebAuthn credential that allows you to log in securely without a password. It uses public-key cryptography to protect your account from phishing and credential theft attacks. </p></section><section class=\"security-settings-page__notes\" data-v-9f3b487c><h3 class=\"security-settings-page__notes-title\" data-v-9f3b487c>Security Notes</h3><ul class=\"security-settings-page__notes-list\" data-v-9f3b487c><li data-v-9f3b487c>Passkeys are unique to each device and cannot be reused if lost.</li><li data-v-9f3b487c>Keep backup codes or alternative login methods in a safe place.</li><li data-v-9f3b487c>Deleting a passkey is permanent and cannot be undone.</li><li data-v-9f3b487c>Platform authenticators (like Touch ID or Windows Hello) require the specific device.</li></ul></section>", 2),
 			_(ee, {
-				open: J.value !== null,
+				open: Y.value !== null,
 				message: "Deleting this passkey is permanent and cannot be undone — devices using it will fall back to your other sign-in methods.",
 				"confirm-label": "Delete passkey",
 				danger: "",
 				"onUpdate:open": n[2] ||= (e) => {
-					e || (J.value = null);
+					e || (Y.value = null);
 				},
-				onConfirm: X
+				onConfirm: Z
 			}, null, 8, ["open"])
 		]));
 	}
-}), [["__scopeId", "data-v-5097b4ab"]]);
-export { R as C, G as S, L as _, J as a, de as b, Q as c, le as d, ue as f, D as g, A as h, E as i, O as l, ce as m, pe as n, U as o, se as p, $ as r, Y as s, ke as t, q as u, H as v, fe as w, K as x, X as y };
+}), [["__scopeId", "data-v-9f3b487c"]]);
+export { R as C, G as S, L as _, J as a, fe as b, $ as c, ue as d, de as f, D as g, A as h, E as i, O as l, le as m, he as n, U as o, Q as p, me as r, Y as s, je as t, q as u, H as v, pe as w, K as x, X as y };
 
-//# sourceMappingURL=SecuritySettingsPage-C9arztPG.js.map
+//# sourceMappingURL=SecuritySettingsPage-BTGRX3mc.js.map

@@ -11,11 +11,13 @@
  * preview before committing, removing the current avatar, and displays the
  * user's initials as a fallback when no avatar is set.
  */
-import { ref, computed, onBeforeUnmount } from 'vue';
+import { computed, inject, onBeforeUnmount, ref } from 'vue';
 import Button from './ui/Button.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useImageSrc } from '../composables/useImageSrc';
+import { wireErrorLine } from '../utils/wireErrors';
+import type { PhlixAppConfig } from '../app/types';
 
 /** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
  *  so bound verbatim they resolve against the HUB origin instead of the selected server's
@@ -28,6 +30,8 @@ const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 const auth = useAuthStore();
 const toasts = useToastStore();
+// Locale seam for the wire-error classifier (same idiom as FederationPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 // --- File input state ---
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -122,7 +126,7 @@ async function uploadAvatar(): Promise<void> {
     // Keep the preview URL; it matches what the server will now serve.
     selectedFile.value = null;
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Avatar upload failed.');
+    toasts.error(wireErrorLine(e, 'Avatar upload failed.', config?.locale));
   } finally {
     uploadLoading.value = false;
   }
@@ -138,7 +142,7 @@ async function removeAvatar(): Promise<void> {
     toasts.success('Avatar removed.');
     clearSelection();
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : 'Avatar removal failed.');
+    toasts.error(wireErrorLine(e, 'Avatar removal failed.', config?.locale));
   } finally {
     deleteLoading.value = false;
   }

@@ -13,8 +13,7 @@
  * through the respective `PUT` endpoints.
  */
 import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
-import { ApiClient, ApiError } from '../../api/client';
-import { errMessage } from '../../api/errors';
+import { ApiClient } from '../../api/client';
 import {
   AdminTranscodingApi,
   type HardwareAccelerator,
@@ -22,6 +21,9 @@ import {
 } from '../../api/admin/transcoding';
 import { useToastStore } from '../../stores/useToastStore';
 import { useMessages } from '../../composables/useMessages';
+import { wireErrorCode, wireErrorLine } from '../../utils/wireErrors';
+import { errorCodeMessage } from '../../i18n/errors';
+import type { PhlixAppConfig } from '../../app/types';
 import Badge from '../../components/ui/Badge.vue';
 import PageHint from '../../components/ui/PageHint.vue';
 import { adminPageHelp } from './helpLinks';
@@ -46,6 +48,8 @@ const apiClient =
 const api = new AdminTranscodingApi(apiClient);
 const toasts = useToastStore();
 const { t } = useMessages();
+// Locale seam for the wire-error classifier (same idiom as FederationPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 
 // ── Tone-map mode options ───────────────────────────────────────────────────────
 const TONE_MAP_OPTIONS: ReadonlyArray<SelectOptionInput> = [
@@ -109,7 +113,7 @@ async function loadData(): Promise<void> {
       toneData.tone_map_mode,
     );
   } catch (e) {
-    error.value = errMessage(e, 'Failed to load transcoding settings.');
+    error.value = wireErrorLine(e, 'Failed to load transcoding settings.', config?.locale);
     toasts.error(error.value);
   } finally {
     loading.value = false;
@@ -133,7 +137,9 @@ async function handleSubmit(): Promise<void> {
     // Refresh originals to clear dirty state
     syncOriginals(preferredAccelerator.value, preferHdrOutput.value, toneMapMode.value);
   } catch (e) {
-    toasts.error(e instanceof ApiError ? e.message : 'Failed to save transcoding settings.');
+    // Survivor class: registered codes localize, code-less ApiError text is
+    // dropped for the generic; non-ApiError throws keep the prior generic arm.
+    toasts.error(errorCodeMessage(wireErrorCode(e), config?.locale, 'Failed to save transcoding settings.'));
   } finally {
     submitting.value = false;
   }

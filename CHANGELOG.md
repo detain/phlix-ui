@@ -12,6 +12,29 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — Settings-family wire-error survivor lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U1)
+
+### Fixed
+
+- **U1 — the Settings family stops rendering raw server error text
+  (REVIEW-UI-MIN2W survivor follow-on).** SecuritySettingsPage (credentials
+  card, delete toast, register-failure toast), admin SettingsPage (loader
+  card + mirrored toast, restart toast, the save fall-through arm),
+  admin TranscodingSettingsPage (loader card, save fall-through toast) and
+  ProfileImageSettings (upload/remove toasts) now classify through the shared
+  `src/utils/wireErrors.ts` seam: a registered contracts code localizes at the
+  configured locale, a code-less `ApiError` gets the surface's generic line
+  (relay/SQL-flavored server prose never survives to the screen; the response
+  stays in the server log), and non-`ApiError` throws keep each site's prior
+  arm verbatim. The admin save fall-through previously declared "genuine
+  failures keep their raw message" — superseded by the estate wire-error law.
+  13 pins, all measured RED on the parent (raw-`SQLSTATE` convictions); four
+  bug-encoding pins ROTATED to the new law (admin 500-raw + restart-403-raw,
+  Transcoding load-raw + save-raw). Surfaces inspected and documented clean:
+  MusicPlayerPage renders only `t('music.streamError')` off the store error
+  channel; the member SettingsPage is a localStorage-only editor with no
+  network failure path. src moved: dist rebuilt in this commit, deterministic
+  x2 (aggregate md5 0958d205).
 ## Unreleased — wire-error survivor-class disclosure lane 2026-11-04 (FIX-UI-W4CURE.md, ui-w4cure U2+U3)
 
 ### Fixed (disclosure only; no src/** or dist changes)
