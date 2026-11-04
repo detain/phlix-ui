@@ -3,7 +3,7 @@ import { t as ee } from "./useToastStore-Bu-iYU7r.js";
 import { t as te } from "./useMessages-DWyC670G.js";
 import { t as r } from "./Badge-B_3IbdKb.js";
 import { t as i } from "./Button-BLpPomsd.js";
-import { t as ne } from "./Input-DrnhzzLE.js";
+import { t as ne } from "./Input-y6G1jaDw.js";
 import { t as a } from "./Modal-kOrwOcVn.js";
 import { t as o } from "./Skeleton-DDhrDRE7.js";
 import { t as s } from "./EmptyState-DjfWh3kt.js";
@@ -396,4 +396,4 @@ var le = "phlix-mcp-", ue = class {
 }), [["__scopeId", "data-v-e5aac080"]]);
 export { P as default };
 
-//# sourceMappingURL=McpTokensPage-CvpQj5ZZ.js.map
+//# sourceMappingURL=McpTokensPage-CtMbKsJn.js.map

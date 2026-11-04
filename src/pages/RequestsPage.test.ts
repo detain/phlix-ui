@@ -339,3 +339,65 @@ describe('S519 — requests-portal search + load hygiene (AD-16 / AD-17)', () =>
     w.unmount();
   });
 });
+
+describe('RequestsPage — cleared number fields stay empty (ui__webux UI-m23)', () => {
+  it('does not send season 0 when the season field is typed then cleared', async () => {
+    const { client, post } = makeClient({ requests: [] });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Request')!.trigger('click');
+    await flushPromises();
+
+    const form = document.querySelector('.request-form') as HTMLElement;
+    const select = form.querySelector('select') as HTMLSelectElement;
+    select.value = 'series';
+    select.dispatchEvent(new Event('change'));
+    await flushPromises();
+
+    const numbers = form.querySelectorAll('input[type="number"]');
+    const tmdb = numbers[0] as HTMLInputElement;
+    const season = numbers[1] as HTMLInputElement;
+    const title = form.querySelector('input[type="text"]') as HTMLInputElement;
+    tmdb.value = '1396';
+    tmdb.dispatchEvent(new Event('input'));
+    title.value = 'Breaking Bad';
+    title.dispatchEvent(new Event('input'));
+    season.value = '2';
+    season.dispatchEvent(new Event('input'));
+    await flushPromises();
+    season.value = '';
+    season.dispatchEvent(new Event('input'));
+    await flushPromises();
+
+    await findBtnByText(w, 'Submit Request')!.trigger('click');
+    await flushPromises();
+
+    const body = (post.mock.calls as unknown as Array<[string, Record<string, unknown>]>)[0][1];
+    // The page's own `formSeason !== ''` guard can only fire if clearing emits
+    // '' — the 0-coercion silently sent season:0 to the wire.
+    expect(body).not.toHaveProperty('season');
+    w.unmount();
+  });
+
+  it('renders a cleared number field blank — no phantom 0 after backspacing', async () => {
+    const { client } = makeClient({ requests: [] });
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtnByText(w, 'New Request')!.trigger('click');
+    await flushPromises();
+
+    const form = document.querySelector('.request-form') as HTMLElement;
+    const tmdb = form.querySelector('input[type="number"]') as HTMLInputElement;
+    tmdb.value = '550';
+    tmdb.dispatchEvent(new Event('input'));
+    await flushPromises();
+    expect(tmdb.value).toBe('550');
+    tmdb.value = '';
+    tmdb.dispatchEvent(new Event('input'));
+    await flushPromises();
+    // Parent model round-trips through Input's :value binding — a cleared
+    // field must not come back as "0".
+    expect(tmdb.value).toBe('');
+    w.unmount();
+  });
+});

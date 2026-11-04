@@ -69,7 +69,7 @@ import { r as zn } from "./wireErrors-BEWfE19X.js";
 import { t as Bn } from "./hubHelpLinks-BNMhK6oW.js";
 import { a as Vn, i as Hn, n as Un, o as Wn, r as Gn, s as Kn, t as qn } from "./plural-B3O2rVPV.js";
 import { n as Jn, t as Yn } from "./debounce-BnRz-bwe.js";
-import { t as Xn } from "./Input-DrnhzzLE.js";
+import { t as Xn } from "./Input-y6G1jaDw.js";
 import { i as Zn, n as Qn, r as $n, t as er } from "./MusicAlbumCard-1czaQhGU.js";
 import { t as tr } from "./useMediaStore-BNs5Udu4.js";
 import { Fragment as F, Teleport as nr, Transition as rr, TransitionGroup as ir, computed as I, createApp as ar, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as or, createTextVNode as V, createVNode as H, defineAsyncComponent as sr, defineComponent as U, getCurrentScope as cr, inject as lr, nextTick as ur, normalizeClass as W, normalizeStyle as dr, onBeforeUnmount as fr, onMounted as G, onScopeDispose as pr, onUnmounted as mr, openBlock as K, provide as hr, readonly as gr, ref as q, renderList as J, renderSlot as _r, resolveComponent as vr, resolveDynamicComponent as yr, toDisplayString as Y, toValue as br, unref as X, useId as xr, vModelSelect as Sr, vModelText as Cr, vShow as wr, watch as Z, watchEffect as Tr, withCtx as Q, withDirectives as Er, withModifiers as Dr } from "vue";
@@ -1350,7 +1350,7 @@ function co(e) {
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-BIeasMdf.js")
+			component: () => import("./ParentalControlsPage-CaVASTDs.js")
 		},
 		{
 			path: `${t}/profiles`,
@@ -1373,7 +1373,7 @@ function co(e) {
 		path: `${t}/${Qa}`,
 		name: Za,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-CvpQj5ZZ.js")
+		component: () => import("./McpTokensPage-CtMbKsJn.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",

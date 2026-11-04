@@ -6,7 +6,7 @@ import { t as re } from "./Tabs-Dd1Z-m2P.js";
 import { t as r } from "./Button-BLpPomsd.js";
 import { t as i } from "./Modal-kOrwOcVn.js";
 import { t as ie } from "./Select-C_evKWXz.js";
-import { t as a } from "./Input-DrnhzzLE.js";
+import { t as a } from "./Input-y6G1jaDw.js";
 import { t as ae } from "./Switch-C607L4Vu.js";
 import { t as o } from "./Badge-B_3IbdKb.js";
 import { t as s } from "./Skeleton-DDhrDRE7.js";
@@ -691,7 +691,7 @@ var he = { class: "parental-page" }, ge = { class: "parental-page__head" }, _e =
 			}, 8, ["modelValue"])
 		]));
 	}
-}), [["__scopeId", "data-v-f56f07ac"]]);
+}), [["__scopeId", "data-v-ca1ce833"]]);
 export { C as default };
 
-//# sourceMappingURL=ParentalControlsPage-BIeasMdf.js.map
+//# sourceMappingURL=ParentalControlsPage-CaVASTDs.js.map

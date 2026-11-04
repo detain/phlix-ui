@@ -40,7 +40,15 @@ const msgId = computed(() => `${id}-msg`);
 
 function onInput(e: Event) {
   const target = e.target as HTMLInputElement;
-  emit('update:modelValue', props.type === 'number' ? Number(target.value) : target.value);
+  if (props.type !== 'number') {
+    emit('update:modelValue', target.value);
+    return;
+  }
+  // UI-m23 — clearing the field must stay "no value": an empty number input
+  // emits '' rather than Number('') = 0, so optional caps (bandwidth), the
+  // page-side `!== ''` guards and the placeholder all behave as written.
+  // Consumers already parse '' as null — see parseNumericInput.
+  emit('update:modelValue', target.value === '' ? '' : Number(target.value));
 }
 </script>
 

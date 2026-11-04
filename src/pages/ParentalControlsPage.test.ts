@@ -1303,9 +1303,10 @@ describe('ParentalControlsPage — stream limits', () => {
 
   /**
    * These drive the REAL `Input` emit — `setInput` writes the DOM value and
-   * dispatches a genuine `input` event, so `Input.vue`'s
-   * `props.type === 'number' ? Number(target.value) : target.value` runs and the
-   * model becomes a NUMBER, exactly as it does in a browser.
+   * dispatches a genuine `input` event, so `Input.vue`'s number branch
+   * (`target.value === '' ? '' : Number(target.value)`, UI-m23) runs and the
+   * model becomes a NUMBER for typed digits — or the empty STRING for a cleared
+   * field — exactly as it does in a browser.
    *
    * ⚠ That is the whole point of the shape. Assigning a string straight to
    * `streamLimitsForm.maxTotalBandwidthKbps` would leave it a string, `.trim()`

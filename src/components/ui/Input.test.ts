@@ -59,3 +59,29 @@ describe('Input — accessible error channel (ui__webux M19)', () => {
     w.unmount();
   });
 });
+
+describe('Input — number clearing keeps "no value" (ui__webux UI-m23)', () => {
+  it('emits the empty string — not 0 — when a number field is cleared', async () => {
+    const w = mount(Input, { props: { modelValue: 5, type: 'number' } });
+    await w.get('input').setValue('');
+    const emitted = w.emitted('update:modelValue')!;
+    expect(emitted[emitted.length - 1]).toEqual(['']);
+    w.unmount();
+  });
+
+  it('still emits a NUMBER for typed number values (coercion law held)', async () => {
+    const w = mount(Input, { props: { modelValue: 5, type: 'number', min: 1 } });
+    await w.get('input').setValue('42');
+    const emitted = w.emitted('update:modelValue')!;
+    expect(emitted[emitted.length - 1]).toEqual([42]);
+    w.unmount();
+  });
+
+  it('text fields pass the raw string through unchanged', async () => {
+    const w = mount(Input, { props: { modelValue: '', type: 'text' } });
+    await w.get('input').setValue('');
+    const emitted = w.emitted('update:modelValue')!;
+    expect(emitted[emitted.length - 1]).toEqual(['']);
+    w.unmount();
+  });
+});

@@ -31,7 +31,7 @@ var d = ["for"], f = [
 		let m = e, h = a, g = u(), _ = t(() => `${g}-msg`);
 		function v(e) {
 			let t = e.target;
-			h("update:modelValue", m.type === "number" ? Number(t.value) : t.value);
+			m.type === "number" ? h("update:modelValue", t.value === "" ? "" : Number(t.value)) : h("update:modelValue", t.value);
 		}
 		return (t, a) => (s(), r("div", { class: o(["phlix-input", {
 			"is-disabled": e.disabled,
@@ -62,7 +62,7 @@ var d = ["for"], f = [
 			}, c(e.error || ""), 9, p)
 		], 2));
 	}
-}), [["__scopeId", "data-v-906c25f7"]]);
+}), [["__scopeId", "data-v-e2ef7c22"]]);
 export { m as t };
 
-//# sourceMappingURL=Input-DrnhzzLE.js.map
+//# sourceMappingURL=Input-y6G1jaDw.js.map

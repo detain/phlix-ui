@@ -12,6 +12,27 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — Input number-clearing lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U2)
+
+### Fixed
+
+- **U2 — clearing a `<Input type="number">` field no longer lands a phantom 0
+  on the parent (UI-m23).** The emit was `Number(target.value)` for the number
+  type, and `Number('') = 0`: backspacing an optional cap replaced the
+  placeholder with a rendered 0, and RequestsPage's own `formSeason !== ''`
+  guards — written for an empty-string contract the component never honored —
+  silently sent `season: 0` / `episode: 0` on the wire after a typed-then-
+  cleared field. `onInput` now emits the empty STRING when a number field is
+  cleared (digits still emit numbers; the `v-model.number` consumer is
+  unaffected — Vue's toNumber passes '' through untouched), and the two
+  `parseNumericInput` docblocks in ParentalControlsPage (consumer side) and its
+  S201 test block (emitter side) now state the three shapes honestly. Pins:
+  Input.test.ts x3 (clear→'', typed→number held, text passthrough held) and
+  RequestsPage.test.ts x2 (typed-then-cleared season absent from the POST
+  body; cleared TMDB field renders blank, not "0") — 3 measured RED on the
+  parent. src moved: dist rebuilt in this commit, deterministic x2 (aggregate
+  md5 6d001c5c).
+
 ## Unreleased — Settings-family wire-error survivor lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U1)
 
 ### Fixed

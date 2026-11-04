@@ -442,9 +442,11 @@ const loadingStreamLimits = ref(false);
 const streamLimitsError = ref<string | null>(null);
 const showStreamLimitsForm = ref(false);
 /**
- * Both fields are bound to `<Input type="number">`, and `Input.vue` emits
- * `Number(target.value)` for that type — so whatever type these are SEEDED with,
- * they become NUMBERS the instant the user types. They are seeded as a string
+ * Both fields are bound to `<Input type="number">`. For that type `Input.vue`
+ * emits `Number(target.value)` when digits are typed — so whatever type these
+ * are SEEDED with, they become NUMBERS the instant the user types — and emits
+ * the empty STRING when the field is cleared (UI-m23: clearing means "no
+ * value", never a phantom 0). They are seeded as a string
  * (`openStreamLimitsEdit` formats the bandwidth with `.toString()`) and as a
  * number, so `string | number` is the honest type for both.
  *
@@ -459,9 +461,10 @@ const streamLimitsForm = ref<{
 const streamLimitsFormError = ref<string | null>(null);
 
 /**
- * Parse a `<Input type="number">` model to a whole number, tolerating BOTH shapes
- * it legitimately arrives in: the string it was seeded with, and the number
- * `Input.vue` emits once the field is touched.
+ * Parse a `<Input type="number">` model to a whole number, tolerating the shapes
+ * it legitimately arrives in: the string it was seeded with, the number
+ * `Input.vue` emits once digits are typed, and the empty string it emits when
+ * the field is cleared (UI-m23).
  *
  * Returns `null` for "no usable value" — blank, non-numeric, or below `min`.
  * Fractions are truncated, matching the `parseInt` this replaces.
