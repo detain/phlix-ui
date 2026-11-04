@@ -55,7 +55,7 @@ export const PT_BR_MESSAGES = {
   },
   shell: {
     skipToContent: 'Pular para o conteúdo',
-    primaryNav: 'Principal',
+    primaryNav: 'Navegação principal',
     openMenu: 'Abrir o menu de navegação',
     menu: 'Menu',
     openCommandPalette: 'Abrir a paleta de comandos ({chord})',

@@ -70,7 +70,7 @@ export const DEFAULT_MESSAGES = {
   },
   shell: {
     skipToContent: 'Skip to content',
-    primaryNav: 'Primary',
+    primaryNav: 'Primary navigation',
     openMenu: 'Open navigation menu',
     menu: 'Menu',
     openCommandPalette: 'Open command palette ({chord})',

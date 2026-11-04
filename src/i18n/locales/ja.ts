@@ -56,7 +56,7 @@ export const JA_MESSAGES = {
   },
   shell: {
     skipToContent: '本文へスキップ',
-    primaryNav: 'メイン',
+    primaryNav: 'メインナビゲーション',
     openMenu: 'ナビゲーションメニューを開く',
     menu: 'メニュー',
     openCommandPalette: 'コマンドパレットを開く（{chord}）',

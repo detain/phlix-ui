@@ -375,7 +375,7 @@ describe('Admin ServicesPage — OAuth redirect result', () => {
     await flushPromises();
     const toasts = useToastStore();
     expect(
-      toasts.toasts.some((t) => t.message === 'Last.fm connection failed, please try again.' && t.tone === 'error'),
+      toasts.toasts.some((t) => t.message === 'Last.fm connection failed. Please try again.' && t.tone === 'error'),
     ).toBe(true);
     w.unmount();
   });

@@ -59,7 +59,7 @@ export const FR_MESSAGES = {
   },
   shell: {
     skipToContent: 'Aller au contenu',
-    primaryNav: 'Principale',
+    primaryNav: 'Navigation principale',
     openMenu: 'Ouvrir le menu de navigation',
     menu: 'Menu',
     openCommandPalette: 'Ouvrir la palette de commandes ({chord})',

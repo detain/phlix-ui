@@ -160,7 +160,7 @@ async function handleOAuthResult(
       service === 'lastfm' ? 'Add a Last.fm API key first.' : 'Add Trakt client ID and secret first.',
     );
   } else {
-    toasts.error(`${label} connection failed, please try again.`);
+    toasts.error(`${label} connection failed. Please try again.`);
   }
   clearQueryParam(service);
   await refresh();

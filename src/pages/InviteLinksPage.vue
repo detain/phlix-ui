@@ -152,7 +152,7 @@ const serverOptions = computed(() =>
 );
 
 const libraryOptions = computed(() => [
-  { value: '', label: 'All Libraries' },
+  { value: '', label: 'All libraries' },
   ...libraries.value.map((lib) => ({ value: lib.id, label: lib.name })),
 ]);
 
@@ -347,7 +347,7 @@ function getServerName(serverId: string): string {
 }
 
 function getLibraryName(libraryId: string | null): string {
-  if (libraryId === null) return 'All Libraries';
+  if (libraryId === null) return 'All libraries';
   return libraryNameMap.value.get(libraryId) ?? libraryId;
 }
 
@@ -543,7 +543,7 @@ onMounted(() => loadLinks(true));
                   v-model="formLibraryId"
                   :options="libraryOptions"
                   :disabled="!formServerId || librariesLoading"
-                  :placeholder="librariesLoading ? 'Loading...' : 'All Libraries'"
+                  :placeholder="librariesLoading ? 'Loading…' : 'All libraries'"
                 />
               </div>
 
