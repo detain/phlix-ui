@@ -11,8 +11,8 @@ import { type RouteLocationRaw } from 'vue-router';
  * Returns `prefetch(to)`, which warms the lazy `() => import()` chunk(s) for a
  * route **without navigating** — call it on `pointerenter`/`focus` of a link so
  * the destination's code is already in the module cache by the time the user
- * clicks (e.g. warming the ~41 kB Player chunk from a poster hover). Pairs with
- * the R6.1a route-level code-splitting.
+ * clicks (e.g. warming the lazy Player-page chunk from a poster hover). Pairs
+ * with the R6.1a route-level code-splitting.
  *
  * Best-effort and idempotent:
  * - each lazy loader is invoked at most once (deduped by function identity; the

@@ -6,7 +6,8 @@
  * picks the right path and returns a handle whose `destroy()` tears the player
  * down (critical: an undestroyed hls.js instance keeps fetching segments).
  *
- * hls.js is imported dynamically so its ~100 kB only loads when a transcode is
+ * hls.js is imported dynamically so its ~700 KiB chunk (~190 KiB gzipped; the
+ * full hls.js build, measured from dist) only loads when a transcode is
  * actually played — direct-play sessions never pull it into the bundle.
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT

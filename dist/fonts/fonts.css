@@ -8,7 +8,8 @@
    scripts/copy-fonts.mjs. Consumers import '@phlix/ui/fonts.css' (wired in R6.6);
    dev pages (swatches/Gallery) link this file directly.
 
-   All three are OFL, latin-subset, variable woff2 (~133 kB total). The
+   All three are OFL, latin-subset, variable woff2 (~130 KiB total = 133,440
+   bytes, measured). The
    metric-matched fallback faces (size-adjust + ascent/descent overrides computed
    from each font's real OS/2 metrics) make the system → web-font swap CLS≈0.
    ============================================================================ */

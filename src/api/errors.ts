@@ -43,6 +43,14 @@ export class TimeoutError extends Error {
  * `NetworkError`/`TimeoutError`/`ApiError` already carry friendly text, so this
  * is the same "prefer the Error's message, else the caller fallback" logic the
  * pages used locally — now shared, and aware of the new typed errors.
+ *
+ * Disclosure (review ui__webux, Info): "friendly" is a contract expectation,
+ * not a guarantee here — `ApiError.message` carries the server-provided text
+ * verbatim (see the class docblock), so debug-flavored wording from a
+ * misbehaving endpoint can reach a role=alert surface through this chokepoint.
+ * The estate posture is that server envelopes ship user-safe copy; callers
+ * holding an error `code` classify on it FIRST (the useAuthStore
+ * `errorCodeMessage` pattern) and treat this function as the display fallback.
  */
 export function errMessage(e: unknown, fallback = 'Something went wrong.'): string {
   if (e instanceof Error && e.message) {

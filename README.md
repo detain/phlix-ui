@@ -23,7 +23,7 @@ Vue app.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
-- ⚡ **Code-split + lazy-routed** — the entry bundle is ~382 KiB raw (~94 KiB gzipped; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
+- ⚡ **Code-split + lazy-routed** — the entry bundle is ~382 KiB raw (~94 KiB gzipped at gzip's default level 6 — max level 9 measures ~92 KiB; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
   player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme, full keyboard support, honored
   reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
@@ -672,6 +672,11 @@ SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Tasks, Settings — are p
 no static JS in the entry. The `pages` default of `buildAdminRoutes()`/`adminMenu()` in
 `src/app/admin.ts` is the source of truth for that list and its sidebar order (the backing
 registry `defaultAdminPages` is module-private); `buildHubAdminRoutes` mounts the smaller hub set instead.
+Note the two hub lists are **not** the same set: the exported `hubAdminPages` registry is the 4
+hub-specific pages (Hub Dashboard, Server Traffic, Audit Logs, Requests), while what
+`buildHubAdminRoutes` mounts is the module-private `hubAdminSet` = those 4 + the 3
+`commonAdminPages` (Users, Logs, Settings) = 7. A consumer building a hub sidebar from
+`hubAdminPages` alone would miss three live routes — mount, or mirror `hubAdminSet`'s shape.
 
 ```ts
 import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';
@@ -753,7 +758,7 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
 
 | Output | Notes |
 | --- | --- |
-| `dist/phlix-ui.js` | ESM entry (~382 KiB raw / ~94 KiB gzipped; routes/player/palette split into lazy chunks). |
+| `dist/phlix-ui.js` | ESM entry (~382 KiB raw / ~94 KiB gzipped at gzip default level 6; routes/player/palette split into lazy chunks). |
 | `dist/phlix-ui.umd.cjs` | UMD/CJS build for `require()`. |
 | `dist/style.css` | Tokens + component styles. |
 | `dist/fonts/` | `fonts.css` + three variable `.woff2` files. |
