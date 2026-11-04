@@ -473,6 +473,7 @@ export const DE_MESSAGES = {
   },
   search: {
     showingOf: '{shown} von {total} Ergebnissen werden angezeigt',
+    inputLabel: 'Filme, Serien, Musik, Bücher durchsuchen',
   },
   settings: {
     theme: 'Theme',

@@ -465,6 +465,7 @@ export declare const IT_MESSAGES: {
     };
     search: {
         showingOf: string;
+        inputLabel: string;
     };
     settings: {
         theme: string;

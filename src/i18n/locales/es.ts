@@ -475,6 +475,7 @@ export const ES_MESSAGES = {
   },
   search: {
     showingOf: 'Mostrando {shown} de {total} resultados',
+    inputLabel: 'Buscar películas, series, música, libros',
   },
   settings: {
     theme: 'Tema',

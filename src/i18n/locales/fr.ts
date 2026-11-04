@@ -477,6 +477,7 @@ export const FR_MESSAGES = {
   },
   search: {
     showingOf: 'Affichage de {shown} résultats sur {total}',
+    inputLabel: 'Rechercher des films, des séries, de la musique, des livres',
   },
   settings: {
     theme: 'Thème',

@@ -205,6 +205,7 @@ function onMatchApplied(updated: MediaItem): void {
                     v-model="query"
                     type="search"
                     name="q"
+                    :aria-label="t('search.inputLabel')"
                     placeholder="Search movies, shows, music, books..."
                     class="search-input"
                     autocomplete="off"

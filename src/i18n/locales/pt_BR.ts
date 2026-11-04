@@ -473,6 +473,7 @@ export const PT_BR_MESSAGES = {
   },
   search: {
     showingOf: 'Exibindo {shown} de {total} resultados',
+    inputLabel: 'Pesquisar filmes, séries, música, livros',
   },
   settings: {
     theme: 'Tema',

@@ -526,6 +526,13 @@ export declare const DEFAULT_MESSAGES: {
          * the call site (house idiom, cf. music.showingRange).
          */
         showingOf: string;
+        /**
+         * The accessible NAME of the primary search input (ui__webux m27). The
+         * placeholder is a hint, not a name — assistive tech needs aria-label.
+         * Mirrored in all seven catalogs; phrasing follows each locale's own
+         * search idiom (de/it/pt_BR "durchsuchen/Cerca/Pesquisar", ja 検索).
+         */
+        inputLabel: string;
     };
     settings: {
         theme: string;

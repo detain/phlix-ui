@@ -474,6 +474,7 @@ export const JA_MESSAGES = {
   },
   search: {
     showingOf: '{total}件中 {shown}件を表示',
+    inputLabel: '映画・番組・音楽・本を検索',
   },
   settings: {
     theme: 'テーマ',

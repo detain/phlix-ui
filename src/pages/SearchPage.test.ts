@@ -18,6 +18,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
 import { isRoute } from '../test/route-match';
 import { ERROR_MESSAGES, ERROR_TITLES } from '../i18n/errors';
+import { DEFAULT_MESSAGES } from '../i18n/messages';
 
 /**
  * The exact search route `SearchPage.vue:70` requests.
@@ -407,6 +408,24 @@ describe('SearchPage — error classification (ui__webux M6)', () => {
     const w = await mountAt({ query: { q: 'dune' } });
     await flushPromises();
     expect(w.findAllComponents(EmptyState)).toHaveLength(1);
+    w.unmount();
+  });
+});
+
+// ui__webux m27 — the primary search field was named only by its placeholder.
+// A placeholder is a hint, not an accessible name: assistive tech announced
+// the input as unlabelled. The name now flows from the message catalog (all
+// seven locales carry the key), so the pin checks the WIRING; the English
+// wording is the catalog's own value, not a second copy of it.
+describe('SearchPage — input accessible name (ui__webux m27)', () => {
+  it('gives the search input an accessible name from the catalog', async () => {
+    stubFetch();
+    const w = await mountAt();
+    await flushPromises();
+    const input = w.find('input[type="search"]');
+    expect(input.exists()).toBe(true);
+    expect(input.attributes('aria-label'), 'accessible name exists').toBeTruthy();
+    expect(input.attributes('aria-label')).toBe(DEFAULT_MESSAGES.search.inputLabel);
     w.unmount();
   });
 });

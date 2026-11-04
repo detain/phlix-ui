@@ -465,6 +465,7 @@ export declare const PT_BR_MESSAGES: {
     };
     search: {
         showingOf: string;
+        inputLabel: string;
     };
     settings: {
         theme: string;

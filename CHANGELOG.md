@@ -12,6 +12,21 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — search accessible-name lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U2)
+
+### Fixed
+
+- **U2 — the primary search field is now named, not just hinted (ui__webux
+  m27).** SearchPage's `input[type=search]` carried a placeholder only; a
+  placeholder is a hint and assistive tech announced the field as unlabelled.
+  The name comes from the message catalog — new `search.inputLabel` key in
+  all seven locales (en/es/fr/de/it/ja/pt_BR, each in its own search idiom) —
+  bound as `:aria-label` on the input. Pin asserts the WIRING (aria-label
+  equals the catalog value), not a duplicated English string. The catalog-
+  size prose tripwire rotated 516→517-key measured (errors.ts /
+  errors.test.ts / README.md). src moved: dist rebuilt in this commit,
+  deterministic ×2 (aggregate md5 50c5e956).
+
 ## Unreleased — volume seed refusal pins lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U1)
 
 ### Tests

@@ -3442,7 +3442,10 @@ var sn = {
 		searchTracksAria: "Search tracks",
 		musicTracksAria: "Music tracks"
 	},
-	search: { showingOf: "Showing {shown} of {total} results" },
+	search: {
+		showingOf: "Showing {shown} of {total} results",
+		inputLabel: "Search movies, shows, music, books"
+	},
 	settings: {
 		theme: "Theme",
 		accent: "Accent",
