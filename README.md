@@ -23,7 +23,7 @@ Vue app.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
-- ⚡ **Code-split + lazy-routed** — the entry bundle is ~382 kB raw (~94 kB gzipped); routes, the
+- ⚡ **Code-split + lazy-routed** — the entry bundle is ~382 KiB raw (~94 KiB gzipped; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
   player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme, full keyboard support, honored
   reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
@@ -598,7 +598,7 @@ deliberately keeps them out so the main bundle stays lean, and the entry's CSS p
 
 > **⚠ Dual-entry state duplication.** The player build lists `@phlix/ui` as external, but that
 > specifier never matches its own imports, so every shared module (`ApiClient`, `usePlayerStore`, …)
-> is **inlined a second time** into `dist/player.js` (≈413 kB vs the ≈382 kB main entry —
+> is **inlined a second time** into `dist/player.js` (≈413 KiB vs the ≈382 KiB main entry —
 > measured from the committed `dist/` at the release era; the mechanism is documented by the
 > DUAL-ENTRY caveat heading `vite.player.config.ts`). Composing pages from root building blocks while mounting
 > `Player` from `@phlix/ui/player` therefore yields **two singleton store/ApiClient instances with
@@ -753,7 +753,7 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
 
 | Output | Notes |
 | --- | --- |
-| `dist/phlix-ui.js` | ESM entry (~382 kB raw / ~94 kB gzipped; routes/player/palette split into lazy chunks). |
+| `dist/phlix-ui.js` | ESM entry (~382 KiB raw / ~94 KiB gzipped; routes/player/palette split into lazy chunks). |
 | `dist/phlix-ui.umd.cjs` | UMD/CJS build for `require()`. |
 | `dist/style.css` | Tokens + component styles. |
 | `dist/fonts/` | `fonts.css` + three variable `.woff2` files. |
