@@ -2618,9 +2618,6 @@ var Is = {
 			return t > 0 && i.push(`${t}d`), n > 0 && i.push(`${n}h`), (r > 0 || i.length === 0) && i.push(`${r}m`), i.join(" ");
 		}
 		function m(e) {
-			return new Date(e).toLocaleString();
-		}
-		function h(e) {
 			switch (e.toLowerCase()) {
 				case "online":
 				case "connected": return "success";
@@ -2631,7 +2628,7 @@ var Is = {
 				default: return "neutral";
 			}
 		}
-		async function g(e = !1) {
+		async function h(e = !1) {
 			e && (s.value = !0), c.value = null;
 			try {
 				let e = await n.get(`/api/v1/me/servers/${t.id}`);
@@ -2642,8 +2639,8 @@ var Is = {
 				e && (s.value = !1);
 			}
 		}
-		let _ = I(() => l.value ? a.value : a.value.slice(0, 5));
-		return G(() => g(!0)), (e, t) => (K(), z("section", Xs, [
+		let g = I(() => l.value ? a.value : a.value.slice(0, 5));
+		return G(() => h(!0)), (e, t) => (K(), z("section", Xs, [
 			B("div", Zs, [H(j, {
 				variant: "ghost",
 				size: "sm",
@@ -2693,7 +2690,7 @@ var Is = {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "rewind",
-					onClick: t[1] ||= (e) => g(!0)
+					onClick: t[1] ||= (e) => h(!0)
 				}, {
 					default: Q(() => [...t[5] ||= [V("Retry", -1)]]),
 					_: 1
@@ -2705,7 +2702,7 @@ var Is = {
 						default: Q(() => [V(Y(r.value.version), 1)]),
 						_: 1
 					}),
-					H(N, { tone: h(r.value.status) }, {
+					H(N, { tone: m(r.value.status) }, {
 						default: Q(() => [V(Y(r.value.status), 1)]),
 						_: 1
 					}, 8, ["tone"]),
@@ -2727,10 +2724,10 @@ var Is = {
 					_: 1
 				})]), B("dl", Sc, [
 					B("div", Cc, [t[13] ||= B("dt", { class: "server-detail__info-label" }, "Worker node", -1), B("dd", wc, Y(i.value.worker_node), 1)]),
-					B("div", Tc, [t[14] ||= B("dt", { class: "server-detail__info-label" }, "Session opened", -1), B("dd", Ec, Y(m(i.value.opened_at)), 1)]),
+					B("div", Tc, [t[14] ||= B("dt", { class: "server-detail__info-label" }, "Session opened", -1), B("dd", Ec, Y(i.value.opened_at === null ? "—" : d(i.value.opened_at)), 1)]),
 					B("div", Dc, [t[15] ||= B("dt", { class: "server-detail__info-label" }, "Data in", -1), B("dd", Oc, Y(f(i.value.bytes_in)), 1)]),
 					B("div", kc, [t[16] ||= B("dt", { class: "server-detail__info-label" }, "Data out", -1), B("dd", Ac, Y(f(i.value.bytes_out)), 1)]),
-					B("div", jc, [t[17] ||= B("dt", { class: "server-detail__info-label" }, "Last frame", -1), B("dd", Mc, Y(d(i.value.last_frame_at)), 1)])
+					B("div", jc, [t[17] ||= B("dt", { class: "server-detail__info-label" }, "Last frame", -1), B("dd", Mc, Y(i.value.last_frame_at === null ? "—" : d(i.value.last_frame_at)), 1)])
 				])])) : (K(), z("article", Nc, [...t[18] ||= [B("header", { class: "server-detail__card-header" }, [B("h2", {
 					id: "relay-session-heading",
 					class: "server-detail__card-title"
@@ -2748,7 +2745,7 @@ var Is = {
 					default: Q(() => [...t[19] ||= [V("Needs renewal", -1)]]),
 					_: 1
 				})) : R("", !0)])]), B("dl", Lc, [
-					B("div", Rc, [t[21] ||= B("dt", { class: "server-detail__info-label" }, "Domain", -1), B("dd", zc, Y(o.value.fqdn), 1)]),
+					B("div", Rc, [t[21] ||= B("dt", { class: "server-detail__info-label" }, "Domain", -1), B("dd", zc, Y(r.value.fqdn), 1)]),
 					B("div", Bc, [t[22] ||= B("dt", { class: "server-detail__info-label" }, "Expiry", -1), B("dd", Vc, [B("span", { class: W({ "server-detail__expired": o.value.expiry_days_remaining <= 0 }) }, Y(o.value.expiry_days_remaining > 0 ? `${X(Bn)(o.value.expiry_days_remaining, "day", "days")} remaining` : "Expired!"), 3)])]),
 					B("div", Hc, [t[23] ||= B("dt", { class: "server-detail__info-label" }, "Certificate", -1), B("dd", Uc, Y(o.value.cert_path), 1)]),
 					B("div", Wc, [t[24] ||= B("dt", { class: "server-detail__info-label" }, "Key", -1), B("dd", Gc, Y(o.value.key_path), 1)])
@@ -2770,7 +2767,7 @@ var Is = {
 					B("th", { scope: "col" }, "Uptime"),
 					B("th", { scope: "col" }, "Sessions"),
 					B("th", { scope: "col" }, "Transcodes")
-				])], -1), B("tbody", null, [(K(!0), z(F, null, J(_.value, (e) => (K(), z("tr", { key: e.id }, [
+				])], -1), B("tbody", null, [(K(!0), z(F, null, J(g.value, (e) => (K(), z("tr", { key: e.id }, [
 					B("td", Qc, Y(u(e.received_at)), 1),
 					B("td", null, [H(N, { tone: "neutral" }, {
 						default: Q(() => [V(Y(e.version), 1)]),
@@ -2783,7 +2780,7 @@ var Is = {
 			])) : R("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-16b05428"]]), rl = {
+}), [["__scopeId", "data-v-f4d0428e"]]), rl = {
 	class: "federation",
 	"aria-labelledby": "federation-heading"
 }, il = {

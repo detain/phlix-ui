@@ -45,10 +45,15 @@ interface ServerInfo {
 interface RelaySession {
   id: string;
   worker_node: string;
-  opened_at: string;
+  /**
+   * HUB WIRE TRUTH (UI-M22 / M-HUB-19): ServerDetailController::unixSeconds()
+   * ships this as UNIX SECONDS — int|null, never a zone-implied DATETIME
+   * string. The page reads it in that form.
+   */
+  opened_at: number | null;
   bytes_in: number;
   bytes_out: number;
-  last_frame_at: number;
+  last_frame_at: number | null;
 }
 
 interface HeartbeatEntry {
@@ -66,7 +71,6 @@ interface TlsStatus {
   key_path: string;
   needs_renewal: boolean;
   expiry_days_remaining: number;
-  fqdn: string;
 }
 
 interface ServerDetailResponse {
@@ -137,11 +141,6 @@ function formatUptime(seconds: number): string {
   if (hours > 0) parts.push(`${hours}h`);
   if (mins > 0 || parts.length === 0) parts.push(`${mins}m`);
   return parts.join(' ');
-}
-
-/** ISO string → human-readable datetime. */
-function formatIsoDate(isoStr: string): string {
-  return new Date(isoStr).toLocaleString();
 }
 
 /** Status tone mapping. */
@@ -301,7 +300,7 @@ onMounted(() => loadServer(true));
           </div>
           <div class="server-detail__info-row">
             <dt class="server-detail__info-label">Session opened</dt>
-            <dd class="server-detail__info-value">{{ formatIsoDate(relaySession.opened_at) }}</dd>
+            <dd class="server-detail__info-value">{{ relaySession.opened_at === null ? '—' : formatRelativeTime(relaySession.opened_at) }}</dd>
           </div>
           <div class="server-detail__info-row">
             <dt class="server-detail__info-label">Data in</dt>
@@ -313,7 +312,7 @@ onMounted(() => loadServer(true));
           </div>
           <div class="server-detail__info-row">
             <dt class="server-detail__info-label">Last frame</dt>
-            <dd class="server-detail__info-value">{{ formatRelativeTime(relaySession.last_frame_at) }}</dd>
+            <dd class="server-detail__info-value">{{ relaySession.last_frame_at === null ? '—' : formatRelativeTime(relaySession.last_frame_at) }}</dd>
           </div>
         </dl>
       </article>
@@ -347,7 +346,9 @@ onMounted(() => loadServer(true));
         <dl class="server-detail__info-list">
           <div class="server-detail__info-row">
             <dt class="server-detail__info-label">Domain</dt>
-            <dd class="server-detail__info-value server-detail__mono">{{ tlsStatus.fqdn }}</dd>
+            <!-- server.fqdn is the wire's domain field (the card is gated on
+                 it); tls_status carries no fqdn key (FIX-XHUB2 m4). -->
+            <dd class="server-detail__info-value server-detail__mono">{{ server.fqdn }}</dd>
           </div>
           <div class="server-detail__info-row">
             <dt class="server-detail__info-label">Expiry</dt>

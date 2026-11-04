@@ -31,7 +31,9 @@ function makeDetail(over: Record<string, unknown> = {}) {
     relay_session: {
       id: 'rs1',
       worker_node: 'edge-1',
-      opened_at: '2026-05-01T00:00:00Z',
+      // FIX-XHUB2 M4 honesty: the hub wire ships opened_at as UNIX SECONDS
+      // (ServerDetailController::unixSeconds → int|null), never an ISO string.
+      opened_at: NOW - 3600,
       bytes_in: 2 * 1024 * 1024,
       bytes_out: 512 * 1024,
       last_frame_at: NOW - 5,
@@ -50,7 +52,8 @@ function makeDetail(over: Record<string, unknown> = {}) {
       key_path: '/etc/tls/key.pem',
       needs_renewal: false,
       expiry_days_remaining: 60,
-      fqdn: 'home.phlix.tv',
+      // FIX-XHUB2 m4 honesty: the hub's tls_status payload carries exactly
+      // these five keys — there is NO fqdn on it (fabricated before).
     },
     ...over,
   };
@@ -245,6 +248,69 @@ describe('ServerDetailPage — navigation', () => {
     const push = vi.spyOn(router, 'push');
     await findBtnByText(w, 'Back to My servers')!.trigger('click');
     expect(push).toHaveBeenCalledWith('/app/servers');
+    w.unmount();
+  });
+});
+
+/**
+ * UI-M22 / FIX-XHUB2 P2+P6 — hub wire truth.
+ *
+ * ServerDetailController::unixSeconds() ships relay_session.opened_at and
+ * last_frame_at as UNIX SECONDS (int|null — never a zone-implied DATETIME
+ * string), and its tls_status payload has no fqdn key at all (the domain is
+ * `server.fqdn`). Before the cure the page typed opened_at as a string and
+ * piped it through `new Date(isoStr)` — with an honest int fixture that
+ * interprets seconds as milliseconds and prints a January-1970 date — and
+ * rendered a tlsStatus.fqdn the hub never sends.
+ */
+describe('ServerDetailPage — hub wire truth (UI-M22)', () => {
+  const rowText = (w: VueWrapper, label: string) =>
+    w.findAll('.server-detail__info-row')
+      .map((n) => n.text())
+      .find((t) => t.startsWith(label));
+
+  it('renders a UNIX-SECONDS opened_at as relative time — never a 1970 date', async () => {
+    const detail = makeDetail({
+      relay_session: {
+        id: 'rs1',
+        worker_node: 'edge-1',
+        opened_at: NOW - 7200, // hub form: unix seconds
+        bytes_in: 0,
+        bytes_out: 0,
+        last_frame_at: NOW - 5,
+      },
+    });
+    const { client } = makeClient(detail);
+    const { w } = await mountPage(client);
+    await flushPromises();
+    expect(rowText(w, 'Session opened')).toContain('2h ago');
+    expect(rowText(w, 'Session opened')).not.toContain('1970');
+    w.unmount();
+  });
+
+  it('renders an em-dash when opened_at is null (unixSeconds ships null)', async () => {
+    const detail = makeDetail({
+      relay_session: {
+        id: 'rs1',
+        worker_node: 'edge-1',
+        opened_at: null,
+        bytes_in: 0,
+        bytes_out: 0,
+        last_frame_at: NOW - 5,
+      },
+    });
+    const { client } = makeClient(detail);
+    const { w } = await mountPage(client);
+    await flushPromises();
+    expect(rowText(w, 'Session opened')).toContain('—');
+    w.unmount();
+  });
+
+  it('renders the Domain row from server.fqdn — tls_status carries no fqdn', async () => {
+    const { client } = makeClient(); // honest fixture: five-key tls_status only
+    const { w } = await mountPage(client);
+    await flushPromises();
+    expect(rowText(w, 'Domain')).toContain('home.phlix.tv');
     w.unmount();
   });
 });

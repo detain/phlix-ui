@@ -12,6 +12,26 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ServerDetail hub-wire-truth lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U3)
+
+### Fixed
+
+- **U3 — ServerDetailPage reads the hub wire as the hub actually sends it
+  (UI-M22 / FIX-XHUB2 P2+P6).** `relay_session.opened_at` was typed `string`
+  and piped through `new Date(isoStr)`; `ServerDetailController::unixSeconds`
+  ships UNIX SECONDS (int|null) — an honest int fixture printed a January-
+  1970 date (the client-code-old law: the wire contract is authority, the
+  fixture had been fabricating the ISO). opened_at/last_frame_at now type
+  `number | null`, render through `formatRelativeTime` with an em-dash null
+  fallback, and `formatIsoDate` is deleted unused. `TlsStatus.fqdn` never
+  existed on the wire (tls_status carries exactly five keys) — dropped from
+  the interface; the Domain row renders `server.fqdn`, the card's own gate.
+  Fixtures restored to wire honesty (int opened_at, five-key tls_status).
+  Three pins red-at-parent (1970-absence, null em-dash, Domain-from-server).
+  src moved: dist rebuilt in this commit, deterministic ×2 (aggregate md5
+  7305c31e). Report-only: heartbeat `received_at` nullability (controller
+  docblock says int|null; page types number) — untouched, out of this unit.
+
 ## Unreleased — search accessible-name lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U2)
 
 ### Fixed
