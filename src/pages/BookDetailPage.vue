@@ -120,7 +120,7 @@ function goBack(): void {
             <Icon name="alert-circle" class="book-detail-page__error-icon" />
             <p>{{ error }}</p>
             <Button variant="outline" @click="loadBook">
-                {{ t('common.retry') ?? 'Retry' }}
+                {{ t('common.retry') }}
             </Button>
         </div>
 

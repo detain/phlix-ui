@@ -91,7 +91,7 @@ async function loadAlbum(): Promise<void> {
         album.value = await getClient().getAlbum(props.name, artistKey.value);
         tracks.value = album.value?.tracks ?? [];
     } catch {
-        error.value = t('music.albumNotFound') ?? 'Album not found';
+        error.value = t('music.albumNotFound');
         album.value = null;
         tracks.value = [];
     } finally {

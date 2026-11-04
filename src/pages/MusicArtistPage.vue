@@ -97,7 +97,7 @@ async function loadArtist(): Promise<void> {
         artist.value = artistData;
     } catch {
         // A FIRST load has nothing to preserve, so this is the whole-page error.
-        error.value = t('music.artistNotFound') ?? 'Artist not found';
+        error.value = t('music.artistNotFound');
         artist.value = null;
         albums.value = [];
         albumTotal.value = 0;

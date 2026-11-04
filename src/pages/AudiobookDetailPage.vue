@@ -136,7 +136,7 @@ function getChapterDuration(chapter: AudiobookChapter): string {
             <Icon name="alert-circle" class="audiobook-detail-page__error-icon" />
             <p>{{ error }}</p>
             <Button variant="outline" @click="loadAudiobook">
-                {{ t('common.retry') ?? 'Retry' }}
+                {{ t('common.retry') }}
             </Button>
         </div>
 

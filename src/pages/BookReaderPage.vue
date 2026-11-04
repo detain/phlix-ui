@@ -251,7 +251,7 @@ const currentChapter = computed(() => {
             <Icon name="alert-circle" class="reader-error__icon" />
             <p>{{ error }}</p>
             <Button variant="outline" @click="loadBook">
-                {{ t('common.retry') ?? 'Retry' }}
+                {{ t('common.retry') }}
             </Button>
         </div>
 

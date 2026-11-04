@@ -74,7 +74,7 @@ async function loadArtists(nextOffset: number): Promise<void> {
     } catch {
         error.value = artists.value.length > 0
             ? t('music.pageLoadFailed')
-            : (t('music.artistsNotFound') ?? 'Could not load artists');
+            : t('music.artistsNotFound');
     } finally {
         loading.value = false;
     }
@@ -116,7 +116,7 @@ function goToArtist(artist: MusicArtist): void {
         <header class="artists-page__header">
             <h1 class="artists-page__title">{{ t('music.artists') }}</h1>
             <p class="artists-page__description">
-                {{ t('music.artistsDescription') ?? 'Browse your music collection by artist' }}
+                {{ t('music.artistsDescription') }}
             </p>
             <p v-if="total > 0" class="artists-page__count" data-count="artists" role="status">
                 {{ totalLabel }}
