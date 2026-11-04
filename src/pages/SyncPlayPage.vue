@@ -21,6 +21,7 @@ import { useMediaApiBase } from '../composables/useApiBase';
 import type { SyncPlayRoom } from '../types/syncplay';
 import SyncPlayModal from '../components/syncplay/SyncPlayModal.vue';
 import Button from '../components/ui/Button.vue';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import Icon from '../components/Icon.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Card from '../components/ui/Card.vue';
@@ -35,6 +36,20 @@ const router = useRouter();
 
 const showModal = ref(false);
 const prefilledRoomId = ref<string | undefined>(undefined);
+/** ui__webux m25 — the leave gate: one click arms the dialog, not the leave. */
+const leaveConfirmOpen = ref(false);
+
+/**
+ * The dialog's scenario copy (ConfirmDialog law: the caller owns it). With a
+ * room it names the room and states the stake; the session-without-room edge
+ * (the button renders off the SESSION) gets the bare action caption rather
+ * than an empty-quoted ghost — an honest degenerate, never fabricated scope.
+ */
+const leaveConfirmMessage = computed(() =>
+  syncPlay.currentRoom
+    ? t('syncplay.leaveConfirm', { name: syncPlay.currentRoom.name })
+    : t('syncplay.leaveRoom'),
+);
 
 const effectiveApiBase = computed(() => mediaApiBase.value);
 
@@ -177,7 +192,7 @@ function onJoined(room: SyncPlayRoom): void {
               <Icon :name="statusIcon" size="sm" />
               {{ statusLabel }}
             </span>
-            <Button variant="ghost" size="sm" @click="handleLeaveRoom">
+            <Button variant="ghost" size="sm" @click="leaveConfirmOpen = true">
               {{ t('syncplay.leaveRoom') }}
             </Button>
           </div>
@@ -220,6 +235,16 @@ function onJoined(room: SyncPlayRoom): void {
 
     <!-- SyncPlay modal (prefilledRoomId from ?room= query param triggers join mode) -->
     <SyncPlayModal v-model="showModal" :prefilled-room-id="prefilledRoomId" @joined="onJoined" />
+
+    <!-- ui__webux m25: leaving a shared room is consequential — confirm it,
+         with the same danger treatment every other destructive gate uses. -->
+    <ConfirmDialog
+      v-model:open="leaveConfirmOpen"
+      :message="leaveConfirmMessage"
+      :confirm-label="t('syncplay.leaveRoom')"
+      danger
+      @confirm="handleLeaveRoom"
+    />
   </div>
 </template>
 

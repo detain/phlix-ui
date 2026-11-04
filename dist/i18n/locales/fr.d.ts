@@ -349,6 +349,7 @@ export declare const FR_MESSAGES: {
         createRoom: string;
         joinRoom: string;
         leaveRoom: string;
+        leaveConfirm: string;
         joinedRoom: string;
         members: string;
         synced: string;

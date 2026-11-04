@@ -12,6 +12,29 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U3)
+
+### Changed
+
+- **U3 — leaving a SyncPlay room now confirms first (UI-m25, review
+  ui__webux: "Leave room is one click, no confirmation").** One click used to
+  tear the session down instantly while every other consequential action in
+  the app gates behind the shared `<ConfirmDialog>`. The button now arms a
+  danger-styled confirmation: "Leave “{room}”? Others lose sync if you
+  host." — a new `syncplay.leaveConfirm` catalog key carried by ALL SEVEN
+  locales (522→523; the prose trio errors.ts / errors.test.ts / README.md
+  rotated FROM the tripwire's measured red, per house law). The session-
+  without-room edge gets the bare action caption — an honest degenerate,
+  never an empty-quoted ghost.
+  **Behavior disclosure (rotated pins):** three existing leave laws were
+  RE-WIRED behind the gate, not weakened — media-API-base handoff + full
+  teardown, the no-room guard (still asserted on the CONFIRMED leg so the
+  page's guard stays the subject), and exactly-once dispatch all now run
+  click→confirm; the one-click flow is deliberately no longer the law.
+  4 red-measured convictions at the parent (2 new + 2 rotated shapes,
+  4F/39P), including a cancel leg proving the dialog's `v-if` genuinely
+  removes the teleported panel.
+
 ## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U2)
 
 ### Changed

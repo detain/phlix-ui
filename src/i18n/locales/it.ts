@@ -353,6 +353,7 @@ export const IT_MESSAGES = {
     createRoom: 'Crea sala',
     joinRoom: 'Unisciti alla sala',
     leaveRoom: 'Esci dalla sala',
+    leaveConfirm: 'Uscire da “{name}”? Gli altri perdono la sincronizzazione se sei l’host.',
     joinedRoom: 'Sei unito a {name}.',
     members: '{count} membro | {count} membri',
     synced: 'Sincronizzato',

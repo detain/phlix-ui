@@ -345,6 +345,7 @@ export declare const IT_MESSAGES: {
         createRoom: string;
         joinRoom: string;
         leaveRoom: string;
+        leaveConfirm: string;
         joinedRoom: string;
         members: string;
         synced: string;

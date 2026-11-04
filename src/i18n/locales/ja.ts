@@ -354,6 +354,7 @@ export const JA_MESSAGES = {
     createRoom: 'ルームを作成',
     joinRoom: 'ルームに参加',
     leaveRoom: 'ルームを退出',
+    leaveConfirm: '「{name}」を退出しますか？あなたがホストの場合、他の参加者の同期が止まります。',
     joinedRoom: '{name}に参加しました。',
     members: 'メンバー{count}人',
     synced: '同期済み',

@@ -357,6 +357,7 @@ export const FR_MESSAGES = {
     createRoom: 'Créer un salon',
     joinRoom: 'Rejoindre un salon',
     leaveRoom: 'Quitter le salon',
+    leaveConfirm: 'Quitter « {name} » ? Les autres perdent la synchro si vous êtes l’hôte.',
     joinedRoom: 'Vous avez rejoint {name}.',
     members: '{count} membre | {count} membres',
     synced: 'Synchronisé',

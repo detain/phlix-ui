@@ -353,6 +353,7 @@ export const DE_MESSAGES = {
     createRoom: 'Raum erstellen',
     joinRoom: 'Raum beitreten',
     leaveRoom: 'Raum verlassen',
+    leaveConfirm: '„{name}“ verlassen? Wenn du der Host bist, verlieren die anderen den Sync.',
     joinedRoom: '{name} beigetreten.',
     members: '{count} Mitglied | {count} Mitglieder',
     synced: 'Synchronisiert',

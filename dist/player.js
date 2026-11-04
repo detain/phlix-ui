@@ -3353,6 +3353,7 @@ var sn = {
 		createRoom: "Create room",
 		joinRoom: "Join room",
 		leaveRoom: "Leave room",
+		leaveConfirm: "Leave “{name}”? Others lose sync if you host.",
 		joinedRoom: "Joined {name}.",
 		members: "{count} member | {count} members",
 		synced: "Synced",

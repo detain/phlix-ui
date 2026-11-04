@@ -366,6 +366,12 @@ export declare const DEFAULT_MESSAGES: {
         createRoom: string;
         joinRoom: string;
         leaveRoom: string;
+        /**
+         * ui__webux m25 — leaving a group is consequential for everyone in it;
+         * the confirmation states the stake, per the review's own voice: others
+         * lose sync when the host walks.
+         */
+        leaveConfirm: string;
         /** Confirmation shown when the modal's `joined` event is consumed (S285). */
         joinedRoom: string;
         members: string;

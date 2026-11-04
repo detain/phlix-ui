@@ -584,7 +584,29 @@ describe('SyncPlayPage — sync status badge', () => {
 describe('SyncPlayPage — leaving a room', () => {
   const room = { id: 'room-1', name: 'Movie Night', isPublic: true, memberCount: 1 };
 
-  it('leaves through the store against the media API base and clears the room', async () => {
+  /**
+   * ui__webux m25 — leaving used to be ONE click with no gate, while every
+   * other consequential action in the app confirms first (ConfirmDialog is
+   * the shared yes/no primitive). The three pre-existing laws below (media
+   * API-base handoff, the no-room guard, exactly-once dispatch) survive
+   * ROTATED behind the new confirmation step — disclosed rotation: the
+   * one-click flow is deliberately no longer the law.
+   *
+   * `<Modal>` teleports its panel to <body> and renders it under `v-if`, so
+   * "panel gone" is a real DOM removal, and the LAST `.phlix-modal__panel` is
+   * the ConfirmDialog (SyncPlayModal is stubbed as a plain div).
+   */
+  function panel(): HTMLElement | undefined {
+    const panels = document.querySelectorAll<HTMLElement>('.phlix-modal__panel');
+    return panels[panels.length - 1];
+  }
+  function btnIn(root: Element, text: string): HTMLButtonElement | undefined {
+    return Array.from(root.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === text,
+    );
+  }
+
+  it('gates the leave behind a confirmation naming the room, then leaves through the store (ui__webux m25)', async () => {
     const { w, store } = await mountPage({ session: makeSession(), room, members: [makeUser()] });
     const { getSyncPlayApi } = await import('../api/syncplay');
     (getSyncPlayApi as unknown as ReturnType<typeof vi.fn>).mockClear();
@@ -592,22 +614,52 @@ describe('SyncPlayPage — leaving a room', () => {
     await findBtn(w, 'Leave room')!.trigger('click');
     await flushPromises();
 
+    // One click must NOT leave — the gate stands between.
+    expect(leaveRoomApi).not.toHaveBeenCalled();
+    const p = panel();
+    expect(p).toBeDefined();
+    // The review's demand: the copy names the room and states the stake.
+    expect(p!.textContent).toContain('Movie Night');
+    expect(p!.textContent).toContain('sync');
+
+    btnIn(p!, 'Leave room')!.click();
+    await flushPromises();
+
+    // The pre-existing law, now on the confirmed leg: store handoff with the
+    // MEDIA api base, full teardown, empty-state fallback.
     expect(leaveRoomApi).toHaveBeenCalledWith('room-1');
-    // The page must hand the MEDIA api base down, not '' — on the hub this is the
-    // relay-proxy base and leaving against '' would hit the wrong origin.
     expect(getSyncPlayApi).toHaveBeenCalledWith(API_BASE);
     expect(closeConnection).toHaveBeenCalled();
     expect(store.currentRoom).toBeNull();
     expect(store.currentSession).toBeNull();
     expect(store.members).toEqual([]);
-    // …and the view falls back to the empty state.
     expect(w.find('.syncplay-page__empty').exists()).toBe(true);
+    w.unmount();
+  });
+
+  it('canceling the confirmation leaves the room and the session untouched (ui__webux m25)', async () => {
+    const { w } = await mountPage({ session: makeSession(), room });
+    await findBtn(w, 'Leave room')!.trigger('click');
+    await flushPromises();
+    const p = panel();
+    expect(p).toBeDefined();
+
+    btnIn(p!, 'Cancel')!.click();
+    await flushPromises();
+
+    expect(leaveRoomApi).not.toHaveBeenCalled();
+    // v-if inside the Teleport: closing genuinely removes the panel.
+    expect(panel()).toBeUndefined();
+    // Still in the room — the section never fell back to the empty state.
+    expect(w.find('.syncplay-page__section').exists()).toBe(true);
+    w.unmount();
   });
 
   it('does not even dispatch the leave action when there is no current room', async () => {
     // `handleLeaveRoom` is guarded on `currentRoom`; with a session but no room the
     // button IS rendered (the `v-if` is `isInRoom`, which keys off the SESSION) and
-    // must still not issue a leave.
+    // must still not issue a leave — not on the first click, and not once the
+    // confirmation is accepted either.
     //
     // The store's own `leaveRoom` opens with the SAME `if (!currentRoom) return`,
     // so asserting only "the network was not touched" cannot tell the page's guard
@@ -619,6 +671,10 @@ describe('SyncPlayPage — leaving a room', () => {
 
     await findBtn(w, 'Leave room')!.trigger('click');
     await flushPromises();
+    const p = panel();
+    expect(p).toBeDefined();
+    btnIn(p!, 'Leave room')!.click();
+    await flushPromises();
 
     expect(leaveSpy).not.toHaveBeenCalled();
     expect(leaveRoomApi).not.toHaveBeenCalled();
@@ -626,10 +682,14 @@ describe('SyncPlayPage — leaving a room', () => {
 
   it('dispatches the leave action exactly once when a room IS present', async () => {
     // The non-inertness control for the test above: the same spy must FIRE on the
-    // happy path, otherwise "not called" would pass for the wrong reason.
+    // happy path (through the gate), otherwise "not called" would pass for the
+    // wrong reason — and it must fire EXACTLY once: the gate closes on confirm,
+    // so a double-dispatch through dialog churn is a double-leave on the wire.
     const { w, store } = await mountPage({ session: makeSession(), room });
     const leaveSpy = vi.spyOn(store, 'leaveRoom');
     await findBtn(w, 'Leave room')!.trigger('click');
+    await flushPromises();
+    btnIn(panel()!, 'Leave room')!.click();
     await flushPromises();
     expect(leaveSpy).toHaveBeenCalledTimes(1);
     expect(leaveSpy).toHaveBeenCalledWith(API_BASE);
