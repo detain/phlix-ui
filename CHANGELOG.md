@@ -12,6 +12,22 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — behavior-minors wave 2026-11-04 (FIX-QUEUE UI-M6 / UI-m27)
+
+### Fixed
+
+- **UI-M6 — SearchPage errors now classify through the contracts error
+  catalog** (ui__webux): the catch assigned the thrown `Error.message` verbatim
+  into the EmptyState description, so a hub-relay 503 rendered raw SQLSTATE /
+  HTTP debug text as the user's headline, English-only. New
+  `src/pages/searchErrors.ts` mirrors `browseErrors.ts`: the `{error, code}`
+  envelope is read off `ApiError.body`, registered codes localize title + body
+  via `errorCodeTitle`/`errorCodeMessage` at the app-configured locale, and
+  code-less failures keep the pre-existing generic "Search failed" card + own
+  message byte-for-byte. 10 pure-module tests + 4 page-wiring pins (the two
+  classification pins measured RED on the pre-cure SFC; the single-card law is
+  pinned as a regression guard, disclosed as such).
+
 ## Unreleased — docs-minors wave-1 lane 2026-11-04 (FIX-QUEUE UI-m15 / UI-m11 residual / UI-m39)
 
 ### Fixed (README truth pass; no src/** changes)

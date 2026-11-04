@@ -17,6 +17,7 @@ import EmptyState from '../components/ui/EmptyState.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import type { MediaItem } from '../types/media-item';
 import { isRoute } from '../test/route-match';
+import { ERROR_MESSAGES, ERROR_TITLES } from '../i18n/errors';
 
 /**
  * The exact search route `SearchPage.vue:70` requests.
@@ -85,16 +86,41 @@ function makeRouter(): Router {
   });
 }
 
-async function mountAt(opts: { query?: Record<string, string>; router?: Router } = {}): Promise<VueWrapper> {
+async function mountAt(opts: {
+  query?: Record<string, string>;
+  router?: Router;
+  config?: Record<string, unknown>;
+} = {}): Promise<VueWrapper> {
   const router = opts.router ?? makeRouter();
   await router.push({ path: '/app/search', query: opts.query ?? {} });
   await router.isReady();
   return mount(SearchPage, {
     global: {
       plugins: [router],
-      provide: { apiBase: '' },
+      provide: { apiBase: '', ...(opts.config ? { phlixConfig: opts.config } : {}) },
     },
   });
+}
+
+/** A non-2xx JSON response — the exact shape `ApiClient.handleResponse` throws an `ApiError` from. */
+function jsonError(status: number, body: unknown): Response {
+  return {
+    ok: false,
+    status,
+    headers: { get: () => 'application/json' } as unknown as Headers,
+    json: async () => body,
+    text: async () => JSON.stringify(body),
+  } as unknown as Response;
+}
+
+function stubFetchErrorBody(status: number, body: unknown) {
+  const fn = vi.fn((url: unknown) => {
+    const u = typeof url === 'string' ? url : '';
+    if (isRoute(u, SEARCH_PATH)) return Promise.resolve(jsonError(status, body));
+    return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
+  });
+  vi.stubGlobal('fetch', fn);
+  return fn;
 }
 
 beforeEach(() => {
@@ -326,6 +352,61 @@ describe('SearchPage — Edit metadata / Explore item data (S324)', () => {
     expect(w.findComponent(MetadataMatchModal).exists()).toBe(false);
     expect(w.findComponent(ItemDataInspector).exists()).toBe(false);
     expect(w.findComponent(MediaGrid).props('canMatch')).toBe(false);
+    w.unmount();
+  });
+});
+
+// ui__webux M6 — the error path must flow through the same classification
+// layer Browse uses (`searchErrors.ts` → contracts error catalog), not dump
+// raw wire text into the card. A 503 from the hub relay carries the wire code
+// in the `{error, code}` envelope; the card shows the localized title + body
+// and never the SQLSTATE-style debug text the proxy passes through.
+describe('SearchPage — error classification (ui__webux M6)', () => {
+  it('localizes a code-carrying ApiError through the error catalog', async () => {
+    stubFetchErrorBody(503, {
+      error: 'SQLSTATE[HY000] [2002] Connection refused',
+      code: 'server.offline',
+    });
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.exists()).toBe(true);
+    expect(empty.props('title')).toBe(ERROR_TITLES.en['server.offline']);
+    expect(empty.props('description')).toBe(ERROR_MESSAGES.en['server.offline']);
+    w.unmount();
+  });
+
+  it('honors the app-configured locale on the error card', async () => {
+    stubFetchErrorBody(503, {
+      error: 'SQLSTATE[HY000] [2002] Connection refused',
+      code: 'server.no_tunnel',
+    });
+    const w = await mountAt({ query: { q: 'dune' }, config: { locale: 'de' } });
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.props('title')).toBe(ERROR_TITLES.de['server.no_tunnel']);
+    expect(empty.props('description')).toBe(ERROR_MESSAGES.de['server.no_tunnel']);
+    w.unmount();
+  });
+
+  it('keeps the generic title + own message for code-less failures (no behavior change)', async () => {
+    stubFetch({ error: true });
+    const w = await mountAt({ query: { q: 'boom' } });
+    await flushPromises();
+    const empty = w.findComponent(EmptyState);
+    expect(empty.props('title')).toBe('Search failed');
+    expect(empty.props('description')).toBe('search boom');
+    w.unmount();
+  });
+
+  it('shows only ONE EmptyState card while an error is set (no-results card must not co-render)', async () => {
+    // Pre-existing law: the v-else-if chain + the error-null guard on
+    // showNoResults keep the cards mutually exclusive. Pinned (not cured) so
+    // the classification rework cannot silently regress it.
+    stubFetchErrorBody(500, { error: 'boom', code: 'something.else' });
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    expect(w.findAllComponents(EmptyState)).toHaveLength(1);
     w.unmount();
   });
 });

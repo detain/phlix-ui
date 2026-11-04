@@ -10,7 +10,7 @@
  * `?q=` URL param on mount), a virtualized results grid, loading skeleton on
  * initial search, and an empty state when no results are found.
  */
-import { onMounted, watch, ref, computed } from 'vue';
+import { onMounted, watch, ref, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
@@ -24,13 +24,17 @@ import { useItemInspector } from '../composables/useItemInspector';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { ApiClient } from '../api/client';
+import { errMessage } from '../api/errors';
 import { useMessages } from '../composables/useMessages';
 import { debounce } from '../utils/debounce';
+import { searchErrorCode, searchErrorInfo } from './searchErrors';
+import type { PhlixAppConfig } from '../app/types';
 import type { MediaItem } from '../types/media-item';
 
 const route = useRoute();
 const router = useRouter();
 const apiBase = useMediaApiBase();
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const userItemData = useUserItemDataStore();
 const toasts = useToastStore();
 const auth = useAuthStore();
@@ -47,7 +51,13 @@ const items = ref<MediaItem[]>([]);
  */
 const serverTotal = ref<number | null>(null);
 const loading = ref(false);
-const error = ref<string | null>(null);
+/**
+ * ui__webux M6 — the error card is classified through `searchErrors.ts`
+ * (contracts error catalog, app locale), not the raw thrown text: a hub-relay
+ * 503 carrying `server.offline` renders the localized card in every shipped
+ * locale; a code-less failure keeps the pre-existing generic card + own message.
+ */
+const error = ref<{ title: string; description: string } | null>(null);
 const hasSearched = ref(false);
 
 // Debounce so we don't hammer the API on every keystroke. S524: the shared
@@ -97,7 +107,9 @@ async function doSearch(): Promise<void> {
         // Hydrate user item data so cards show favorite/watched state
         items.value.forEach((item) => userItemData.hydrate(item));
     } catch (e) {
-        error.value = e instanceof Error ? e.message : 'Search failed';
+        // ui__webux M6: classify through the contracts error catalog (see
+        // searchErrors.ts) — raw wire/SQL text is never the user's headline.
+        error.value = searchErrorInfo(searchErrorCode(e), errMessage(e), config?.locale);
         items.value = [];
         serverTotal.value = null;
     } finally {
@@ -210,12 +222,12 @@ function onMatchApplied(updated: MediaItem): void {
             <Spinner label="Searching…" />
         </div>
 
-        <!-- Error state -->
+        <!-- Error state (ui__webux M6: title + description classified via searchErrors.ts) -->
         <EmptyState
             v-else-if="showError"
             icon="alert"
-            title="Search failed"
-            :description="error ?? undefined"
+            :title="error?.title ?? 'Search failed'"
+            :description="error?.description"
         >
             <template #actions>
                 <Button variant="solid" size="sm" @click="doSearch">Retry</Button>
