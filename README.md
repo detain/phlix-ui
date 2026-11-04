@@ -114,6 +114,16 @@ season drill-down (`/app/media/:id/season/:season`), player (`/app/player/:id`),
 for the server, plus a 404 catch-all. The built-in route pages, the
 player surface, and the command palette are lazy chunks — they load only when first reached.
 
+**A note on transport.** The snippet above points `apiBase` at a *different* origin than the one
+serving the SPA, so the browser will only let `/api/v1` calls through when the API host's CORS
+policy allows the page's exact origin — Phlix hosts never emit `Access-Control-Allow-Origin: *`
+(the server's `CorsManager` reflects an allow-listed origin with credentials; the hub's
+`CorsPolicy` grants nothing cross-origin until configured). Auth rides the `Authorization: Bearer`
+token login mints into `localStorage` (custody is swappable via the `tokenStore` config seam).
+Serving the SPA on the *same* origin as its API — `apiBase: ''`, as the composite example below
+does — is the zero-config path: exactly how server and hub host this bundle under `/app`
+themselves; no preflight, nothing to allow-list.
+
 **Browse is organized per library.** The Browse home renders a "Continue Watching" rail, any configured
 `homeRows`, then **one rail per library** ("Movies", "TV", "Anime", …) read from `GET /api/v1/libraries`.
 Each rail's "See all" opens that library's dedicated `/app/library/:id` page (the full filterable grid).
