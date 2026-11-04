@@ -7,9 +7,10 @@
 [![Vue 3](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 
 The shared **Vue 3 design system + application shell** for [Phlix](https://github.com/detain).
-Both Phlix products — **phlix-server** (the media server) and **phlix-hub** (the federation hub) —
-mount this one package to render their entire `/app/*` single-page experience. Build a feature here
-once and it ships to both.
+Both Phlix web products — **phlix-server** (the media server) and **phlix-hub** (the federation
+hub) — mount this one package to render their entire `/app/*` single-page experience, and the
+Tizen widget and Windows desktop shell re-vendor the same built bundle into their native apps.
+Build a feature here once and it ships to every Phlix surface.
 
 `@phlix/ui` is a self-contained kit: a 3-theme **"Nocturne" cinema-after-dark** token system, 26
 accessible primitives, a media-browsing + video-player surface, auth/settings forms, a ⌘K command
@@ -25,7 +26,7 @@ Vue app.
 - ⚡ **Code-split + lazy-routed** — the entry bundle is ~382 kB raw (~94 kB gzipped); routes, the
   player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme, full keyboard support, honored
-  reduced-motion, an i18n-readiness seam.
+  reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
 > **Status:** `v0.99.14`. Pre-1.0, so minor releases may include breaking changes. See
@@ -109,7 +110,8 @@ season drill-down (`/app/media/:id/season/:season`), player (`/app/player/:id`),
 (`/app/explore`), recommendations (`/app/recommendations`), watch history (`/app/history`), SyncPlay
 (`/app/syncplay`), music (`/app/music`), parental controls (`/app/parental`), profiles
 (`/app/profiles`), playlists (`/app/playlists` and `/app/playlists/:id`), and MCP tokens
-(`/app/mcp-tokens`) — nineteen named routes, plus a 404 catch-all. The built-in route pages, the
+(`/app/mcp-tokens`, mounted only when `app: 'hub'`) — nineteen named routes for the hub, eighteen
+for the server, plus a 404 catch-all. The built-in route pages, the
 player surface, and the command palette are lazy chunks — they load only when first reached.
 
 **Browse is organized per library.** The Browse home renders a "Continue Watching" rail, any configured
@@ -150,14 +152,14 @@ almost always pass two: `app` and `apiBase`:
 | `defaultTv?` | `boolean` | Initial TV mode for a first-time visitor (10-foot sizing + visible focus rings). A stored user toggle always wins; applied pre-mount like `defaultTheme`. |
 | `branding?` | `BrandingConfig` | Per-app brand: `wordmark?`, `logoSrc?`, `logoAlt?`, `tagline?`. |
 | `homeRows?` | `HomeRow[]` | Browse home-row shelves: `{ id, title, query? }` (query is a partial `LibraryQueryParams`, incl. `libraryId`). Rendered _in addition to_ the automatic per-library rails. |
-| `messages?` | `PhlixMessagesConfig` | Deep-partial override of user-facing English strings (the i18n-readiness seam). |
+| `messages?` | `PhlixMessagesConfig` | Deep-partial override of user-facing English strings (the config-time seam the six shipped locale bundles ride). |
 | `locale?` | `PhlixErrorLocale` | Selects which of the seven complete error-code catalogs (`src/i18n/errors.ts`) renders. Omit (or pass an unknown tag) ⇒ English. Config-time like `messages` — no runtime locale switch. |
 | `wsUrl?` | `string \| null` | R12-02 — operator-pinned WebSocket endpoint for the SPA's sockets (`ws(s)://host[:port]`, NO path/query/userinfo; hub env `HUB_WS_URL`). A valid value overrides the legacy same-origin port derivations (`:8097` SyncPlay direct, `:8804` hub relay); null/absent/invalid ⇒ legacy behavior unchanged. |
 | `wsPath?` | `string \| null` | R12-02 — path companion to `wsUrl` (a single absolute path, e.g. `/syncplay`; hub env `HUB_WS_PATH`). Only refines a present `wsUrl`; the hub relay defaults its `/syncplay` prefix when omitted. |
 | `deviceHeaders?` | `Record<string, string>` | Extra headers sent on every API request — native-device identity (`X-Phlix-Device-ID` / `-Name` / `-Type`, `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`; this is how the Windows/Tizen apps identify as devices. |
 | `requireConnection?` | `boolean` | When true, any route visited with no resolved API base redirects to the Connect screen. Native desktop/TV clients set this (they ship with no baked-in server origin); web-hosted server/hub leave it false. |
 | `onConnectionChange?` | `(url: string \| null) => void` | Called whenever the Connect screen persists (or clears, with `null`) the chosen API base — native shells mirror it into their own durable store. |
-| `connectScan?` | `() => Promise<ConnectCandidate[]>` | Host-injected LAN server scan consumed by the Connect screen's "Scan" affordance (S532). OMITTED ⇒ the affordance is hidden (a web-hosted app has nothing to scan). |
+| `connectScan?` | `() => Promise<ConnectCandidate[]>` | Host-injected LAN server scan consumed by the Connect screen's "Scan" affordance (S532). OMITTED ⇒ the affordance is hidden (a web-hosted app has nothing to scan). The element type `ConnectCandidate` lives in `src/app/types.ts`; a root-barrel re-export is owed (name the row's type via the module path until it lands). |
 | `playerHlsConfig?` | `Partial<HlsConfig>` | Per-app hls.js overrides for the transcode player (e.g. a TV tuning `maxBufferLength` down to cap RAM). Merged OVER the built-in defaults; the auth `xhrSetup` is always preserved. |
 | `tokenStore?` | `TokenStore` | Token custody seam (R-UI-10): the store all session tokens flow through — `Authorization` headers, 401 refresh rotation, sign-in/out, the SyncPlay WS token, HLS segment auth. Register a host-owned store (e.g. the Windows client's DPAPI `SafeStorageTokenStore`) to keep credentials out of `localStorage`; omitted keeps the localStorage default. Registered once at boot via `setDefaultTokenStore`; resolved per request, so the boot-time `auth.init()` and the import-constructed `api` singleton both flow through it. |
 
@@ -463,7 +465,9 @@ function throttledMeasure(): void {
 window.addEventListener('scroll', throttledMeasure, { passive: true });
 ```
 
-For rAF-coalesced measurements (used in `MediaGrid.vue` for layout calculations after scroll settles):
+For rAF-coalesced measurements (`MediaGrid.vue` coalesces its ResizeObserver- and sentinel-driven
+remeasures onto the paint cycle this way; its scroll handler never measures — geometry is cached
+between remeasures):
 
 ```ts
 let frame = 0;
@@ -502,7 +506,8 @@ one exception, flagged where it appears: the Player surface ships on the seconda
 `PageHint` — all token-driven, theme-aware, keyboard-accessible. Plus `Icon`
 (Lucide via `unplugin-icons`; type-checked `IconName`, with every registered name in
 `src/components/icon-registry.ts` — the single source of truth `Icon.test.ts` iterates) and
-`AppBackdrop` (the atmosphere layer).
+`AppBackdrop` (the atmosphere layer). `Card` and `Input` also live in that directory but are
+internal composition of the built-in pages — deliberately **not** root exports.
 
 ### Components (`src/components/`, `src/app/`)
 
@@ -585,7 +590,7 @@ deliberately keeps them out so the main bundle stays lean, and the entry's CSS p
 ship on the same entry (`playback.ts`, `captions.ts`, `ambient.ts`, `shortcuts.ts`, `format-time.ts`,
 `transcode.ts`, `hls-playback.ts`, and the `useHlsTranscode` / `usePlayerStore` seams). Direct play vs.
 server transcode is decided in
-`playback.ts`. The entry itself re-exports only `needsTranscode`, `extensionOf`,
+`playback.ts`. Of `playback.ts`, the entry re-exports only `needsTranscode`, `extensionOf`,
 `isFatalMediaError`, `ringDashoffset` (+ the `DIRECT_PLAY_EXTENSIONS`/`TRANSCODE_EXTENSIONS`/
 `UPNEXT_*` constants): the codec pipeline — `videoCodecFromStreams()`, `videoCodecPolicy()`,
 `needsTranscodeWithCapabilities()`, `containerMimeForExtension()` — is **internal to
@@ -759,8 +764,11 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
   `document` access.
 - **Stores need the provided `apiBase`** — they `inject('apiBase')`, so run them inside a
   `createPhlixApp` tree (or provide `apiBase` yourself).
-- **One package, two consumers** — `phlix-server/web-ui` and `phlix-hub/web-ui` both pin the same
-  git tag and commit a rebuilt `public/assets/app/**` bundle. They always track the same MAJOR.
+- **One package, four git-tag consumers** — `phlix-server/web-ui` and `phlix-hub/web-ui` pin the
+  same git tag and commit a rebuilt `public/assets/app/**` SPA bundle; `phlix-tizen-client` and
+  `phlix-windows-client` pin that same tag and re-vendor the built bundle into their native app
+  packages (widget bundle / Electron `package/`). A release is not shipped until every consumer
+  re-pins. They always track the same MAJOR.
 
 ---
 
