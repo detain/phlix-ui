@@ -439,7 +439,7 @@ export const JA_MESSAGES = {
     allTracks: 'すべてのトラック',
     searchTracks: 'トラックを検索…',
     playAll: 'すべて再生',
-    matching: '件の結果',
+    matching: '「{query}」に一致',
     noTracksMatch: '検索に一致するトラックはありません。',
     selectTrack: '再生するトラックを選択してください',
     artist: 'アーティスト',

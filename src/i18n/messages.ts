@@ -523,7 +523,7 @@ export const DEFAULT_MESSAGES = {
     allTracks: 'All tracks',
     searchTracks: 'Search tracks…',
     playAll: 'Play all',
-    matching: 'matching',
+    matching: 'matching “{query}”',
     noTracksMatch: 'No tracks match your search.',
     selectTrack: 'Select a track to play',
     artist: 'Artist',

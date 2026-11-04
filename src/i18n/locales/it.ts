@@ -438,7 +438,7 @@ export const IT_MESSAGES = {
     allTracks: 'Tutti i brani',
     searchTracks: 'Cerca brani…',
     playAll: 'Riproduci tutti',
-    matching: 'risultati',
+    matching: 'corrispondenti a “{query}”',
     noTracksMatch: 'Nessun brano corrisponde alla tua ricerca.',
     selectTrack: 'Seleziona un brano da riprodurre',
     artist: 'Artista',

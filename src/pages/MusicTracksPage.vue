@@ -197,7 +197,7 @@ function onSeek(event: Event): void {
          explicitly qualified as page-local ("N tracks on this page") -->
     <p class="tracks-page__count" data-count="tracks" role="status" aria-live="polite">
       {{ countLabel }}
-      <span v-if="searchQuery"> ({{ t('music.matching') }} "{{ searchQuery }}")</span>
+      <span v-if="searchQuery"> ({{ t('music.matching', { query: searchQuery }) }})</span>
     </p>
 
     <!-- A failed page keeps its rows and its pager, so this is a banner above the

@@ -438,7 +438,7 @@ export const DE_MESSAGES = {
     allTracks: 'Alle Titel',
     searchTracks: 'Titel suchen…',
     playAll: 'Alle abspielen',
-    matching: 'Treffer',
+    matching: 'Treffer für „{query}“',
     noTracksMatch: 'Keine Titel passen zu deiner Suche.',
     selectTrack: 'Wähle einen Titel zum Abspielen',
     artist: 'Künstler',

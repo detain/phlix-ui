@@ -442,7 +442,7 @@ export const FR_MESSAGES = {
     allTracks: 'Toutes les pistes',
     searchTracks: 'Rechercher des pistes…',
     playAll: 'Tout lire',
-    matching: 'résultats',
+    matching: 'correspondant à « {query} »',
     noTracksMatch: 'Aucune piste ne correspond à votre recherche.',
     selectTrack: 'Sélectionnez une piste à lire',
     artist: 'Artiste',

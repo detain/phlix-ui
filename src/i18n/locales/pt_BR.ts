@@ -438,7 +438,7 @@ export const PT_BR_MESSAGES = {
     allTracks: 'Todas as faixas',
     searchTracks: 'Pesquisar faixas…',
     playAll: 'Reproduzir tudo',
-    matching: 'correspondências',
+    matching: 'correspondentes a “{query}”',
     noTracksMatch: 'Nenhuma faixa corresponde à sua pesquisa.',
     selectTrack: 'Selecione uma faixa para reproduzir',
     artist: 'Artista',

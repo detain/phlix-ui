@@ -440,7 +440,7 @@ export const ES_MESSAGES = {
     allTracks: 'Todas las pistas',
     searchTracks: 'Buscar pistas…',
     playAll: 'Reproducir todo',
-    matching: 'coincidencias',
+    matching: 'coincidentes con “{query}”',
     noTracksMatch: 'Ninguna pista coincide con tu búsqueda.',
     selectTrack: 'Selecciona una pista para reproducir',
     artist: 'Artista',
