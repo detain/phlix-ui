@@ -27,6 +27,15 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   message byte-for-byte. 10 pure-module tests + 4 page-wiring pins (the two
   classification pins measured RED on the pre-cure SFC; the single-card law is
   pinned as a regression guard, disclosed as such).
+- **UI-m10 + UI-m40 (dup pair) — `buildWsUrl` windowless half-guard closed**
+  (ui__crossfe / ui__fedev): the legacy derivation guarded `window.location
+  .hostname` with `typeof window` while the very next line dereferenced
+  `window.location.protocol` unguarded — a windowless execution (SSR
+  prerender, bare harness) threw `ReferenceError` instead of taking the
+  documented `localhost` fallback. One window check now feeds both reads, the
+  same SSR-safe law `socketHint.ts:82` and `hubRelay.ts` `defaultHubHost`
+  already follow. New pin measured RED on the committed source (exactly 1
+  failure) before the cure; `hubRelay.ts` needed no change (verified guarded).
 
 ## Unreleased — docs-minors wave-1 lane 2026-11-04 (FIX-QUEUE UI-m15 / UI-m11 residual / UI-m39)
 

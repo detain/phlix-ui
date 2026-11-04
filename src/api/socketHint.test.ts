@@ -191,4 +191,22 @@ describe('buildWsUrl (:8097) — seam precedence (R12-02)', () => {
     (window as { __PHLIX__?: unknown }).__PHLIX__ = { wsUrl: 'wss://bad/path/here' };
     expect(dial('sp_4')).toBe(`ws://${window.location.hostname}:8097?room=sp_4`);
   });
+
+  it('windowless host, no seam ⇒ the documented localhost fallback — never a ReferenceError', () => {
+    // ui__fedev / ui__crossfe: the legacy derivation guarded the hostname line
+    // with `typeof window` but dereferenced `window.location.protocol` on the
+    // very next line, so a windowless execution (SSR prerender, bare harness)
+    // threw instead of taking the 'localhost' fallback the author intended.
+    // One window check now feeds BOTH reads.
+    vi.stubGlobal('window', undefined);
+    let url = '';
+    try {
+      url = dial('sp_5');
+    } finally {
+      // Restore BEFORE the describe's afterEach: it (and RecordingWebSocket)
+      // legitimately live on a real window again.
+      vi.unstubAllGlobals();
+    }
+    expect(url).toBe('ws://localhost:8097?room=sp_5');
+  });
 });

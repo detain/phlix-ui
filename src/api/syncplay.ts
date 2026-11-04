@@ -629,8 +629,15 @@ function buildWsUrl(roomId: string): string {
   if (hint.wsUrl !== null) {
     return `${hint.wsUrl}${hint.wsPath ?? ''}?room=${encodeURIComponent(roomId)}`;
   }
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  // ONE window check feeds BOTH reads (ui__fedev / ui__crossfe): the hostname
+  // line was guarded while the very next line dereferenced `window.location`
+  // again, so a windowless execution reached the documented 'localhost'
+  // fallback's sibling expression and threw ReferenceError instead of taking
+  // it. Same degradation law as `socketHint.ts` (SSR-safe) and `hubRelay.ts`
+  // (`defaultHubHost` guards the whole location access).
+  const loc = typeof window !== 'undefined' ? window.location : null;
+  const hostname = loc?.hostname ?? 'localhost';
+  const protocol = loc?.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${hostname}:8097?room=${encodeURIComponent(roomId)}`;
 }
 
