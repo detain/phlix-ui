@@ -14,55 +14,55 @@ import { t as c } from "./EmptyState-DjfWh3kt.js";
 import { t as se } from "./PageHint-C2jY1TZi.js";
 import { t as ce } from "./helpLinks-3xhEuW25.js";
 import { n as le } from "./Icon-55iG1rR7.js";
-import { Fragment as l, computed as u, createBlock as d, createCommentVNode as f, createElementBlock as p, createElementVNode as m, createStaticVNode as ue, createTextVNode as h, createVNode as g, defineComponent as de, inject as fe, normalizeStyle as pe, onBeforeUnmount as me, onMounted as he, openBlock as _, ref as v, renderList as y, toDisplayString as b, unref as x, vModelText as ge, watch as _e, withCtx as S, withDirectives as ve, withModifiers as ye } from "vue";
+import { Fragment as l, computed as u, createBlock as d, createCommentVNode as f, createElementBlock as p, createElementVNode as m, createStaticVNode as ue, createTextVNode as h, createVNode as g, defineComponent as de, inject as fe, normalizeStyle as pe, onBeforeUnmount as me, onMounted as he, openBlock as _, ref as v, renderList as ge, toDisplayString as y, unref as b, vModelText as _e, watch as ve, withCtx as x, withDirectives as ye, withModifiers as be } from "vue";
 // src/pages/admin/LibrariesPage.vue?vue&type=script&setup=true&lang.ts
-var be = {
+var xe = {
 	class: "admin-libraries",
 	"aria-labelledby": "libraries-heading"
-}, xe = { class: "admin-libraries__head" }, Se = {
+}, Se = { class: "admin-libraries__head" }, Ce = {
 	key: 0,
 	class: "admin-libraries__skel"
-}, Ce = {
+}, we = {
 	key: 3,
 	class: "admin-libraries__table",
 	"aria-label": "Libraries"
-}, we = ["data-testid"], Te = {
+}, Te = ["data-testid"], Ee = {
 	key: 0,
 	class: "admin-libraries__error"
-}, Ee = ["data-testid"], De = ["aria-valuenow", "aria-label"], Oe = { class: "admin-libraries__progress-meta" }, ke = {
+}, De = ["data-testid"], Oe = ["aria-valuenow", "aria-label"], ke = { class: "admin-libraries__progress-meta" }, Ae = {
 	key: 0,
 	class: "admin-libraries__progress-file"
-}, Ae = ["data-testid"], je = { class: "admin-libraries__actions" }, Me = { class: "admin-libraries__field" }, Ne = { class: "admin-libraries__field" }, Pe = ["value"], Fe = {
+}, je = ["data-testid"], Me = { class: "admin-libraries__actions" }, Ne = { class: "admin-libraries__field" }, Pe = { class: "admin-libraries__field" }, Fe = ["value"], Ie = {
 	key: 2,
 	class: "admin-libraries__hint-text"
-}, Ie = { class: "admin-libraries__field" }, Le = {
+}, Le = { class: "admin-libraries__field" }, Re = {
 	key: 0,
 	class: "admin-libraries__field"
-}, Re = {
+}, ze = {
 	key: 1,
 	class: "admin-libraries__field"
-}, ze = { class: "admin-libraries__field" }, Be = {
+}, Be = { class: "admin-libraries__field" }, Ve = {
 	key: 2,
 	class: "admin-libraries__field"
-}, Ve = {
+}, He = {
 	class: "admin-libraries__imagetypes",
 	role: "group",
 	"aria-label": "Artwork types"
-}, He = { class: "admin-libraries__checkbox" }, Ue = [
+}, Ue = { class: "admin-libraries__checkbox" }, We = [
 	"checked",
 	"aria-label",
 	"onChange"
-], We = { class: "admin-libraries__checkbox-text" }, Ge = { class: "admin-libraries__checkbox-label" }, Ke = {
+], Ge = { class: "admin-libraries__checkbox-text" }, Ke = { class: "admin-libraries__checkbox-label" }, qe = {
 	key: 0,
 	class: "admin-libraries__checkbox-providers"
-}, qe = {
+}, Je = {
 	key: 0,
 	class: "admin-libraries__skel"
-}, Je = {
+}, Ye = {
 	key: 2,
 	class: "admin-libraries__table",
 	"aria-label": "Scan history"
-}, Ye = ["data-testid"], Xe = ["data-testid"], Ze = { class: "admin-libraries__date" }, Qe = { class: "admin-libraries__date" }, $e = 2e3, C = /*#__PURE__*/ le(/* @__PURE__ */ de({
+}, Xe = ["data-testid"], Ze = ["data-testid"], Qe = { class: "admin-libraries__date" }, $e = { class: "admin-libraries__date" }, et = 2e3, S = /*#__PURE__*/ le(/* @__PURE__ */ de({
 	__name: "LibrariesPage",
 	props: {
 		client: {},
@@ -76,7 +76,7 @@ var be = {
 			"photo",
 			"book",
 			"audiobook"
-		]), C = le, et = fe("apiBase", ""), tt = u(() => typeof et == "string" ? et : et?.value ?? ""), nt = C.client ?? new e({ baseUrl: tt.value }), w = new r(nt), rt = new te(nt), T = ne(), it = u(() => C.pollIntervalMs ?? $e), at = u(() => n.map((e) => ({
+		]), S = le, C = fe("apiBase", ""), tt = u(() => typeof C == "string" ? C : C?.value ?? ""), nt = S.client ?? new e({ baseUrl: tt.value }), w = new r(nt), rt = new te(nt), T = ne(), it = u(() => S.pollIntervalMs ?? et), at = u(() => n.map((e) => ({
 			value: e,
 			label: e
 		})));
@@ -228,7 +228,7 @@ var be = {
 		function Nt(e) {
 			H.value = e, U.value = !0;
 		}
-		_e(V, () => {
+		ve(V, () => {
 			N.value && !U.value && H.value.length === 0 && (H.value = V.value.slice());
 		});
 		function Pt(e) {
@@ -294,8 +294,11 @@ var be = {
 				}
 			}
 		}
-		let q = v(null);
-		async function Ht() {
+		let q = v(null), Ht = u(() => {
+			let e = q.value?.item_count;
+			return typeof e == "number" && Number.isInteger(e) && e >= 0 ? e : null;
+		});
+		async function Ut() {
 			let e = q.value;
 			if (e) try {
 				await w.remove(e.id), T.success("Library deleted."), q.value = null, await M();
@@ -303,7 +306,7 @@ var be = {
 				T.error(t(e, "Failed to delete library.")), q.value = null;
 			}
 		}
-		function Ut(e, t) {
+		function Wt(e, t) {
 			switch (t) {
 				case "scan": return w.scan(e.id);
 				case "rescan": return w.rescan(e.id);
@@ -316,7 +319,7 @@ var be = {
 				case "regenerate-assets": return w.regenerateAssets(e.id);
 			}
 		}
-		function Wt(e, t) {
+		function Gt(e, t) {
 			switch (e) {
 				case "metadata":
 				case "refresh-metadata":
@@ -330,8 +333,8 @@ var be = {
 		}
 		async function J(e, n) {
 			try {
-				let t = await Ut(e, n);
-				T.success(t.message || Wt(n, t.job_id));
+				let t = await Wt(e, n);
+				T.success(t.message || Gt(n, t.job_id));
 				let r = O.value[e.id];
 				O.value = {
 					...O.value,
@@ -344,7 +347,7 @@ var be = {
 				T.error(t(e, "Failed to queue operation."));
 			}
 		}
-		let Gt = {
+		let Kt = {
 			prune: {
 				title: "Prune removed files",
 				confirmLabel: "Prune removed",
@@ -369,18 +372,18 @@ var be = {
 				danger: !0,
 				message: "Permanently remove EVERY item in “{name}”, including all watch progress, favorites and ratings? This cannot be undone."
 			}
-		}, Y = v(null), X = u(() => Y.value ? Gt[Y.value.op] : null), Kt = u(() => Y.value && X.value ? X.value.message.replace("{name}", Y.value.lib.name) : "");
+		}, Y = v(null), X = u(() => Y.value ? Kt[Y.value.op] : null), qt = u(() => Y.value && X.value ? X.value.message.replace("{name}", Y.value.lib.name) : "");
 		function Z(e, t) {
 			Y.value = {
 				lib: e,
 				op: t
 			};
 		}
-		async function qt() {
+		async function Jt() {
 			let e = Y.value;
 			e && (Y.value = null, await J(e.lib, e.op));
 		}
-		function Jt(e) {
+		function Yt(e) {
 			return [
 				{
 					label: "Rescan",
@@ -420,23 +423,23 @@ var be = {
 				}
 			];
 		}
-		let Q = v(null), $ = v([]), Yt = v(!1), Xt = u(() => Q.value ? `Scan history — ${Q.value.name}` : "Scan history"), Zt = u({
+		let Q = v(null), $ = v([]), Xt = v(!1), Zt = u(() => Q.value ? `Scan history — ${Q.value.name}` : "Scan history"), Qt = u({
 			get: () => Q.value !== null,
 			set: (e) => {
-				e || $t();
+				e || en();
 			}
 		});
-		async function Qt(e) {
-			Q.value = e, $.value = [], Yt.value = !0;
+		async function $t(e) {
+			Q.value = e, $.value = [], Xt.value = !0;
 			try {
 				$.value = await w.scanHistory(e.id);
 			} catch (e) {
 				T.error(t(e, "Failed to load history."));
 			} finally {
-				Yt.value = !1;
+				Xt.value = !1;
 			}
 		}
-		function $t() {
+		function en() {
 			Q.value = null, $.value = [];
 		}
 		return he(() => {
@@ -444,8 +447,8 @@ var be = {
 		}), me(() => {
 			for (let e of Object.keys(k)) clearInterval(k[e]), delete k[e];
 			typeof document < "u" && document.removeEventListener("visibilitychange", xt);
-		}), (e, t) => (_(), p("section", be, [
-			m("header", xe, [t[11] ||= m("h1", {
+		}), (e, t) => (_(), p("section", xe, [
+			m("header", Se, [t[11] ||= m("h1", {
 				id: "libraries-heading",
 				class: "admin-libraries__title"
 			}, "Libraries", -1), g(o, {
@@ -454,22 +457,22 @@ var be = {
 				"left-icon": "plus",
 				onClick: Rt
 			}, {
-				default: S(() => [...t[10] ||= [h("Add library", -1)]]),
+				default: x(() => [...t[10] ||= [h("Add library", -1)]]),
 				_: 1
 			})]),
 			g(se, {
-				links: x(ce).libraries.links,
-				details: x(ce).libraries.details
+				links: b(ce).libraries.links,
+				details: b(ce).libraries.details
 			}, {
-				default: S(() => [...t[12] ||= [
+				default: x(() => [...t[12] ||= [
 					h(" Each library has a set of operations for keeping it in sync with disk and with online metadata. A live percentage is shown while any of them run. Expand ", -1),
 					m("strong", null, "“What do these operations do?”", -1),
 					h(" below for when to use each. ", -1)
 				]]),
 				_: 1
 			}, 8, ["links", "details"]),
-			t[38] ||= ue("<details class=\"admin-libraries__help\" open data-v-e790c6c7><summary class=\"admin-libraries__help-summary\" data-v-e790c6c7>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-e790c6c7><dt data-v-e790c6c7>Scan</dt><dd data-v-e790c6c7> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-e790c6c7>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-e790c6c7>Match metadata</dt><dd data-v-e790c6c7> Fetches TMDB/IMDB details and artwork <em data-v-e790c6c7>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-e790c6c7>Recheck all metadata</dt><dd data-v-e790c6c7> Forces a fresh metadata fetch for <em data-v-e790c6c7>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-e790c6c7>Rescan</dt><dd data-v-e790c6c7> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-e790c6c7>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-e790c6c7>Prune removed</dt><dd data-v-e790c6c7> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-e790c6c7>Regenerate media assets</dt><dd data-v-e790c6c7> Re-creates the file-based media assets (chapter thumbnails, trickplay sprite, Roku BIF) for the library’s existing items. <strong data-v-e790c6c7>Idempotent</strong> — firing it while a regeneration is already queued is a no-op success, not an error. </dd><dt data-v-e790c6c7>Clear metadata</dt><dd data-v-e790c6c7> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-e790c6c7>Clear cached artwork</dt><dd data-v-e790c6c7> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-e790c6c7>Delete all items</dt><dd data-v-e790c6c7><strong data-v-e790c6c7>Destructive.</strong> Removes every item in the library <em data-v-e790c6c7>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
-			gt.value ? (_(), p("div", Se, [g(oe, {
+			t[39] ||= ue("<details class=\"admin-libraries__help\" open data-v-c998b860><summary class=\"admin-libraries__help-summary\" data-v-c998b860>What do these operations do?</summary><dl class=\"admin-libraries__help-list\" data-v-c998b860><dt data-v-c998b860>Scan</dt><dd data-v-c998b860> Imports new and changed files from disk, keeping every existing item along with its posters, watch progress and favorites. Does <em data-v-c998b860>not</em> contact TMDB/IMDB. Run it after you add, rename or remove media. </dd><dt data-v-c998b860>Match metadata</dt><dd data-v-c998b860> Fetches TMDB/IMDB details and artwork <em data-v-c998b860>only</em> for items that don’t have metadata yet — already-matched items are skipped. Run it after a Scan to fill in the new items. </dd><dt data-v-c998b860>Recheck all metadata</dt><dd data-v-c998b860> Forces a fresh metadata fetch for <em data-v-c998b860>every</em> item: updates existing entries and backfills newly-tracked fields (episode stills, trailers, logos, certifications). Use it after a metadata feature update or to refresh stale data. </dd><dt data-v-c998b860>Rescan</dt><dd data-v-c998b860> Re-scans from disk and prunes only the items whose files are truly gone. <strong data-v-c998b860>Non-destructive</strong> — surviving items keep their watch progress, favorites and metadata, and an unmounted drive won’t wipe the library. Use it to repair a library that has drifted out of sync. </dd><dt data-v-c998b860>Prune removed</dt><dd data-v-c998b860> Removes only the items whose files no longer exist, without a full rescan. </dd><dt data-v-c998b860>Regenerate media assets</dt><dd data-v-c998b860> Re-creates the file-based media assets (chapter thumbnails, trickplay sprite, Roku BIF) for the library’s existing items. <strong data-v-c998b860>Idempotent</strong> — firing it while a regeneration is already queued is a no-op success, not an error. </dd><dt data-v-c998b860>Clear metadata</dt><dd data-v-c998b860> Resets items to filesystem basics (the items and your watch data are kept) so a later Match metadata can re-fetch cleanly. </dd><dt data-v-c998b860>Clear cached artwork</dt><dd data-v-c998b860> Deletes locally cached images to free disk space; they are re-downloaded on the next metadata match. </dd><dt class=\"admin-libraries__help-danger\" data-v-c998b860>Delete all items</dt><dd data-v-c998b860><strong data-v-c998b860>Destructive.</strong> Removes every item in the library <em data-v-c998b860>and</em> its watch progress, favorites and ratings. Only use this for a full reset. </dd></dl></details>", 1),
+			gt.value ? (_(), p("div", Ce, [g(oe, {
 				variant: "text",
 				lines: 6
 			})])) : D.value ? (_(), d(c, {
@@ -478,13 +481,13 @@ var be = {
 				title: "Couldn’t load libraries",
 				description: D.value
 			}, {
-				actions: S(() => [g(o, {
+				actions: x(() => [g(o, {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "rewind",
 					onClick: M
 				}, {
-					default: S(() => [...t[13] ||= [h("Retry", -1)]]),
+					default: x(() => [...t[13] ||= [h("Retry", -1)]]),
 					_: 1
 				})]),
 				_: 1
@@ -494,17 +497,17 @@ var be = {
 				title: "No libraries yet",
 				description: "Add one to get started."
 			}, {
-				actions: S(() => [g(o, {
+				actions: x(() => [g(o, {
 					variant: "solid",
 					size: "sm",
 					"left-icon": "plus",
 					onClick: Rt
 				}, {
-					default: S(() => [...t[14] ||= [h("Add library", -1)]]),
+					default: x(() => [...t[14] ||= [h("Add library", -1)]]),
 					_: 1
 				})]),
 				_: 1
-			})) : (_(), p("table", Ce, [t[20] ||= m("thead", null, [m("tr", null, [
+			})) : (_(), p("table", we, [t[20] ||= m("thead", null, [m("tr", null, [
 				m("th", { scope: "col" }, "Name"),
 				m("th", { scope: "col" }, "Type"),
 				m("th", { scope: "col" }, "Paths"),
@@ -513,19 +516,19 @@ var be = {
 					scope: "col",
 					class: "admin-libraries__actions-col"
 				}, "Actions")
-			])], -1), m("tbody", null, [(_(!0), p(l, null, y(ht.value, (e) => (_(), p("tr", { key: e.id }, [
-				m("td", null, b(e.name), 1),
-				m("td", null, b(e.type), 1),
-				m("td", null, b(e.paths?.length ?? 0) + " paths", 1),
+			])], -1), m("tbody", null, [(_(!0), p(l, null, ge(ht.value, (e) => (_(), p("tr", { key: e.id }, [
+				m("td", null, y(e.name), 1),
+				m("td", null, y(e.type), 1),
+				m("td", null, y(e.paths?.length ?? 0) + " paths", 1),
 				m("td", null, [m("span", {
 					class: "admin-libraries__status",
 					"data-testid": `status-${e.id}`
 				}, [
 					g(a, { tone: ct(O.value[e.id]) }, {
-						default: S(() => [h(b(st(O.value[e.id])), 1)]),
+						default: x(() => [h(y(st(O.value[e.id])), 1)]),
 						_: 2
 					}, 1032, ["tone"]),
-					O.value[e.id]?.status === "failed" && O.value[e.id]?.error ? (_(), p("span", Te, b(O.value[e.id]?.error), 1)) : dt(O.value[e.id]) ? (_(), p("span", {
+					O.value[e.id]?.status === "failed" && O.value[e.id]?.error ? (_(), p("span", Ee, y(O.value[e.id]?.error), 1)) : dt(O.value[e.id]) ? (_(), p("span", {
 						key: 1,
 						class: "admin-libraries__progress",
 						"data-testid": `progress-${e.id}`
@@ -540,28 +543,28 @@ var be = {
 						}, [m("span", {
 							class: "admin-libraries__progress-fill",
 							style: pe({ width: ft(O.value[e.id]) + "%" })
-						}, null, 4)], 8, De),
-						m("span", Oe, b(ft(O.value[e.id])) + "% · " + b(pt(O.value[e.id])), 1),
-						mt(O.value[e.id]) ? (_(), p("span", ke, b(mt(O.value[e.id])), 1)) : f("", !0)
-					], 8, Ee)) : f("", !0),
+						}, null, 4)], 8, Oe),
+						m("span", ke, y(ft(O.value[e.id])) + "% · " + y(pt(O.value[e.id])), 1),
+						mt(O.value[e.id]) ? (_(), p("span", Ae, y(mt(O.value[e.id])), 1)) : f("", !0)
+					], 8, De)) : f("", !0),
 					E(O.value[e.id]) ? (_(), p("span", {
 						key: 2,
 						class: "admin-libraries__failed",
 						"data-testid": `failed-${e.id}`,
 						role: "status"
 					}, [g(a, { tone: "warning" }, {
-						default: S(() => [h(b(E(O.value[e.id])), 1)]),
+						default: x(() => [h(y(E(O.value[e.id])), 1)]),
 						_: 2
-					}, 1024)], 8, Ae)) : f("", !0)
-				], 8, we)]),
-				m("td", null, [m("div", je, [
+					}, 1024)], 8, je)) : f("", !0)
+				], 8, Te)]),
+				m("td", null, [m("div", Me, [
 					g(o, {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `Edit ${e.name}`,
 						onClick: (t) => zt(e)
 					}, {
-						default: S(() => [...t[15] ||= [h(" Edit ", -1)]]),
+						default: x(() => [...t[15] ||= [h(" Edit ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					g(o, {
@@ -570,7 +573,7 @@ var be = {
 						"aria-label": `Scan ${e.name}`,
 						onClick: (t) => J(e, "scan")
 					}, {
-						default: S(() => [...t[16] ||= [h(" Scan ", -1)]]),
+						default: x(() => [...t[16] ||= [h(" Scan ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
 					g(o, {
@@ -579,17 +582,17 @@ var be = {
 						"aria-label": `Match metadata for ${e.name}`,
 						onClick: (t) => J(e, "metadata")
 					}, {
-						default: S(() => [...t[17] ||= [h(" Match metadata ", -1)]]),
+						default: x(() => [...t[17] ||= [h(" Match metadata ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"]),
-					g(re, { items: Jt(e) }, {
-						default: S(() => [g(o, {
+					g(re, { items: Yt(e) }, {
+						default: x(() => [g(o, {
 							variant: "ghost",
 							size: "sm",
 							"right-icon": "chevron-down",
 							"aria-label": `More actions for ${e.name}`
 						}, {
-							default: S(() => [...t[18] ||= [h(" More ", -1)]]),
+							default: x(() => [...t[18] ||= [h(" More ", -1)]]),
 							_: 1
 						}, 8, ["aria-label"])]),
 						_: 2
@@ -598,9 +601,9 @@ var be = {
 						variant: "ghost",
 						size: "sm",
 						"aria-label": `History for ${e.name}`,
-						onClick: (t) => Qt(e)
+						onClick: (t) => $t(e)
 					}, {
-						default: S(() => [...t[19] ||= [h(" History ", -1)]]),
+						default: x(() => [...t[19] ||= [h(" History ", -1)]]),
 						_: 1
 					}, 8, ["aria-label", "onClick"])
 				])])
@@ -611,12 +614,12 @@ var be = {
 				title: Ct.value,
 				onClose: Bt
 			}, {
-				footer: S(() => [g(o, {
+				footer: x(() => [g(o, {
 					variant: "ghost",
 					size: "sm",
 					onClick: Bt
 				}, {
-					default: S(() => [...t[30] ||= [h("Cancel", -1)]]),
+					default: x(() => [...t[30] ||= [h("Cancel", -1)]]),
 					_: 1
 				}), g(o, {
 					variant: "solid",
@@ -624,21 +627,21 @@ var be = {
 					loading: St.value,
 					onClick: Vt
 				}, {
-					default: S(() => [h(b(P.value ? "Save" : "Create"), 1)]),
+					default: x(() => [h(y(P.value ? "Save" : "Create"), 1)]),
 					_: 1
 				}, 8, ["loading"])]),
-				default: S(() => [m("form", {
+				default: x(() => [m("form", {
 					class: "admin-libraries__form",
-					onSubmit: ye(Vt, ["prevent"])
+					onSubmit: be(Vt, ["prevent"])
 				}, [
-					m("label", Me, [t[21] ||= m("span", { class: "admin-libraries__label" }, "Name", -1), ve(m("input", {
+					m("label", Ne, [t[21] ||= m("span", { class: "admin-libraries__label" }, "Name", -1), ye(m("input", {
 						"onUpdate:modelValue": t[0] ||= (e) => F.value = e,
 						type: "text",
 						class: "admin-libraries__input",
 						autocomplete: "off",
 						required: ""
-					}, null, 512), [[ge, F.value]])]),
-					m("div", Ne, [
+					}, null, 512), [[_e, F.value]])]),
+					m("div", Pe, [
 						t[22] ||= m("span", { class: "admin-libraries__label" }, "Type", -1),
 						P.value ? (_(), p("input", {
 							key: 0,
@@ -647,33 +650,33 @@ var be = {
 							readonly: "",
 							"aria-readonly": "true",
 							"aria-label": "Type"
-						}, null, 8, Pe)) : (_(), d(ie, {
+						}, null, 8, Fe)) : (_(), d(ie, {
 							key: 1,
 							"model-value": I.value,
 							options: at.value,
 							label: "Type",
 							"onUpdate:modelValue": t[1] ||= (e) => I.value = String(e)
 						}, null, 8, ["model-value", "options"])),
-						P.value ? (_(), p("span", Fe, "Type cannot be changed.")) : f("", !0)
+						P.value ? (_(), p("span", Ie, "Type cannot be changed.")) : f("", !0)
 					]),
-					m("label", Ie, [t[23] ||= m("span", { class: "admin-libraries__label" }, "Paths (one per line)", -1), ve(m("textarea", {
+					m("label", Le, [t[23] ||= m("span", { class: "admin-libraries__label" }, "Paths (one per line)", -1), ye(m("textarea", {
 						"onUpdate:modelValue": t[2] ||= (e) => L.value = e,
 						class: "admin-libraries__textarea",
 						rows: "4",
 						autocomplete: "off",
 						placeholder: "/media/movies"
-					}, null, 512), [[ge, L.value]])]),
-					I.value === "series" ? (_(), p("div", Le, [g(ae, {
+					}, null, 512), [[_e, L.value]])]),
+					I.value === "series" ? (_(), p("div", Re, [g(ae, {
 						modelValue: R.value,
 						"onUpdate:modelValue": t[3] ||= (e) => R.value = e,
 						label: "Each series is in its own folder"
 					}, null, 8, ["modelValue"]), t[24] ||= m("span", { class: "admin-libraries__hint-text" }, " Use each top-level folder name as the series title to improve metadata matching. ", -1)])) : f("", !0),
-					x(de).has(I.value) ? (_(), p("div", Re, [g(ae, {
+					b(de).has(I.value) ? (_(), p("div", ze, [g(ae, {
 						"model-value": z.value,
 						label: "Automatically generate collections from TMDB box sets",
 						"onUpdate:modelValue": It
 					}, null, 8, ["model-value"]), t[25] ||= m("span", { class: "admin-libraries__hint-text" }, " When on, items that match a TMDB box set (e.g. a trilogy) are grouped into a collection during scanning. Turn it off to skip collection generation for this library. ", -1)])) : f("", !0),
-					m("div", ze, [
+					m("div", Be, [
 						t[26] ||= m("span", { class: "admin-libraries__label" }, "Metadata source priority", -1),
 						t[27] ||= m("p", { class: "admin-libraries__hint-text" }, " The order metadata sources are tried for this library. The first source with a value for a field wins. Leave as the default to use the server-wide order, or reorder / remove sources to override it just for this library. ", -1),
 						g(ee, {
@@ -687,19 +690,19 @@ var be = {
 							"label"
 						])
 					]),
-					W.value.length ? (_(), p("div", Be, [
+					W.value.length ? (_(), p("div", Ve, [
 						t[28] ||= m("span", { class: "admin-libraries__label" }, "Artwork types", -1),
 						t[29] ||= m("p", { class: "admin-libraries__hint-text" }, " Which artwork types this library downloads and stores during scan and metadata matching. Unchecked types are skipped. Leave as-is to use the defaults. ", -1),
-						m("ul", Ve, [(_(!0), p(l, null, y(W.value, (e) => (_(), p("li", {
+						m("ul", He, [(_(!0), p(l, null, ge(W.value, (e) => (_(), p("li", {
 							key: e.type,
 							class: "admin-libraries__imagetype"
-						}, [m("label", He, [m("input", {
+						}, [m("label", Ue, [m("input", {
 							type: "checkbox",
 							class: "admin-libraries__checkbox-input",
 							checked: G.value[e.type] ?? !1,
 							"aria-label": e.label,
 							onChange: (t) => Dt(e.type, t.target.checked)
-						}, null, 40, Ue), m("span", We, [m("span", Ge, b(e.label), 1), e.providers.length ? (_(), p("span", Ke, b(e.providers.join(", ")), 1)) : f("", !0)])])]))), 128))])
+						}, null, 40, We), m("span", Ge, [m("span", Ke, y(e.label), 1), e.providers.length ? (_(), p("span", qe, y(e.providers.join(", ")), 1)) : f("", !0)])])]))), 128))])
 					])) : f("", !0)
 				], 32)]),
 				_: 1
@@ -710,25 +713,27 @@ var be = {
 				size: "sm",
 				"onUpdate:modelValue": t[6] ||= (e) => q.value = null
 			}, {
-				footer: S(() => [g(o, {
+				footer: x(() => [g(o, {
 					variant: "ghost",
 					size: "sm",
 					onClick: t[5] ||= (e) => q.value = null
 				}, {
-					default: S(() => [...t[33] ||= [h("Cancel", -1)]]),
+					default: x(() => [...t[34] ||= [h("Cancel", -1)]]),
 					_: 1
 				}), g(o, {
 					variant: "danger",
 					size: "sm",
-					onClick: Ht
+					onClick: Ut
 				}, {
-					default: S(() => [...t[34] ||= [h("Delete", -1)]]),
+					default: x(() => [...t[35] ||= [h("Delete", -1)]]),
 					_: 1
 				})]),
-				default: S(() => [m("p", null, [
+				default: x(() => [m("p", null, [
 					t[31] ||= h(" Delete library ", -1),
-					m("strong", null, b(q.value?.name), 1),
-					t[32] ||= h("? This cannot be undone. ", -1)
+					m("strong", null, y(q.value?.name), 1),
+					t[32] ||= h(),
+					Ht.value === null ? (_(), p(l, { key: 1 }, [h("and every item it contains")], 64)) : (_(), p(l, { key: 0 }, [h("and all " + y(Ht.value?.toLocaleString()) + " of its items", 1)], 64)),
+					t[33] ||= h(" — including all watch progress, favorites and ratings? This cannot be undone. ", -1)
 				])]),
 				_: 1
 			}, 8, ["model-value"]),
@@ -738,74 +743,74 @@ var be = {
 				size: "sm",
 				"onUpdate:modelValue": t[8] ||= (e) => Y.value = null
 			}, {
-				footer: S(() => [g(o, {
+				footer: x(() => [g(o, {
 					variant: "ghost",
 					size: "sm",
 					onClick: t[7] ||= (e) => Y.value = null
 				}, {
-					default: S(() => [...t[35] ||= [h("Cancel", -1)]]),
+					default: x(() => [...t[36] ||= [h("Cancel", -1)]]),
 					_: 1
 				}), g(o, {
 					variant: X.value?.danger ? "danger" : "solid",
 					size: "sm",
-					onClick: qt
+					onClick: Jt
 				}, {
-					default: S(() => [h(b(X.value?.confirmLabel ?? "Confirm"), 1)]),
+					default: x(() => [h(y(X.value?.confirmLabel ?? "Confirm"), 1)]),
 					_: 1
 				}, 8, ["variant"])]),
-				default: S(() => [m("p", null, b(Kt.value), 1)]),
+				default: x(() => [m("p", null, y(qt.value), 1)]),
 				_: 1
 			}, 8, ["model-value", "title"]),
 			g(s, {
-				modelValue: Zt.value,
-				"onUpdate:modelValue": t[9] ||= (e) => Zt.value = e,
-				title: Xt.value,
+				modelValue: Qt.value,
+				"onUpdate:modelValue": t[9] ||= (e) => Qt.value = e,
+				title: Zt.value,
 				size: "lg"
 			}, {
-				footer: S(() => [g(o, {
+				footer: x(() => [g(o, {
 					variant: "solid",
 					size: "sm",
-					onClick: $t
+					onClick: en
 				}, {
-					default: S(() => [...t[37] ||= [h("Close", -1)]]),
+					default: x(() => [...t[38] ||= [h("Close", -1)]]),
 					_: 1
 				})]),
-				default: S(() => [Yt.value ? (_(), p("div", qe, [g(oe, {
+				default: x(() => [Xt.value ? (_(), p("div", Je, [g(oe, {
 					variant: "text",
 					lines: 4
 				})])) : $.value.length === 0 ? (_(), d(c, {
 					key: 1,
 					icon: "list",
 					title: "No scans yet"
-				})) : (_(), p("table", Je, [t[36] ||= m("thead", null, [m("tr", null, [
+				})) : (_(), p("table", Ye, [t[37] ||= m("thead", null, [m("tr", null, [
 					m("th", { scope: "col" }, "Type"),
 					m("th", { scope: "col" }, "Status"),
 					m("th", { scope: "col" }, "Failed"),
 					m("th", { scope: "col" }, "Queued"),
 					m("th", { scope: "col" }, "Completed"),
 					m("th", { scope: "col" }, "Error")
-				])], -1), m("tbody", null, [(_(!0), p(l, null, y($.value, (e) => (_(), p("tr", { key: e.id }, [
-					m("td", { "data-testid": `history-type-${e.id}` }, b(ut(e.type)), 9, Ye),
+				])], -1), m("tbody", null, [(_(!0), p(l, null, ge($.value, (e) => (_(), p("tr", { key: e.id }, [
+					m("td", { "data-testid": `history-type-${e.id}` }, y(ut(e.type)), 9, Xe),
 					m("td", null, [g(a, { tone: ct(e) }, {
-						default: S(() => [h(b(st(e)), 1)]),
+						default: x(() => [h(y(st(e)), 1)]),
 						_: 2
 					}, 1032, ["tone"])]),
 					m("td", { "data-testid": `history-failed-${e.id}` }, [E(e) ? (_(), d(a, {
 						key: 0,
 						tone: "warning"
 					}, {
-						default: S(() => [h(b(E(e)), 1)]),
+						default: x(() => [h(y(E(e)), 1)]),
 						_: 2
-					}, 1024)) : (_(), p(l, { key: 1 }, [h("—")], 64))], 8, Xe),
-					m("td", Ze, b(e.queued_at ?? ""), 1),
-					m("td", Qe, b(e.completed_at ?? ""), 1),
-					m("td", null, b(e.error ?? ""), 1)
+					}, 1024)) : (_(), p(l, { key: 1 }, [h("—")], 64))], 8, Ze),
+					m("td", Qe, y(e.queued_at ?? ""), 1),
+					m("td", $e, y(e.completed_at ?? ""), 1),
+					m("td", null, y(e.error ?? ""), 1)
 				]))), 128))])]))]),
 				_: 1
 			}, 8, ["modelValue", "title"])
 		]));
 	}
-}), [["__scopeId", "data-v-e790c6c7"]]);
-export { C as default };
+}), [["__scopeId", "data-v-c998b860"]]);
+export { S as default };
 
-//# sourceMappingURL=LibrariesPage-t9Yjlqp6.js.map
+//# sourceMappingURL=LibrariesPage-BUg9A8I0.js.map

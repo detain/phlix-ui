@@ -12,6 +12,24 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U2)
+
+### Changed
+
+- **U2 — library-delete confirm matches its own sub-op's honesty (UI-m26,
+  review ui__webux: "Library-delete confirm copy thinner than its own
+  sub-ops").** 'Delete all items' spells out "EVERY item … all watch
+  progress, favorites and ratings" while library-delete — which destroys
+  strictly more (rows AND library) — said only name + 'cannot be undone'.
+  The server's `GET /api/v1/libraries` enriches rows with `item_count`
+  (omitted when the count rail is unwired), so the modal now states the
+  scope: with a row count it reads "and all 4,213 of its items"; without
+  one it says "and every item it contains" — never a fabricated number
+  (guarded integer check against the index-signature `unknown`). Both
+  branches carry the delete-all consequence voice. 2 red-measured pins
+  (count stated / count never invented, 2F/97P at parent). Copy stays raw
+  English literals per the admin page's documented inline convention.
+
 ## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U1)
 
 ### Changed

@@ -412,6 +412,43 @@ describe('Admin LibrariesPage — create / edit / delete', () => {
     w.unmount();
   });
 
+  /**
+   * ui__webux m26 — the library-delete confirm said LESS than its own sub-op:
+   * 'Delete all items' spells out watch progress / favorites / ratings, while
+   * deleting the library (which destroys strictly more — the rows AND the
+   * library) only said name + 'cannot be undone'. The server's GET
+   * /api/v1/libraries enriches each row with `item_count` (omitted when the
+   * count rail is unwired), so the copy states the scope and — where the wire
+   * provided one — the actual item count.
+   */
+  it('delete confirm states the row item count when the server provides it (ui__webux m26)', async () => {
+    const { client, del } = makeClient({ libraries: [{ ...lib, item_count: 4213 }] });
+    const w = mountPage(client);
+    await flushPromises();
+    menuItem(await openMoreMenu(w), 'Delete').click();
+    await flushPromises();
+    expect(del).not.toHaveBeenCalled();
+    const text = modalPanel().querySelector('p')?.textContent ?? '';
+    expect(text).toContain('cannot be undone');
+    expect(text).toContain('4,213');
+    expect(text).toContain('watch progress');
+    w.unmount();
+  });
+
+  it('delete confirm states the scope honestly with no fabricated count when the row omits item_count (ui__webux m26)', async () => {
+    const { client } = makeClient(); // default row carries no item_count — the real unwired shape
+    const w = mountPage(client);
+    await flushPromises();
+    menuItem(await openMoreMenu(w), 'Delete').click();
+    await flushPromises();
+    const text = modalPanel().querySelector('p')?.textContent ?? '';
+    expect(text).toContain('every item it contains');
+    expect(text).toContain('watch progress');
+    // No digits: an absent count must never be invented.
+    expect(text).not.toMatch(/\d/);
+    w.unmount();
+  });
+
   it('toasts when deleting fails', async () => {
     const { client, del } = makeClient();
     del.mockRejectedValueOnce(new Error('delete boom'));

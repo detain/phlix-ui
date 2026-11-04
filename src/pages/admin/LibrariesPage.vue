@@ -631,6 +631,19 @@ async function submitForm(): Promise<void> {
 // ── Delete confirm ─────────────────────────────────────────────────────────────
 const deleting = ref<Library | null>(null);
 
+/**
+ * ui__webux m26: the server enriches GET /api/v1/libraries rows with
+ * `item_count` (LibraryController adds it from countByType; omitted when the
+ * count rail is unwired). The delete confirm states the scope this makes
+ * visible. Guarded against the index-signature `unknown` so a missing or
+ * junk value degrades to the honest no-count copy — a number is never
+ * fabricated.
+ */
+const deletingItemCount = computed(() => {
+  const raw = deleting.value?.item_count;
+  return typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 ? raw : null;
+});
+
 async function confirmDelete(): Promise<void> {
   const target = deleting.value;
   if (!target) return;
@@ -1193,7 +1206,7 @@ onBeforeUnmount(() => {
       @update:model-value="deleting = null"
     >
       <p>
-        Delete library <strong>{{ deleting?.name }}</strong>? This cannot be undone.
+        Delete library <strong>{{ deleting?.name }}</strong> <template v-if="deletingItemCount !== null">and all {{ deletingItemCount?.toLocaleString() }} of its items</template><template v-else>and every item it contains</template> — including all watch progress, favorites and ratings? This cannot be undone.
       </p>
       <template #footer>
         <Button variant="ghost" size="sm" @click="deleting = null">Cancel</Button>

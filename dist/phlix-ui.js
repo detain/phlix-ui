@@ -1739,7 +1739,7 @@ var uo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-t9Yjlqp6.js")
+	component: () => import("./LibrariesPage-BUg9A8I0.js")
 }, zo = {
 	name: "admin-duplicates",
 	path: "duplicates",
