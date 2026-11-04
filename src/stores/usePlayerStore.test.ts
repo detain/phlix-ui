@@ -573,3 +573,63 @@ describe('audit #14 — corrupt resume blob cannot poison the store', () => {
     expect(p.resumePositionFor('y')).toBe(60);
   });
 });
+
+describe('ui-min2w — a corrupted volume can never poison the player store', () => {
+  // Volume twin of audit #14's resume-blob law and of setCurrent's duration
+  // guard (:267): Math.min/max PROPAGATE NaN, so the 0-1 clamp alone cannot
+  // stop a non-finite value. A poisoned `volume` reaches <video>.volume raw
+  // (Player.vue :1301/:1496) where real browsers throw IndexSizeError, and
+  // VolumeControl's watch persists it back to prefs.
+  it('setVolume refuses NaN — the previous volume survives', () => {
+    const p = usePlayerStore();
+    p.setVolume(0.4);
+    p.setVolume(NaN);
+    expect(p.volume).toBe(0.4);
+  });
+
+  it('setVolume refuses ±Infinity (same Number.isFinite law)', () => {
+    const p = usePlayerStore();
+    p.setVolume(0.4);
+    p.setVolume(Infinity);
+    expect(p.volume).toBe(0.4);
+    p.setVolume(-Infinity);
+    expect(p.volume).toBe(0.4);
+  });
+
+  it('the 0-1 clamp law still holds for finite input (pin)', () => {
+    const p = usePlayerStore();
+    p.setVolume(5);
+    expect(p.volume).toBe(1);
+    p.setVolume(-2);
+    expect(p.volume).toBe(0);
+    p.setVolume(0.25);
+    expect(p.volume).toBe(0.25);
+  });
+
+  it('seedFromPreferences refuses a non-finite persisted defaultVolume', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setVolume(0.25);
+    prefs.defaultVolume = NaN; // what a corrupt 'phlix.prefs' blob hydrates verbatim
+    p.seedFromPreferences();
+    expect(p.volume).toBe(0.25);
+  });
+
+  it('seedFromPreferences clamps an out-of-range persisted defaultVolume', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setVolume(0.25);
+    prefs.defaultVolume = 5; // readStoredPreferences shallow-spreads the blob verbatim
+    p.seedFromPreferences();
+    expect(p.volume).toBe(1);
+  });
+
+  it('seedFromPreferences still seeds well-formed values (no behavior drift)', () => {
+    const prefs = usePreferencesStore();
+    prefs.defaultVolume = 0.5;
+    const p = usePlayerStore();
+    p.setVolume(0.25);
+    p.seedFromPreferences();
+    expect(p.volume).toBe(0.5);
+  });
+});

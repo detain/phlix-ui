@@ -12,6 +12,34 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — volume-finiteness lane 2026-11-04 (FIX-UI-MIN2W.md, ui-min2w)
+
+### Fixed
+
+- **U2 (landed, coordinates corrected from disk) — non-finite input can
+  never poison `volume`.** The lane brief cited a 'volume control cap +
+  NaN guard in useKeyboardControls, clamp 0..100 (ui__webux/ui__fedev
+  minors)'. Verified false as cited: no such register row exists in either
+  review file, no `useKeyboardControls` file exists, and volume is a 0–1
+  scale whose clamp already ships. Verified real from source: `setVolume`
+  clamped with `Math.min(1, Math.max(0, v))` — which **propagates NaN** —
+  and `seedFromPreferences` assigned `prefs.defaultVolume` verbatim,
+  bypassing even the clamp, while `readStoredPreferences` shallow-spreads
+  the persisted blob verbatim over defaults. A corrupt `phlix.prefs`
+  (`{"defaultVolume": 5}`, `null`, a string) therefore flowed seed →
+  `volume` → `<video>.volume` raw (Player.vue pushes it on metadata load;
+  browsers throw IndexSizeError on out-of-range/non-finite) and was
+  persisted back by VolumeControl's watch. One `normalizeVolume` parse
+  channel (refuse non-finite, keep last good; clamp finite) now feeds both
+  writers — the volume twin of audit #14's resume-blob law and of
+  `setCurrent`'s duration guard. 6 pins: 4 measured RED on the parent
+  (NaN, ±Infinity, seed refusal, seed clamp), 2 green-at-parent pins of
+  the existing laws (finite clamp, well-formed seed) disclosed as pins,
+  not new behavior. U1 (Input.vue focus-visible + reduced-motion) and U3
+  (timeSecs NaN) were skipped ALREADY-CURED: both treatments ship at tip
+  (c5a3a66a's error-channel block; `setCurrent`'s isFinite duration
+  guard, already pinned) — evidence in FIX-UI-MIN2W.md.
+
 ## Unreleased — behavior-minors wave 2026-11-04 (FIX-QUEUE UI-M6 / UI-m27)
 
 ### Fixed

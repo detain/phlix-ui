@@ -84,6 +84,21 @@ function readTouchedMap(): Record<string, number> {
 }
 
 /**
+ * Parse a requested volume onto the store's 0–1 scale — the single channel
+ * every volume write flows through. Non-finite input is refused (null):
+ * Math.min/max PROPAGATE NaN, so the clamp alone cannot stop poison, and a
+ * bad `volume` reaches <video>.volume raw (Player.vue mirrors it verbatim,
+ * where real browsers throw IndexSizeError on a non-finite assignment) and
+ * gets persisted back to prefs by VolumeControl's watch. Refusing keeps the
+ * last good value; this is the volume twin of audit #14's resume-blob law
+ * and of setCurrent's duration guard.
+ */
+function normalizeVolume(v: unknown): number | null {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return null;
+  return Math.min(1, Math.max(0, v));
+}
+
+/**
  * usePlayerStore (R1.3) — singleton playback state shared across routes so a
  * mini-player can keep playing during navigation and "resume" / "up-next" work.
  *
@@ -340,8 +355,10 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     if (typeof navigator !== 'undefined' && navigator.mediaSession) navigator.mediaSession.playbackState = 'paused';
   }
   function setVolume(v: number): void {
-    volume.value = Math.min(1, Math.max(0, v));
-    if (volume.value > 0) muted.value = false;
+    const vol = normalizeVolume(v);
+    if (vol === null) return; // refuse NaN/±Infinity — keep the last good volume
+    volume.value = vol;
+    if (vol > 0) muted.value = false;
   }
   function toggleMute(): void {
     muted.value = !muted.value;
@@ -450,7 +467,10 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   /** Re-seed volume/quality/subtitle from the current preferences (e.g. on open). */
   function seedFromPreferences(): void {
-    volume.value = prefs.defaultVolume;
+    // defaultVolume arrives from a verbatim-hydrated localStorage blob, so it
+    // flows through the same parse channel instead of a raw assignment.
+    const vol = normalizeVolume(prefs.defaultVolume);
+    if (vol !== null) volume.value = vol;
     quality.value = prefs.defaultQuality;
     subtitleLang.value = prefs.defaultSubtitleLang;
   }
