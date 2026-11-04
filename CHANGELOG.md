@@ -12,6 +12,20 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — ToastHost doc-truth lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U3)
+
+### Fixed
+
+- **U3 — ToastHost's header no longer claims an aria-live region it does not
+  render (UI-m22).** The docblock promised "the region is aria-live=polite so
+  additions are announced" while the wrapper ships only role=region +
+  aria-label; the real announcement channel is each toast's own role
+  (`alert` for errors, `status` otherwise) — already pinned structurally. The
+  prose now names that channel honestly, and a tripwire pin asserts the
+  wrapper carries NO aria-live so docs and DOM cannot re-diverge.
+  src/** moved (SFC script comment edits ARE bundle-affecting): dist rebuilt
+  in this commit, deterministic x2 (aggregate md5 113506b5).
+
 ## Unreleased — Input number-clearing lane 2026-11-04 (FIX-UI-W6.md, ui-w6 U2)
 
 ### Fixed

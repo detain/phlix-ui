@@ -11,9 +11,12 @@ let hostCount = 0;
 <script setup lang="ts">
 /**
  * ToastHost (R0.4e) — renders toasts from useToastStore. Mount ONCE near the app
- * root. Teleports to <body>; the region is aria-live=polite so additions are
- * announced. Each toast has a tone icon, optional title/action, and a dismiss
- * button. Reduced-motion aware.
+ * root. Teleports to <body>. Announcements ride each toast's own role — `alert`
+ * for errors, `status` otherwise; the wrapper is a labeled region
+ * (role=region + aria-label) that deliberately carries NO aria-live, so a burst
+ * of arrivals speaks through the per-toast live roles instead of one region
+ * double-announcing them. Each toast has a tone icon, optional title/action,
+ * and a dismiss button. Reduced-motion aware.
  */
 import { onMounted, onBeforeUnmount } from 'vue';
 import Icon, { type IconName } from '../Icon.vue';

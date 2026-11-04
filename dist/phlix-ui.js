@@ -662,7 +662,7 @@ var $r = ["aria-label", "aria-expanded"], ei = {
 			_: 1
 		})], 10, Li)]));
 	}
-}), [["__scopeId", "data-v-0127c07a"]]);
+}), [["__scopeId", "data-v-3081e958"]]);
 // src/composables/color.ts
 function Gi(e) {
 	let t = e.trim().replace(/^#/, "");

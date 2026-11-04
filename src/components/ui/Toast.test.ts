@@ -87,3 +87,19 @@ describe('ToastHost', () => {
     expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(0);
   });
 });
+
+describe('ToastHost — announcement channel truth (ui__webux UI-m22)', () => {
+  it('the wrapper is a labeled region with NO aria-live — the per-toast roles are the live channel', async () => {
+    const s = useToastStore();
+    mount(ToastHost, { attachTo: document.body });
+    s.show({ message: 'Saved', tone: 'success', duration: 0 });
+    await new Promise((r) => setTimeout(r, 0));
+    const region = document.body.querySelector('.phlix-toasts') as HTMLElement;
+    expect(region.getAttribute('aria-live')).toBeNull();
+    expect(region.getAttribute('role')).toBe('region');
+    expect(region.getAttribute('aria-label')).toBe('Notifications');
+    // The docblock now states what the DOM does: this toast speaks through its
+    // own status role — the region never announces.
+    expect(document.body.querySelector('.phlix-toast')?.getAttribute('role')).toBe('status');
+  });
+});
