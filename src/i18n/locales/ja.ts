@@ -472,6 +472,9 @@ export const JA_MESSAGES = {
     searchTracksAria: 'トラックを検索',
     musicTracksAria: '音楽のトラック',
   },
+  search: {
+    showingOf: '{total}件中 {shown}件を表示',
+  },
   settings: {
     theme: 'テーマ',
     accent: 'アクセント',

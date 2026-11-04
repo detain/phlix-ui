@@ -471,6 +471,9 @@ export const PT_BR_MESSAGES = {
     searchTracksAria: 'Buscar faixas',
     musicTracksAria: 'Faixas de música',
   },
+  search: {
+    showingOf: 'Exibindo {shown} de {total} resultados',
+  },
   settings: {
     theme: 'Tema',
     accent: 'Destaque',

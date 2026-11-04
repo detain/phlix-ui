@@ -12,6 +12,21 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — webux majors lane 2026-11-04 (ui__webux)
+
+### Fixed (review-round 2026-11-04)
+
+- **Search results said nothing about the cap** (webux M5): `SearchPage` typed
+  the wire `total` and then bound the grid to `items.length` — a 25-of-400
+  result set rendered as if it were the complete answer. The grid now receives
+  the server total (final-length virtualized sizing), and when the page holds
+  only part of the matches a new catalog line says the cap out loud —
+  `search.showingOf` ('Showing {shown} of {total} results'), true translations
+  across all seven locales (catalog 515→516 keys / 25→26 groups; the prose
+  trio — errors.ts docblock, errors.test.ts margins note, README identity
+  claim + groups claim — rotated from the measured reds). An absent or
+  non-numeric wire `total` degrades to null, never `NaN`.
+
 ## Unreleased — copy/docs review lane 2026-11-04 (ui__copywriter + ui__writer + ui__pm)
 
 ### Fixed (review-round 2026-11-04)

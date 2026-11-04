@@ -471,6 +471,9 @@ export const DE_MESSAGES = {
     searchTracksAria: 'Titel durchsuchen',
     musicTracksAria: 'Musiktitel',
   },
+  search: {
+    showingOf: '{shown} von {total} Ergebnissen werden angezeigt',
+  },
   settings: {
     theme: 'Theme',
     accent: 'Akzent',

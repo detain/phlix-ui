@@ -327,7 +327,7 @@ mirrors: mechanical enforcement, zero review burden.
 
 The package ships **complete** translations of the whole English catalog for six
 locales: `es`, `fr`, `de`, `it`, `pt_BR`, `ja`. Each is a `satisfies PhlixMessages`
-object (same 25 groups, same key set), so the compiler rejects any missing or extra
+object (same 26 groups, same key set), so the compiler rejects any missing or extra
 key against `DEFAULT_MESSAGES`. They ride the existing config-time seam unchanged —
 a bundle is just a full `PhlixMessages` passed as `PhlixAppConfig.messages`:
 
@@ -387,7 +387,7 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-515-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
+516-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
 equality on every ui tag since the `v0.99.5` era (now `v0.99.14`-era) — ~150 registry strings
 would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is

@@ -588,6 +588,16 @@ export const DEFAULT_MESSAGES = {
     searchTracksAria: 'Search tracks',
     musicTracksAria: 'Music tracks',
   },
+  /** SearchPage (`/app/search`) surfaces (ui__webux M5). */
+  search: {
+    /**
+     * The cap line: the endpoint serves one capped page but the wire `total`
+     * is the full match count, so a partial list must say so instead of
+     * reading like the complete answer. Both numbers arrive pre-formatted at
+     * the call site (house idiom, cf. music.showingRange).
+     */
+    showingOf: 'Showing {shown} of {total} results',
+  },
   settings: {
     // Appearance section titles + radiogroup labels
     theme: 'Theme',

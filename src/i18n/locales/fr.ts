@@ -475,6 +475,9 @@ export const FR_MESSAGES = {
     searchTracksAria: 'Rechercher des pistes',
     musicTracksAria: 'Pistes de musique',
   },
+  search: {
+    showingOf: 'Affichage de {shown} résultats sur {total}',
+  },
   settings: {
     theme: 'Thème',
     accent: 'Accentuation',

@@ -473,6 +473,9 @@ export const ES_MESSAGES = {
     searchTracksAria: 'Buscar canciones',
     musicTracksAria: 'Canciones',
   },
+  search: {
+    showingOf: 'Mostrando {shown} de {total} resultados',
+  },
   settings: {
     theme: 'Tema',
     accent: 'Acento',

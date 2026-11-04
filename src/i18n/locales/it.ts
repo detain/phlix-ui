@@ -471,6 +471,9 @@ export const IT_MESSAGES = {
     searchTracksAria: 'Cerca brani',
     musicTracksAria: 'Brani musicali',
   },
+  search: {
+    showingOf: 'Visualizzazione di {shown} risultati su {total}',
+  },
   settings: {
     theme: 'Tema',
     accent: 'Accento',

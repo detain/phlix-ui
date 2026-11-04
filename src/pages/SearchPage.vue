@@ -24,6 +24,7 @@ import { useItemInspector } from '../composables/useItemInspector';
 import { useToastStore } from '../stores/useToastStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { ApiClient } from '../api/client';
+import { useMessages } from '../composables/useMessages';
 import { debounce } from '../utils/debounce';
 import type { MediaItem } from '../types/media-item';
 
@@ -33,10 +34,18 @@ const apiBase = useMediaApiBase();
 const userItemData = useUserItemDataStore();
 const toasts = useToastStore();
 const auth = useAuthStore();
+const { t } = useMessages();
 
 // --- search state -------------------------------------------------------
 const query = ref<string>('');
 const items = ref<MediaItem[]>([]);
+/**
+ * ui__webux M5 — the FULL server-side match count, separate from the capped
+ * page in `items`. Null when the wire carries no usable number (a stale proxy
+ * may omit it); the grid then sizes itself off the loaded count, exactly as it
+ * did before this ref existed.
+ */
+const serverTotal = ref<number | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const hasSearched = ref(false);
@@ -64,6 +73,7 @@ async function doSearch(): Promise<void> {
     // Reset when query is cleared
     if (q === '') {
         items.value = [];
+        serverTotal.value = null;
         hasSearched.value = false;
         error.value = null;
         return;
@@ -80,11 +90,16 @@ async function doSearch(): Promise<void> {
             { q },
         );
         items.value = result.items ?? [];
+        // ui__webux M5: trust-but-verify the wire count — a non-number (stale
+        // proxy, changed shape) degrades to null instead of rendering "NaN".
+        serverTotal.value =
+            typeof result.total === 'number' && Number.isFinite(result.total) ? result.total : null;
         // Hydrate user item data so cards show favorite/watched state
         items.value.forEach((item) => userItemData.hydrate(item));
     } catch (e) {
         error.value = e instanceof Error ? e.message : 'Search failed';
         items.value = [];
+        serverTotal.value = null;
     } finally {
         loading.value = false;
     }
@@ -114,6 +129,7 @@ watch(
                 void doSearch();
             } else {
                 items.value = [];
+                serverTotal.value = null;
                 hasSearched.value = false;
             }
         }
@@ -129,6 +145,21 @@ const showResults = computed(
 );
 const showPrompt = computed(() => !hasSearched.value && query.value.trim() === '');
 const showError = computed(() => hasSearched.value && error.value !== null);
+
+// ui__webux M5 — when the wire knows there are more matches than the capped
+// page carries, the list says so out loud: without this line a 25-of-400
+// result set reads like the complete answer.
+const showCapNotice = computed(
+    () => serverTotal.value !== null && items.value.length < serverTotal.value,
+);
+const capNotice = computed(() =>
+    serverTotal.value === null
+        ? ''
+        : t('search.showingOf', {
+              shown: items.value.length.toLocaleString(),
+              total: serverTotal.value.toLocaleString(),
+          }),
+);
 
 // S324 — admin ⋯-menu metadata actions (S15's "every MediaCard host" AC; this
 // host was the one S15's In-scope list omitted). "Edit metadata" opens the shared
@@ -208,16 +239,18 @@ function onMatchApplied(updated: MediaItem): void {
         />
 
         <!-- Results grid -->
-        <MediaGrid
-            v-else-if="showResults"
-            :items="items"
-            :total="items.length"
-            :can-match="auth.isAdmin"
-            @match="onMatch"
-            @refresh="onMatch"
-            @edit-metadata="onMatch"
-            @explore-data="openInspector"
-        />
+        <template v-else-if="showResults">
+            <p v-if="showCapNotice" class="search-cap-notice">{{ capNotice }}</p>
+            <MediaGrid
+                :items="items"
+                :total="serverTotal"
+                :can-match="auth.isAdmin"
+                @match="onMatch"
+                @refresh="onMatch"
+                @edit-metadata="onMatch"
+                @explore-data="openInspector"
+            />
+        </template>
 
         <MetadataMatchModal
             v-if="auth.isAdmin"
@@ -290,5 +323,12 @@ function onMatchApplied(updated: MediaItem): void {
     display: flex;
     justify-content: center;
     padding: var(--space-12) 0;
+}
+
+/* ui__webux M5 — the cap line sits directly above the grid it qualifies. */
+.search-cap-notice {
+    margin: 0 0 var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
 }
 </style>

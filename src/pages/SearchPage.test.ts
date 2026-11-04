@@ -58,13 +58,13 @@ function jsonResponse(body: unknown): Response {
   } as unknown as Response;
 }
 
-function stubFetch(opts: { items?: MediaItem[]; error?: boolean } = {}) {
+function stubFetch(opts: { items?: MediaItem[]; total?: number; error?: boolean } = {}) {
   const fn = vi.fn((url: unknown) => {
     const u = typeof url === 'string' ? url : '';
     if (isRoute(u, SEARCH_PATH)) {
       if (opts.error) return Promise.reject(new Error('search boom'));
       const items = opts.items ?? [media()];
-      return Promise.resolve(jsonResponse({ items, query: 'q', total: items.length }));
+      return Promise.resolve(jsonResponse({ items, query: 'q', total: opts.total ?? items.length }));
     }
     return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
   });
@@ -150,6 +150,54 @@ describe('SearchPage — states', () => {
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
     expect(empty.props('title')).toBe('Search failed');
+    w.unmount();
+  });
+});
+
+// ui__webux M5 — the wire says `total` matches; the page holds a capped
+// slice. Before the cure the grid was bound to `items.length` and the list
+// read like the complete answer: 25-of-400 rendered as "25 results".
+describe('SearchPage — server total vs capped page (ui__webux M5)', () => {
+  it('binds the server total to the grid, not the loaded page length', async () => {
+    stubFetch({ items: [media({ id: 'a' }), media({ id: 'b' })], total: 25 });
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    expect(w.findComponent(MediaGrid).props('total')).toBe(25);
+    w.unmount();
+  });
+
+  it('says the cap out loud when the page holds only part of the matches', async () => {
+    stubFetch({ items: [media({ id: 'a' }), media({ id: 'b' })], total: 25 });
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    expect(w.find('.search-cap-notice').text()).toBe('Showing 2 of 25 results');
+    w.unmount();
+  });
+
+  it('stays silent when the page already holds every match', async () => {
+    stubFetch({ items: [media()], total: 1 });
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    expect(w.find('.search-cap-notice').exists()).toBe(false);
+    expect(w.findComponent(MediaGrid).props('total')).toBe(1);
+    w.unmount();
+  });
+
+  it('degrades to null total when the wire carries no numeric total', async () => {
+    // The endpoint TYPE promises `total`; a stale proxy could omit it. Nothing
+    // may render NaN and the grid falls back to its loaded-count sizing.
+    const fn = vi.fn((url: unknown) => {
+      const u = typeof url === 'string' ? url : '';
+      if (isRoute(u, SEARCH_PATH)) {
+        return Promise.resolve(jsonResponse({ items: [media()], query: 'q' }));
+      }
+      return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
+    });
+    vi.stubGlobal('fetch', fn);
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    expect(w.find('.search-cap-notice').exists()).toBe(false);
+    expect(w.findComponent(MediaGrid).props('total')).toBeNull();
     w.unmount();
   });
 });
