@@ -2710,26 +2710,50 @@ var Ht = /* @__PURE__ */ new WeakMap(), Ut = class {
 	}
 };
 new Ut();
-// src/stores/useToastStore.ts
 var Wt = z("phlix-toast", () => {
-	let e = S([]), t = /* @__PURE__ */ new Map(), n = 0;
-	function r(n) {
-		let r = t.get(n);
-		r && (clearTimeout(r), t.delete(n)), e.value = e.value.filter((e) => e.id !== n);
+	let e = S([]), t = /* @__PURE__ */ new Map(), n = /* @__PURE__ */ new Map(), r = 0;
+	function i(r) {
+		let i = t.get(r);
+		i && i.handle !== null && clearTimeout(i.handle), t.delete(r), n.delete(r), e.value = e.value.filter((e) => e.id !== r);
 	}
-	function i(i) {
-		let a = ++n, o = {
+	function a(e, n) {
+		t.set(e, {
+			remaining: n,
+			startedAt: Date.now(),
+			handle: setTimeout(() => i(e), n)
+		});
+	}
+	function o(e, r) {
+		let i = n.get(e) ?? /* @__PURE__ */ new Set();
+		if (n.set(e, i), i.has(r) || (i.add(r), i.size > 1)) return;
+		let a = t.get(e);
+		if (!a || a.handle === null) return;
+		clearTimeout(a.handle);
+		let o = Math.max(0, Date.now() - (a.startedAt ?? Date.now()));
+		a.handle = null, a.startedAt = null, a.remaining = Math.max(0, a.remaining - o);
+	}
+	function s(e, r) {
+		let i = n.get(e);
+		if (!i || !i.has(r) || (i.delete(r), i.size > 0)) return;
+		let o = t.get(e);
+		o && o.handle === null && a(e, o.remaining);
+	}
+	function c(t) {
+		let n = ++r, o = {
 			tone: "neutral",
 			duration: 5e3,
-			...i,
-			id: a
+			...t,
+			id: n
 		};
-		return e.value.push(o), o.duration > 0 && t.set(a, setTimeout(() => r(a), o.duration)), a;
+		for (e.value.push(o), o.duration > 0 && o.action === void 0 && a(n, o.duration); e.value.length > 5;) i(e.value[0].id);
+		return n;
 	}
-	function a() {
-		t.forEach((e) => clearTimeout(e)), t.clear(), e.value = [];
+	function l() {
+		t.forEach((e) => {
+			e.handle !== null && clearTimeout(e.handle);
+		}), t.clear(), n.clear(), e.value = [];
 	}
-	function o(e, t, n) {
+	function u(e, t, n) {
 		if (t === void 0) return {
 			...n,
 			message: e
@@ -2748,16 +2772,18 @@ var Wt = z("phlix-toast", () => {
 	}
 	return {
 		toasts: e,
-		show: i,
-		dismiss: r,
-		clear: a,
-		success: (e, t) => i(o(e, t, { tone: "success" })),
-		error: (e, t) => i(o(e, t, {
+		show: c,
+		dismiss: i,
+		clear: l,
+		hold: o,
+		release: s,
+		success: (e, t) => c(u(e, t, { tone: "success" })),
+		error: (e, t) => c(u(e, t, {
 			tone: "error",
 			duration: 8e3
 		})),
-		warning: (e, t) => i(o(e, t, { tone: "warning" })),
-		info: (e, t) => i(o(e, t, { tone: "info" }))
+		warning: (e, t) => c(u(e, t, { tone: "warning" })),
+		info: (e, t) => c(u(e, t, { tone: "info" }))
 	};
 });
 // src/api/admin/users.ts

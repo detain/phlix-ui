@@ -17,6 +17,13 @@ let hostCount = 0;
  * of arrivals speaks through the per-toast live roles instead of one region
  * double-announcing them. Each toast has a tone icon, optional title/action,
  * and a dismiss button. Reduced-motion aware.
+ *
+ * UI-M18 (review ui__webux, WCAG 2.2.1): resting the pointer or the keyboard
+ * focus on a toast freezes its countdown — the template's pointer/focus
+ * handlers drive the store's refcounted `hold`/`release` — and a toast
+ * carrying an action never times out at all (the store's own law, pinned in
+ * useToastStore.test.ts). Leaving the last holding channel resumes exactly
+ * the remaining time.
  */
 import { onMounted, onBeforeUnmount } from 'vue';
 import Icon, { type IconName } from '../Icon.vue';
@@ -62,6 +69,10 @@ onBeforeUnmount(() => {
           class="phlix-toast"
           :class="`phlix-toast--${t.tone}`"
           :role="t.tone === 'error' ? 'alert' : 'status'"
+          @pointerenter="toasts.hold(t.id, 'pointer')"
+          @pointerleave="toasts.release(t.id, 'pointer')"
+          @focusin="toasts.hold(t.id, 'focus')"
+          @focusout="toasts.release(t.id, 'focus')"
         >
           <Icon :name="iconFor(t)" class="phlix-toast__icon" />
           <div class="phlix-toast__content">

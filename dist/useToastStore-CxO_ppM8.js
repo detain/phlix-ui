@@ -1,0 +1,81 @@
+import { ref as e } from "vue";
+import { defineStore as t } from "pinia";
+var n = t("phlix-toast", () => {
+	let t = e([]), n = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), i = 0;
+	function a(e) {
+		let i = n.get(e);
+		i && i.handle !== null && clearTimeout(i.handle), n.delete(e), r.delete(e), t.value = t.value.filter((t) => t.id !== e);
+	}
+	function o(e, t) {
+		n.set(e, {
+			remaining: t,
+			startedAt: Date.now(),
+			handle: setTimeout(() => a(e), t)
+		});
+	}
+	function s(e, t) {
+		let i = r.get(e) ?? /* @__PURE__ */ new Set();
+		if (r.set(e, i), i.has(t) || (i.add(t), i.size > 1)) return;
+		let a = n.get(e);
+		if (!a || a.handle === null) return;
+		clearTimeout(a.handle);
+		let o = Math.max(0, Date.now() - (a.startedAt ?? Date.now()));
+		a.handle = null, a.startedAt = null, a.remaining = Math.max(0, a.remaining - o);
+	}
+	function c(e, t) {
+		let i = r.get(e);
+		if (!i || !i.has(t) || (i.delete(t), i.size > 0)) return;
+		let a = n.get(e);
+		a && a.handle === null && o(e, a.remaining);
+	}
+	function l(e) {
+		let n = ++i, r = {
+			tone: "neutral",
+			duration: 5e3,
+			...e,
+			id: n
+		};
+		for (t.value.push(r), r.duration > 0 && r.action === void 0 && o(n, r.duration); t.value.length > 5;) a(t.value[0].id);
+		return n;
+	}
+	function u() {
+		n.forEach((e) => {
+			e.handle !== null && clearTimeout(e.handle);
+		}), n.clear(), r.clear(), t.value = [];
+	}
+	function d(e, t, n) {
+		if (t === void 0) return {
+			...n,
+			message: e
+		};
+		let { message: r, ...i } = t;
+		return r === void 0 ? {
+			...n,
+			...i,
+			message: e
+		} : {
+			...n,
+			title: i.title ?? e,
+			...i,
+			message: r
+		};
+	}
+	return {
+		toasts: t,
+		show: l,
+		dismiss: a,
+		clear: u,
+		hold: s,
+		release: c,
+		success: (e, t) => l(d(e, t, { tone: "success" })),
+		error: (e, t) => l(d(e, t, {
+			tone: "error",
+			duration: 8e3
+		})),
+		warning: (e, t) => l(d(e, t, { tone: "warning" })),
+		info: (e, t) => l(d(e, t, { tone: "info" }))
+	};
+});
+export { n as t };
+
+//# sourceMappingURL=useToastStore-CxO_ppM8.js.map

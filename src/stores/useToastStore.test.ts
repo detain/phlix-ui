@@ -7,7 +7,11 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useToastStore } from './useToastStore';
+import { useToastStore, MAX_VISIBLE_TOASTS } from './useToastStore';
+import * as toastStoreModule from './useToastStore';
+
+/** The visible-stack cap the store must enforce (pinned to its export below). */
+const CAP = 5;
 
 describe('useToastStore', () => {
     beforeEach(() => {
@@ -256,6 +260,150 @@ describe('useToastStore', () => {
 
             // clearTimeout should only be called once (the first dismiss)
             expect(vi.spyOn(global, 'clearTimeout')).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    // UI-M18 (review ui__webux, deferred-3 from FIX-UI-W2): the stack was
+    // unbounded, its timers fixed at show-time, and action buttons evaporated
+    // mid-interaction (WCAG 2.2.1 Timing Adjustable). The cure ships three
+    // laws, one pin group each: a bounded stack with oldest-evicted eviction,
+    // refcounted hold/resume pause of the countdown, and actionable toasts
+    // that refuse auto-dismiss entirely.
+    describe('UI-M18 — bounded stack (oldest evicted)', () => {
+        it('ships the cap the tests assume', () => {
+            expect((toastStoreModule as unknown as Record<string, unknown>).MAX_VISIBLE_TOASTS).toBe(CAP);
+        });
+
+        it('caps the visible stack at MAX_VISIBLE_TOASTS, evicting the oldest first', () => {
+            const store = useToastStore();
+            for (const name of ['one', 'two', 'three', 'four', 'five', 'six']) {
+                store.show({ message: name, duration: 0 }); // sticky: isolate the cap from timers
+            }
+            expect(store.toasts).toHaveLength(MAX_VISIBLE_TOASTS);
+            expect(store.toasts.map((x) => x.message)).toEqual(['two', 'three', 'four', 'five', 'six']);
+        });
+
+        it('eviction clears the evicted toast timer, so a dismissed toast can never fire', () => {
+            const store = useToastStore();
+            store.show({ message: 'oldest', duration: 5000 });
+            for (const name of ['a', 'b', 'c', 'd', 'e']) store.show({ message: name, duration: 0 });
+            expect(store.toasts.map((x) => x.message)).not.toContain('oldest');
+
+            // The evicted toast's timer must be gone: advancing past its
+            // duration must not dismiss whichever survivor happens to share
+            // the clock window — the stack stays exactly as it is.
+            vi.advanceTimersByTime(99999);
+            expect(store.toasts).toHaveLength(MAX_VISIBLE_TOASTS);
+        });
+
+        it('the cap counts against a fresh burst, not against history', () => {
+            const store = useToastStore();
+            store.show({ message: 'first', duration: 1000 });
+            vi.advanceTimersByTime(1000); // 'first' auto-dismisses
+            for (const name of ['a', 'b', 'c', 'd', 'e']) store.show({ message: name, duration: 0 });
+            expect(store.toasts).toHaveLength(MAX_VISIBLE_TOASTS);
+            expect(store.toasts[0]!.message).toBe('a');
+        });
+    });
+
+    describe('UI-M18 — actionable toasts refuse auto-dismiss entirely', () => {
+        it('a toast carrying an action never times out', () => {
+            const store = useToastStore();
+            const onClick = vi.fn();
+            store.show({ message: 'Deleted', duration: 1000, action: { label: 'Undo', onClick } });
+
+            vi.advanceTimersByTime(60000);
+
+            expect(store.toasts).toHaveLength(1);
+        });
+
+        it('its action stays clickable and still dismisses it', () => {
+            const store = useToastStore();
+            const onClick = vi.fn();
+            const id = store.show({ message: 'Deleted', duration: 1000, action: { label: 'Undo', onClick } });
+
+            const toast = store.toasts[0]!;
+            toast.action!.onClick();
+            store.dismiss(id);
+
+            expect(onClick).toHaveBeenCalledOnce();
+            expect(store.toasts).toHaveLength(0);
+        });
+
+        it('the no-action default is unchanged: an ordinary toast still times out', () => {
+            const store = useToastStore();
+            store.show({ message: 'plain', duration: 1000 });
+            vi.advanceTimersByTime(1000);
+            expect(store.toasts).toHaveLength(0);
+        });
+    });
+
+    describe('UI-M18 — hold/resume freezes the countdown (pointer + focus refcounted)', () => {
+        it('hold pauses dismissal and release resumes it for the remaining time', () => {
+            const store = useToastStore();
+            const id = store.show({ message: 'readable', duration: 5000 });
+
+            store.hold(id, 'pointer');
+            vi.advanceTimersByTime(10000); // hovered through its whole window
+            expect(store.toasts).toHaveLength(1);
+
+            store.release(id, 'pointer');
+            vi.advanceTimersByTime(4999); // the FULL original window — none of it was consumed while held
+            expect(store.toasts).toHaveLength(1);
+
+            vi.advanceTimersByTime(1);
+            expect(store.toasts).toHaveLength(0);
+        });
+
+        it('holds are refcounted per source — releasing the pointer while focus is inside keeps it alive', () => {
+            const store = useToastStore();
+            const id = store.show({ message: 'tabbed', duration: 5000 });
+
+            store.hold(id, 'pointer');
+            store.hold(id, 'focus');
+            store.release(id, 'pointer');
+            vi.advanceTimersByTime(60000);
+            expect(store.toasts).toHaveLength(1); // focus still inside — no timeout may fire
+
+            store.release(id, 'focus');
+            vi.advanceTimersByTime(5000);
+            expect(store.toasts).toHaveLength(0);
+        });
+
+        it('dismiss clears a pending hold so release/resume can never resurrect a gone toast', () => {
+            const store = useToastStore();
+            const id = store.show({ message: 'gone', duration: 5000 });
+            store.hold(id, 'focus');
+            store.dismiss(id);
+
+            expect(store.toasts).toHaveLength(0);
+            expect(() => store.release(id, 'focus')).not.toThrow();
+            vi.advanceTimersByTime(60000);
+            expect(store.toasts).toHaveLength(0);
+        });
+
+        it('release without a prior hold is inert (no phantom timer, no early dismiss)', () => {
+            const store = useToastStore();
+            const id = store.show({ message: 'untouched', duration: 5000 });
+
+            expect(() => store.release(id, 'pointer')).not.toThrow();
+            vi.advanceTimersByTime(4999);
+            expect(store.toasts).toHaveLength(1);
+            vi.advanceTimersByTime(1);
+            expect(store.toasts).toHaveLength(0);
+        });
+
+        it('hold/resume on an actionable toast is safe and irrelevant — it never times out', () => {
+            const store = useToastStore();
+            const id = store.show({
+                message: 'undo-me',
+                duration: 1000,
+                action: { label: 'Undo', onClick: vi.fn() },
+            });
+            store.hold(id, 'focus');
+            store.release(id, 'focus');
+            vi.advanceTimersByTime(60000);
+            expect(store.toasts).toHaveLength(1);
         });
     });
 });

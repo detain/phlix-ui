@@ -103,3 +103,80 @@ describe('ToastHost — announcement channel truth (ui__webux UI-m22)', () => {
     expect(document.body.querySelector('.phlix-toast')?.getAttribute('role')).toBe('status');
   });
 });
+// UI-M18 (review ui__webux): ToastHost must wire the pointer and keyboard into
+// the store's hold/resume pause — WCAG 2.2.1 Timing Adjustable. These pins
+// drive the REAL events on the REAL toast element; the countdown pausing is
+// the store's own law (pinned in useToastStore.test.ts), the wiring is here.
+describe('ToastHost — hover/focus pause the countdown (UI-M18)', () => {
+  const flush = () => vi.advanceTimersByTimeAsync(0);
+  const toastEl = () => document.body.querySelector('.phlix-toast') as HTMLElement;
+
+  it('pointerenter freezes dismissal; the toast survives its whole window', async () => {
+    vi.useFakeTimers();
+    const s = useToastStore();
+    mount(ToastHost, { attachTo: document.body });
+    s.show({ message: 'reading', duration: 2000 });
+    await flush();
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(1);
+
+    toastEl().dispatchEvent(new Event('pointerenter'));
+    await vi.advanceTimersByTimeAsync(5000); // hovered through (and past) its window
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(1);
+
+    toastEl().dispatchEvent(new Event('pointerleave'));
+    await vi.advanceTimersByTimeAsync(1999); // full original window resumes
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(0);
+    vi.useRealTimers();
+  });
+
+  it('focus inside the toast freezes dismissal too (keyboard user on the action)', async () => {
+    vi.useFakeTimers();
+    const s = useToastStore();
+    mount(ToastHost, { attachTo: document.body });
+    s.show({ message: 'tabbed', duration: 2000 });
+    await flush();
+
+    toastEl().dispatchEvent(new Event('focusin'));
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(1);
+
+    toastEl().dispatchEvent(new Event('focusout'));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(0);
+    vi.useRealTimers();
+  });
+
+  it('both sources hold at once — leaving the pointer while focus stays inside keeps the toast up', async () => {
+    vi.useFakeTimers();
+    const s = useToastStore();
+    mount(ToastHost, { attachTo: document.body });
+    s.show({ message: 'both', duration: 2000 });
+    await flush();
+
+    const el = toastEl();
+    el.dispatchEvent(new Event('pointerenter'));
+    el.dispatchEvent(new Event('focusin'));
+    el.dispatchEvent(new Event('pointerleave')); // mouse leaves, caret still inside
+    await vi.advanceTimersByTimeAsync(9000);
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(1);
+
+    el.dispatchEvent(new Event('focusout'));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(document.body.querySelectorAll('.phlix-toast')).toHaveLength(0);
+    vi.useRealTimers();
+  });
+
+  it('an actionable toast renders past any timer — the Undo button cannot evaporate mid-interaction', async () => {
+    vi.useFakeTimers();
+    const s = useToastStore();
+    mount(ToastHost, { attachTo: document.body });
+    s.show({ message: 'Deleted', duration: 1000, action: { label: 'Undo', onClick: vi.fn() } });
+    await flush();
+
+    await vi.advanceTimersByTimeAsync(60000); // ten windows with nobody hovering
+    expect(document.body.querySelectorAll('.phlix-toast__action')).toHaveLength(1);
+    vi.useRealTimers();
+  });
+});

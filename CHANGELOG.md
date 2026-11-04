@@ -12,6 +12,32 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — bounded toast stack lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U3)
+
+### Changed
+
+- **U3 — the toast stack is bounded, holdable, and action-safe (UI-M18, review
+  ui__webux — deferred-3 from FIX-UI-W2; its test contract landed as a dead
+  lane's WIP and was adopted from disk).** Three laws, one commit:
+  (1) at most `MAX_VISIBLE_TOASTS = 5` toasts are visible; over the cap the
+  OLDEST is evicted, and eviction kills its timer so a dismissed toast can
+  never fire against a survivor — error bursts (failing poll loops, offline
+  retry storms) no longer stack forever. (2) `hold(id, source)`/
+  `release(id, source)` freeze and resume a countdown, refcounted per source
+  (`pointer` | `focus`); <ToastHost> wires them to pointerenter/leave and
+  focusin/out, so reading or tabbing onto a toast stops its clock and the
+  resume grants exactly the remaining time (WCAG 2.2.1 Timing Adjustable).
+  (3) a toast carrying an action REFUSES auto-dismiss entirely — an Undo
+  button cannot evaporate mid-interaction; it leaves when clicked or closed.
+  **Behavior disclosure:** the one actionable toast in the shipped UI
+  (PlaylistPickerModal's "Delete empty playlist" recovery, 10s) now stays
+  until acted on or dismissed — the intentional shape of law 3.
+  Pins: the dead lane's contract (14 convictions: 10 store + 4 host, all
+  measured RED at the parent: `store.hold is not a function` / cap absent /
+  timers unfrozen) adopted with ONE disclosed repair — the WIP referenced the
+  `MAX_VISIBLE_TOASTS` binding without importing it (TypeError-red whole file);
+  the named import added. 47+12 across the toast suites green, zero collateral.
+
 ## Unreleased — optimistic-rollback server-truth lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U2)
 
 ### Fixed
