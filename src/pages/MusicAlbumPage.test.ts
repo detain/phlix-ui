@@ -213,6 +213,30 @@ describe('MusicAlbumPage', () => {
     w.unmount();
   });
 
+  /**
+   * ui__webux m21 — the error state was a dead end: a message with no way out.
+   * The retry must be WIRED, not decorative: flipping the stub from reject to a
+   * resolved album and clicking retry has to clear the error and render the
+   * header, proving the button re-issues the live loader (loadAlbum).
+   */
+  it('error state offers a retry that reloads the album (ui__webux m21)', async () => {
+    stubFetch({ error: true });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('.album-page__error').exists()).toBe(true);
+
+    const retry = w.find('[data-testid="album-retry"]');
+    expect(retry.exists()).toBe(true);
+
+    // The server recovers; retry re-runs the load and the album renders.
+    stubFetch();
+    await retry.trigger('click');
+    await flushPromises();
+    expect(w.find('.album-page__error').exists()).toBe(false);
+    expect(w.find('.album-header__title').text()).toBe('OK Computer');
+    w.unmount();
+  });
+
   it('plays a track through the shared player when a row is clicked', async () => {
     stubFetch();
     const w = mountPage(makeRouter());

@@ -4622,17 +4622,29 @@ var Is = {
 					class: "album-page__back-icon"
 				}), B("span", null, Y(X(n)("player.back")), 1)]),
 				_: 1
-			})]), f.value ? (K(), z("div", Dd, [t[1] ||= or("<div class=\"album-skel\" data-v-922a062d><div class=\"album-skel__art\" data-v-922a062d></div><div class=\"album-skel__info\" data-v-922a062d><div class=\"album-skel__title\" data-v-922a062d></div><div class=\"album-skel__artist\" data-v-922a062d></div><div class=\"album-skel__meta\" data-v-922a062d></div></div></div>", 1), B("div", Od, [(K(), z(F, null, J(8, (e) => B("div", {
+			})]), f.value ? (K(), z("div", Dd, [t[1] ||= or("<div class=\"album-skel\" data-v-47a8360c><div class=\"album-skel__art\" data-v-47a8360c></div><div class=\"album-skel__info\" data-v-47a8360c><div class=\"album-skel__title\" data-v-47a8360c></div><div class=\"album-skel__artist\" data-v-47a8360c></div><div class=\"album-skel__meta\" data-v-47a8360c></div></div></div>", 1), B("div", Od, [(K(), z(F, null, J(8, (e) => B("div", {
 				key: e,
 				class: "track-skel"
 			}, [...t[0] ||= [
 				B("div", { class: "track-skel__num" }, null, -1),
 				B("div", { class: "track-skel__title" }, null, -1),
 				B("div", { class: "track-skel__duration" }, null, -1)
-			]])), 64))])])) : p.value ? (K(), z("div", kd, [H(l, {
-				name: "alert-circle",
-				class: "album-page__error-icon"
-			}), B("p", null, Y(p.value), 1)])) : u.value ? (K(), z(F, { key: 2 }, [B("header", Ad, [B("div", jd, [u.value.albumArtUrl ? (K(), z("img", {
+			]])), 64))])])) : p.value ? (K(), z("div", kd, [
+				H(l, {
+					name: "alert-circle",
+					class: "album-page__error-icon"
+				}),
+				B("p", null, Y(p.value), 1),
+				H(j, {
+					variant: "outline",
+					size: "sm",
+					"data-testid": "album-retry",
+					onClick: g
+				}, {
+					default: Q(() => [V(Y(X(n)("common.retry")), 1)]),
+					_: 1
+				})
+			])) : u.value ? (K(), z(F, { key: 2 }, [B("header", Ad, [B("div", jd, [u.value.albumArtUrl ? (K(), z("img", {
 				key: 1,
 				src: X(a)(u.value.albumArtUrl),
 				alt: u.value.title,
@@ -4682,7 +4694,7 @@ var Is = {
 			}), B("p", null, Y(X(n)("music.noTracks")), 1)]))]);
 		};
 	}
-}), [["__scopeId", "data-v-922a062d"]]), Kd = { class: "artists-page" }, qd = { class: "artists-page__header" }, Jd = { class: "artists-page__title" }, Yd = { class: "artists-page__description" }, Xd = {
+}), [["__scopeId", "data-v-47a8360c"]]), Kd = { class: "artists-page" }, qd = { class: "artists-page__header" }, Jd = { class: "artists-page__title" }, Yd = { class: "artists-page__description" }, Xd = {
 	key: 0,
 	class: "artists-page__count",
 	"data-count": "artists",

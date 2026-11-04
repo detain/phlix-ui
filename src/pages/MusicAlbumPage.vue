@@ -31,6 +31,7 @@ import { useMusicPlayer } from '../composables/useMusicPlayer';
 import { ApiClient } from '../api/client';
 import MusicTrackList from '../components/MusicTrackList.vue';
 import Icon from '../components/Icon.vue';
+import Button from '../components/ui/Button.vue';
 import type { MusicAlbum, MusicTrack } from '../types/music';
 
 const props = defineProps<{
@@ -179,6 +180,12 @@ function playAll(): void {
         <div v-else-if="error" class="album-page__error" role="alert">
             <Icon name="alert-circle" class="album-page__error-icon" />
             <p>{{ error }}</p>
+            <!-- ui__webux m21: the message used to be a dead end. Retry re-runs
+                 loadAlbum() (which resets error itself), so a transient failure
+                 no longer strands the reader. -->
+            <Button variant="outline" size="sm" data-testid="album-retry" @click="loadAlbum">
+                {{ t('common.retry') }}
+            </Button>
         </div>
 
         <!-- Album detail -->

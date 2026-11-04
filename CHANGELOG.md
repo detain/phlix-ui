@@ -12,6 +12,22 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — webux behavior tail lane 2026-11-04 (FIX-UI-W8.md, U1)
+
+### Changed
+
+- **U1 — MusicAlbumPage's error state gains a WIRED retry (UI-m21, review
+  ui__webux: "error state is a dead end — message with no retry").** The
+  failure branch rendered icon + message inside the `role="alert"` div and
+  stopped there, so a transient album-load rejection stranded the reader.
+  It now carries `<Button variant="outline" size="sm">` labeled
+  `t('common.retry')` (already catalogued in all seven locales) wired to
+  `loadAlbum()` — which resets `error` itself, so a recovered server clears
+  the state and renders the album. Red-measured pin at the parent: the new
+  test flips the fetch stub from reject to a resolved album and asserts the
+  retry clears `.album-page__error` and renders the header — the message-only
+  parent is convicted at the retry-existence assertion (1F/18P targeted).
+
 ## Unreleased — bounded toast stack lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U3)
 
 ### Changed
