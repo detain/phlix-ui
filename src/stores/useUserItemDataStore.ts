@@ -54,6 +54,9 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
     () => profiles.epoch,
     () => {
       entries.value = new Map();
+      // UI-m48: the last-known-server values were recorded under the OLD
+      // profile's scope — S82 law says they cannot outlive it either.
+      serverTruth.clear();
     },
   );
 
@@ -98,6 +101,23 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
   }
 
   /**
+   * UI-m48 (review ui__webux): the last value the SERVER confirmed per item —
+   * fed by `hydrate` (server payload) and by every successful write. On a
+   * failed optimistic write the rollback restores THIS, never the flip's own
+   * pre-op snapshot: with overlapping toggles that snapshot can be two writes
+   * stale (the review's "cache true while server is false" class). Deliberately
+   * NOT reactive — it is consulted only on the failure path; the map above
+   * remains the rendered state. With no server record yet the rollback falls
+   * back to the old snapshot (the server has never contradicted it).
+   */
+  const serverTruth = new Map<string, UserItemData>();
+
+  function recordServerTruth(id: string, patch: Partial<UserItemData>): void {
+    const current = serverTruth.get(id) ?? { ...DEFAULT_ENTRY };
+    serverTruth.set(id, { ...current, ...patch });
+  }
+
+  /**
    * Seed the cache entry for an item from its server `user_data` block. Safe to
    * call repeatedly (e.g. on each detail open). `user_data` is optional/nullable
    * — when absent the entry defaults to favorite=false, rating=null, like_level=0.
@@ -105,12 +125,14 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
   function hydrate(item: MediaDetail | MediaListItem | null | undefined): void {
     if (!item || typeof item.id !== 'string') return;
     const ud = (item as MediaDetail).user_data;
-    entries.value.set(item.id, {
+    const seeded: UserItemData = {
       favorite: ud?.favorite ?? false,
       rating: ud?.rating ?? null,
       like_level: ud?.like_level ?? 0,
       watched: ud?.watched ?? false,
-    });
+    };
+    entries.value.set(item.id, seeded);
+    serverTruth.set(item.id, { ...seeded });
   }
 
   function setEntry(id: string, patch: Partial<UserItemData>): void {
@@ -136,12 +158,15 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       } else {
         await api.removeFavorite(id);
       }
+      recordServerTruth(id, { favorite: next }); // UI-m48: the server just confirmed it
     } catch (e) {
-      // Roll back the optimistic flip and tell the user. UI-m49: the action
-      // context rides the catalog ('my list' worded, both arms); the appended
-      // error detail stays the raw errMessage channel — that class is its own
-      // registered wave (INFO-UI-33), not this fix.
-      setEntry(id, { favorite: previous });
+      // Roll back to the last value the SERVER confirmed — never this flip's
+      // own pre-op snapshot, which overlapping writes can make stale (UI-m48);
+      // with no server record yet the snapshot is the best-known fallback.
+      // UI-m49: the action context rides the catalog ('my list' worded, both
+      // arms); the appended error detail stays the raw errMessage channel.
+      const truth = serverTruth.get(id);
+      setEntry(id, { favorite: truth ? truth.favorite : previous });
       const copy = next ? t('itemActions.favoriteAddError') : t('itemActions.favoriteRemoveError');
       useToastStore().error(`${copy}: ${errMessage(e)}`);
     }
@@ -166,9 +191,12 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
       } else {
         await api.markUnwatched(id);
       }
+      recordServerTruth(id, { watched: next }); // UI-m48
     } catch (e) {
-      setEntry(id, { watched: previous });
+      // UI-m48: roll back to server truth (snapshot fallback when unseen);
       // UI-m49: catalog copy both arms (see toggleFavorite).
+      const truth = serverTruth.get(id);
+      setEntry(id, { watched: truth ? truth.watched : previous });
       const copy = next ? t('itemActions.markWatchedError') : t('itemActions.markUnwatchedError');
       useToastStore().error(`${copy}: ${errMessage(e)}`);
     }
@@ -196,11 +224,14 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
 
     try {
       await client(apiBase).setLikeLevel(id, next);
+      recordServerTruth(id, { like_level: next }); // UI-m48
     } catch (e) {
-      // Roll back the optimistic change to the precise prior level and tell the
-      // user. UI-m49: the action context rides the catalog; errMessage detail
-      // stays on the raw channel (INFO-UI-33's own wave).
-      setEntry(id, { like_level: previous });
+      // Roll back to the last level the SERVER confirmed (UI-m48; the prior
+      // level is the fallback only when the server never spoke about the
+      // item). UI-m49: the action context rides the catalog; errMessage
+      // detail stays on the raw channel (INFO-UI-33's own wave).
+      const truth = serverTruth.get(id);
+      setEntry(id, { like_level: truth ? truth.like_level : previous });
       useToastStore().error(`${t('itemActions.ratingSaveError')}: ${errMessage(e)}`);
     }
   }
@@ -208,6 +239,7 @@ export const useUserItemDataStore = defineStore('user-item-data', () => {
   /** Discard the cached client so the next call rebuilds it (e.g. on logout). */
   function reset(): void {
     entries.value = new Map();
+    serverTruth.clear(); // UI-m48: stale server records die with the cache
     apiClient = null;
   }
 

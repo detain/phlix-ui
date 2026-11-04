@@ -3864,7 +3864,7 @@ var Cn = z("profile", () => {
 }), Tn = z("user-item-data", () => {
 	let e = S(/* @__PURE__ */ new Map()), t = Cn();
 	P(() => t.epoch, () => {
-		e.value = /* @__PURE__ */ new Map();
+		e.value = /* @__PURE__ */ new Map(), l.clear();
 	});
 	let { t: n } = J(), r = null;
 	function i(e) {
@@ -3882,60 +3882,71 @@ var Cn = z("profile", () => {
 	function c(t) {
 		return e.value.get(t) ?? { ...wn };
 	}
-	function l(t) {
+	let l = /* @__PURE__ */ new Map();
+	function u(e, t) {
+		let n = l.get(e) ?? { ...wn };
+		l.set(e, {
+			...n,
+			...t
+		});
+	}
+	function d(t) {
 		if (!t || typeof t.id != "string") return;
-		let n = t.user_data;
-		e.value.set(t.id, {
+		let n = t.user_data, r = {
 			favorite: n?.favorite ?? !1,
 			rating: n?.rating ?? null,
 			like_level: n?.like_level ?? 0,
 			watched: n?.watched ?? !1
-		});
+		};
+		e.value.set(t.id, r), l.set(t.id, { ...r });
 	}
-	function u(t, n) {
+	function f(t, n) {
 		let r = e.value.get(t) ?? { ...wn };
 		e.value.set(t, {
 			...r,
 			...n
 		});
 	}
-	async function d(e, t) {
+	async function p(e, t) {
 		let r = a(e), o = !r;
-		u(e, { favorite: o });
+		f(e, { favorite: o });
 		try {
 			let n = i(t);
-			o ? await n.addFavorite(e) : await n.removeFavorite(e);
+			o ? await n.addFavorite(e) : await n.removeFavorite(e), u(e, { favorite: o });
 		} catch (t) {
-			u(e, { favorite: r });
-			let i = n(o ? "itemActions.favoriteAddError" : "itemActions.favoriteRemoveError");
-			Wt().error(`${i}: ${ve(t)}`);
+			let i = l.get(e);
+			f(e, { favorite: i ? i.favorite : r });
+			let a = n(o ? "itemActions.favoriteAddError" : "itemActions.favoriteRemoveError");
+			Wt().error(`${a}: ${ve(t)}`);
 		}
 	}
-	async function f(e, t) {
+	async function m(e, t) {
 		let r = s(e), a = !r;
-		u(e, { watched: a });
+		f(e, { watched: a });
 		try {
 			let n = i(t);
-			a ? await n.markWatched(e) : await n.markUnwatched(e);
+			a ? await n.markWatched(e) : await n.markUnwatched(e), u(e, { watched: a });
 		} catch (t) {
-			u(e, { watched: r });
-			let i = n(a ? "itemActions.markWatchedError" : "itemActions.markUnwatchedError");
-			Wt().error(`${i}: ${ve(t)}`);
+			let i = l.get(e);
+			f(e, { watched: i ? i.watched : r });
+			let o = n(a ? "itemActions.markWatchedError" : "itemActions.markUnwatchedError");
+			Wt().error(`${o}: ${ve(t)}`);
 		}
 	}
-	async function p(e, t, r) {
+	async function h(e, t, r) {
 		let a = Math.trunc(Number(t));
 		Number.isFinite(a) || (a = 0), a < -2 && (a = -2), a > 2 && (a = 2);
 		let s = o(e);
-		u(e, { like_level: a });
+		f(e, { like_level: a });
 		try {
-			await i(r).setLikeLevel(e, a);
+			await i(r).setLikeLevel(e, a), u(e, { like_level: a });
 		} catch (t) {
-			u(e, { like_level: s }), Wt().error(`${n("itemActions.ratingSaveError")}: ${ve(t)}`);
+			let r = l.get(e);
+			f(e, { like_level: r ? r.like_level : s }), Wt().error(`${n("itemActions.ratingSaveError")}: ${ve(t)}`);
 		}
 	}
-	function m() {
-		e.value = /* @__PURE__ */ new Map(), r = null;
+	function g() {
+		e.value = /* @__PURE__ */ new Map(), l.clear(), r = null;
 	}
 	return {
 		entries: e,
@@ -3943,11 +3954,11 @@ var Cn = z("profile", () => {
 		likeLevel: o,
 		isWatched: s,
 		get: c,
-		hydrate: l,
-		toggleFavorite: d,
-		toggleWatched: f,
-		setLike: p,
-		reset: m
+		hydrate: d,
+		toggleFavorite: p,
+		toggleWatched: m,
+		setLike: h,
+		reset: g
 	};
 }), En = {
 	viewBox: "0 0 24 24",

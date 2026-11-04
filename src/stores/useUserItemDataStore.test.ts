@@ -467,4 +467,76 @@ describe('useUserItemDataStore', () => {
       expect(store.isFavorite('m1')).toBe(false);
     });
   });
+
+  // UI-m48 (review ui__webux): each toggle snapshotted its OWN pre-flip value
+  // for rollback. With overlapping writes that snapshot can be two commits
+  // stale — the cache lands on a value the server never held. The cure keeps a
+  // per-item last-known-SERVER record (hydrate + every successful write feed
+  // it) and rolls back to it, falling back to the old snapshot only when the
+  // server has never spoken about the item.
+  describe('UI-m48 — rollback lands on server truth, not a stale snapshot', () => {
+    it('a late failure after two successful overlapping toggles restores the SERVER value', async () => {
+      let lateReject: (reason: unknown) => void = () => {};
+      const slow = new Promise<Response>((_resolve, reject) => {
+        lateReject = reject;
+      });
+      const fetchMock = vi
+        .fn()
+        .mockImplementationOnce(() => slow) // A: false→true — hangs, will fail last
+        .mockResolvedValueOnce(jsonResponse({ message: 'ok' })) // B: true→false — lands
+        .mockResolvedValueOnce(jsonResponse({ message: 'ok' })); // C: false→true — lands
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 0 }));
+
+      const pending = store.toggleFavorite('m1', ''); // A (its snapshot: false)
+      await store.toggleFavorite('m1', ''); // B → server false
+      await store.toggleFavorite('m1', ''); // C → server true
+      expect(store.isFavorite('m1')).toBe(true);
+
+      lateReject(new Error('network down'));
+      await pending; // A's rollback fires now
+
+      // Server truth is TRUE (C). The old code restored A's stale snapshot
+      // (false) — cache diverging from the server until the next hydrate.
+      expect(store.isFavorite('m1')).toBe(true);
+    });
+
+    it('a late like_level failure rolls back to the server-confirmed level', async () => {
+      let lateReject: (reason: unknown) => void = () => {};
+      const slow = new Promise<Response>((_resolve, reject) => {
+        lateReject = reject;
+      });
+      const fetchMock = vi
+        .fn()
+        .mockImplementationOnce(() => slow) // A: 0→2 — will fail last
+        .mockResolvedValueOnce(jsonResponse({ message: 'ok' })); // B: 2→1 — lands
+      vi.stubGlobal('fetch', fetchMock);
+      const store = useUserItemDataStore();
+      store.hydrate(detail('m1', { favorite: false, rating: null, like_level: 0 }));
+
+      const pending = store.setLike('m1', 2, ''); // A (its snapshot: 0)
+      await store.setLike('m1', 1, ''); // B → server 1
+
+      lateReject(new Error('network down'));
+      await pending; // A's rollback fires now
+
+      // Server truth is 1; the old code restored A's stale snapshot (0).
+      expect(store.likeLevel('m1')).toBe(1);
+    });
+
+    it('with no server record yet, rollback falls back to the pre-flip snapshot (old law held)', async () => {
+      // Never hydrated: the server has never spoken about this item, so the
+      // pre-flip snapshot IS the best-known value — the cure must not invent a
+      // phantom default beyond it. GREEN at parent by design (fallback arm).
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+      const toasts = useToastStore();
+      vi.spyOn(toasts, 'error');
+      const store = useUserItemDataStore();
+
+      await store.toggleFavorite('m1', '');
+
+      expect(store.isFavorite('m1')).toBe(false);
+    });
+  });
 });

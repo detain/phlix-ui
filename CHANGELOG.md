@@ -12,6 +12,29 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — optimistic-rollback server-truth lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U2)
+
+### Fixed
+
+- **U2 — a failed optimistic write now rolls back to the last value the SERVER
+  confirmed, not the flip's own pre-op snapshot (UI-m48, review ui__webux).**
+  Every toggle in `useUserItemDataStore` snapshotted the value it was about to
+  leave and restored that snapshot on failure. With overlapping toggles the
+  snapshot can be two writes stale: A(true→false) fails after B and C have
+  landed, and the cache reverts to a value the server never held in that
+  window — divergent until the next hydrate. Cure: a non-reactive
+  last-known-server map fed by `hydrate` (the server's own payload) and by
+  every successful toggle; the failure path restores it, falling back to the
+  old snapshot ONLY where the server has never spoken about the item (the
+  pre-existing law, pinned). Profile-scope swaps (S82) and `reset()` clear the
+  truth map together with the cache — server records cannot outlive the scope
+  they were written in either.
+  Pins: 2 convictions measured RED at the parent (favorite triple-overlap;
+  like_level overlap — one boolean field + one numeric field, the watched arm
+  shares the code path), plus 1 disclosed GREEN-at-parent golden pinning the
+  absent-truth fallback; 35/35 suite, 649/649 across the nine consumer
+  suites, zero collateral.
+
 ## Unreleased — optimistic-toast catalog lane 2026-11-04 (FIX-UI-W7.md, ui-w7 U1)
 
 ### Fixed
