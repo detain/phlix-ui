@@ -12,6 +12,36 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — wire-error survivor-class disclosure lane 2026-11-04 (FIX-UI-W4CURE.md, ui-w4cure U2+U3)
+
+### Fixed (disclosure only; no src/** or dist changes)
+
+- **U2 — `11dde554` landed a user-visible behavior change with no CHANGELOG
+  entry; this is that entry (REVIEW-UI-W4.md, Minor #2).** The commit promoted
+  the browse/search error classifier to `src/utils/wireErrors.ts` (the
+  clone shape at the 3rd adopter) and changed what users SEE on five pages:
+  BrowsePage rails and the remove toast, ExplorePage, AuditLogsPage,
+  FederationPage and FederationSharesPage now render registered wire error
+  codes as localized catalog copy at the configured locale, replacing raw
+  server English error text; typed client errors keep their own copy
+  verbatim. The lane register disclosed "no CHANGELOG touched" as a decision;
+  the repo's own top-pend law (CHANGELOG.md:5) and every sibling behavior-fix
+  in the chain (ac10db7a, d6420130, 936e695d, ed797ed1 — each carries one)
+  contradict it. Forward-fixed by this entry; `11dde554` itself is not
+  rewritten (verbatim-history law; same class as the `0.99.14` consolidated
+  entry-less forward-disclosure, and the de19413e/b11c1f28 precedents).
+  In the same breath: `801c59f8` (README bundle-size kB→KiB labels) shipped
+  entry-less the same way — disclosed here, docs-prose class, named by the
+  same review (REVIEW-UI-W4.md, Minor #2 parenthetical).
+- **U3 — phantom figure forward-correction (REVIEW-UI-W4.md, Minor #1).**
+  The `11dde554` commit message claims "15 core + 12 per-page pins". Disk
+  truth is **14 core**: `src/utils/wireErrors.test.ts` carries exactly 14
+  `it` blocks (re-verified this lane on the `git show 11dde554:` blob; the
+  review's C3 vitest run reports 14), so the promotion shipped 14 + 12 = 26
+  pins, never 15 + 12 = 27. The figure is pinned at 14 here; the commit
+  message and the original register are immutable history — corrections
+  ride new notes on top.
+
 ## Unreleased — ServerDetail hub-wire-truth lane 2026-11-04 (FIX-UI-W5.md, ui-w5 U3)
 
 ### Fixed
