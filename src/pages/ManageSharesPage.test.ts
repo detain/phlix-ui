@@ -250,7 +250,7 @@ describe('ManageSharesPage — revoke', () => {
     await flushPromises();
     affirmConfirmDialog();
     await flushPromises();
-    expect(useToastStore().toasts.some((t) => t.message === 'Failed to revoke share.')).toBe(true);
+    expect(useToastStore().toasts.some((t) => t.message === 'Couldn’t revoke the share.')).toBe(true);
     w.unmount();
   });
 });

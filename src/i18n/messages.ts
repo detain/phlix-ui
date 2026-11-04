@@ -359,12 +359,12 @@ export const DEFAULT_MESSAGES = {
     expired: 'This invite link has expired or been exhausted.',
     sessionExpired: 'Session expired. Please sign in again.',
     invalidToken: 'Invalid invite token.',
-    failed: 'Failed to accept invite.',
+    failed: 'Couldn’t accept the invite.',
     // M8 (webux review): one-click revocation armed a gate — scenario copy.
     revokeConfirm: 'This invite link stops working immediately. It cannot be restored.',
     revokeLabel: 'Revoke link',
     revoked: 'Invite link revoked.',
-    revokeFailed: 'Failed to revoke invite link.',
+    revokeFailed: 'Couldn’t revoke the invite link.',
   },
   // Member-facing library shares (ManageSharesPage) — M8 gate copy and the
   // toasts that used to be inline English (webux m13 fold).
@@ -372,7 +372,7 @@ export const DEFAULT_MESSAGES = {
     revokeConfirm: 'This person loses access immediately. A new share is needed to give it back.',
     revokeLabel: 'Revoke share',
     revoked: 'Share revoked.',
-    revokeFailed: 'Failed to revoke share.',
+    revokeFailed: 'Couldn’t revoke the share.',
   },
   itemActions: {
     addFavorite: 'Add to My List',
@@ -636,8 +636,8 @@ export const DEFAULT_MESSAGES = {
     unsaved: 'Unsaved',
     saveGroup: 'Save {name}',
     groupSaved: '{name} settings saved.',
-    groupSaveError: 'Failed to save {name} settings.',
-    loadFailed: 'Failed to load settings.',
+    groupSaveError: 'Couldn’t save {name} settings.',
+    loadFailed: 'Couldn’t load settings.',
     loadErrorTitle: "Couldn’t load settings",
     // M12: WebAuthn ceremony returning null replaces 'No credential created'.
     passkeyNotCreated: 'No passkey was created. Try again.',

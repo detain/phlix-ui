@@ -435,6 +435,18 @@ describe('copy law tripwires (W-min187)', () => {
     }
   });
 
+  it('the English catalog ships only the “Couldn’t ….” error voice (ui__copywriter major-1)', () => {
+    // The parental-block comment (messages.ts) records the 'Failed to ….' voice
+    // as m24-deprecated; three keys still rendered it while their siblings
+    // complied. The SSOT law is now mechanically held: no DEFAULT_MESSAGES
+    // value may open with the retired voice.
+    for (const [group, entries] of Object.entries(DEFAULT_MESSAGES)) {
+      for (const [key, value] of Object.entries(entries as Record<string, string>)) {
+        expect(value, `${group}.${key}`).not.toMatch(/^Failed to\b/);
+      }
+    }
+  });
+
   it('the prose catalog-size claims match the measured leaf count', () => {
     const measured = collectStrings(DEFAULT_MESSAGES).length;
     for (const rel of ['./errors.ts', './errors.test.ts', '../../README.md']) {
