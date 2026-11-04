@@ -35,6 +35,7 @@ export const DE_MESSAGES = {
     loading: 'Wird geladen',
     notifications: 'Mitteilungen',
     noMatches: 'Keine Treffer',
+    detailsUnavailable: 'Details für „{name}“ sind in dieser App nicht verfügbar.',
     missingMediaId: 'Kein Titel ausgewählt. Wähle einen aus deiner Bibliothek.',
     missingSeasonId: 'Keine Staffel ausgewählt. Wähle eine auf der Serien-Seite.',
     searchPlaceholder: 'Suchen…',

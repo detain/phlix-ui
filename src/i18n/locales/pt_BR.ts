@@ -35,6 +35,7 @@ export const PT_BR_MESSAGES = {
     loading: 'Carregando',
     notifications: 'Notificações',
     noMatches: 'Nenhuma correspondência',
+    detailsUnavailable: 'Os detalhes de “{name}” não estão disponíveis neste aplicativo.',
     missingMediaId: 'Nenhum item selecionado. Escolha um da sua biblioteca.',
     missingSeasonId: 'Nenhuma temporada selecionada. Escolha uma na página da série.',
     searchPlaceholder: 'Pesquisar…',

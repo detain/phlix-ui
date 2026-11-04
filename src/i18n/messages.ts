@@ -48,6 +48,7 @@ export const DEFAULT_MESSAGES = {
     loading: 'Loading',
     notifications: 'Notifications',
     noMatches: 'No matches',
+    detailsUnavailable: 'Details for “{name}” aren’t available in this app.',
     // M12 (copywriter review): route-param guards render through the page-error
     // surface — user-facing sentences, not the old 'No media id provided' jargon.
     missingMediaId: 'No item was selected. Choose one from your library.',

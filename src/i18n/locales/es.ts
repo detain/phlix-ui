@@ -37,6 +37,7 @@ export const ES_MESSAGES = {
     loading: 'Cargando',
     notifications: 'Notificaciones',
     noMatches: 'Sin coincidencias',
+    detailsUnavailable: 'Los detalles de “{name}” no están disponibles en esta aplicación.',
     missingMediaId: 'Ningún elemento seleccionado. Elige uno de tu biblioteca.',
     missingSeasonId: 'Ninguna temporada seleccionada. Elige una en la página de la serie.',
     searchPlaceholder: 'Buscar…',

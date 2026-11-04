@@ -452,7 +452,7 @@ function onWatchlist(item: MediaItem): void {
 }
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
-  else toasts.info(`Details for “${item.name}” are coming soon.`);
+  else toasts.info(t('common.detailsUnavailable', { name: item.name }));
 }
 
 // The card/menu already toggled the watched store + persisted the change before

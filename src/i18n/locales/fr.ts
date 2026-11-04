@@ -39,6 +39,7 @@ export const FR_MESSAGES = {
     loading: 'Chargement',
     notifications: 'Notifications',
     noMatches: 'Aucun résultat',
+    detailsUnavailable: 'Les détails de « {name} » ne sont pas disponibles dans cette application.',
     missingMediaId: 'Aucun élément sélectionné. Choisissez-en un dans votre bibliothèque.',
     missingSeasonId: 'Aucune saison sélectionnée. Choisissez-en une sur la page de la série.',
     searchPlaceholder: 'Rechercher…',

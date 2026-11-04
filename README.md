@@ -385,7 +385,7 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-514-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
+515-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
 equality on every ui tag since the `v0.99.5` era (now `v0.99.13`-era) — ~150 registry strings
 would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is

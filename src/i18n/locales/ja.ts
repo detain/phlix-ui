@@ -36,6 +36,7 @@ export const JA_MESSAGES = {
     loading: '読み込み中',
     notifications: '通知',
     noMatches: '該当する項目はありません',
+    detailsUnavailable: '「{name}」の詳細はこのアプリでは利用できません。',
     missingMediaId: '項目が選択されていません。ライブラリから選択してください。',
     missingSeasonId: 'シーズンが選択されていません。シリーズページから選択してください。',
     searchPlaceholder: '検索…',

@@ -90,7 +90,7 @@ async function onPlay(item: MediaItem): Promise<void> {
 
 function onInfo(item: MediaItem): void {
   if (router?.hasRoute('media')) go('media', item.id);
-  else toasts.info(`Details for “${item.name}” are coming soon.`);
+  else toasts.info(t('common.detailsUnavailable', { name: item.name }));
 }
 
 function onWatchlist(item: MediaItem): void {
