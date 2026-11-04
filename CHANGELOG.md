@@ -12,6 +12,74 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — copy/docs review lane 2026-11-04 (ui__copywriter + ui__writer + ui__pm)
+
+### Fixed (review-round 2026-11-04)
+
+- **Error-voice SSOT compliance** (copywriter M1): the five catalog keys still
+  rendering the m24-deprecated 'Failed to ….' voice re-cut to 'Couldn't …'
+  (invite.failed, invite.revokeFailed, shares.revokeFailed, settings.groupSaveError,
+  settings.loadFailed); the reviewer's mechanical law added to the copy-law
+  tripwires (no DEFAULT_MESSAGES value may open with 'Failed to'). Locale mirrors
+  are true translations — no cascade churn. One measured-red pin rotated
+  (ManageSharesPage.test.ts revoke-failure toast).
+- **Sentence-case law** (copywriter M3): Title Case rail/modal titles that violated
+  the file's own Copy Law 1 re-cut — Browse rails 'Continue watching'/'Next up'/
+  'Most watched' (also fixing the aria-label announcements), PlayerPage
+  'Can't start playback' (reviewer-preferred, matches the transcode-heading voice),
+  'New media request', LiveTv 'Schedule recording'/'Add series rule' (+ hub help
+  link), 'Initiate hub pairing', plus same-class uncited drifts 'New MCP token'
+  and 'Select a photo library'; visual-harness rail fixtures follow. 16 measured
+  reds rotated (BrowsePage/LiveTvPage tests; props('title')/indexOf/findBtn
+  comparisons). 'Request Queue' deliberately NOT renamed (registered page name).
+- **Catalog routing of duplicated literals** (copywriter M4/M1-tail): five 'Nothing
+  to play yet.' sites, FederationSharesPage 'Share revoked.', SettingsPage and
+  inline revoke fallbacks now render through their existing catalog keys; two
+  pages gained the useMessages import their sibling lines already used. No value
+  moved, pins held.
+- **Dead `t(…) ?? literal` fallbacks deleted** (copywriter M2): seven branches
+  seeding wording that contradicts the keys they fall back from (the R15-20
+  empty-vs-failure confusion). t() is total; no rendered change.
+- **Micro copy drifts** (copywriter M5/M7/I1): 'Loading…' ellipsis + 'All
+  libraries' case (InviteLinksPage); shell.primaryNav gains the landmark noun
+  'Primary navigation' across all seven catalogs (de already complied);
+  ServicesPage comma splice. One measured-red pin rotated.
+- **Empty-state truth** (copywriter I3): syncplay.noRooms drops the post-M-UI-14
+  'public' lie; library.unknownError becomes a human sentence ('Something went
+  wrong.') per the errors.ts doctrine. Seven-mirror value edits.
+- **music.matching whole-phrase** (copywriter M3-min): value carries the query
+  with per-locale typographic quotation (fr « », de „“), curing the template's
+  straight-quote Copy Law 2 breach the value-walk tripwire could not see;
+  template interpolates {query}. Key count held, toContain('matching') pin green.
+- **New key `common.detailsUnavailable`** (copywriter M6 / pm m1): the four
+  'coming soon' toasts (a permanent host property, not a roadmap promise) become
+  one honest degraded-copy sentence shipped across all seven catalogs; four call
+  sites route through t(). **KEY-COUNT CHANGE: 514→515** — prose identity trio
+  (README :388, errors.ts, errors.test.ts) rotated from the measured red; dist
+  rebuild deferred to the release batch (lane bans build work).
+- **README release currency** (writer M1 / pm M1-M2): Status stamp, install pin,
+  era reference and bundle figures rotated to v0.99.14 with re-measured bytes
+  (391,443 B ≈ 382 kB raw / gzip 95,824 B ≈ 94 kB; player.js 422,965 B ≈ 413 kB —
+  the dual-entry caveat's ≈421 kB was stale even against its own comparison).
+  pm's tripwire automation is flagged for the release batch (new test infra).
+- **README/code truth pass** (writer m1-m3 / pm m1-m3): four git-tag consumers
+  stated (server/hub SPA re-vendor + Tizen/Windows bundle re-vendor); admin.ts
+  docblock lists re-derived from the arrays beside them; README admin citation
+  points at the public handle (the old one cited a module-private const);
+  player-entry claim scoped to playback.ts; MediaGrid rAF exemplar re-anchored to
+  the current architecture; Card/Input internal note added; /app/mcp-tokens
+  annotated hub-only (app === 'hub'); ConnectCandidate un-rooted disclosure.
+
+**Correction (new note, per the never-rewrite law):** the folded lane header at
+`### ui deferred lane m21 2026-11-04` (writer m4) carries the day AFTER its
+0.99.14 (2026-11-03) release stamp; commit 4dad88dd is authored 2026-11-03. The
+folded body is history and stays verbatim.
+
+**Gates:** vitest --no-file-parallelism 324 files / 6583 passed / 10 skipped
+(6582-era baseline + exactly this lane's new voice-law test); vue-tsc 0 errors;
+eslint clean on all touched files (dev/visual harnesses are config-ignored).
+No dist rebuild in this lane (release batch owns it).
+
 ## 0.99.14 - 2026-11-03
 
 ### Release — phase-3 cascade cut: the `@phlix/contracts` `#v0.5.5` registry cohort (one new RESERVED word `not_found`, localized across all seven catalogs; 204→205 pins rotated from measured red), plus the review-campaign deferred lanes m21/m15/M13 and the fix-lane cluster m10-m13-m26 / m23-m25 / m22 / c1 — the seven pending Unreleased blocks below fold verbatim (bodies untouched, headers demoted `## Unreleased` to `###`), and the disclosed CHANGELOG fold debt for five entry-less review-fix batches lands here as its scheduled consolidated forward entry. `dist/` rebuilt in the release commit because the M-UI-23 version stamp embeds the version string.
