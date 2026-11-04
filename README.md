@@ -211,8 +211,10 @@ The "Nocturne" system ships three themes, applied via a `data-theme` attribute o
 
 `usePreferencesStore` holds the user's appearance + playback preferences, persisted to
 `localStorage` (`phlix.prefs`). `useTheme()` reflects them onto `<html>` reactively
-(`data-theme`, `data-density`, `data-reduced-motion`, and inline `--accent*` variables). The
-`AppearanceSettings` panel (mounted by the built-in Settings page) exposes them all:
+(`data-theme`, `data-density`, `data-reduced-motion`, `data-tv`, and inline `--accent*` variables).
+The table is the COMPLETE persisted field set — the `Preferences` contract, seeded by
+`DEFAULT_PREFERENCES`. The `AppearanceSettings` panel (mounted by the built-in Settings page)
+exposes most of it; where a field has a different writer — or none yet — the Notes column says so:
 
 | Preference | Default | Notes |
 | --- | --- | --- |
@@ -226,8 +228,16 @@ The "Nocturne" system ships three themes, applied via a `data-theme` attribute o
 | `atmosphere` | `true` | film-grain/vignette + ambient player glow |
 | `autoplay` | `true` | up-next auto-advance |
 | `defaultVolume` / `defaultQuality` / `defaultSubtitleLang` | `1` / `'auto'` / — | player seeds |
+| `defaultAudioLang` | `null` | player seed — preferred audio track language (BCP-47, e.g. `'es-ES'`) |
+| `subtitlePreferenceSet` | `false` | latches an explicit caption choice ("Off" counts, via `CaptionsMenu`/Settings) so a server `default: true` track never silently overrides it |
 | `captionStyle` | size `md`, white, no bg, drop-shadow | caption rendering |
+| `tv` | `false` | 10-foot mode — `[data-tv]` sizing + visible focus ring, orthogonal to theme/density |
 | `filterPresets` | `[]` | saved Browse filter presets |
+| `showMarkerTimeline` | `true` | gates the player's chapter/ad marker strip; read by `Player.vue`, no surfaced control yet (store-level) |
+| `crossfadeDuration` | `0` | seconds of music crossfade (`0` = off; the panel's Crossfade section) |
+| `crossfadeFadeIn` / `crossfadeFadeOut` | `0.5` / `0.5` | crossfade curve fractions (0–1) |
+| `gaplessEnabled` | `true` | gapless album playback |
+| `preferredAudioQuality` | `'high'` | audio tier — `'low' \| 'medium' \| 'high' \| 'lossless'` |
 
 To prevent a flash of the wrong theme, `createPhlixApp` calls `applyStoredThemeEarly()` synchronously
 before mount. If you mount `PhlixApp.vue` yourself, call it first.

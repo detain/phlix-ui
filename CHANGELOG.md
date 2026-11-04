@@ -12,6 +12,39 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — docs-minors wave-1 lane 2026-11-04 (FIX-QUEUE UI-m15 / UI-m11 residual / UI-m39)
+
+### Fixed (README truth pass; no src/** changes)
+
+- **UI-m15 — Quickstart discloses cross-origin transport reality** (ui__newcomer):
+  the opening snippet points `apiBase` at a foreign origin while the README said
+  nothing about CORS or the auth flow. A new "A note on transport" paragraph
+  states that Phlix hosts never emit a wildcard `Access-Control-Allow-Origin`
+  (server `CorsManager` reflects an allow-listed origin with credentials; hub
+  `CorsPolicy` grants nothing cross-origin until configured — verified against
+  both repos' sources), that auth rides the login-minted bearer token (custody
+  swappable via the `tokenStore` seam), and that same-origin hosting —
+  `apiBase: ''` — is the zero-config path, as server and hub themselves serve
+  the bundle under `/app`.
+- **UI-m11 (residual) — dual-entry caveat figures re-attributed** (ui__docmaint):
+  the figures were rotated to the v0.99.14 bytes by the copydocs lane (9c571bfa)
+  but the attribution still pointed at the `vite.player.config.ts` head comment,
+  which contains no figures at all. The parenthetical now says the numbers are
+  measured from the committed `dist/` and cites the config comment only for the
+  mechanism, under the DUAL-ENTRY heading that actually documents it.
+- **UI-m39 — Preferences table completed to the full contract** (ui__docmaint):
+  the intro claimed the `AppearanceSettings` panel "exposes them all" and the
+  table carried 14 of the 23 `DEFAULT_PREFERENCES` fields (disk truth; the
+  review's title said seven, its own parentheses listed nine). The intro is
+  re-scoped — the table IS the complete persisted contract, the panel exposes
+  most of it, and the Notes column names other-or-no writers — and the nine
+  omitted fields landed with defaults verified against the store:
+  `defaultAudioLang`, `subtitlePreferenceSet`, `tv`, `showMarkerTimeline`
+  (no surfaced control yet — `Player.vue` only reads it), `crossfadeDuration`,
+  `crossfadeFadeIn`/`crossfadeFadeOut`, `gaplessEnabled`,
+  `preferredAudioQuality`. `data-tv` joins the `useTheme()` reflection list
+  (it is written there).
+
 ## Unreleased — copydocs CURE lane 2026-11-04 (review FINDINGS on the copy/docs lane)
 
 ### Fixed (review 2026-11-04 FINDINGS — REVIEW-UI-COPYDOCS.md F1-F4)
