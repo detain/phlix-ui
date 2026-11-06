@@ -77,14 +77,20 @@ describe('UserMenu — signed in', () => {
     expect(push).toHaveBeenCalledWith('/app/settings');
   });
 
-  it('signs out (clears the session) and routes to login', async () => {
+  it('signs out with ONE navigation owner: the store logout, not a competing router.push (CU-118)', async () => {
+    // useAuthStore.logout() already ends in a hard window.location.href to the
+    // login path (client-loginPath parity, useAuthStore.ts:255-265). The old
+    // UserMenu code ALSO called router.push('/app/login') right after — a
+    // second, doomed navigation that can never take effect over the full-page
+    // redirect and flashes the wrong route while the reload is slow
+    // (ui__webux #14). The sign-out arm must leave the destination to logout.
     const { w, auth, push } = mountMenu(true);
     expect(auth.isLoggedIn).toBe(true);
     await w.get('.usermenu__trigger').trigger('click');
     const items = w.get('.usermenu__panel').findAll('.usermenu__item');
     await items[items.length - 1].trigger('click'); // Sign out
     expect(auth.isLoggedIn).toBe(false);
-    expect(push).toHaveBeenCalledWith('/app/login');
+    expect(push).not.toHaveBeenCalled();
   });
 
   it('toggles the menu closed when the trigger is clicked again', async () => {

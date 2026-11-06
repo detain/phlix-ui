@@ -160,7 +160,16 @@ function onKeydown(e: KeyboardEvent) {
   background: var(--accent-text);
 }
 .phlix-tabs__panel { padding-top: var(--space-5); }
-.phlix-tabs__panel:focus-visible { outline: none; }
+/* CU-119: the panel is tabindex=0 for scrollable content, so it must keep a
+   focus indicator. Removing the UA outline left keyboard users with a scroll
+   region that gives no visible focus cue — replace, don't erase (ui review
+   webux #15). Inset ring = the house :focus-visible idiom, drawn inside so
+   panel overflow never clips it. */
+.phlix-tabs__panel:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent-ring);
+  border-radius: var(--radius-sm);
+}
 @media (prefers-reduced-motion: reduce) {
   .phlix-tabs__tab { transition: none; }
 }

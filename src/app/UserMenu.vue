@@ -7,7 +7,8 @@
 /**
  * UserMenu (R5.1) — the shell account affordance. An avatar button opens a
  * focus-trapped popover: when signed in, the user's name + a Settings link +
- * Sign out (`useAuthStore.logout` then route to login); when signed out, a
+ * Sign out (delegated to `useAuthStore.logout`, which owns the route to
+ * login); when signed out, a
  * Sign in link. Links are `routerBase`-aware (config). Esc / click-outside close.
  */
 import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
@@ -65,8 +66,11 @@ function go(path: string): void {
 }
 function signOut(): void {
   close();
+  // logout() is the SOLE navigation owner: useAuthStore.logout already routes
+  // to the login path (window.location.href, useAuthStore.ts:255-265). The
+  // router.push that used to follow raced it into a double navigation
+  // (ui review webux #14, CU-118).
   auth.logout();
-  void router.push(`${homePath.value}/login`);
 }
 /** Re-arms the Who's-watching gate (S82). With one profile the gate's own
  *  condition keeps it closed — nothing to switch to, nothing shown. */

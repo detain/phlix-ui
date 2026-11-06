@@ -1,25 +1,25 @@
-import { i as e } from "./safeRedirect-DOYFMhxN.js";
+import { i as e } from "./safeRedirect-EznUMPik.js";
 import { t } from "./IconButton-oCt4k5-3.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-FI3Uj9O8.js";
 import { n as c, t as l } from "./Icon-55iG1rR7.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-DrDMAwjz.js";
-import { i as h, n as g, r as _, t as v } from "./useMessages-CrbiNZLy.js";
-import { t as y } from "./useAuthStore-B0GAOsR5.js";
-import { n as b, r as x, t as S } from "./useProfileStore-435nVZzp.js";
+import { i as h, n as g, r as _, t as v } from "./useMessages-CviWXZsn.js";
+import { t as y } from "./useAuthStore-BWmqegXJ.js";
+import { n as b, r as x, t as S } from "./useProfileStore-BkYXKuly.js";
 import { i as C, n as w, r as T, t as E } from "./useImageSrc-CSM61b-l.js";
 import { i as D, n as O, r as ee, t as te } from "./usePlayerStore-BpohCwDP.js";
-import { n as ne, t as re } from "./ThumbRating-Sbyflr6I.js";
+import { n as ne, t as re } from "./ThumbRating-DZsSRred.js";
 import { n as k, r as ie, t as ae } from "./useApiBase-DXTBY90j.js";
 import { i as oe, o as se, s as ce } from "./shortcuts-BqUhFpRJ.js";
-import { t as le } from "./NetworkHealthIndicator-DvlDFVtT.js";
+import { t as le } from "./NetworkHealthIndicator-QCLBYnu7.js";
 import { t as ue } from "./useToastStore-CxO_ppM8.js";
-import { C as de, S as fe, T as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-nMYZMwFv.js";
+import { C as de, S as fe, T as pe, _ as me, a as he, b as ge, c as _e, d as ve, f as ye, g as be, h as xe, i as Se, l as Ce, m as we, n as Te, o as Ee, p as De, r as Oe, s as ke, t as Ae, u as je, v as Me, w as Ne, x as Pe, y as Fe } from "./SecuritySettingsPage-DXbtKe6C.js";
 import { i as Ie, n as Le, r as Re, t as ze } from "./Kbd-B47x87jw.js";
 import { a as Be, i as Ve, n as He, o as Ue, r as We, t as Ge } from "./useLibrariesStore-CGqgMNKs.js";
-import { n as Ke, t as qe } from "./HomeRow-CnNXHd7p.js";
+import { n as Ke, t as qe } from "./HomeRow-DbV9XoYx.js";
 import { t as Je } from "./safeHref-Be5nFpx7.js";
 import { t as A } from "./EmptyState-DjfWh3kt.js";
-import { t as j } from "./Button-BLpPomsd.js";
+import { t as j } from "./Button-Dfl4y6vO.js";
 import { C as Ye, S as Xe, _ as Ze, a as Qe, b as $e, d as et, f as tt, g as nt, h as rt, i as it, l as at, m as ot, n as st, o as ct, p as lt, r as ut, s as dt, t as ft, u as pt, v as mt, x as M, y as ht } from "./client-BLNUsFSj.js";
 import { a as gt, c as _t, i as vt, l as yt, n as bt, o as xt, r as St, s as Ct, t as wt, u as Tt } from "./useConnectionStore-AmsgQivX.js";
 import { t as Et } from "./socketHint-C0yqQROO.js";
@@ -28,21 +28,21 @@ import { t as N } from "./Badge-B_3IbdKb.js";
 import { t as jt } from "./Slider-Bj5BaBUu.js";
 import { t as Mt } from "./Switch-C607L4Vu.js";
 import { t as Nt } from "./Chip-eO7BYLEk.js";
-import { t as Pt } from "./Select-CAtA3xpg.js";
-import { t as Ft } from "./Combobox-KJUNp0YT.js";
-import { t as It } from "./Modal-tLotLCqD.js";
-import { t as Lt } from "./ConfirmDialog-B9UrqjZ7.js";
+import { t as Pt } from "./Select-cEIRGIDP.js";
+import { t as Ft } from "./Combobox-DhCysV2T.js";
+import { t as It } from "./Modal-CDHudOiM.js";
+import { t as Lt } from "./ConfirmDialog-MLGD49bw.js";
 import { t as Rt } from "./Tooltip-CaS-pDMB.js";
 import { t as P } from "./Skeleton-DDhrDRE7.js";
-import { t as zt } from "./Spinner-BNjoYh2x.js";
+import { t as zt } from "./Spinner-BqIK0Jt9.js";
 import { t as Bt } from "./PageHint-C2jY1TZi.js";
-import { t as Vt } from "./Tabs-Dd1Z-m2P.js";
+import { t as Vt } from "./Tabs-DZRiZml3.js";
 import { t as Ht } from "./Menu-D1MRZDZu.js";
 import { t as Ut } from "./HelpText-B3jlK4n_.js";
-import { o as Wt, t as Gt } from "./MediaCard-B_SVtQUZ.js";
-import { t as Kt } from "./MediaGrid-DnDm-Wg9.js";
-import { t as qt } from "./MediaRow-TyLe__0V.js";
-import { n as Jt, t as Yt } from "./metadata-sources-YDki1B5t.js";
+import { o as Wt, t as Gt } from "./MediaCard-C4l7dtyc.js";
+import { t as Kt } from "./MediaGrid-BdbH7Vc2.js";
+import { t as qt } from "./MediaRow-RIlbBRiX.js";
+import { n as Jt, t as Yt } from "./metadata-sources-DS5HrEcn.js";
 import { n as Xt, t as Zt } from "./logs-COEMLOJe.js";
 import { t as Qt } from "./dashboard-oXlrEa_N.js";
 import { a as $t, c as en, i as tn, l as nn, n as rn, o as an, r as on, s as sn, t as cn } from "./users-CYhaHmzc.js";
@@ -63,14 +63,14 @@ import { i as On, n as kn, r as An, t as jn } from "./plugins-B5-cvjEZ.js";
 import { n as Mn, r as Nn, t as Pn } from "./maintenance-DFbfN6f-.js";
 import { t as Fn } from "./hubDashboard-BOYT5ia6.js";
 import { n as In, t as Ln } from "./media-query-D7hrCu8r.js";
-import { t as Rn } from "./LoginForm-DEoolf1i.js";
-import { t as zn } from "./SignupForm-R6jAs-wg.js";
+import { t as Rn } from "./LoginForm-CBc7yAMe.js";
+import { t as zn } from "./SignupForm-DlYvH-NY.js";
 import { r as Bn } from "./wireErrors-BkdyAKba.js";
 import { t as Vn } from "./hubHelpLinks-BNMhK6oW.js";
 import { a as Hn, i as Un, n as Wn, o as Gn, r as Kn, s as qn, t as Jn } from "./plural-B3O2rVPV.js";
 import { n as Yn, t as Xn } from "./debounce-BnRz-bwe.js";
 import { t as Zn } from "./Input-y6G1jaDw.js";
-import { i as Qn, n as $n, r as er, t as tr } from "./MusicAlbumCard-D4eerwsj.js";
+import { i as Qn, n as $n, r as er, t as tr } from "./MusicAlbumCard-CLpaqKux.js";
 import { t as nr } from "./useMediaStore-C5sqjMqc.js";
 import { Fragment as F, Teleport as rr, Transition as ir, TransitionGroup as ar, computed as I, createApp as or, createBlock as L, createCommentVNode as R, createElementBlock as z, createElementVNode as B, createStaticVNode as sr, createTextVNode as V, createVNode as H, defineAsyncComponent as cr, defineComponent as U, getCurrentScope as lr, inject as ur, nextTick as dr, normalizeClass as W, normalizeStyle as fr, onBeforeUnmount as pr, onMounted as G, onScopeDispose as mr, onUnmounted as hr, openBlock as K, provide as gr, readonly as _r, ref as q, renderList as J, renderSlot as vr, resolveComponent as yr, resolveDynamicComponent as br, toDisplayString as Y, toValue as xr, unref as X, useId as Sr, vModelSelect as Cr, vModelText as wr, vShow as Tr, watch as Z, watchEffect as Er, withCtx as Q, withDirectives as Dr, withModifiers as Or } from "vue";
 import { createPinia as kr, defineStore as Ar } from "pinia";
@@ -274,7 +274,7 @@ var ei = ["aria-label", "aria-expanded"], ti = {
 			_(), r.push(e);
 		}
 		function S() {
-			_(), t.logout(), r.push(`${o.value}/login`);
+			_(), t.logout();
 		}
 		function C() {
 			_(), n.openGate();
@@ -389,7 +389,7 @@ var ei = ["aria-label", "aria-expanded"], ti = {
 			onClick: n[6] ||= (e) => b(`${o.value}/login`)
 		}, [H(l, { name: "user" }), V(" " + Y(X(c)("shell.signIn")), 1)]))], 40, ii)) : R("", !0)], 512));
 	}
-}), [["__scopeId", "data-v-8bac346d"]]), di = ["aria-label"], fi = { class: "whos__inner" }, pi = { class: "whos__title" }, mi = {
+}), [["__scopeId", "data-v-45240098"]]), di = ["aria-label"], fi = { class: "whos__inner" }, pi = { class: "whos__title" }, mi = {
 	key: 0,
 	class: "whos__states",
 	"data-testid": "whos-loading",
@@ -923,7 +923,7 @@ var _a = ["src", "alt"], va = { class: "brand-wordmark" }, ya = {
 		ra();
 		let n = Ie(), r = $(), i = Fr(), { t: a } = v(), o = se(), s = I(() => i.meta?.fullBleed === !0 && o.theaterActive);
 		ia();
-		let c = cr(() => import("./CommandPalette-C2NTvMDc.js")), u = q(!1);
+		let c = cr(() => import("./CommandPalette-2WTbFogc.js")), u = q(!1);
 		Z(() => n.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1281,111 +1281,111 @@ function lo(e) {
 			path: t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-xuggRLLW.js")
+			component: () => import("./BrowsePage-Cy8TZl_J.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-BYsmBF9p.js")
+			component: () => import("./MediaDetailPage-7vDeGtOf.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-B3SSGcm5.js")
+			component: () => import("./SeasonPage-qf2mOSXp.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-D1P9JVpy.js")
+			component: () => import("./LibraryPage-ChxD1iVJ.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-B9xGWVJX.js")
+			component: () => import("./PlayerPage-l7f7TGL0.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DV65_WQm.js")
+			component: () => import("./LoginPage-ltHMVEFC.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-Dp_XY74x.js")
+			component: () => import("./SignupPage-DqLbXPs4.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-g_sO74qd.js")
+			component: () => import("./ConnectPage-U3CufWm_.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-BHM9UAmj.js")
+			component: () => import("./SettingsPage-DipgTeSH.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-B7ygxNt7.js")
+			component: () => import("./ExplorePage-Bpn0NokP.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-B-F-U-TI.js")
+			component: () => import("./RecommendationsPage-qJnyOWmA.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-BclO8w8H.js")
+			component: () => import("./WatchHistoryPage-bO5SpsH-.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-oAs-li3C.js")
+			component: () => import("./SyncPlayPage-sZR9MlgA.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-BBVsq5c9.js")
+			component: () => import("./MusicLibraryPage-D_TxoOYM.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-Dlh8UkUp.js")
+			component: () => import("./ParentalControlsPage-BzAoj7lW.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-CGi8CNsD.js")
+			component: () => import("./ProfilesPage-BUln_LcH.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-CLy_6OEF.js")
+			component: () => import("./PlaylistsPage-pcMJHisr.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-tt5hVBk7.js")
+			component: () => import("./PlaylistDetailPage-CnwPa4p3.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${$a}`,
 		name: Qa,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-i4tQpdpp.js")
+		component: () => import("./McpTokensPage-D_mZn3ad.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1657,145 +1657,145 @@ var fo = /*#__PURE__*/ c(/* @__PURE__ */ U({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-Bngv1Vr3.js")
+	component: () => import("./DashboardPage-D31uNaDT.js")
 }, Eo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-B6FG6-vI.js")
+	component: () => import("./UsersPage-BFa2XGzq.js")
 }, Do = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-REb01I0e.js")
+	component: () => import("./LogsPage-Dmx0-vmC.js")
 }, Oo = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-BRKQDUNT.js")
+	component: () => import("./WebhooksPage-HYvzZwiG.js")
 }, ko = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-CHa4oUv5.js")
+	component: () => import("./ServicesPage-64lNUKJc.js")
 }, Ao = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-BOIwWAWd.js")
+	component: () => import("./IntegrationsPage-DVdp8vI_.js")
 }, jo = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-DO1Y_vJL.js")
+	component: () => import("./BackupPage-CWFjhcyh.js")
 }, Mo = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-jWBBDKhe.js")
+	component: () => import("./CastDevicesPage-CUXqLYwu.js")
 }, No = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-BDv1_sfu.js")
+	component: () => import("./DlnaServerPage-Bqjl2XCt.js")
 }, Po = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-CJgN_4dK.js")
+	component: () => import("./RemoteAccessPage-CWAasa6D.js")
 }, Fo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-Ooz5cWPX.js")
+	component: () => import("./LiveTvPage-H3LpJ8C7.js")
 }, Io = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-CcXFFq0N.js")
+	component: () => import("./CollectionsPage-D1KJPdHu.js")
 }, Lo = {
 	name: "admin-history",
 	path: "history",
 	label: "Watch history",
 	icon: "film",
-	component: () => import("./HistoryPage-3eI_m-BJ.js")
+	component: () => import("./HistoryPage-B4Y96jzF.js")
 }, Ro = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-CVl0Rmhj.js")
+	component: () => import("./SyncPlayPage-DS4fcMH0.js")
 }, zo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-BzjrHPsi.js")
+	component: () => import("./LibrariesPage-Bq88NzuL.js")
 }, Bo = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-DkXfV-hJ.js")
+	component: () => import("./DuplicatesPage-BMwFCjDM.js")
 }, Vo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-CY-zzppf.js")
+	component: () => import("./PluginsPage-BkGp6Ygu.js")
 }, Ho = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-aSNeAU-P.js")
+	component: () => import("./TasksPage-DLCGiox8.js")
 }, Uo = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-cPinL_2W.js")
+	component: () => import("./TranscodingSettingsPage-C-b4e1Th.js")
 }, Wo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-C4jM8gHK.js")
+	component: () => import("./SettingsPage-BW_-HVcs.js")
 }, Go = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-CG4Don4K.js")
+	component: () => import("./HubDashboardPage-g507g3b-.js")
 }, Ko = {
 	name: "admin-metrics",
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-nb8bpJa_.js").then((e) => e.t)
+	component: () => import("./MetricsPage-DT9HmbYB.js").then((e) => e.t)
 }, qo = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
 	label: "Audit Logs",
 	icon: "eye",
-	component: () => import("./AuditLogsPage-PLNbyE50.js")
+	component: () => import("./AuditLogsPage-DX1MfMJ-.js")
 }, Jo = {
 	name: "admin-requests",
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-CEMZPiAN.js")
+	component: () => import("./RequestsPage-BgZdcnkp.js")
 }, Yo = [
 	To,
 	Ko,
@@ -1895,7 +1895,7 @@ function rs(e = "/app", t = ts) {
 	}), [{
 		path: n,
 		meta: { requiresAdmin: !0 },
-		component: () => import("./AdminLayout-Ddtx8LZ6.js"),
+		component: () => import("./AdminLayout-Be1Ib95e.js"),
 		props: {
 			base: e,
 			pages: t
@@ -7603,7 +7603,10 @@ var ev = {
 		unknownError: "Algo salió mal.",
 		loadTitlesError: "No se pudieron cargar los títulos"
 	},
-	playlist: { loadError: "No se pudo cargar esta lista de reproducción." },
+	playlist: {
+		loadError: "No se pudo cargar esta lista de reproducción.",
+		loadErrorTitle: "No se pudo cargar esta lista de reproducción"
+	},
 	music: {
 		title: "Biblioteca de música",
 		titleColumn: "Título",
@@ -7736,6 +7739,7 @@ var ev = {
 		noEpisodes: "Todavía no hay episodios para reproducir",
 		loadingAria: "Cargando temporada",
 		loadError: "No se pudo cargar esta temporada.",
+		loadErrorTitle: "No se pudo cargar esta temporada",
 		backToSeries: "Volver a la serie",
 		episodes: "Episodios",
 		notFound: "Temporada no encontrada",
@@ -7780,8 +7784,11 @@ var ev = {
 		deleteScheduleConfirm: "¿Eliminar el horario {name}?",
 		removeTagConfirm: "¿Quitar la etiqueta {tag}?",
 		loadErrorSchedules: "No se pudieron cargar los horarios.",
+		loadErrorSchedulesTitle: "No se pudieron cargar los horarios",
 		loadErrorTags: "No se pudieron cargar las etiquetas.",
+		loadErrorTagsTitle: "No se pudieron cargar las etiquetas",
 		loadErrorStreamLimits: "No se pudieron cargar los límites de stream.",
+		loadErrorStreamLimitsTitle: "No se pudieron cargar los límites de stream",
 		scheduleSaveError: "No se pudo guardar el horario.",
 		scheduleDeleteError: "No se pudo eliminar el horario.",
 		tagAddError: "No se pudo añadir la etiqueta.",
@@ -8174,7 +8181,10 @@ var ev = {
 		unknownError: "Une erreur est survenue.",
 		loadTitlesError: "Impossible de charger les titres"
 	},
-	playlist: { loadError: "Impossible de charger cette playlist." },
+	playlist: {
+		loadError: "Impossible de charger cette playlist.",
+		loadErrorTitle: "Impossible de charger cette playlist"
+	},
 	music: {
 		title: "Bibliothèque musicale",
 		titleColumn: "Titre",
@@ -8307,6 +8317,7 @@ var ev = {
 		noEpisodes: "Aucun épisode à lire pour le moment",
 		loadingAria: "Chargement de la saison",
 		loadError: "Impossible de charger cette saison.",
+		loadErrorTitle: "Impossible de charger cette saison",
 		backToSeries: "Retour à la série",
 		episodes: "Épisodes",
 		notFound: "Saison introuvable",
@@ -8351,8 +8362,11 @@ var ev = {
 		deleteScheduleConfirm: "Supprimer l’horaire {name} ?",
 		removeTagConfirm: "Retirer l’étiquette {tag} ?",
 		loadErrorSchedules: "Impossible de charger les horaires.",
+		loadErrorSchedulesTitle: "Impossible de charger les horaires",
 		loadErrorTags: "Impossible de charger les étiquettes.",
+		loadErrorTagsTitle: "Impossible de charger les étiquettes",
 		loadErrorStreamLimits: "Impossible de charger les limites de stream.",
+		loadErrorStreamLimitsTitle: "Impossible de charger les limites de stream",
 		scheduleSaveError: "Impossible d’enregistrer l’horaire.",
 		scheduleDeleteError: "Impossible de supprimer l’horaire.",
 		tagAddError: "Impossible d’ajouter l’étiquette.",
@@ -8745,7 +8759,10 @@ var ev = {
 		unknownError: "Etwas ist schiefgelaufen.",
 		loadTitlesError: "Titel konnten nicht geladen werden"
 	},
-	playlist: { loadError: "Die Playlist konnte nicht geladen werden." },
+	playlist: {
+		loadError: "Die Playlist konnte nicht geladen werden.",
+		loadErrorTitle: "Die Playlist konnte nicht geladen werden"
+	},
 	music: {
 		title: "Musikbibliothek",
 		titleColumn: "Titel",
@@ -8878,6 +8895,7 @@ var ev = {
 		noEpisodes: "Noch keine Folgen abspielbar",
 		loadingAria: "Staffel wird geladen",
 		loadError: "Diese Staffel konnte nicht geladen werden.",
+		loadErrorTitle: "Diese Staffel konnte nicht geladen werden",
 		backToSeries: "Zurück zur Serie",
 		episodes: "Episoden",
 		notFound: "Staffel nicht gefunden",
@@ -8922,8 +8940,11 @@ var ev = {
 		deleteScheduleConfirm: "Zeitplan {name} löschen?",
 		removeTagConfirm: "Tag {tag} entfernen?",
 		loadErrorSchedules: "Zeitpläne konnten nicht geladen werden.",
+		loadErrorSchedulesTitle: "Zeitpläne konnten nicht geladen werden",
 		loadErrorTags: "Tags konnten nicht geladen werden.",
+		loadErrorTagsTitle: "Tags konnten nicht geladen werden",
 		loadErrorStreamLimits: "Stream-Limits konnten nicht geladen werden.",
+		loadErrorStreamLimitsTitle: "Stream-Limits konnten nicht geladen werden",
 		scheduleSaveError: "Zeitplan konnte nicht gespeichert werden.",
 		scheduleDeleteError: "Zeitplan konnte nicht gelöscht werden.",
 		tagAddError: "Tag konnte nicht hinzugefügt werden.",
@@ -9316,7 +9337,10 @@ var ev = {
 		unknownError: "Qualcosa è andato storto.",
 		loadTitlesError: "Impossibile caricare i titoli"
 	},
-	playlist: { loadError: "Impossibile caricare questa playlist." },
+	playlist: {
+		loadError: "Impossibile caricare questa playlist.",
+		loadErrorTitle: "Impossibile caricare questa playlist"
+	},
 	music: {
 		title: "Libreria musicale",
 		titleColumn: "Titolo",
@@ -9449,6 +9473,7 @@ var ev = {
 		noEpisodes: "Ancora nessun episodio da riprodurre",
 		loadingAria: "Caricamento stagione",
 		loadError: "Impossibile caricare questa stagione.",
+		loadErrorTitle: "Impossibile caricare questa stagione",
 		backToSeries: "Torna alla serie",
 		episodes: "Episodi",
 		notFound: "Stagione non trovata",
@@ -9493,8 +9518,11 @@ var ev = {
 		deleteScheduleConfirm: "Eliminare l’orario {name}?",
 		removeTagConfirm: "Rimuovere il tag {tag}?",
 		loadErrorSchedules: "Impossibile caricare gli orari.",
+		loadErrorSchedulesTitle: "Impossibile caricare gli orari",
 		loadErrorTags: "Impossibile caricare i tag.",
+		loadErrorTagsTitle: "Impossibile caricare i tag",
 		loadErrorStreamLimits: "Impossibile caricare i limiti di stream.",
+		loadErrorStreamLimitsTitle: "Impossibile caricare i limiti di stream",
 		scheduleSaveError: "Impossibile salvare l’orario.",
 		scheduleDeleteError: "Impossibile eliminare l’orario.",
 		tagAddError: "Impossibile aggiungere il tag.",
@@ -9887,7 +9915,10 @@ var ev = {
 		unknownError: "Algo deu errado.",
 		loadTitlesError: "Não foi possível carregar os títulos"
 	},
-	playlist: { loadError: "Não foi possível carregar esta playlist." },
+	playlist: {
+		loadError: "Não foi possível carregar esta playlist.",
+		loadErrorTitle: "Não foi possível carregar esta playlist"
+	},
 	music: {
 		title: "Biblioteca de música",
 		titleColumn: "Título",
@@ -10020,6 +10051,7 @@ var ev = {
 		noEpisodes: "Ainda não há episódios para reproduzir",
 		loadingAria: "Carregando temporada",
 		loadError: "Não foi possível carregar esta temporada.",
+		loadErrorTitle: "Não foi possível carregar esta temporada",
 		backToSeries: "Voltar à série",
 		episodes: "Episódios",
 		notFound: "Temporada não encontrada",
@@ -10064,8 +10096,11 @@ var ev = {
 		deleteScheduleConfirm: "Excluir o horário {name}?",
 		removeTagConfirm: "Remover a tag {tag}?",
 		loadErrorSchedules: "Não foi possível carregar os horários.",
+		loadErrorSchedulesTitle: "Não foi possível carregar os horários",
 		loadErrorTags: "Não foi possível carregar as tags.",
+		loadErrorTagsTitle: "Não foi possível carregar as tags",
 		loadErrorStreamLimits: "Não foi possível carregar os limites de stream.",
+		loadErrorStreamLimitsTitle: "Não foi possível carregar os limites de stream",
 		scheduleSaveError: "Não foi possível salvar o horário.",
 		scheduleDeleteError: "Não foi possível excluir o horário.",
 		tagAddError: "Não foi possível adicionar a tag.",
@@ -10458,7 +10493,10 @@ var ev = {
 		unknownError: "問題が発生しました。",
 		loadTitlesError: "タイトルを読み込めませんでした"
 	},
-	playlist: { loadError: "このプレイリストを読み込めませんでした。" },
+	playlist: {
+		loadError: "このプレイリストを読み込めませんでした。",
+		loadErrorTitle: "このプレイリストを読み込めませんでした"
+	},
 	music: {
 		title: "ミュージックライブラリ",
 		titleColumn: "タイトル",
@@ -10591,6 +10629,7 @@ var ev = {
 		noEpisodes: "再生できるエピソードはまだありません",
 		loadingAria: "シーズンを読み込み中",
 		loadError: "このシーズンを読み込めませんでした。",
+		loadErrorTitle: "このシーズンを読み込めませんでした",
 		backToSeries: "シリーズに戻る",
 		episodes: "エピソード",
 		notFound: "シーズンが見つかりません",
@@ -10635,8 +10674,11 @@ var ev = {
 		deleteScheduleConfirm: "スケジュール「{name}」を削除しますか？",
 		removeTagConfirm: "タグ「{tag}」を削除しますか？",
 		loadErrorSchedules: "スケジュールを読み込めませんでした。",
+		loadErrorSchedulesTitle: "スケジュールを読み込めませんでした",
 		loadErrorTags: "タグを読み込めませんでした。",
+		loadErrorTagsTitle: "タグを読み込めませんでした",
 		loadErrorStreamLimits: "配信制限を読み込めませんでした。",
+		loadErrorStreamLimitsTitle: "配信制限を読み込めませんでした",
 		scheduleSaveError: "スケジュールを保存できずにしました。",
 		scheduleDeleteError: "スケジュールを削除できずにしました。",
 		tagAddError: "タグを追加できずにしました。",
@@ -10663,7 +10705,7 @@ var ev = {
 	it: rv,
 	pt_BR: iv,
 	ja: av
-}, sv = cr(() => import("./MediaDetail-Cw_kyJla.js").then((e) => e.n)), cv = cr(() => import("./MetadataMatchModal-Bd-y6OuY.js").then((e) => e.n)), lv = cr(() => import("./FilterBar-Bt3hphuo.js").then((e) => e.n)), uv = cr(() => import("./SearchPage-Cc5YvCOF.js"));
+}, sv = cr(() => import("./MediaDetail-BGo9Om0Y.js").then((e) => e.n)), cv = cr(() => import("./MetadataMatchModal-B-_MK1RV.js").then((e) => e.n)), lv = cr(() => import("./FilterBar-DJo_qOt7.js").then((e) => e.n)), uv = cr(() => import("./SearchPage-BJGSECyD.js"));
 export { S as ACTIVE_PROFILE_KEY, Zt as ALL_LOGS, Td as AcceptInvitePage, mn as AdminBackupApi, hn as AdminCastApi, yn as AdminCollectionsApi, Qt as AdminDashboardApi, gn as AdminDlnaServerApi, bn as AdminHistoryApi, Fn as AdminHubDashboardApi, pn as AdminIntegrationsApi, wn as AdminLibrariesApi, vn as AdminLiveTvApi, Xt as AdminLogsApi, Pn as AdminMaintenanceApi, Yt as AdminMetadataSourcesApi, jn as AdminPluginsApi, _n as AdminRemoteAccessApi, fn as AdminServicesApi, Tn as AdminSettingsApi, xn as AdminSyncPlayApi, cn as AdminUsersApi, dn as AdminWebhooksApi, ft as ApiClient, mt as ApiError, e as AppBackdrop, Zr as AppLayout, Bh as AudiobookDetailPage, bg as AudiobookPlayerPage, uh as AudiobooksPage, he as BUILT_IN_THEME_IDS, N as Badge, jm as BookDetailPage, Ym as BookReaderPage, um as BooksPage, j as Button, wt as CONNECTION_API_BASE_KEY, bt as CONNECTION_CONFIRMED_ORIGIN_KEY, wa as CURRENT_SERVER_ID_KEY, Ta as CURRENT_SERVER_NAME_KEY, Nt as Chip, Ft as Combobox, Lt as ConfirmDialog, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, rn as DEFAULT_THROTTLE_BPS, nv as DE_MESSAGES, tt as ERROR_MESSAGES, lt as ERROR_TITLES, ev as ES_MESSAGES, A as EmptyState, Ee as FOCUS_RING_MIN_CONTRAST, tv as FR_MESSAGES, gl as FederationPage, zl as FederationSharesPage, lv as FilterBar, ot as GENERIC_ERROR_MESSAGE, Aa as HUB_SYNC_PLAY_PORT, yo as HelpPopover, Ut as HelpText, rv as IT_MESSAGES, l as Icon, t as IconButton, gd as InviteLinksPage, av as JA_MESSAGES, ze as Kbd, Sn as LIBRARY_TYPES, ov as LOCALE_MESSAGES, As as LibraryScanPage, et as LocalStorageTokenStore, Rn as LoginForm, Mn as MAINTENANCE_ENDPOINTS, Nn as MAINTENANCE_TASK_NAMES, ke as MAX_EXTENDS_DEPTH, Qa as MCP_TOKENS_ROUTE_NAME, $a as MCP_TOKENS_ROUTE_PATH, st as MUSIC_PAGE_SIZE, Yl as ManageSharesPage, Gt as MediaCard, sv as MediaDetail, Kt as MediaGrid, qe as MediaHomeRow, qt as MediaRow, Ht as Menu, cv as MetadataMatchModal, It as Modal, Kd as MusicAlbumPage, Pf as MusicArtistPage, ff as MusicArtistsPage, Xp as MusicPlayerPage, yp as MusicTracksPage, Xs as MyServersPage, ht as NetworkError, kn as PLUGIN_SECRET_MASK, Jn as PLURAL_CATEGORIES, on as PROFILE_LAST_ERROR_CODE, tn as PROFILE_LAST_ERROR_TEXT, iv as PT_BR_MESSAGES, Bt as PageHint, po as PageTransition, ba as PhlixApp, n_ as PhotoAlbumPage, Vg as PhotoAlbumsPage, B_ as PhotoSlideshowPage, T_ as PhotoViewPage, vs as ProfileImageSettings, $t as RATING_LABELS, an as RATING_MAX, sn as RATING_OPTIONS, Xn as REQUEST_SEARCH_DEBOUNCE_MS, te as RESUME_MAX_RATIO, O as RESUME_MIN_SECONDS, _e as RING_GROUND_KEYS, So as RatingBadge, Ru as RequestsPage, fo as Reveal, Cn as SCAN_JOB_TYPES, En as SETTINGS_SECRET_MASK, Ve as SORT_TITLE_ARTICLES, ln as SUBSCRIBABLE_EVENTS, uv as SearchPage, Ae as SecuritySettingsPage, Pt as Select, rl as ServerDetailPage, lu as SharedWithMePage, Vr as Sheet, zn as SignupForm, P as Skeleton, jt as Slider, Jt as SourcePriorityEditor, zt as Spinner, Mt as Switch, Ce as THEME_CACHE_KEY, je as THEME_TOKEN_ALLOWLIST, en as THROTTLE_BPS_LEVELS, nn as THROTTLE_BPS_OPTIONS, ut as TMDB_UNCONFIGURED_CODE, Vt as Tabs, re as ThumbRating, $e as TimeoutError, Gi as ToastHost, Rt as Tooltip, wo as UserRatingPicker, un as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, ve as activeThemeStyle, os as adminMenu, na as applyStoredThemeEarly, ye as applyThemeTokens, q_ as bestCandidate, V_ as bindMediaStoreToRouter, rs as buildAdminRoutes, as as buildHubAdminRoutes, Fa as buildHubRelayUrl, Ln as buildMediaQuery, In as buildMediaUrl, is as buildServerAdminRoutes, De as clearThemeTokens, Wa as closeHubRelayConnection, Qo as commonAdminPages, Be as compareByStrippedTitle, we as compositedContrastOver, uo as createPhlixApp, _ as createTranslator, Yn as debounce, $i as deriveAccentVars, M as errMessage, rt as errorCodeMessage, nt as errorCodeTitle, He as fetchLibraries, Se as fetchThemes, xe as focusRingLawViolation, o as focusable, r as focusableRegistry, At as formatPageTitle, Le as fuzzyScore, ct as getDefaultApiHeaders, Ga as getHubRelaySocket, p as hasStoredPreferences, es as hubAdminPages, n as installFocusable, St as isAllowedBase, be as isAllowedThemeToken, me as isBuiltInThemeId, Xe as isOffline, vt as isPlaintextPublic, Wn as isPluralTemplate, gt as isPrivateHost, Ze as isRegisteredErrorCode, w as isRewritableImagePath, Me as isSafeThemeTokenValue, dt as isTmdbUnconfigured, Re as matchCommand, eo as mcpTokensMenuItem, h as mergeMessages, xt as normalizeBase, Fe as normalizeServerTheme, Va as openHubRelayConnection, Ct as originOf, Na as parsePendingCommandFrame, ge as parseThemeColor, Ca as phlixUiVersion, An as pluginErrorCode, On as pluginValidationErrors, Kn as plural, Un as pluralCategory, Hn as pluralCount, Gn as pluralize, _t as probeServer, Pe as readCachedTheme, d as readStoredPreferences, H_ as rectCenter, T as resolveImageSrc, C as resolveImageSrcset, fe as resolveThemeBase, de as resolveThemeTokens, Je as safeHref, Ne as sanitizeThemeTokens, qn as selectPluralTemplate, $o as serverAdminPages, Ot as setAppName, at as setDefaultApiHeaders, pt as setDefaultTokenStore, kt as setPageTitle, We as sortLibraries, Ue as stripLeadingArticle, ae as useApiBase, y as useAuthStore, ia as useCommandPaletteHotkey, Ie as useCommandStore, yt as useConnectionStore, i as useFocusTrap, E as useImageSrc, Ge as useLibrariesStore, k as useMediaApiBase, nr as useMediaStore, v as useMessages, $_ as useOnline, Dt as usePageTitle, D as usePlayerStore, la as usePreconnect, u as usePreferencesStore, Wt as usePrefetch, x as useProfileStore, pa as useResumeReporter, Ke as useResumeSync, ka as useServerStore, Dn as useSettingsPrefsStore, Q_ as useSpatialNav, ra as useTheme, Oe as useThemesStore, ue as useToastStore, ne as useUserItemDataStore, Tt as withScheme, pe as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

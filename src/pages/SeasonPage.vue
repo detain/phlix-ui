@@ -192,7 +192,7 @@ function onLove(next: number): void {
         <EmptyState
             v-else-if="error"
             icon="alert"
-            :title="t('season.loadError')"
+            :title="t('season.loadErrorTitle')"
             :description="error"
         >
             <template #actions>

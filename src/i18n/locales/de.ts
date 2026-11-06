@@ -411,6 +411,7 @@ export const DE_MESSAGES = {
   },
   playlist: {
     loadError: "Die Playlist konnte nicht geladen werden.",
+    loadErrorTitle: "Die Playlist konnte nicht geladen werden",
   },
   music: {
     title: 'Musikbibliothek',
@@ -550,6 +551,7 @@ export const DE_MESSAGES = {
     noEpisodes: 'Noch keine Folgen abspielbar',
     loadingAria: 'Staffel wird geladen',
     loadError: 'Diese Staffel konnte nicht geladen werden.',
+    loadErrorTitle: 'Diese Staffel konnte nicht geladen werden',
     backToSeries: 'Zurück zur Serie',
     episodes: 'Episoden',
     notFound: 'Staffel nicht gefunden',
@@ -594,8 +596,11 @@ export const DE_MESSAGES = {
     deleteScheduleConfirm: 'Zeitplan {name} löschen?',
     removeTagConfirm: 'Tag {tag} entfernen?',
     loadErrorSchedules: 'Zeitpläne konnten nicht geladen werden.',
+    loadErrorSchedulesTitle: 'Zeitpläne konnten nicht geladen werden',
     loadErrorTags: 'Tags konnten nicht geladen werden.',
+    loadErrorTagsTitle: 'Tags konnten nicht geladen werden',
     loadErrorStreamLimits: 'Stream-Limits konnten nicht geladen werden.',
+    loadErrorStreamLimitsTitle: 'Stream-Limits konnten nicht geladen werden',
     scheduleSaveError: 'Zeitplan konnte nicht gespeichert werden.',
     scheduleDeleteError: 'Zeitplan konnte nicht gelöscht werden.',
     tagAddError: 'Tag konnte nicht hinzugefügt werden.',

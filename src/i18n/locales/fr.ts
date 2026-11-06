@@ -415,6 +415,7 @@ export const FR_MESSAGES = {
   },
   playlist: {
     loadError: "Impossible de charger cette playlist.",
+    loadErrorTitle: "Impossible de charger cette playlist",
   },
   music: {
     title: 'Bibliothèque musicale',
@@ -554,6 +555,7 @@ export const FR_MESSAGES = {
     noEpisodes: 'Aucun épisode à lire pour le moment',
     loadingAria: 'Chargement de la saison',
     loadError: 'Impossible de charger cette saison.',
+    loadErrorTitle: 'Impossible de charger cette saison',
     backToSeries: 'Retour à la série',
     episodes: 'Épisodes',
     notFound: 'Saison introuvable',
@@ -598,8 +600,11 @@ export const FR_MESSAGES = {
     deleteScheduleConfirm: 'Supprimer l’horaire {name} ?',
     removeTagConfirm: 'Retirer l’étiquette {tag} ?',
     loadErrorSchedules: 'Impossible de charger les horaires.',
+    loadErrorSchedulesTitle: 'Impossible de charger les horaires',
     loadErrorTags: 'Impossible de charger les étiquettes.',
+    loadErrorTagsTitle: 'Impossible de charger les étiquettes',
     loadErrorStreamLimits: 'Impossible de charger les limites de stream.',
+    loadErrorStreamLimitsTitle: 'Impossible de charger les limites de stream',
     scheduleSaveError: 'Impossible d’enregistrer l’horaire.',
     scheduleDeleteError: 'Impossible de supprimer l’horaire.',
     tagAddError: 'Impossible d’ajouter l’étiquette.',

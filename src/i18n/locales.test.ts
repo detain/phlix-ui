@@ -37,7 +37,9 @@
  * @license MIT
  */
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MESSAGES,
@@ -473,5 +475,53 @@ describe('copy law tripwires (W-min187)', () => {
       text,
       `README.md: no "same ${groups} groups" claim (measured count is ${groups}; rotate the prose)`,
     ).toContain(`same ${groups} groups`);
+  });
+
+  it('every t()-bound :title resolves to period-less copy in all seven catalogs (CU-071)', () => {
+    // COPY LAW 3 (messages.ts header): a complete status/error sentence carries
+    // a period; labels, TITLES and buttons never do. Five *loadError* keys
+    // breached it by rendering as EmptyState `:title` headings (ui__copywriter
+    // #1, Major) — the cure split them into period-less title twins while the
+    // period-ended originals stay as running-text fallbacks. This tripwire
+    // walks every `:title="t('…')"` site under src/ (EmptyState outputs its
+    // title inside an <h3>) and holds the law for EN plus all six mirrors, so
+    // the whole surface class — not just the five historical sites — stays
+    // closed.
+    // Path-based walk (same fileURLToPath idiom as Tabs.test.ts's source pins;
+    // readdirSync rejects the non-file URL import.meta.url takes under vite).
+    const srcDir = join(dirname(fileURLToPath(import.meta.url)), '..');
+    const keys = new Set<string>();
+    for (const rel of readdirSync(srcDir, { recursive: true, encoding: 'utf8' })) {
+      if (!rel.endsWith('.vue')) continue;
+      const text = readFileSync(join(srcDir, rel), 'utf8');
+      for (const m of text.matchAll(/:title="t\('([^']+)'\)"/g)) keys.add(m[1] as string);
+    }
+    // Sanity: the walk actually sees the bound-title surface (28 distinct keys
+    // measured at the CU-071 cure; a lower floor tolerates later drift without
+    // ever letting the scan silently find nothing).
+    expect(keys.size).toBeGreaterThanOrEqual(25);
+    const catalogs: Array<[string, unknown]> = [
+      ['en', DEFAULT_MESSAGES],
+      ['de', DE_MESSAGES],
+      ['es', ES_MESSAGES],
+      ['fr', FR_MESSAGES],
+      ['it', IT_MESSAGES],
+      ['ja', JA_MESSAGES],
+      ['pt_BR', PT_BR_MESSAGES],
+    ];
+    for (const key of keys) {
+      for (const [name, catalog] of catalogs) {
+        // Same group-first split law as the key-set walk above: the group is
+        // the first segment, the rest is the leaf path verbatim.
+        const [group, ...leafPath] = key.split('.') as [string, ...string[]];
+        let node: unknown = (catalog as Record<string, unknown>)[group];
+        for (const seg of leafPath) node = (node as Record<string, unknown>)?.[seg];
+        expect(typeof node, `${name}: ${key} does not resolve to a string`).toBe('string');
+        expect(
+          node as string,
+          `${name}: ${key} renders inside an <h3> title but ends in terminal punctuation`,
+        ).not.toMatch(/[.!。！？…]$/);
+      }
+    }
   });
 });

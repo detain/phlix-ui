@@ -412,6 +412,7 @@ export const JA_MESSAGES = {
   },
   playlist: {
     loadError: "このプレイリストを読み込めませんでした。",
+    loadErrorTitle: "このプレイリストを読み込めませんでした",
   },
   music: {
     title: 'ミュージックライブラリ',
@@ -551,6 +552,7 @@ export const JA_MESSAGES = {
     noEpisodes: '再生できるエピソードはまだありません',
     loadingAria: 'シーズンを読み込み中',
     loadError: 'このシーズンを読み込めませんでした。',
+    loadErrorTitle: 'このシーズンを読み込めませんでした',
     backToSeries: 'シリーズに戻る',
     episodes: 'エピソード',
     notFound: 'シーズンが見つかりません',
@@ -595,8 +597,11 @@ export const JA_MESSAGES = {
     deleteScheduleConfirm: 'スケジュール「{name}」を削除しますか？',
     removeTagConfirm: 'タグ「{tag}」を削除しますか？',
     loadErrorSchedules: 'スケジュールを読み込めませんでした。',
+    loadErrorSchedulesTitle: 'スケジュールを読み込めませんでした',
     loadErrorTags: 'タグを読み込めませんでした。',
+    loadErrorTagsTitle: 'タグを読み込めませんでした',
     loadErrorStreamLimits: '配信制限を読み込めませんでした。',
+    loadErrorStreamLimitsTitle: '配信制限を読み込めませんでした',
     scheduleSaveError: 'スケジュールを保存できずにしました。',
     scheduleDeleteError: 'スケジュールを削除できずにしました。',
     tagAddError: 'タグを追加できずにしました。',

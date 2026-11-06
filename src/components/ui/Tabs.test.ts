@@ -136,6 +136,30 @@ describe('Tabs — tab row wrapping (S23)', () => {
   });
 });
 
+describe('Tabs — scrollable panel keeps a focus indicator (CU-119)', () => {
+  const sfcSource = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'Tabs.vue'),
+    'utf8',
+  );
+
+  it('the panel is keyboard-scrollable and its focus-visible rule paints a ring (WCAG 2.4.7)', () => {
+    const w = mount(Tabs, { props: { modelValue: 'a', tabs } });
+    // tabindex=0 is the (correct, preserved) half of the finding: keyboard
+    // users must be able to scroll the panel.
+    expect(w.get('[role="tabpanel"]').attributes('tabindex')).toBe('0');
+    // The cure half: focusability without a VISIBLE indicator strands keyboard
+    // users (the rule used to be `outline: none` with nothing behind it).
+    // jsdom does not apply scoped CSS, so assert the declaration in the
+    // component's <style> source (same venue law as the S23 pin above).
+    const flat = sfcSource.replace(/\s+/g, ' ');
+    const start = flat.indexOf('.phlix-tabs__panel:focus-visible {');
+    expect(start).toBeGreaterThanOrEqual(0);
+    const block = flat.slice(start, flat.indexOf('}', start) + 1);
+    expect(block).toContain('box-shadow');
+    expect(block).toMatch(/inset 0 0 0 \d+px var\(--accent-ring\)/);
+  });
+});
+
 describe('Tabs — muted (not disabled) tab (S24)', () => {
   const mutedTabs = [
     { value: 'a', label: 'Alpha' },

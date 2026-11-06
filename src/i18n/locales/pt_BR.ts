@@ -411,6 +411,7 @@ export const PT_BR_MESSAGES = {
   },
   playlist: {
     loadError: "Não foi possível carregar esta playlist.",
+    loadErrorTitle: "Não foi possível carregar esta playlist",
   },
   music: {
     title: 'Biblioteca de música',
@@ -550,6 +551,7 @@ export const PT_BR_MESSAGES = {
     noEpisodes: 'Ainda não há episódios para reproduzir',
     loadingAria: 'Carregando temporada',
     loadError: 'Não foi possível carregar esta temporada.',
+    loadErrorTitle: 'Não foi possível carregar esta temporada',
     backToSeries: 'Voltar à série',
     episodes: 'Episódios',
     notFound: 'Temporada não encontrada',
@@ -594,8 +596,11 @@ export const PT_BR_MESSAGES = {
     deleteScheduleConfirm: 'Excluir o horário {name}?',
     removeTagConfirm: 'Remover a tag {tag}?',
     loadErrorSchedules: 'Não foi possível carregar os horários.',
+    loadErrorSchedulesTitle: 'Não foi possível carregar os horários',
     loadErrorTags: 'Não foi possível carregar as tags.',
+    loadErrorTagsTitle: 'Não foi possível carregar as tags',
     loadErrorStreamLimits: 'Não foi possível carregar os limites de stream.',
+    loadErrorStreamLimitsTitle: 'Não foi possível carregar os limites de stream',
     scheduleSaveError: 'Não foi possível salvar o horário.',
     scheduleDeleteError: 'Não foi possível excluir o horário.',
     tagAddError: 'Não foi possível adicionar a tag.',

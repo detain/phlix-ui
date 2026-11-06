@@ -6,6 +6,40 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w03 L2 2026-11-06 (CU-071/CU-117/CU-118/CU-119/CU-121/CU-125)
+
+Review-cure batch (`.reviews/2026-11-04/` ui registers, third ui wave). Red-first:
+each pin measured failing at the parent commit before its src cure.
+
+- **CU-117** `Button.vue`: while `loading`, the button no longer sets the native
+  `disabled` attribute — native disabling drops the element from the sequential
+  focus order, so focus on a submit-as-you-save button vanished to `<body>` the
+  instant loading began (mid-save blur loss). Loading now announces
+  `aria-disabled="true"` + `aria-busy` and blocks activation through a capture
+  click guard plus a submitter-aware form-submit guard (own submissions die,
+  other controls in the same form are untouched). The explicit `disabled` prop
+  keeps its native-attribute contract. Loading wears the disabled look via
+  `.is-loading` CSS.
+- **CU-118** `UserMenu.vue`: sign-out stopped double-navigating. `useAuthStore.logout`
+  already routes to the login path; the extra `router.push` that followed raced it.
+  `logout()` is now the sole navigation owner (menu links unaffected).
+- **CU-119** `Tabs.vue`: the scrollable tab panel (`tabindex="0"`) had
+  `:focus-visible { outline: none }` with nothing replacing it — keyboard users
+  got a focused scroll region with no visible cue. It now draws the house
+  inset accent ring.
+- **CU-071** i18n copy law: five period-terminated body strings were being
+  rendered as EmptyState `<h3>` titles (`playlist.loadError`, `season.loadError`,
+  `parental.loadErrorSchedules/Tags/StreamLimits`). Added period-less `*Title`
+  twins to all seven catalogs (526→531 keys, mirrors +6×5, prose pins rotated)
+  and switched the five title call sites to them; the toast/error-message sites
+  keep the period-ended bodies. A copy-law tripwire test now walks every
+  `t()`-bound `:title` across all seven catalogs, failing on terminal punctuation.
+- **CU-121/CU-125** README: ToC orphan fixed (removed the lone `h3` Pluralization
+  entry; added the missing `License` link) and the dev quick-reference block
+  gained the Gallery URL (`http://localhost:5173/src/dev/gallery.html`, probe-
+  verified) plus the missing `test:coverage` line.
+
+
 > **On the plan-document anchors below.** Many entries cite `plan_updates.md` / `updates.md` and
 > `S<number>` identifiers. Those plan docs are the estate update program's wave ledgers; they were
 > never files in this repo and now live in the docs site's archive: `phlix-docs/docs/old/`

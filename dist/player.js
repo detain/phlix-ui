@@ -3470,7 +3470,10 @@ var cn = {
 		unknownError: "Something went wrong.",
 		loadTitlesError: "Couldn’t load titles"
 	},
-	playlist: { loadError: "Couldn’t load this playlist." },
+	playlist: {
+		loadError: "Couldn’t load this playlist.",
+		loadErrorTitle: "Couldn’t load this playlist"
+	},
 	music: {
 		title: "Music library",
 		titleColumn: "Title",
@@ -3603,6 +3606,7 @@ var cn = {
 		noEpisodes: "No episodes to play yet",
 		loadingAria: "Loading season",
 		loadError: "Couldn’t load this season.",
+		loadErrorTitle: "Couldn’t load this season",
 		backToSeries: "Back to series",
 		episodes: "Episodes",
 		notFound: "Season not found",
@@ -3647,8 +3651,11 @@ var cn = {
 		deleteScheduleConfirm: "Delete schedule {name}?",
 		removeTagConfirm: "Remove tag {tag}?",
 		loadErrorSchedules: "Couldn’t load schedules.",
+		loadErrorSchedulesTitle: "Couldn’t load schedules",
 		loadErrorTags: "Couldn’t load tags.",
+		loadErrorTagsTitle: "Couldn’t load tags",
 		loadErrorStreamLimits: "Couldn’t load stream limits.",
+		loadErrorStreamLimitsTitle: "Couldn’t load stream limits",
 		scheduleSaveError: "Couldn’t save schedule.",
 		scheduleDeleteError: "Couldn’t delete schedule.",
 		tagAddError: "Couldn’t add tag.",
@@ -7917,6 +7924,7 @@ var pl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 }), [["__scopeId", "data-v-12c692c9"]]), Yl = [
 	"type",
 	"disabled",
+	"aria-disabled",
 	"aria-busy"
 ], Xl = {
 	key: 0,
@@ -7943,8 +7951,22 @@ var pl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 		rightIcon: {}
 	},
 	setup(e) {
-		let t = e, n = r(() => t.disabled || t.loading);
-		return (t, r) => (x(), o("button", {
+		let t = e, n = S(null);
+		function r(e) {
+			t.loading && (e.preventDefault(), e.stopImmediatePropagation());
+		}
+		function c(e) {
+			t.loading && e.submitter === n.value && (e.preventDefault(), e.stopImmediatePropagation());
+		}
+		let l = null;
+		return y(() => {
+			let e = n.value?.closest("form");
+			e && (e.addEventListener("submit", c, !0), l = e);
+		}), v(() => {
+			l?.removeEventListener("submit", c, !0), l = null;
+		}), (t, c) => (x(), o("button", {
+			ref_key: "rootEl",
+			ref: n,
 			type: e.type,
 			class: g(["phlix-btn", [
 				`phlix-btn--${e.variant}`,
@@ -7954,8 +7976,10 @@ var pl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 					"is-loading": e.loading
 				}
 			]]),
-			disabled: n.value,
-			"aria-busy": e.loading || void 0
+			disabled: e.disabled || void 0,
+			"aria-disabled": e.loading || void 0,
+			"aria-busy": e.loading || void 0,
+			onClick: r
 		}, [
 			e.loading ? (x(), o("span", Xl, [u(Y, { name: "spinner" })])) : a("", !0),
 			e.leftIcon && !e.loading ? (x(), i(Y, {
@@ -7971,7 +7995,7 @@ var pl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 			}, null, 8, ["name"])) : a("", !0)
 		], 10, Yl));
 	}
-}), [["__scopeId", "data-v-38abf89d"]]), $l = [
+}), [["__scopeId", "data-v-cf0eaa3c"]]), $l = [
 	"disabled",
 	"aria-label",
 	"aria-pressed"

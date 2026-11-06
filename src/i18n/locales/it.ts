@@ -411,6 +411,7 @@ export const IT_MESSAGES = {
   },
   playlist: {
     loadError: "Impossibile caricare questa playlist.",
+    loadErrorTitle: "Impossibile caricare questa playlist",
   },
   music: {
     title: 'Libreria musicale',
@@ -550,6 +551,7 @@ export const IT_MESSAGES = {
     noEpisodes: 'Ancora nessun episodio da riprodurre',
     loadingAria: 'Caricamento stagione',
     loadError: 'Impossibile caricare questa stagione.',
+    loadErrorTitle: 'Impossibile caricare questa stagione',
     backToSeries: 'Torna alla serie',
     episodes: 'Episodi',
     notFound: 'Stagione non trovata',
@@ -594,8 +596,11 @@ export const IT_MESSAGES = {
     deleteScheduleConfirm: 'Eliminare l’orario {name}?',
     removeTagConfirm: 'Rimuovere il tag {tag}?',
     loadErrorSchedules: 'Impossibile caricare gli orari.',
+    loadErrorSchedulesTitle: 'Impossibile caricare gli orari',
     loadErrorTags: 'Impossibile caricare i tag.',
+    loadErrorTagsTitle: 'Impossibile caricare i tag',
     loadErrorStreamLimits: 'Impossibile caricare i limiti di stream.',
+    loadErrorStreamLimitsTitle: 'Impossibile caricare i limiti di stream',
     scheduleSaveError: 'Impossibile salvare l’orario.',
     scheduleDeleteError: 'Impossibile eliminare l’orario.',
     tagAddError: 'Impossibile aggiungere il tag.',

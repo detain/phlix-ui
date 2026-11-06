@@ -500,6 +500,7 @@ export const DEFAULT_MESSAGES = {
   },
   playlist: {
     loadError: "Couldn’t load this playlist.",
+    loadErrorTitle: "Couldn’t load this playlist",
   },
   music: {
     title: 'Music library',
@@ -714,6 +715,7 @@ export const DEFAULT_MESSAGES = {
     // Empty/error-state copy (L3)
     loadingAria: 'Loading season',
     loadError: "Couldn’t load this season.",
+    loadErrorTitle: "Couldn’t load this season",
     backToSeries: 'Back to series',
     episodes: 'Episodes',
     notFound: 'Season not found',
@@ -758,8 +760,11 @@ export const DEFAULT_MESSAGES = {
     deleteScheduleConfirm: 'Delete schedule {name}?',
     removeTagConfirm: 'Remove tag {tag}?',
     loadErrorSchedules: "Couldn’t load schedules.",
+    loadErrorSchedulesTitle: "Couldn’t load schedules",
     loadErrorTags: "Couldn’t load tags.",
+    loadErrorTagsTitle: "Couldn’t load tags",
     loadErrorStreamLimits: "Couldn’t load stream limits.",
+    loadErrorStreamLimitsTitle: "Couldn’t load stream limits",
     // M13 option A (deferred lane 2026-11-03): the write-side twins of the
     // loadError trio — the page's error fallbacks, previously inline in the
     // 'Failed to ….' voice m24 deprecated. Same 'Couldn’t ….' law, same shape.

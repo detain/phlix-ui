@@ -196,7 +196,7 @@ onMounted(() => void load());
     <EmptyState
       v-else-if="error"
       icon="alert"
-      :title="t('playlist.loadError')"
+      :title="t('playlist.loadErrorTitle')"
       :description="error"
     >
       <template #actions>

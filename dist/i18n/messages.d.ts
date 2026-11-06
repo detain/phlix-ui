@@ -442,6 +442,7 @@ export declare const DEFAULT_MESSAGES: {
     };
     playlist: {
         loadError: string;
+        loadErrorTitle: string;
     };
     music: {
         title: string;
@@ -618,6 +619,7 @@ export declare const DEFAULT_MESSAGES: {
         noEpisodes: string;
         loadingAria: string;
         loadError: string;
+        loadErrorTitle: string;
         backToSeries: string;
         episodes: string;
         notFound: string;
@@ -662,8 +664,11 @@ export declare const DEFAULT_MESSAGES: {
         deleteScheduleConfirm: string;
         removeTagConfirm: string;
         loadErrorSchedules: string;
+        loadErrorSchedulesTitle: string;
         loadErrorTags: string;
+        loadErrorTagsTitle: string;
         loadErrorStreamLimits: string;
+        loadErrorStreamLimitsTitle: string;
         scheduleSaveError: string;
         scheduleDeleteError: string;
         tagAddError: string;

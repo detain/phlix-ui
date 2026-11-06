@@ -43,7 +43,6 @@ Vue app.
 - [Configuration — `PhlixAppConfig`](#configuration--phlixappconfig)
 - [Theming & user preferences](#theming--user-preferences)
 - [Stores & composables](#stores--composables)
-- [Pluralization (`src/utils/plural.ts`)](#pluralization-srcutilspluralts)
 - [Performance patterns](#performance-patterns)
 - [Component catalog](#component-catalog)
 - [Command palette (⌘K)](#command-palette-k)
@@ -52,6 +51,7 @@ Vue app.
 - [Development](#development)
 - [Build output](#build-output)
 - [Compatibility & notes](#compatibility--notes)
+- [License](#license)
 
 ---
 
@@ -409,7 +409,7 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-526-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
+531-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
 equality on every ui tag since the `v0.99.5` era (now `v0.99.15`-era) — the catalog's
 129 dotted registry strings per locale (903 across the seven bundles) would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
@@ -719,13 +719,13 @@ import '@phlix/ui/fonts.css'; // @font-face declarations (recommended)
 
 ```sh
 npm install
-npm run dev          # Vite dev server (open src/dev/gallery.html for the primitive Gallery)
+npm run dev          # Vite dev server — the primitive Gallery lives at http://localhost:5173/src/dev/gallery.html
 npm run build        # vue-tsc typecheck + vite lib build + d.ts emit + copy fonts
 npm run dist:check   # fail if the committed dist/ drifted from src/ (CI gate step)
 npm run audit        # scripts/audit-gate.mjs — strict npm audit + justified allow-list (CI gate step, static job)
 npm run test         # vitest (watch)
 npm run test:run     # vitest run (CI)
-npm run test:run -- --coverage  # same suite + coverage/lcov.info (what CI uploads)
+npm run test:coverage  # vitest run --coverage — same suite, emits coverage/lcov.info (what CI uploads)
 npm run typecheck    # vue-tsc --noEmit
 npm run lint         # eslint (part of the CI gate)
 npm run test:visual  # Playwright visual-regression suite (on-demand; not in the default gate)

@@ -231,12 +231,15 @@ describe('LoginForm', () => {
     expect(push).toHaveBeenCalledWith('/hub');
   });
 
-  it('disables the submit button while auth.loading', async () => {
+  it('keeps the submit button focusable-but-blocked while auth.loading (CU-117)', async () => {
     const { w, auth } = mountForm();
     auth.loading = true;
     await flushPromises();
     const btn = w.get('button[type="submit"]');
-    expect(btn.attributes('disabled')).toBeDefined();
+    // New Button law: loading announces aria-disabled (no native attribute —
+    // that would drop the mid-submit button from the focus order).
+    expect(btn.attributes('disabled')).toBeUndefined();
+    expect(btn.attributes('aria-disabled')).toBe('true');
     expect(btn.attributes('aria-busy')).toBe('true');
     expect(btn.text()).toContain('Signing in');
   });

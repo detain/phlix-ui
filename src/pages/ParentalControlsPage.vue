@@ -614,7 +614,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="schedulesError"
               icon="alert"
-              :title="t('parental.loadErrorSchedules')"
+              :title="t('parental.loadErrorSchedulesTitle')"
               :description="schedulesError"
             >
               <template #actions>
@@ -674,7 +674,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="tagsError"
               icon="alert"
-              :title="t('parental.loadErrorTags')"
+              :title="t('parental.loadErrorTagsTitle')"
               :description="tagsError"
             >
               <template #actions>
@@ -728,7 +728,7 @@ function askDeleteTag(tag: ProfileTag): void {
             <EmptyState
               v-else-if="streamLimitsError"
               icon="alert"
-              :title="t('parental.loadErrorStreamLimits')"
+              :title="t('parental.loadErrorStreamLimitsTitle')"
               :description="streamLimitsError"
             >
               <template #actions>

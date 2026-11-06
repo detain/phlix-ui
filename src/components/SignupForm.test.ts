@@ -248,12 +248,15 @@ describe('SignupForm', () => {
     expect(toastErr).not.toHaveBeenCalled();
   });
 
-  it('disables the submit button + shows the busy label while auth.loading', async () => {
+  it('keeps the submit button focusable-but-blocked + shows the busy label while auth.loading (CU-117)', async () => {
     const { w, auth } = mountForm();
     auth.loading = true;
     await flushPromises();
     const btn = w.get('button[type="submit"]');
-    expect(btn.attributes('disabled')).toBeDefined();
+    // New Button law (CU-117): aria-disabled, not native disabled — focus on a
+    // mid-submit button must survive the loading flip.
+    expect(btn.attributes('disabled')).toBeUndefined();
+    expect(btn.attributes('aria-disabled')).toBe('true');
     expect(btn.text()).toContain('Creating account');
   });
 
