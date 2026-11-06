@@ -12,7 +12,14 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — playback: pinned-quality loads use the server-advertised playlist_url (URL-contract law) (2026-11-06)
+## 0.99.20 - 2026-11-06
+
+### Release — 1 commit since the `v0.99.19` cut (`a6c9d466`): the playback URL-contract cure `c8c608f4`. The 2026-11-06 hub.phlix "can't play" incident class is dead at the root: pinned-quality loads now consume the signed per-rung mini-master URLs the server mints (`playlist_url` / `url` on each variant, phlix-server `f4f01949`) VERBATIM — probe, load and legacy fallback all read the server's own signatures, and no client-side string surgery ever touches a signed URL again. A rung the ladder never advertises (older server / off-wire pick) still derives its index, but strictly PATH-scoped (split at `?`, rename inside the path, re-append the master's query — the `/hls/{job}`-prefix-scoped signer authorises it). `parseVariants` carries the new fields snake/camel-tolerant with absence keeping 'older server' decidable; `setVariants` resolves them at the boundary (the `setSubtitleTracks` law) into an internal mirror that outlives the post-load `resetLevelState`, so consecutive pinned picks keep their exact advertised URLs. Folded verbatim from the pending Unreleased lane block below (house TW-ui law: bodies untouched, lane header demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit carrying the M-UI-23 `0.99.20` stamp into the shipped bundles consumers vendor into `/app` (the fix lane's dist already rode `c8c608f4` bundle-substantive; this cut re-stamps).
+
+- Measured suite counts at this tip (full serial battery, settled tree with the rebuilt dist): `vitest --no-file-parallelism` = **329 files / 6797 passed / 10 skipped** — the exact 0.99.19 floor (329/6785/10) plus `c8c608f4`'s 12 measured-red-first pins (2 signed-master WIP + 10 URL-contract); `vue-tsc --noEmit` exit 0; `eslint .` exit 0.
+- Red-first/mutation evidence (lane-measured at `c8c608f4`, carried into this record): the URL-contract pins ran against the parent tree's src measured **6 failed / 107 passed** red-first; mutation kills: stripping the advertised preference reddens **exactly 4** (the consumption pins, zero collateral), restoring whole-URL surgery reddens **exactly 4** signed-shape pins (2 signed-master + un-advertised derivation + the mutation-toothed LAW sweep asserting every emitted URL-with-a-query carries `_master.m3u8` strictly before the `?`), unsigned pins untouched.
+
+### playback: pinned-quality loads use the server-advertised playlist_url (URL-contract law) (2026-11-06)
 
 - **`loadVariantPlaylist` consumes the signed rung URLs the server now mints.**
   phlix-server `f4f01949` grew the wire contract: every playable variant on the
