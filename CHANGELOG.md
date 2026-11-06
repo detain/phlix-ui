@@ -12,6 +12,47 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — player: stale-audio-menu cure after legacy fallback + probe-shape pins (2026-11-06)
+
+- **Major (review v2): the audio menu can no longer show stale renditions after a legacy
+  fallback.** On a pre-mini-master server a pinned quality on a multi-audio title HEAD-probes
+  the rung index, gets 404, and loads the legacy bare video-only playlist. hls.js 1.7.4 answers
+  that master→bare reload by clearing its audioTracks controller and announcing the change via
+  `AUDIO_TRACKS_UPDATED` only — `AUDIO_TRACK_SWITCHED` never fires — and the composable synced
+  the store's `audioTracks` exclusively on the switched event plus the attach seed. The store
+  therefore kept the PREVIOUS manifest's renditions while nothing on the bare rung could honour
+  a selection: a menu of dead clicks. `syncAudioTrackState()` now runs beside
+  `syncAudioPresence()` on every `MANIFEST_PARSED` (onReady) and every `LEVEL_LOADED` tick, so
+  the rung-reload truth (empty on a bare `-an` rung; filled when a group appears without a
+  switch) lands in the store either direction. Silent stays hidden, honest stays shown: the
+  post-fallback bare rung yields zero tracks and zero `CODECS` audio declaration, so no
+  synthesized 'Original' entry is presented for audio that does not exist. New law tests drive
+  the exact hls.js event sequence (`audioTracks` emptied WITHOUT any switched event, then
+  manifest re-parse + level load) through the real composable and pin the store empty/-1; the
+  reverse direction pins a group that fills without a switched event surfacing off the same
+  ticks. Stripping either sync line reddens exactly those two tests (mutation-proven).
+- **Minor m1**: `defaultProbeRungPlaylist` is exported and pinned directly — five new tests
+  prove the shipped fetch shape one HEAD request per probe, `Authorization: Bearer <token>`
+  derived from the master-URL origin, no header when the token getter is null, 404 → absent as
+  the ONLY decisive verdict, every other status (401/403/500/503) and any throw → unknown.
+- **Minor m2**: the fallback `console.warn` said multi-audio titles would "play WITHOUT
+  selectable audio" — after the menu fix the bare rung is silent with the menu HIDDEN. Prose
+  corrected to the honest shape (both URL names kept — the 404-warning pin asserts them).
+- **Composable docs**: the `onReady`/`LEVEL_LOADED` handler docblocks and the controller
+  `audioTracks`/`hasAudio` contract prose now state the rung-reload law (the track list is
+  re-read on every manifest parse, not only settled switches).
+- **Tests**: full serial battery `vitest --no-file-parallelism` = **329 files / 6785 passed /
+  10 skipped** (the 0.99.18-era floor 329/6775/10 plus 10 new measured pins; red-first
+  measured 2F/56P on `useHlsTranscode.test.ts` before the composable fix); `vue-tsc --noEmit`
+  exit 0; `eslint .` exit 0. Mutation killed: deleting the two new sync lines reddens exactly
+  the two staleness tests (2 failed / 64 passed).
+- **dist** rebuilt in this commit; determinism proved ×2 from the same tree
+  (`diff -r` empty; content-only aggregate md5 — files sorted, concatenated —
+  `5b998d4bbeac7a290bc77d2ae35b538d` ×2 identical). Carriers rotate
+  `dist/phlix-ui.js` e6db248b→14d7432a, `dist/player.js` 757435be→b3f389d0;
+  `dist/composables/useHlsTranscode.d.ts` gains the `defaultProbeRungPlaylist` export
+  (declared consumer type surface — additive). `dist:check` green on the committed tree.
+
 ## Unreleased — player: mini-master 404 fallback + muxed-audio Original entry (2026-11-06)
 
 - **L1 — rung mini-master 404 now degrades to the legacy bare rung playlist.** `loadVariantPlaylist`

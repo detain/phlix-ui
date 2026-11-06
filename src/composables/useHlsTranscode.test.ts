@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, type Mock } from 'vitest';
-import { useHlsTranscode, type RungPlaylistProbe, type TranscodeHttpClient } from './useHlsTranscode';
+import { defaultProbeRungPlaylist, useHlsTranscode, type RungPlaylistProbe, type TranscodeHttpClient } from './useHlsTranscode';
 import type { HlsHandle, HlsLevel } from '../components/player/hls-playback';
 
 function fakeVideo(): HTMLVideoElement {
@@ -918,6 +918,81 @@ describe('useHlsTranscode', () => {
       expect(h.loadSource).toHaveBeenCalledTimes(1);
       expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p_master.m3u8');
     });
+
+    // The suite's mock handle never went stale (review REGISTER
+    // REVIEW-ui-me-safety-v2.md, Major): hls.js 1.7.4's master→bare playlist
+    // reload clears the audio-track controller in onManifestLoading (hls.mjs
+    // :22437-22444) and announces the emptied group ONLY via AUDIO_TRACKS_UPDATED
+    // (:22523) — AUDIO_TRACK_SWITCHED fires solely from setAudioTrack (:22632),
+    // so it never lands on that transition. If the composable reads tracks only
+    // off AUDIO_TRACK_SWITCHED + the attach seed, the menu keeps the PREVIOUS
+    // master's renditions over a silent `-an` bare rung and every click is a
+    // silent no-op. These tests make the mock's track list ACTUALLY go stale.
+    it('legacy fallback clears stale renditions — the bare -an rung leaves no selectable tracks and no synthesized Original', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const h = harness({
+          start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' },
+          probeOutcome: 'absent',
+          hasAudioValue: true,
+        });
+        await h.controller.start(fakeVideo(), 'm');
+        // Seed the master's real rendition group — what the menu LEGITIMATELY
+        // shows while the master (with its EXT-X-MEDIA audio group) is loaded.
+        h.hls.audioTracks = [
+          { index: 0, name: 'English', lang: 'en', default: true, autoselect: true },
+          { index: 1, name: 'Japanese', lang: 'ja', default: false, autoselect: false },
+        ];
+        h.hls.currentAudioTrack = 0;
+        h.hls.fireAudioTrackSwitched(0);
+        expect(h.controller.audioTracks.value).toHaveLength(2);
+        expect(h.controller.currentAudioTrack.value).toBe(0);
+        expect(h.controller.hasAudio.value).toBe(true);
+
+        // Pin the quality → probe answers 404 → the legacy bare rung loads once.
+        h.controller.loadVariantPlaylist('original');
+        await flushRun();
+        expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal.m3u8');
+
+        // hls.js on the master→bare reload, exactly as it really fires it:
+        // controller state CLEARED, emptied group announced via
+        // AUDIO_TRACKS_UPDATED only (never AUDIO_TRACK_SWITCHED — so we do NOT
+        // fire it here; that omission IS the bug vector), then MANIFEST_PARSED
+        // and LEVEL_LOADED land on the ticks the composable DOES subscribe to.
+        h.hls.audioTracks = [];
+        h.hls.currentAudioTrack = -1;
+        h.hls.hasAudioValue = false; // bare -an rung: no group, no muxed CODECS
+        h.hls.fireReady();
+        h.hls.fireLevelLoaded();
+
+        // LAW: the store/menu must be refreshed to TRUTH — the stale renditions
+        // are GONE, nothing is selected, and the silent rung earns no
+        // synthesized 'Original' entry (hidden-menu law: silent stays hidden).
+        expect(h.controller.audioTracks.value).toEqual([]);
+        expect(h.controller.currentAudioTrack.value).toBe(-1);
+        expect(h.controller.hasAudio.value).toBe(false);
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it('a rung reload whose group fills WITHOUT AUDIO_TRACK_SWITCHED surfaces the renditions off the subscribed ticks (the same updated-only transition, other direction)', async () => {
+      const h = harness({
+        start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' },
+        levels: [],
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.audioTracks.value).toEqual([]);
+      // Load a rung whose mini-master carries a real group: hls.js clears state,
+      // parses the group, and fires only AUDIO_TRACKS_UPDATED before settling.
+      // Reading the live handle at MANIFEST_PARSED / LEVEL_LOADED must pick it up.
+      h.hls.audioTracks = [{ index: 0, name: 'English', lang: 'en', default: true, autoselect: true }];
+      h.hls.currentAudioTrack = 0;
+      h.hls.hasAudioValue = true;
+      h.hls.fireReady();
+      expect(h.controller.audioTracks.value).toHaveLength(1);
+      expect(h.controller.currentAudioTrack.value).toBe(0);
+    });
   });
 
   // ── L2 (composable half) — muxed-audio presence signal ─────────────────────
@@ -1011,5 +1086,79 @@ describe('audit #6 — superseded runs and reset()', () => {
 
     h.controller.reset();
     expect(store.hlsMasterUrl).toBe('');
+  });
+});
+
+// ── m1 — the SHIPPED rung probe (direct pins, no injected seam) ──────────────
+// Every controller-level L1 test injects `probeRungPlaylist`, so the real
+// default (a bearer-carrying HEAD against the resolved mini-master URL) had
+// zero direct coverage until now.
+describe('defaultProbeRungPlaylist (the shipped HEAD probe)', () => {
+  const indexUrl = 'http://h:8096/hls/job-1/media_voriginal_master.m3u8';
+
+  it('issues ONE HEAD carrying the bearer Authorization header, maps 2xx to available', async () => {
+    const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>(async () =>
+      ({ status: 200, ok: true }) as unknown as Response,
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await expect(defaultProbeRungPlaylist(indexUrl, () => 'tok-123')).resolves.toBe('available');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toBe(indexUrl);
+      const init = fetchMock.mock.calls[0][1]!;
+      expect(init.method).toBe('HEAD');
+      // Bearer rides the master-derived URL only (same custody hls.js uses);
+      // the resolved index URL IS the origin-scoped target — no request to any
+      // other host happens here.
+      expect(init.headers).toEqual({ Authorization: 'Bearer tok-123' });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('sends NO Authorization header when no token is held', async () => {
+    const fetchMock = vi.fn<(input: string, init?: RequestInit) => Promise<Response>>(async () =>
+      ({ status: 204, ok: true }) as unknown as Response,
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await expect(defaultProbeRungPlaylist(indexUrl, () => null)).resolves.toBe('available');
+      const init = fetchMock.mock.calls[0][1]!;
+      expect(init.headers).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('an explicit 404 is the ONLY decisive absent verdict', async () => {
+    const fetchMock = vi.fn(async () => ({ status: 404, ok: false }) as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await expect(defaultProbeRungPlaylist(indexUrl, () => 'tok')).resolves.toBe('absent');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each([500, 503, 403, 401])('a non-404 %s status is unknowable, never absent (the loud mini-master path stays)', async (status) => {
+    const fetchMock = vi.fn(async () => ({ status, ok: false }) as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await expect(defaultProbeRungPlaylist(indexUrl, () => 'tok')).resolves.toBe('unknown');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('a throwing fetch (network boom) is unknowable too — never a silent legacy fallback', async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new Error('network down');
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await expect(defaultProbeRungPlaylist(indexUrl, () => 'tok')).resolves.toBe('unknown');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

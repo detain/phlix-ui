@@ -123,10 +123,14 @@ export interface HlsTranscodeController {
    *  (e.g. manifest only has one quality) to populate the quality selector.
    *  Null on a legacy pre-ABR job. */
   variants: Ref<Variant[] | null>;
-  /** The available audio tracks from the HLS manifest (P3B-S3 multi-audio).
-   *  Populated once the manifest is parsed via {@link HlsHandle.audioTracks}.
-   *  Empty when the manifest has no #EXT-X-MEDIA:TYPE=AUDIO groups or on the
-   *  native-HLS (Safari) path where audio tracks come from video.audioTracks. */
+  /** The available audio tracks from the attached stream (P3B-S3 multi-audio).
+   *  Mirrors {@link HlsHandle.audioTracks} live: re-read on manifest parse
+   *  (including every rung reload), on each LEVEL_LOADED tick, and on settled
+   *  track switches — so a playlist reload that empties or refills the group
+   *  (hls.js fires only AUDIO_TRACKS_UPDATED there) can never leave stale
+   *  renditions in the menu. Empty when the manifest has no
+   *  #EXT-X-MEDIA:TYPE=AUDIO groups or on the native-HLS (Safari) path where
+   *  audio tracks come from video.audioTracks. */
   audioTracks: Ref<HlsAudioTrack[]>;
   /** The currently selected audio track index, or `-1` when no audio track
    *  is active (e.g. native HLS path or a manifest with no audio groups). */
@@ -226,8 +230,13 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   }
 
   /** Pull audio track state from the attached handle. Called on manifest-parse
-   *  and on every settled audio track switch. `activeIndex`, when given (from
-   *  the switch event), names the track that is actually playing. */
+   *  (including a rung reload's re-parse), on every LEVEL_LOADED tick, and on
+   *  every settled audio track switch. hls.js's playlist reloads can clear or
+   *  refill the group with only an AUDIO_TRACKS_UPDATED event (never
+   *  AUDIO_TRACK_SWITCHED), so the ticks we DO subscribe to must re-read the
+   *  live list — otherwise the menu serves the previous playlist's stale
+   *  renditions over a stream that no longer has them. `activeIndex`, when given
+   *  (from the switch event), names the track that is actually playing. */
   function syncAudioTrackState(activeIndex?: number): void {
     if (!handle) return;
     audioTracks.value = handle.audioTracks;
@@ -362,10 +371,14 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         startPosition,
         // MANIFEST_PARSED also re-fires when loadVariantPlaylist re-points the
         // SAME instance at a rung playlist — this closure is therefore the
-        // per-rung refresh tick for levels AND audio presence (the rung's
-        // CODECS answer is only knowable once ITS manifest parses).
+        // per-rung refresh tick for levels, audio TRACKS and audio presence (an
+        // emptied or filled group is only knowable once ITS manifest parses, and
+        // hls.js's master→bare reload announces it via AUDIO_TRACKS_UPDATED
+        // alone — never AUDIO_TRACK_SWITCHED — so the subscribed ticks must
+        // re-read the live track list).
         onReady: () => {
           syncLevelState();
+          syncAudioTrackState();
           syncAudioPresence();
         },
         onError: () => {
@@ -389,8 +402,14 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       unsubscribeAudioTrackSwitched = handle.onAudioTrackSwitched((index) => syncAudioTrackState(index));
       // A MUXED-audio level's codec answer is reconciled as its playlist
       // loads — LEVEL_LOADED is the tick that turns `hasAudio` on for
-      // single-audio rungs (and re-answers it after a rung switch).
-      unsubscribeLevelLoaded = handle.onLevelLoaded(() => syncAudioPresence());
+      // single-audio rungs (and re-answers it after a rung switch). The track
+      // list rides the same tick: an AUDIO_TRACKS_UPDATED-only transition
+      // (master→bare, or bare→master) never fires AUDIO_TRACK_SWITCHED, so
+      // without this the menu would keep the previous playlist's renditions.
+      unsubscribeLevelLoaded = handle.onLevelLoaded(() => {
+        syncAudioTrackState();
+        syncAudioPresence();
+      });
       // Seed from the handle now: covers the native/degraded shape (empty levels,
       // Auto) and a manifest that parsed before this point.
       syncLevelState();
@@ -480,7 +499,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       if (cancelled || attempt !== rungProbeSeq || !handle) return;
       if (outcome === 'absent') {
         console.warn(
-          `[phlix-ui] rung mini-master unavailable (${miniMasterUrl}) — this server has no per-rung index files; falling back to the legacy bare rung playlist (${legacyPlaylistUrl}). Multi-audio titles play without selectable audio tracks until the server ships the index.`,
+          `[phlix-ui] rung mini-master unavailable (${miniMasterUrl}) — this server has no per-rung index files; falling back to the legacy bare rung playlist (${legacyPlaylistUrl}). Multi-audio titles play silent on the video-only bare rung and the audio menu stays hidden (never a stale rendition list); muxed-audio titles play correctly. The menu returns once the server ships the index.`,
         );
         handle.loadSource(legacyPlaylistUrl);
       } else {
@@ -589,9 +608,11 @@ function safeToken(): string | null {
  * header hls.js attaches to the playlist itself. Only an explicit HTTP 404 is
  * decisive ('absent'); 2xx is 'available'; any other status or a network throw
  * is 'unknown' — which never triggers the fallback (see the law documented on
- * {@link UseHlsTranscodeOptions.probeRungPlaylist}).
+ * {@link UseHlsTranscodeOptions.probeRungPlaylist}). Exported so the shipped
+ * fetch shape (HEAD / bearer / status mapping) is pinned directly, not only
+ * through the injected test seam.
  */
-async function defaultProbeRungPlaylist(url: string, getToken: () => string | null): Promise<RungPlaylistProbe> {
+export async function defaultProbeRungPlaylist(url: string, getToken: () => string | null): Promise<RungPlaylistProbe> {
   try {
     const token = getToken();
     const res = await fetch(url, {

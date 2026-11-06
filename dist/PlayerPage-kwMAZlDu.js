@@ -357,7 +357,7 @@ function ut(e) {
 				hlsConfig: e.hlsConfig,
 				startPosition: s,
 				onReady: () => {
-					g(), b();
+					g(), y(), b();
 				},
 				onError: () => {
 					l() || (t.value = "error");
@@ -369,7 +369,9 @@ function ut(e) {
 				} catch {}
 				return;
 			}
-			k = f, ne = k.onLevelSwitched((e) => g(e)), re = k.onAudioTrackSwitched((e) => y(e)), A = k.onLevelLoaded(() => b()), g(), y(), b();
+			k = f, ne = k.onLevelSwitched((e) => g(e)), re = k.onAudioTrackSwitched((e) => y(e)), A = k.onLevelLoaded(() => {
+				y(), b();
+			}), g(), y(), b();
 			try {
 				let e = d();
 				e.hlsMasterUrl = h.value;
@@ -398,7 +400,7 @@ function ut(e) {
 			} catch {
 				e = "unknown";
 			}
-			!j && i === ie && k && (e === "absent" ? (console.warn(`[phlix-ui] rung mini-master unavailable (${n}) — this server has no per-rung index files; falling back to the legacy bare rung playlist (${r}). Multi-audio titles play without selectable audio tracks until the server ships the index.`), k.loadSource(r)) : k.loadSource(n), _());
+			!j && i === ie && k && (e === "absent" ? (console.warn(`[phlix-ui] rung mini-master unavailable (${n}) — this server has no per-rung index files; falling back to the legacy bare rung playlist (${r}). Multi-audio titles play silent on the video-only bare rung and the audio menu stays hidden (never a stale rendition list); muxed-audio titles play correctly. The menu returns once the server ships the index.`), k.loadSource(r)) : k.loadSource(n), _());
 		})();
 	}
 	function fe() {
@@ -3567,4 +3569,4 @@ var Li = { class: "player__stage" }, Ri = ["src", "poster"], zi = [
 }), [["__scopeId", "data-v-98924eb8"]]);
 export { Oa as default };
 
-//# sourceMappingURL=PlayerPage-CR9MkMKP.js.map
+//# sourceMappingURL=PlayerPage-kwMAZlDu.js.map

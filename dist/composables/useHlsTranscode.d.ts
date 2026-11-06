@@ -88,10 +88,14 @@ export interface HlsTranscodeController {
      *  (e.g. manifest only has one quality) to populate the quality selector.
      *  Null on a legacy pre-ABR job. */
     variants: Ref<Variant[] | null>;
-    /** The available audio tracks from the HLS manifest (P3B-S3 multi-audio).
-     *  Populated once the manifest is parsed via {@link HlsHandle.audioTracks}.
-     *  Empty when the manifest has no #EXT-X-MEDIA:TYPE=AUDIO groups or on the
-     *  native-HLS (Safari) path where audio tracks come from video.audioTracks. */
+    /** The available audio tracks from the attached stream (P3B-S3 multi-audio).
+     *  Mirrors {@link HlsHandle.audioTracks} live: re-read on manifest parse
+     *  (including every rung reload), on each LEVEL_LOADED tick, and on settled
+     *  track switches — so a playlist reload that empties or refills the group
+     *  (hls.js fires only AUDIO_TRACKS_UPDATED there) can never leave stale
+     *  renditions in the menu. Empty when the manifest has no
+     *  #EXT-X-MEDIA:TYPE=AUDIO groups or on the native-HLS (Safari) path where
+     *  audio tracks come from video.audioTracks. */
     audioTracks: Ref<HlsAudioTrack[]>;
     /** The currently selected audio track index, or `-1` when no audio track
      *  is active (e.g. native HLS path or a manifest with no audio groups). */
@@ -146,3 +150,13 @@ export interface HlsTranscodeController {
     reset(): void;
 }
 export declare function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeController;
+/**
+ * Default rung-mini-master probe: one HEAD request carrying the SAME bearer
+ * header hls.js attaches to the playlist itself. Only an explicit HTTP 404 is
+ * decisive ('absent'); 2xx is 'available'; any other status or a network throw
+ * is 'unknown' — which never triggers the fallback (see the law documented on
+ * {@link UseHlsTranscodeOptions.probeRungPlaylist}). Exported so the shipped
+ * fetch shape (HEAD / bearer / status mapping) is pinned directly, not only
+ * through the injected test seam.
+ */
+export declare function defaultProbeRungPlaylist(url: string, getToken: () => string | null): Promise<RungPlaylistProbe>;
