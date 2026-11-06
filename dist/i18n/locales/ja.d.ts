@@ -149,6 +149,7 @@ export declare const JA_MESSAGES: {
         signInFailed: string;
         serverUnreachable: string;
         signupFailed: string;
+        sessionExpired: string;
     };
     connect: {
         eyebrow: string;

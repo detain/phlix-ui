@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, inject, provide, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, inject, onScopeDispose, provide, ref, watch } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import AppLayout from './AppLayout.vue';
 import ThemeToggle from './ThemeToggle.vue';
@@ -101,6 +101,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useLibrariesStore } from '../stores/useLibrariesStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
 import { useProfileStore } from '../stores/useProfileStore';
+import { useToastStore } from '../stores/useToastStore';
 import { useCommandPaletteHotkey } from '../composables/useCommandPaletteHotkey';
 import { usePreconnect, resolveImageOrigin } from '../composables/usePreconnect';
 import { useResumeSync } from '../composables/useResumeSync';
@@ -117,6 +118,7 @@ const commands = useCommandStore();
 const router = useRouter();
 const route = useRoute();
 const { t } = useMessages();
+const toasts = useToastStore();
 
 // Full-bleed shell (S34): the shell drops its chrome (`.shell--flush` hides the
 // sticky header + zeroes the main padding) so the in-window player owns the whole
@@ -134,6 +136,26 @@ const isFullBleed = computed(() => route.meta?.fullBleed === true && playerUi.th
 
 // Always-on ⌘K hotkey (stays in the main bundle); the palette UI is lazy below.
 useCommandPaletteHotkey();
+
+// CU-107 (webux review): when the API client determinatively kills a dead session
+// (expireSession dispatches the window 'phlix:auth-expired' event), useAuthStore
+// mirrors it by nulling its state — but until now NOTHING made the event visible:
+// a mid-session expiry silently degraded the shell to logged-out chrome with no
+// explanation. The app shell owns that UX (the store's M-UI-26 docblock assigns it
+// to "router guards/pages"): toast why, then route to sign-in carrying the current
+// path back — the same { name: 'login', query: { redirect } } shape authGuard
+// (createPhlixApp.ts) produces for a cold navigations's denied member.
+if (typeof window !== 'undefined') {
+  const onAuthExpired = () => {
+    toasts.warning(t('auth.sessionExpired'));
+    const current = router.currentRoute.value;
+    if (current.name !== 'login' && router.hasRoute('login')) {
+      void router.replace({ name: 'login', query: { redirect: current.fullPath } });
+    }
+  };
+  window.addEventListener('phlix:auth-expired', onAuthExpired);
+  onScopeDispose(() => window.removeEventListener('phlix:auth-expired', onAuthExpired));
+}
 
 // The command palette is a lazy chunk (R6.1b): fetch + mount it only once it has
 // been opened at least once — via the ⌘K hotkey, the actions-cluster button, or any

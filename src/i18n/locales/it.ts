@@ -151,6 +151,7 @@ export const IT_MESSAGES = {
     signInFailed: 'Accesso non riuscito.',
     serverUnreachable: 'Impossibile contattare il server. Controlla la connessione e riprova.',
     signupFailed: 'Impossibile creare il tuo account. Riprova.',
+    sessionExpired: 'Sessione scaduta. Accedi di nuovo.',
   },
   connect: {
     eyebrow: 'Per iniziare',

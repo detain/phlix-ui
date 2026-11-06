@@ -153,6 +153,7 @@ export const ES_MESSAGES = {
     signInFailed: 'Error al iniciar sesión.',
     serverUnreachable: 'No se pudo contactar con el servidor. Comprueba tu conexión e inténtalo de nuevo.',
     signupFailed: 'No se pudo crear tu cuenta. Inténtalo de nuevo.',
+    sessionExpired: 'La sesión caducó. Inicia sesión de nuevo.',
   },
   connect: {
     eyebrow: 'Primeros pasos',

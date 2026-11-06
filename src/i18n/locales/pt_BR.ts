@@ -151,6 +151,7 @@ export const PT_BR_MESSAGES = {
     signInFailed: 'Falha ao entrar.',
     serverUnreachable: 'Não foi possível contatar o servidor. Verifique sua conexão e tente novamente.',
     signupFailed: 'Não foi possível criar sua conta. Tente novamente.',
+    sessionExpired: 'Sessão expirada. Entre novamente.',
   },
   connect: {
     eyebrow: 'Comece agora',

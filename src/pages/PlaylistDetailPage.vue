@@ -33,6 +33,9 @@ import {
 import { usePageTitle } from '../composables/usePageTitle';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
+import { usePlayerStore } from '../stores/usePlayerStore';
+import { resolvePlayable } from '../composables/useResolvePlayable';
 import { pluralCount } from '../utils/plural';
 import { canManagePlaylist } from '../utils/playlistPermissions';
 import MediaCard from '../components/MediaCard.vue';
@@ -60,6 +63,8 @@ const router = useRouter();
 const apiBase = useMediaApiBase();
 const toasts = useToastStore();
 const auth = useAuthStore();
+const userItemData = useUserItemDataStore();
+const player = usePlayerStore();
 
 /**
  * Server Option-A law (utils/playlistPermissions): visibility ≠ manageability.
@@ -126,6 +131,7 @@ async function load(): Promise<void> {
       const entry = getMediaItemCacheEntry(row.id);
       if (entry && isMediaItemCacheFresh(entry)) {
         replaceItem(row.id, entry.item);
+        userItemData.hydrate(entry.item);
         return;
       }
       try {
@@ -134,6 +140,7 @@ async function load(): Promise<void> {
         );
         cacheMediaItem(row.id, res.item);
         replaceItem(row.id, res.item);
+        userItemData.hydrate(res.item);
       } catch {
         /* raw tile stands — see header truth note */
       }
@@ -150,6 +157,68 @@ async function load(): Promise<void> {
 function replaceItem(id: string, item: MediaItem): void {
   const index = items.value.findIndex((i) => i.id === id);
   if (index >= 0) items.value.splice(index, 1, item);
+}
+
+// CU-090 (ui__enduser #2): the grid tiles were bare `<MediaCard :item>` — the
+// card's own Play/info/watchlist/watched affordances rendered but evaporated,
+// because a MediaCard event without a host listener is a no-op. The playlist
+// detail page is a first-class watching surface; it now answers the member
+// protocol with BrowsePage's semantics (resolve-then-play, store-state toasts;
+// the card already persisted favorite/watched before re-emitting, so these
+// handlers must NOT toggle again).
+function go(name: string, id: string): void {
+  void router?.push({ name, params: { id } }).catch(() => {});
+}
+
+let playController: AbortController | null = null;
+function isAbort(e: unknown): boolean {
+  return typeof e === 'object' && e !== null && (e as { name?: string }).name === 'AbortError';
+}
+
+async function onPlay(item: MediaItem): Promise<void> {
+  playController?.abort();
+  const myController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  playController = myController;
+  const stale = (): boolean => myController !== playController;
+  try {
+    const client = getClient();
+    const resolved = await resolvePlayable(
+      client,
+      apiBase.value,
+      item,
+      player.resumeMap,
+      myController?.signal,
+    );
+    if (stale()) return;
+    if (!resolved) {
+      toasts.info(t('library.nothingToPlay'));
+      return;
+    }
+    go('player', resolved.id);
+  } catch (e) {
+    if (stale() || isAbort(e)) return;
+    toasts.info(t('library.nothingToPlay'));
+  }
+}
+
+function onInfo(item: MediaItem): void {
+  if (router?.hasRoute('media')) go('media', item.id);
+  else toasts.info(t('common.detailsUnavailable', { name: item.name }));
+}
+
+function onWatchlist(item: MediaItem): void {
+  if (userItemData.isFavorite(item.id)) {
+    toasts.success(t('itemActions.addedToList', { name: item.name }));
+  } else {
+    toasts.info(t('itemActions.removedFromList', { name: item.name }));
+  }
+}
+function onMarkWatched(item: MediaItem): void {
+  if (userItemData.isWatched(item.id)) {
+    toasts.success(`Marked “${item.name}” as watched.`);
+  } else {
+    toasts.info(`Marked “${item.name}” as unwatched.`);
+  }
 }
 
 async function removeItem(item: MediaItem): Promise<void> {
@@ -231,7 +300,13 @@ onMounted(() => void load());
 
       <ul v-else class="playlist-detail__grid">
         <li v-for="item in items" :key="item.id" class="playlist-detail__cell">
-          <MediaCard :item="item" />
+          <MediaCard
+            :item="item"
+            @play="onPlay"
+            @info="onInfo"
+            @watchlist="onWatchlist"
+            @mark-watched="onMarkWatched"
+          />
           <button
             v-if="canManage"
             type="button"

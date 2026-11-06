@@ -151,6 +151,7 @@ export const DE_MESSAGES = {
     signInFailed: 'Anmeldung fehlgeschlagen.',
     serverUnreachable: 'Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.',
     signupFailed: 'Dein Konto konnte nicht erstellt werden. Bitte versuche es erneut.',
+    sessionExpired: 'Sitzung abgelaufen. Bitte melde dich erneut an.',
   },
   connect: {
     eyebrow: 'Erste Schritte',

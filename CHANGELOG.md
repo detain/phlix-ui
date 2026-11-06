@@ -6,6 +6,58 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w11 L9 2026-11-07 (CU-079/CU-081/CU-089/CU-090/CU-102/CU-107)
+
+Review-cure batch (`.reviews/2026-11-04/` ui registers, fourth ui wave). Red-first:
+each pin measured failing at the parent commit before its src cure.
+
+- **CU-107** auth-expiry UX: `expireSession` in `src/api/client.ts:835` broadcasts the
+  window `phlix:auth-expired` event and the auth store nulls its state, but nothing
+  ever listened — an expired session left the SPA parked on a dead page with silent
+  failures. `PhlixApp.vue` now owns the listener: a warning toast on
+  `auth.sessionExpired` (new key, catalogs 531→532, prose pins rotated from measured
+  red) and, off the login route, a `router.replace` to login carrying
+  `query.redirect = fullPath` — the same handoff shape `authGuard` uses. Registered
+  window-guarded, removed via `onScopeDispose`.
+- **CU-089** `SearchPage.vue`: the results `MediaGrid` bound only match/refresh —
+  card play / info / watchlist / mark-watched / choose-poster / remove emissions went
+  nowhere, so search hits were display-only. All six handlers are wired to the
+  `BrowsePage` protocol: abort-supersede `resolvePlayable` play into the player
+  route, route-or-toast info, state-READ toasts for watchlist/mark-watched (the card
+  already toggled the store itself — re-toggling would double-flip), and the
+  admin-only PosterPicker + delete ConfirmDialog modals.
+- **CU-090** `PlaylistDetailPage.vue`: same story smaller — the playlist drawer’s
+  `MediaCard`s were bound to nothing. Play/info/watchlist/mark-watched now follow the
+  same protocol (through the page’s `getClient()` injection seam); no admin modals,
+  per the register’s scope. Hydration calls join `load()` so the cards know real
+  state.
+- **CU-102** `LogsPage.vue` `highlightJson`: fed markup fragments to a `v-html` sink
+  after a hand-rolled 3-entity escape (`&` `<` `>` — no quote entity), so the
+  `"key": "value"` decoration relied on raw `"` staying raw. Rewritten to route every
+  inter-match and captured fragment through the file’s complete 5-entity `escapeHtml`;
+  the span taxonomy is unchanged. The `escape-html-quotes` gate gained a second law:
+  every `src/` function that builds `<span class=` markup must escape with all five
+  entities (or delegate to a complete `escapeHtml`) — this builder was the living
+  exception.
+- **CU-079** `MediaCard.vue` remote/latch fix: D-pad navigation synthesizes `:hover`
+  on the focused card and the pointer never “leaves”, so the lift transform, ring
+  and revealed action bar stayed latched on stale cards. All seven `:hover` arms moved
+  inside `@media (hover: hover)`; the `:focus-within` keyboard twins stay ungated (the
+  only visible affordance on a remote), and the reduced-motion rules stay ungated as
+  cancel-only declarations. A structural gate (`media-card-hover-guards.test.ts`)
+  parses the stylesheet and reddens any future ungated `:hover`.
+- **CU-081** README version stamps sat three releases stale (`v0.99.15` Status line,
+  install pin, era parenthetical vs shipped `0.99.22`). All three rotated; the new
+  `readme-version-currency.test.ts` pins each stamp to `package.json.version` with
+  anti-vacuous exact-count asserts, so the next release fails CI until the README
+  follows it.
+
+Consumer impact: the locale catalogs gained `auth.sessionExpired` (532 leaves) — the
+`PhlixMessages` type in the published `dist/i18n/*.d.ts` widens accordingly, and the
+tizen/windows consumer suites that pin their vendored catalog hashes must rotate at
+the next re-vendor. `dist/` rebuilt deterministically (×2 byte-identical) and
+committed in this same commit; chunk hashes rotate through the shared-module graph.
+
 ## Unreleased — w03 L2 2026-11-06 (CU-071/CU-117/CU-118/CU-119/CU-121/CU-125)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, third ui wave). Red-first:

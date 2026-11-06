@@ -148,6 +148,7 @@ export declare const PT_BR_MESSAGES: {
         signInFailed: string;
         serverUnreachable: string;
         signupFailed: string;
+        sessionExpired: string;
     };
     connect: {
         eyebrow: string;

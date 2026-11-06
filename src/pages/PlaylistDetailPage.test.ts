@@ -20,6 +20,8 @@ import { setActivePinia, createPinia } from 'pinia';
 import PlaylistDetailPage from './PlaylistDetailPage.vue';
 import type { ApiClient } from '../api/client';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useToastStore } from '../stores/useToastStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 
@@ -90,6 +92,8 @@ function makeRouter(): Router {
     routes: [
       { path: '/app/playlists', name: 'playlists', component: stub },
       { path: '/app/playlists/:id', name: 'playlist', component: stub },
+      { path: '/app/media/:id', name: 'media', component: stub },
+      { path: '/app/player/:id', name: 'player', component: stub },
     ],
   });
 }
@@ -256,5 +260,68 @@ describe('PlaylistDetailPage', () => {
     expect(w.findAll('.playlist-detail__remove').length).toBe(2);
     const deletePlaylistBtn = w.findAll('button').find((b) => b.text() === 'Delete playlist');
     expect(deletePlaylistBtn).toBeDefined();
+  });
+
+  // CU-090 (ui__enduser #2): the grid rendered a BARE <MediaCard :item> — its
+  // Play/info/watchlist/watched affordances emitted into the void. These pins
+  // prove the page now answers the member protocol. RED AT PARENT: the stub
+  // card's $emit reached no listener; the route never changed.
+  it('card Play navigates to the player (movies resolve to themselves)', async () => {
+    const client = fakeClient();
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = await mountPage(client, router);
+    await flushPromises();
+
+    w.findAllComponents(MediaCardStub)[0].vm.$emit('play', shaped({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'm1' } });
+  });
+
+  it('card Info navigates to the media detail route', async () => {
+    const client = fakeClient();
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = await mountPage(client, router);
+    await flushPromises();
+
+    w.findAllComponents(MediaCardStub)[0].vm.$emit('info', shaped({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'media', params: { id: 'm1' } });
+  });
+
+  it('card watchlist re-emit toasts the persisted state without a second toggle', async () => {
+    const client = fakeClient();
+    const w = await mountPage(client, makeRouter());
+    await flushPromises();
+    const userItemData = useUserItemDataStore();
+    const toasts = useToastStore();
+    // The card already flipped the store (favorite ON) before re-emitting.
+    userItemData.hydrate(shaped({ id: 'm1', user_data: { favorite: true, rating: null } }));
+
+    w.findAllComponents(MediaCardStub)[0].vm.$emit('watchlist', shaped({ id: 'm1', name: 'Dune' }));
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'success' && t.message.includes('Dune') && /my list/i.test(t.message),
+      ),
+    ).toBe(true);
+    expect(userItemData.isFavorite('m1')).toBe(true); // no double-flip
+  });
+
+  it('card mark-watched re-emit reports the resulting watched state', async () => {
+    const client = fakeClient();
+    const w = await mountPage(client, makeRouter());
+    await flushPromises();
+    const userItemData = useUserItemDataStore();
+    const toasts = useToastStore();
+    userItemData.hydrate(
+      shaped({ id: 'm1', user_data: { favorite: false, watched: true, rating: null } }),
+    );
+
+    w.findAllComponents(MediaCardStub)[0]
+      .vm.$emit('mark-watched', shaped({ id: 'm1', name: 'Dune' }));
+    expect(
+      toasts.toasts.some((t) => t.tone === 'success' && t.message === 'Marked “Dune” as watched.'),
+    ).toBe(true);
   });
 });

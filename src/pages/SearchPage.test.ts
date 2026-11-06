@@ -13,8 +13,12 @@ import SearchPage from './SearchPage.vue';
 import MediaGrid from '../components/MediaGrid.vue';
 import MetadataMatchModal from '../components/MetadataMatchModal.vue';
 import ItemDataInspector from '../components/ItemDataInspector.vue';
+import PosterPicker from '../components/PosterPicker.vue';
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import EmptyState from '../components/ui/EmptyState.vue';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useToastStore } from '../stores/useToastStore';
+import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 import { isRoute } from '../test/route-match';
 import { ERROR_MESSAGES, ERROR_TITLES } from '../i18n/errors';
@@ -426,6 +430,144 @@ describe('SearchPage — input accessible name (ui__webux m27)', () => {
     expect(input.exists()).toBe(true);
     expect(input.attributes('aria-label'), 'accessible name exists').toBeTruthy();
     expect(input.attributes('aria-label')).toBe(DEFAULT_MESSAGES.search.inputLabel);
+    w.unmount();
+  });
+});
+
+// CU-089 (ui__enduser #1): the results grid carried only the admin metadata
+// bindings — Play, details, watchlist and watched were DEAD on the one surface
+// members actually use to find something to watch. These pins exercise the
+// BrowsePage card-action protocol now mirrored here. RED AT PARENT: the emits
+// below had no listener — findComponent(MediaGrid).vm.$emit('play', …) simply
+// evaporated and the route stayed /app/search.
+describe('SearchPage — card actions reach the page (CU-089)', () => {
+  it('Play on a movie result navigates to the player route', async () => {
+    stubFetch();
+    const router = makeRouter();
+    const w = await mountAt({ query: { q: 'dune' }, router });
+    await flushPromises();
+    w.findComponent(MediaGrid).vm.$emit('play', media({ id: 'm1' }));
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe('/app/player/m1');
+    w.unmount();
+  });
+
+  it('Info on a result navigates to the media detail route', async () => {
+    stubFetch();
+    const router = makeRouter();
+    const w = await mountAt({ query: { q: 'dune' }, router });
+    await flushPromises();
+    w.findComponent(MediaGrid).vm.$emit('info', media({ id: 'm1' }));
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe('/app/media/m1');
+    w.unmount();
+  });
+
+  it('Info degrades to a toast on hosts without a media route', async () => {
+    stubFetch();
+    // A consumer mounting the library without the optional detail route (the
+    // onInfo contract): the member gets the localized reason, not silence.
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/app', name: 'browse', component: stub },
+        { path: '/app/search', name: 'search', component: stub },
+        { path: '/app/player/:id', name: 'player', component: stub },
+      ],
+    });
+    const w = await mountAt({ query: { q: 'dune' }, router });
+    await flushPromises();
+    const toasts = useToastStore();
+    w.findComponent(MediaGrid).vm.$emit('info', media({ id: 'm1', name: 'Dune' }));
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'info' && t.message.includes('Dune'),
+      ),
+    ).toBe(true);
+    w.unmount();
+  });
+
+  it('watchlist re-emit toasts the persisted state WITHOUT a second toggle', async () => {
+    stubFetch();
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    const userItemData = useUserItemDataStore();
+    const toasts = useToastStore();
+    // The card ALREADY toggled favorite ON (Step 17.3) before re-emitting.
+    userItemData.hydrate(media({ id: 'm1', user_data: { favorite: true, rating: null } }));
+    w.findComponent(MediaGrid).vm.$emit('watchlist', media({ id: 'm1', name: 'Dune' }));
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'success' && t.message.includes('Dune') && /my list/i.test(t.message),
+      ),
+    ).toBe(true);
+    // No double-flip: the store still reads favorited after the handler ran.
+    expect(userItemData.isFavorite('m1')).toBe(true);
+    w.unmount();
+  });
+
+  it('mark-watched re-emit reports the resulting watched state', async () => {
+    stubFetch();
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    const userItemData = useUserItemDataStore();
+    const toasts = useToastStore();
+    userItemData.hydrate(media({ id: 'm1', user_data: { favorite: false, watched: true, rating: null } }));
+    w.findComponent(MediaGrid).vm.$emit('mark-watched', media({ id: 'm1', name: 'Dune' }));
+    expect(
+      toasts.toasts.some(
+        (t) => t.tone === 'success' && t.message === 'Marked “Dune” as watched.',
+      ),
+    ).toBe(true);
+    w.unmount();
+  });
+
+  it('admin: Choose poster arms the PosterPicker modal for the picked item', async () => {
+    stubFetch();
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    w.findComponent(MediaGrid).vm.$emit('choose-poster', media({ id: 'm1' }));
+    await flushPromises();
+    const picker = w.findComponent(PosterPicker);
+    expect(picker.exists()).toBe(true);
+    expect(picker.props('item')?.id).toBe('m1');
+    w.unmount();
+  });
+
+  it('admin: Remove arms the confirm dialog and deleting drops the row', async () => {
+    const fetchFn = vi.fn((url: unknown, init?: { method?: string }) => {
+      const u = typeof url === 'string' ? url : '';
+      if (init?.method === 'DELETE' && isRoute(u, '/api/v1/media/m1')) {
+        return Promise.resolve(jsonResponse({ id: 'm1' }));
+      }
+      if (isRoute(u, SEARCH_PATH)) {
+        return Promise.resolve(jsonResponse({ items: [media({ id: 'm1' })], query: 'q', total: 1 }));
+      }
+      return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
+    });
+    vi.stubGlobal('fetch', fetchFn);
+    const auth = useAuthStore();
+    auth.user = { id: 'admin', is_admin: true } as unknown as (typeof auth)['user'];
+    const w = await mountAt({ query: { q: 'dune' } });
+    await flushPromises();
+    w.findComponent(MediaGrid).vm.$emit('remove', media({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    const dialog = w.findComponent(ConfirmDialog);
+    expect(dialog.props('open')).toBe(true);
+    expect(String(dialog.props('message'))).toContain('Remove “Dune” from the library?');
+    dialog.vm.$emit('confirm');
+    await flushPromises();
+    expect(
+      fetchFn.mock.calls.some(([u, i]) => (i as { method?: string })?.method === 'DELETE' && isRoute(u, '/api/v1/media/m1')),
+    ).toBe(true);
+    // The row leaves: with the last result gone the grid itself unmounts back
+    // to the no-results state, and a success toast names the removed title.
+    expect(w.findComponent(MediaGrid).exists()).toBe(false);
+    expect(
+      useToastStore().toasts.some((t) => t.tone === 'success' && t.message.includes('Dune')),
+    ).toBe(true);
     w.unmount();
   });
 });

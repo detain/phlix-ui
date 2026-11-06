@@ -3218,7 +3218,8 @@ var cn = {
 		passwordMismatch: "Passwords do not match.",
 		signInFailed: "Couldn’t sign in.",
 		serverUnreachable: "Couldn’t reach the server. Check your connection and try again.",
-		signupFailed: "Couldn’t create your account. Please try again."
+		signupFailed: "Couldn’t create your account. Please try again.",
+		sessionExpired: "Session expired. Please sign in again."
 	},
 	connect: {
 		eyebrow: "Get started",

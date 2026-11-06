@@ -162,6 +162,7 @@ export declare const DEFAULT_MESSAGES: {
         signInFailed: string;
         serverUnreachable: string;
         signupFailed: string;
+        sessionExpired: string;
     };
     connect: {
         eyebrow: string;

@@ -148,6 +148,7 @@ export declare const DE_MESSAGES: {
         signInFailed: string;
         serverUnreachable: string;
         signupFailed: string;
+        sessionExpired: string;
     };
     connect: {
         eyebrow: string;

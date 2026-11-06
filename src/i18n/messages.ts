@@ -177,6 +177,9 @@ export const DEFAULT_MESSAGES = {
     // last-resort line the auth store surfaces when the failure isn't an Error.
     serverUnreachable: 'Couldn’t reach the server. Check your connection and try again.',
     signupFailed: 'Couldn’t create your account. Please try again.',
+    // CU-107 (webux review): the client's expireSession broadcast. The app shell
+    // toasts this and routes to the sign-in screen with a redirect back.
+    sessionExpired: 'Session expired. Please sign in again.',
   },
   connect: {
     // First-run "point this app at your server" screen (native clients)

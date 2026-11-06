@@ -334,4 +334,46 @@ describe('Admin LogsPage — renderer overhaul', () => {
     expect(w.findAll('.log-badge--channel')).toHaveLength(1);
     w.unmount();
   });
+
+  // CU-102 (ui__secaudit #2): highlightJson used to hand-escape only `< > &`
+  // before interpolating the captured key/value into span markup — quotes rode
+  // through unescaped while the file's own complete 5-entity escapeHtml sat
+  // unused below. The cure routes EVERY fragment through escapeHtml. The law
+  // lives on the STRING fed to v-html (the DOM re-serializes entities back to
+  // characters, hiding it), so it is pinned on the function's own output —
+  // the script-setup binding, reachable through the dev-mode instance proxy.
+  it('JSON decoration escapes quotes through the complete helper (CU-102)', async () => {
+    const w = await mountAll(['app-2026-07-18.log     {"user":"a\'b","n":5}']);
+    const highlight = (w.vm as unknown as Record<string, unknown>).highlightJson as
+      | ((text: string) => string)
+      | undefined;
+    expect(typeof highlight, 'highlightJson is exposed as a script-setup binding').toBe(
+      'function',
+    );
+
+    const html = highlight!('{"user":"a\'b <i>","n":5,"ok":true,"gone":null}');
+    // Decoration survives: key + all four value classes still emitted.
+    expect(html).toContain('<span class="json-key">');
+    expect(html).toContain('<span class="json-string">');
+    expect(html).toContain('<span class="json-number">');
+    expect(html).toContain('<span class="json-boolean">');
+    expect(html).toContain('<span class="json-null">');
+    // Every quote from the line arrives escaped — &quot; AND &#39; are the
+    // two entities the old 3-entity pre-pass dropped (RED AT PARENT).
+    expect(html).toContain('&quot;user&quot;');
+    expect(html).toContain('&#39;');
+    expect(html).toContain('&lt;i&gt;');
+    expect(html).not.toMatch(/<span class="json-key">"/);
+    w.unmount();
+  });
+
+  it('markup payload in a log line stays inert text (regression pin)', async () => {
+    const w = await mountAll([
+      'app-2026-07-18.log     {"xss":"<img src=x onerror=alert(1)>"}',
+    ]);
+    const pre = w.find('[data-testid="logs-output"]');
+    expect(pre.element.querySelectorAll('img')).toHaveLength(0);
+    expect(pre.text()).toContain('{"xss":"<img src=x onerror=alert(1)>"}');
+    w.unmount();
+  });
 });

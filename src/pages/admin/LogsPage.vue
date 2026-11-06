@@ -99,37 +99,46 @@ function stripEmptyJson(line: string): string {
 /**
  * Apply basic JSON syntax highlighting to text.
  * Returns HTML string with <span> elements wrapping highlighted tokens.
+ *
+ * CU-102 (ui__secaudit #2): this pass used to escape ONLY `< > &` inline and
+ * interpolate the captured fragments into the span markup as-is — `"` and `'`
+ * rode straight through, a hand-rolled copy of the escaping law that the
+ * file's own complete 5-entity {@link escapeHtml} already enforces (UI-m19).
+ * The walk now runs over the RAW text and every fragment — the inter-match
+ * text and each captured key/value — goes through escapeHtml. The sink is
+ * v-html (:557): with a whole-fragment escape there is no character from the
+ * log line that can open a tag or land inside a markup quote; the span
+ * classes stay fixed strings. Visual text is unchanged (`&quot;` renders as a
+ * quote), the span taxonomy (json-key/json-string/json-boolean/json-null/
+ * json-number) is preserved, and `formatLine` keeps feeding the raw message.
  */
 function highlightJson(text: string): string {
-  // Escape HTML entities first for safety
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-
-  // Match JSON-like segments: "key": value patterns
-  // We use a functional replace to apply highlighting
-  return escaped.replace(
-    /("([^"]+)":\s*)("(?:[^"\\]|\\.)*"|\d+\.?\d*|true|false|null)/g,
-    (_match, keyPart, _key, value) => {
-      // keyPart includes the quoted key and colon
-      const highlightedKey = `<span class="json-key">${keyPart}</span>`;
-      let highlightedValue = value;
-
-      if (value.startsWith('"')) {
-        // String value
-        highlightedValue = `<span class="json-string">${value}</span>`;
-      } else if (value === 'true' || value === 'false') {
-        highlightedValue = `<span class="json-boolean">${value}</span>`;
-      } else if (value === 'null') {
-        highlightedValue = `<span class="json-null">${value}</span>`;
-      } else if (!isNaN(Number(value))) {
-        highlightedValue = `<span class="json-number">${value}</span>`;
-      }
-
-      return highlightedKey + highlightedValue;
-    },
-  );
+  // Match JSON-like segments: "key": value patterns (over the raw text — the
+  // escaping moved from a pre-pass into every emitted fragment).
+  const pattern = /("([^"]+)":\s*)("(?:[^"\\]|\\.)*"|\d+\.?\d*|true|false|null)/g;
+  let out = '';
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = pattern.exec(text)) !== null) {
+    out += escapeHtml(text.slice(last, m.index));
+    // keyPart (m[1]) includes the quoted key and colon.
+    let highlightedValue: string;
+    if (m[3].startsWith('"')) {
+      // String value
+      highlightedValue = `<span class="json-string">${escapeHtml(m[3])}</span>`;
+    } else if (m[3] === 'true' || m[3] === 'false') {
+      highlightedValue = `<span class="json-boolean">${escapeHtml(m[3])}</span>`;
+    } else if (m[3] === 'null') {
+      highlightedValue = `<span class="json-null">${escapeHtml(m[3])}</span>`;
+    } else {
+      // The value alternation leaves only numbers here (was: !isNaN branch).
+      highlightedValue = `<span class="json-number">${escapeHtml(m[3])}</span>`;
+    }
+    out += `<span class="json-key">${escapeHtml(m[1])}</span>` + highlightedValue;
+    last = m.index + m[0].length;
+  }
+  out += escapeHtml(text.slice(last));
+  return out;
 }
 
 export interface ProcessedLine {
@@ -308,7 +317,8 @@ function processLine(line: string, fallbackSource = '', isCombined = false): Raw
  * `LEVEL` are separate badges (never duplicated as plain text). Every fragment
  * derived from raw log text is HTML-escaped before it reaches `v-html`:
  * `source`/`channel` via {@link escapeHtml}, the message via {@link highlightJson}
- * (which escapes `& < >` first). This is the XSS boundary for log content.
+ * (which escapes every fragment through {@link escapeHtml}). This is the XSS
+ * boundary for log content.
  *
  * @param combinedSources overrides `info.source` when several files' identical
  *   lines were merged into one row (comma-joined source list).
@@ -319,7 +329,8 @@ function formatLine(info: RawLine, combinedSources?: string): string {
   const timeHtml = info.localTime ? `${escapeHtml(info.localTime)} ` : '';
   const channelHtml = info.channel ? `${getChannelBadgeHtml(info.channel)} ` : '';
   const levelHtml = info.level ? `${getLevelBadgeHtml(info.level)}: ` : '';
-  // highlightJson escapes &<> itself — pass the raw message (no double-escape).
+  // highlightJson escapes every fragment itself (CU-102) — pass the raw
+  // message (no double-escape).
   const messageHtml = info.message ? highlightJson(info.message) : '';
   return `${sourceHtml}${timeHtml}${channelHtml}${levelHtml}${messageHtml}`;
 }

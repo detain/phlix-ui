@@ -743,13 +743,29 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   pointer-events: none;
   z-index: -1;
 }
-.media-card:hover,
+/* CU-079 (ui__crossfe #4): every :hover arm below lives inside `@media (hover:
+   hover)` while the keyboard's :focus-within arm stays ungated. On D-pad
+   devices a pointer is never physically over the card — the browser keeps a
+   SYNTHETIC hover where focus moved the pointer, so hover-styled state latched
+   onto the last card the user stepped off. Lift/ring/overlay are then sticky
+   forever. Coarse pointers get their reveal from the `@media (hover: none)`
+   block further down and from :focus-within; true pointer hover is the only
+   thing (hover: hover) admits here. */
 .media-card:focus-within {
   transform: translateY(-8px) scale(1.025);
 }
-.media-card:hover::after,
+@media (hover: hover) {
+  .media-card:hover {
+    transform: translateY(-8px) scale(1.025);
+  }
+}
 .media-card:focus-within::after {
   opacity: 1;
+}
+@media (hover: hover) {
+  .media-card:hover::after {
+    opacity: 1;
+  }
 }
 /* Focus ring: additive on top of shadow for :focus-within */
 .media-card:focus-within::after {
@@ -801,9 +817,13 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   filter: blur(0);
   transform: scale(1);
 }
-.media-card:hover .media-card__img.is-loaded,
 .media-card:focus-within .media-card__img.is-loaded {
   transform: scale(1.06);
+}
+@media (hover: hover) {
+  .media-card:hover .media-card__img.is-loaded {
+    transform: scale(1.06);
+  }
 }
 
 .media-card__fallback {
@@ -869,9 +889,13 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   border-radius: inherit;
   box-shadow: 0 0 8px var(--accent);
 }
-.media-card:hover .media-card__progress,
 .media-card:focus-within .media-card__progress {
   opacity: 0;
+}
+@media (hover: hover) {
+  .media-card:hover .media-card__progress {
+    opacity: 0;
+  }
 }
 
 .media-card__overlay {
@@ -904,10 +928,15 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
     transparent 100%
   );
 }
-.media-card:hover .media-card__overlay,
 .media-card:focus-within .media-card__overlay {
   opacity: 1;
   transform: translateY(0);
+}
+@media (hover: hover) {
+  .media-card:hover .media-card__overlay {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .media-card__title {
   font-family: var(--font-display);
@@ -979,9 +1008,13 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
      for the stretched link; enabled once the overlay is actually shown. */
   pointer-events: none;
 }
-.media-card:hover .media-card__actions,
 .media-card:focus-within .media-card__actions {
   pointer-events: auto;
+}
+@media (hover: hover) {
+  .media-card:hover .media-card__actions {
+    pointer-events: auto;
+  }
 }
 /* The thumbs widget defaults to `var(--text)` (near-black on daylight) — force it
    WHITE + non-shrinking + slightly smaller in the (always-dark) card overlay, and
@@ -1047,10 +1080,15 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
   transition: transform var(--dur-fast) var(--ease-spring), color var(--dur-base) var(--ease-out);
 }
-/* Hover feedback without a background: tint amber + a small scale. */
-.media-card__iconbtn:hover {
-  transform: scale(1.12);
-  color: var(--accent);
+/* Hover feedback without a background: tint amber + a small scale. CU-079:
+   (hover: hover) only — the synthetic latched hover on D-pad pointers would
+   otherwise permanently tint the stale card (the focus-visible ring below is
+   the keyboard's own affordance). */
+@media (hover: hover) {
+  .media-card__iconbtn:hover {
+    transform: scale(1.12);
+    color: var(--accent);
+  }
 }
 .media-card__iconbtn:focus-visible {
   outline: none;

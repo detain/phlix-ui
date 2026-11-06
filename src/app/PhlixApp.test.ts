@@ -44,6 +44,7 @@ function makeRouter(): Router {
       { path: '/app/movies', name: 'movies', component: { template: '<div />' } },
       { path: '/app/library/:id', name: 'library', component: { template: '<div />' } },
       { path: '/app/player/:id', name: 'player', meta: { fullBleed: true }, component: { template: '<div class="player-route" />' } },
+      { path: '/app/login', name: 'login', meta: { public: true }, component: { template: '<div class="login-route" />' } },
     ],
   });
 }
@@ -760,5 +761,47 @@ describe('PhlixApp — toast host (review ui__webux C1)', () => {
     expect(toast?.querySelector('.phlix-toast__message')?.textContent).toBe(
       'Invite link created and copied to clipboard.',
     );
+  });
+});
+
+describe('PhlixApp — session-expiry broadcast (CU-107)', () => {
+  it('toasts and routes to sign-in carrying the interrupted path back', async () => {
+    // The API client's expireSession nulls the token store and dispatches the
+    // window 'phlix:auth-expired' event; useAuthStore (M-UI-26) mirrors it by
+    // nulling its own state but deliberately owns no UX — its docblock hands
+    // UX to "router guards/pages", and until CU-107 nobody picked it up: a
+    // mid-session expiry silently degraded the shell to logged-out chrome.
+    // The shell now toasts why and forwards to sign-in with the SAME
+    // { name: 'login', query: { redirect } } shape authGuard produces, so a
+    // completed sign-in can land the member back where they were.
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await router.push('/app/settings');
+    await flushPromises();
+    window.dispatchEvent(new Event('phlix:auth-expired'));
+    await nextTick();
+    await flushPromises();
+
+    const toast = document.body.querySelector('.phlix-toast--warning');
+    expect(toast).not.toBeNull();
+    expect(toast?.querySelector('.phlix-toast__message')?.textContent).toBe(
+      'Session expired. Please sign in again.',
+    );
+    expect(router.currentRoute.value.name).toBe('login');
+    expect(router.currentRoute.value.query.redirect).toBe('/app/settings');
+  });
+
+  it('does not re-navigate when the member is already on sign-in', async () => {
+    // Login itself can expire (a stale form left open). Redirecting to login
+    // again would drop the redirect the user may already be carrying; the
+    // guard condition keeps the current route untouched.
+    wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
+    await router.push('/app/login');
+    await flushPromises();
+    window.dispatchEvent(new Event('phlix:auth-expired'));
+    await nextTick();
+    await flushPromises();
+
+    expect(router.currentRoute.value.name).toBe('login');
+    expect(router.currentRoute.value.query.redirect).toBeUndefined();
   });
 });

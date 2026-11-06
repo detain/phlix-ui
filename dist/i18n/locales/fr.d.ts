@@ -152,6 +152,7 @@ export declare const FR_MESSAGES: {
         signInFailed: string;
         serverUnreachable: string;
         signupFailed: string;
+        sessionExpired: string;
     };
     connect: {
         eyebrow: string;

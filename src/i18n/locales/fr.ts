@@ -155,6 +155,7 @@ export const FR_MESSAGES = {
     signInFailed: 'Échec de la connexion.',
     serverUnreachable: 'Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.',
     signupFailed: 'Impossible de créer votre compte. Veuillez réessayer.',
+    sessionExpired: 'Session expirée. Veuillez vous reconnecter.',
   },
   connect: {
     eyebrow: 'Pour commencer',
