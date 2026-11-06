@@ -227,6 +227,7 @@ export declare const FR_MESSAGES: {
         off: string;
         audio: string;
         audioTrack: string;
+        audioOriginal: string;
         captionStyle: string;
         size: string;
         captionSize: string;

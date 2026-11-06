@@ -12,6 +12,45 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — player: mini-master 404 fallback + muxed-audio Original entry (2026-11-06)
+
+- **L1 — rung mini-master 404 now degrades to the legacy bare rung playlist.** `loadVariantPlaylist`
+  (src/composables/useHlsTranscode.ts) HEAD-probes the per-rung `media_v{id}_master.m3u8` before
+  attaching it: an explicit HTTP 404 loads the legacy bare `media_v{id}.m3u8` exactly once per pick
+  with a `console.warn` naming both URLs (very old servers pinned under a hub proxy, or a job dir
+  whose server-side self-heal races, play silent-quality as they did pre-RUNGMASTER instead of
+  hard-failing). Any other probe outcome (2xx, non-404 status, network throw) keeps the mini-master
+  and the loud hls.js path — a 500 is never silently retried. The probe verdict is invalidated on
+  cleanup/reset and by a superseding quality pick (stale verdicts can never double-load). The
+  legacy URL is never itself probed. `probeRungPlaylist` is injectable for tests; the default
+  carries the bearer token against the resolved master-URL origin only.
+- **L2 — owner ruling: audio-bearing sources with zero selectable tracks show exactly one
+  highlighted "Original" entry.** Muxed-audio titles (single-audio sources: the mini-master
+  declares no `EXT-X-MEDIA` group and hls.js reports zero audioTracks; also direct-play
+  single-stream sources) previously rendered an empty audio menu. The player now synthesizes a
+  single non-interactive "Original" radio entry, checked, selecting it is a no-op. Sources with no
+  audio at all keep the menu hidden entirely. Presence is derived per path: the HLS path via the new
+  `HlsHandle.hasAudio()` (rendition group present, or the manifest level's `CODECS` attribute
+  declares an audio entry — `codecStringCarriesAudio`), refreshed on `LEVEL_LOADED` via the new
+  `onLevelLoaded` handle seam and surfaced as the controller's `hasAudio` ref; the direct-play path
+  via the playback-info single audio stream. Native/<video> enumeration (Safari) outranks
+  synthesis and reports truthfully; where presence is unknowable the menu stays hidden
+  (conservative). Multi-track real-track rendering is byte-unchanged; CaptionsMenu's audio gate
+  moved `> 1` → `> 0` so the synthesized entry (and a real single native track) can surface.
+- **Composable handle seam** (`src/components/player/hls-playback.ts`): `HlsHandle` gains
+  `onLevelLoaded(cb)` and `hasAudio()`; exported helper `codecStringCarriesAudio`. The native
+  fallback handle answers `hasAudio() === false` (Chrome exposes no audioTracks API — presence
+  unknowable there by design).
+- **i18n**: new key `player.audioOriginal` across 7 locales ('Original' en/de/es/fr/pt_BR;
+  'Originale' it; 'オリジナル' ja); `UNTRANSLATED_OK` de/es/fr/pt_BR admit `player.audioOriginal`.
+  Catalog leaf-count prose rotated 523-key → 524-key (src/i18n/errors.ts, errors.test.ts, README).
+- **Tests**: full serial battery `vitest --no-file-parallelism` = **329 files / 6775 passed /
+  10 skipped** (the 0.99.18 floor 329/6738/10 plus 37 measured pins); `vue-tsc --noEmit` exit 0;
+  `eslint` exit 0. Mutations killed: fallback-strip (legacy→mini in the absent branch) reddens
+  exactly the 404 pin; probe-outcome inversion reddens 8; CaptionsMenu gate revert reddens 5.
+- **dist** rebuilt in this commit; determinism proved ×2 from clean trees, aggregate md5
+  `3d653198cc416498403153ca57d3fa6d` (×2 identical, diff-empty).
+
 ## 0.99.18 - 2026-11-06
 
 ### Release — 1 commit since the `v0.99.17` cut (`b958fb57`): the pinned-quality mini-master audio cure (RUNGMASTER — a pinned quality no longer plays silent on multi-audio titles; the client-side half of the 11-06 no-audio incident, paired with the phlix-server per-rung `media_v{id}_master.m3u8` mini-master emitter already origin-bound at `1035e7de`), folded verbatim from the pending Unreleased lane block below (house TW-ui law: bodies untouched, lane header demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit carrying the M-UI-23 `0.99.18` stamp into the shipped bundles consumers vendor into `/app` (RUNGMASTER had already rebuilt dist bundle-substantive in its own commit; this cut re-stamps).

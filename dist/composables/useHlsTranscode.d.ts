@@ -44,7 +44,19 @@ export interface UseHlsTranscodeOptions {
      *  (e.g. a constrained TV tuning buffer lengths down to cap RAM). Merged OVER
      *  phlix-ui's defaults; never overrides the auth `xhrSetup` (see hls-playback). */
     hlsConfig?: Partial<import('hls.js').HlsConfig>;
+    /** Injectable availability probe for a rung's mini-master index, used by
+     *  {@link HlsTranscodeController.loadVariantPlaylist} (L1 forward-compat: a
+     *  server predating the index, or a rung dir whose self-heal regeneration
+     *  raced). `'absent'` (an explicit HTTP 404) is the ONLY outcome that falls
+     *  back to the legacy bare rung playlist; `'available'` and `'unknown'`
+     *  (5xx / network throw) load the mini-master unchanged so a transient
+     *  failure can never silently degrade a working stream. Defaults to a HEAD
+     *  request carrying the same bearer header hls.js uses. Overridden in tests. */
+    probeRungPlaylist?: (url: string) => Promise<RungPlaylistProbe>;
 }
+/** Outcome of a rung-playlist availability probe — see
+ *  {@link UseHlsTranscodeOptions.probeRungPlaylist}. */
+export type RungPlaylistProbe = 'available' | 'absent' | 'unknown';
 /**
  * A subtitle sidecar track exposed to the player, with its `url` already
  * resolved against the API base (an absolute URL ready for a `<track src>`).
@@ -84,6 +96,16 @@ export interface HlsTranscodeController {
     /** The currently selected audio track index, or `-1` when no audio track
      *  is active (e.g. native HLS path or a manifest with no audio groups). */
     currentAudioTrack: Ref<number>;
+    /** True when the attached stream carries audio at all — a selectable
+     *  rendition group OR audio muxed into the video segments (the rung's
+     *  manifest `CODECS` declares an audio elementary stream). The
+     *  player renders its single synthesized 'Original' audio track entry from
+     *  this when {@link audioTracks} is empty but audio plays; a source with
+     *  no audio (or the native-HLS path, where presence is unknowable here)
+     *  keeps the menu hidden. Re-evaluated on manifest parse, LEVEL_LOADED
+     *  (the codec reconciliation for a newly loaded level lands there), settled
+     *  switches, and rung reloads. */
+    hasAudio: Ref<boolean>;
     /** Pin a quality rung by level index for an IMMEDIATE switch, or pass `'auto'`
       *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
       *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
@@ -108,6 +130,9 @@ export interface HlsTranscodeController {
     /** Load a specific variant playlist directly (e.g. `media_voriginal_master.m3u8`)
      *  instead of using ABR level switching. This is used for the "Original"
      *  quality option when the original variant is not in the ABR ladder.
+     *  The rung's mini-master index is probed first; only an explicit 404 falls
+     *  back to the legacy bare rung playlist (L1 forward-compat — see
+     *  {@link UseHlsTranscodeOptions.probeRungPlaylist}).
      *  Calling this will clear the buffer and restart playback. */
     loadVariantPlaylist(variantId: string): void;
     /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when

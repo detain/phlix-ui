@@ -926,16 +926,41 @@ const isInfoAudioActive = computed<boolean>(
     infoAudioTrackList.value.length > 1,
 );
 
+/** L2 (owner ruling 2026-11-06): a title that HAS audio but offers no
+ *  selectable track list shows exactly one highlighted 'Original' entry in the
+ *  audio section; a title with no audio keeps the section hidden entirely.
+ *  The two muxed shapes: (a) the attached HLS stream muxes audio into its
+ *  segments — the per-rung mini-master declares an audio CODECS entry but
+ *  carries no EXT-X-MEDIA group, so hls.js exposes zero audioTracks while the
+ *  video plays sound (`tc.hasAudio`); (b) DIRECT play where playback-info
+ *  advertises exactly one embedded audio stream (Chrome has no
+ *  `video.audioTracks`, so that single muxed stream was invisible). Any real
+ *  list — native enumeration, a rendition group, or >1 advertised streams —
+ *  outranks the synthesis: those entries are genuinely selectable. Unknown
+ *  audio presence (native HLS path) stays hidden — conservative, matches the
+ *  pre-ruling behavior. */
+const hasOriginalAudio = computed<boolean>(() => {
+  if (audioTracks.value.length > 0) return false; // native enumeration is authoritative
+  if (tc.state.value === 'ready') return !isHlsAudioActive.value && tc.hasAudio.value;
+  return !transcodeNeeded.value && !isInfoAudioActive.value && infoAudioTrackList.value.length === 1;
+});
+
 /** The audio track list to show: HLS when active, else native (Safari), else the
- *  server playback-info list on direct play. */
+ *  server playback-info list on direct play, else the single synthesized
+ *  'Original' entry for a muxed-audio source (never for a silent one). */
 const effectiveAudioTracks = computed<TextTrackInfo[]>(() => {
   if (isHlsAudioActive.value) return hlsAudioTrackList.value;
   if (isInfoAudioActive.value) return infoAudioTrackList.value;
+  if (audioTracks.value.length > 0) return audioTracks.value;
+  if (hasOriginalAudio.value) {
+    return [{ index: 0, language: '', label: t('player.audioOriginal'), kind: 'audio' as const }];
+  }
   return audioTracks.value;
 });
 
 /** The active audio track index: HLS currentAudioTrack when active; on the
- *  playback-info path the user's pick, else the server's default stream. */
+ *  playback-info path the user's pick, else the server's default stream; the
+ *  synthesized 'Original' entry is always the active one. */
 const effectiveActiveAudio = computed<number>(() => {
   if (isHlsAudioActive.value) return tc.currentAudioTrack.value;
   if (isInfoAudioActive.value) {
@@ -943,6 +968,7 @@ const effectiveActiveAudio = computed<number>(() => {
     const def = (props.playbackAudioTracks ?? []).find((t) => t.default);
     return def ? def.index : (props.playbackAudioTracks?.[0]?.index ?? 0);
   }
+  if (audioTracks.value.length === 0 && hasOriginalAudio.value) return 0;
   return activeAudio.value;
 });
 const chaptersListOpen = ref(false);
@@ -1130,6 +1156,12 @@ function toggleCaptions(): void {
 let pendingHlsAudioIndex: number | null = null;
 
 function onSelectAudio(index: number): void {
+  // The synthesized single 'Original' entry is a highlighted NO-OP by ruling:
+  // there is no second stream to switch to, and none of the real branches
+  // below (HLS rendition switch / direct-play transcode fall-over / native
+  // enable) may fire for it — the menu renders it precisely because the
+  // session has nothing to switch.
+  if (hasOriginalAudio.value) return;
   if (isHlsAudioActive.value) {
     // P3B: route audio track selection through the hls.js controller
     tc.setAudioTrack(index);

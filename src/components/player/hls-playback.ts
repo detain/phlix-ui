@@ -134,6 +134,26 @@ export interface HlsHandle {
    * (e.g. "Original" quality).
    */
   loadSource(url: string): void;
+  /**
+   * Subscribe to hls.js `LEVEL_LOADED` — fires each time a level's media
+   * playlist (and its codec reconciliation) lands, including the FIRST load
+   * after {@link HlsHandle.loadSource} re-points the session at another
+   * playlist. This is the refresh tick that keeps {@link HlsHandle.hasAudio}
+   * honest across rung switches. On the native-HLS path this never fires and
+   * returns a no-op unsubscribe.
+   */
+  onLevelLoaded(callback: () => void): () => void;
+  /**
+   * True when the attached stream carries audio, either as a selectable
+   * rendition group ({@link HlsHandle.audioTracks} non-empty) or MUXED into
+   * the video segments (the level's manifest `CODECS` declaration names an
+   * audio elementary stream). Phlix's per-rung mini-master always declares
+   * CODECS, so a muxed single-audio rung answers at manifest parse. False for
+   * `-an` video-only rungs AND for manifests that declare nothing
+   * (unknowable — the caller hides the menu), and always false on the
+   * native-HLS path where the browser owns the element.
+   */
+  hasAudio(): boolean;
 }
 
 /** Options for {@link attachHls}. */
@@ -195,6 +215,28 @@ function persistBandwidth(bw: number): void {
 export function isNativeHlsSupported(video: HTMLVideoElement): boolean {
   const t = video.canPlayType('application/vnd.apple.mpegurl');
   return t === 'probably' || t === 'maybe';
+}
+
+/**
+ * Whether an HLS `CODECS` attribute value names an AUDIO elementary stream:
+ * a lone audio string ('mp4a.40.2'), or a combined 'avc1.640029,mp4a.40.2'.
+ * The audio prefixes cover what phlix-server's ffmpeg builders can emit —
+ * AAC (ISO-14496-3 'mp4a'), raw-AC-3/E-AC-3 in TS containers ('ac-3'/'ec-3'),
+ * and Opus in fMP4 ('opus'). Video-only entries ('avc1', 'hvc1', 'vp09',
+ * 'av01') carry audio no more than a `-an` rung does.
+ */
+export function codecStringCarriesAudio(codecs: string | undefined): boolean {
+  if (!codecs) return false;
+  return codecs
+    .split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .some(
+      (entry) =>
+        entry.startsWith('mp4a') ||
+        entry.startsWith('ac-3') ||
+        entry.startsWith('ec-3') ||
+        entry.startsWith('opus'),
+    );
 }
 
 /**
@@ -261,6 +303,11 @@ export async function attachHls(
       loadSource(newUrl: string): void {
         video.src = newUrl;
       },
+      // Native (Safari/iOS) path: the browser owns manifest parsing and audio,
+      // so no level-details tick to subscribe to and audio presence is
+      // unknowable from here — the caller treats `false` as "hide the menu".
+      onLevelLoaded: () => () => undefined,
+      hasAudio: () => false,
     };
   }
 
@@ -330,6 +377,13 @@ export async function attachHls(
         opts.onError?.(data.details ?? 'fatal hls error');
         hls.destroy();
       }
+    });
+    // LEVEL_LOADED fan-out for the handle's onLevelLoaded subscribers (the
+    // composable's muxed-audio refresh tick). A copy-iteration keeps an
+    // unsubscribe that runs DURING a notify from skipping a sibling listener.
+    const levelLoadedListeners: Array<() => void> = [];
+    hls.on(Hls.Events.LEVEL_LOADED, () => {
+      for (const notify of [...levelLoadedListeners]) notify();
     });
 
     // Track the instance and set up periodic bandwidth persistence so the
@@ -403,6 +457,26 @@ export async function attachHls(
         const listener = (_event: unknown, data: { id: number }): void => callback(data.id);
         hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, listener);
         return (): void => hls.off(Hls.Events.AUDIO_TRACK_SWITCHED, listener);
+      },
+      onLevelLoaded(callback: () => void): () => void {
+        levelLoadedListeners.push(callback);
+        return (): void => {
+          const at = levelLoadedListeners.indexOf(callback);
+          if (at >= 0) levelLoadedListeners.splice(at, 1);
+        };
+      },
+      hasAudio(): boolean {
+        // A real rendition group answers unconditionally — the same signal the
+        // audio menu already consumes. The muxed case is the codec declaration:
+        // hls.js parses the manifest stream-inf `CODECS` attribute onto the
+        // Level (its public `audioCodec`), and phlix's per-rung mini-master
+        // ALWAYS declares CODECS — for a single-audio source it carries the
+        // audio entry ('…,mp4a.40.2') with NO EXT-X-MEDIA group, which is
+        // exactly the muxed shape this signal exists for. Manifests that
+        // declare nothing stay unknowable → false → menu hidden (conservative;
+        // LevelDetails exposes no audio codec in hls.js's public API).
+        if ((hls.audioTracks?.length ?? 0) > 0) return true;
+        return hls.levels.some((l) => codecStringCarriesAudio(l.audioCodec));
       },
       loadSource(newUrl: string): void {
         hls.loadSource(newUrl);

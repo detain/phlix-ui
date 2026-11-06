@@ -223,6 +223,7 @@ export declare const PT_BR_MESSAGES: {
         off: string;
         audio: string;
         audioTrack: string;
+        audioOriginal: string;
         captionStyle: string;
         size: string;
         captionSize: string;

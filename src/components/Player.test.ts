@@ -51,6 +51,9 @@ vi.mock('../composables/useHlsTranscode', async () => {
   const variants = ref<unknown[] | null>(null);
   const audioTracks = ref<Array<{ index: number; name: string; lang: string; default: boolean; autoselect: boolean }>>([]);
   const currentAudioTrack = ref(-1);
+  // L2: the composable's muxed-audio presence signal (player synthesizes the
+  // single 'Original' entry from it when no selectable list exists).
+  const hasAudio = ref(false);
   const ctrl = {
     state,
     progress,
@@ -62,6 +65,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
     variants,
     audioTracks,
     currentAudioTrack,
+    hasAudio,
     setLevel: vi.fn(),
     setNextLevel: vi.fn(),
     setAudioTrack: vi.fn(),
@@ -79,6 +83,7 @@ vi.mock('../composables/useHlsTranscode', async () => {
       variants.value = null;
       audioTracks.value = [];
       currentAudioTrack.value = -1;
+      hasAudio.value = false;
     }),
   };
   return { useHlsTranscode: () => ctrl, __ctrl: ctrl };
@@ -104,6 +109,7 @@ function tc(): {
   variants: { value: unknown[] | null };
   audioTracks: { value: Array<{ index: number; name: string; lang: string; default: boolean; autoselect: boolean }> };
   currentAudioTrack: { value: number };
+  hasAudio: { value: boolean };
   setLevel: ReturnType<typeof vi.fn>;
   setNextLevel: ReturnType<typeof vi.fn>;
   setAudioTrack: ReturnType<typeof vi.fn>;
@@ -206,6 +212,7 @@ beforeEach(() => {
   ctrl.variants.value = null;
   ctrl.audioTracks.value = [];
   ctrl.currentAudioTrack.value = -1;
+  ctrl.hasAudio.value = false;
   ctrl.setLevel.mockClear();
   ctrl.setNextLevel.mockClear();
   ctrl.setAudioTrack.mockClear();
@@ -1509,11 +1516,27 @@ describe('Player — direct-play playback-info tracks (audio menu + signed subti
     expect(radios[1].attributes('aria-checked')).toBe('false');
   });
 
-  it('hides the audio list when playback-info advertises a single track', async () => {
+  it('shows ONE synthesized Original entry when playback-info advertises a single (muxed) track', async () => {
+    // L2 (owner ruling 2026-11-06): audio exists but nothing is selectable —
+    // the menu shows exactly one highlighted 'Original' entry instead of the
+    // old hidden-empty state. The entry is Player-synthesized: the server's
+    // stream label never reaches the menu here.
     const { w } = mountPlayer({ streamUrl: 'http://x/movie.mp4', playbackAudioTracks: [paTrack()] });
     await w.find('.capmenu__btn').trigger('click');
     await nextTick();
-    expect(w.find('[aria-label="Audio track"]').exists()).toBe(false);
+    const group = w.find('[aria-label="Audio track"]');
+    expect(group.exists()).toBe(true);
+    const radios = group.findAll('[role="radio"]');
+    expect(radios).toHaveLength(1);
+    expect(radios[0].text()).toBe('Original');
+    expect(radios[0].attributes('aria-checked')).toBe('true');
+    // Clicking the synthesized entry must not fire any real branch — above all
+    // the direct-play transcode fall-over (there is nothing to fall over for).
+    await radios[0].trigger('click');
+    await nextTick();
+    expect(tc().start).not.toHaveBeenCalled();
+    expect(tc().setAudioTrack).not.toHaveBeenCalled();
+    expect(w.find('.prep').exists()).toBe(false);
   });
 
   it('falls over to the HLS transcode on a non-default pick, then selects the hls.js track by index', async () => {
@@ -3544,5 +3567,96 @@ describe('webux M1 — buffering cue', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+// ── L2 — synthesized single 'Original' audio entry (muxed-audio sessions) ───
+// Owner ruling 2026-11-06: a video that HAS audio but offers no selectable
+// track list shows exactly one highlighted 'Original' entry; a video with no
+// audio keeps the section hidden entirely. The composable's `hasAudio` signal
+// (mini-master CODECS names audio, no EXT-X-MEDIA group) drives the HLS case.
+describe('Player — synthesized Original audio entry (L2)', () => {
+  function openAudioGroup(w: ReturnType<typeof mountPlayer>['w']) {
+    return w.find('[aria-label="Audio track"]');
+  }
+
+  it('a muxed-audio HLS session shows exactly one highlighted Original entry', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/stream' });
+    tc().state.value = 'ready'; // attached transcode session
+    tc().hasAudio.value = true; // mini-master declares mp4a in CODECS, no group
+    await nextTick();
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    const group = openAudioGroup(w);
+    expect(group.exists()).toBe(true);
+    const radios = group.findAll('[role="radio"]');
+    expect(radios).toHaveLength(1);
+    expect(radios[0].text()).toBe('Original');
+    expect(radios[0].attributes('aria-checked')).toBe('true');
+  });
+
+  it('clicking the Original entry is a highlighted no-op (no rendition switch, no transcode)', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/stream' });
+    tc().state.value = 'ready';
+    tc().hasAudio.value = true;
+    await nextTick();
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    await openAudioGroup(w).findAll('[role="radio"]')[0].trigger('click');
+    await nextTick();
+    expect(tc().setAudioTrack).not.toHaveBeenCalled();
+    expect(tc().start).not.toHaveBeenCalled();
+    // Still highlighted exactly once — nothing changed to select.
+    const radios = openAudioGroup(w).findAll('[role="radio"]');
+    expect(radios).toHaveLength(1);
+    expect(radios[0].attributes('aria-checked')).toBe('true');
+  });
+
+  it('a silent (-an) attached session keeps the audio section hidden', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/stream' });
+    tc().state.value = 'ready';
+    tc().hasAudio.value = false; // video-only rungs answer false
+    await nextTick();
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    expect(openAudioGroup(w).exists()).toBe(false);
+  });
+
+  it('real rendition tracks win over the synthesis (multi-audio path byte-unchanged)', async () => {
+    const { w } = mountPlayer({ streamUrl: 'http://x/stream' });
+    tc().state.value = 'ready';
+    tc().hasAudio.value = true;
+    tc().audioTracks.value = [
+      { index: 0, name: 'English', lang: 'eng', default: true, autoselect: true },
+      { index: 1, name: 'Japanese', lang: 'jpn', default: false, autoselect: false },
+    ];
+    tc().currentAudioTrack.value = 0; // hls.js settles the DEFAULT rendition
+    await nextTick();
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    const radios = openAudioGroup(w).findAll('[role="radio"]');
+    expect(radios).toHaveLength(2);
+    expect(radios.map((r) => r.text())).toEqual(['English', 'Japanese']);
+    expect(radios[0].attributes('aria-checked')).toBe('true');
+  });
+
+  it('the native video.audioTracks enumeration outranks the synthesis', async () => {
+    const { w, video } = mountPlayer({ streamUrl: 'http://x/stream' });
+    tc().state.value = 'ready';
+    tc().hasAudio.value = true;
+    // Chrome has no audioTracks API (hence the synthesis); Safari-style
+    // enumeration is REAL data and must render as itself, never 'Original'.
+    const tracks = [{ language: 'en', label: 'Audio 1', id: 'a0', enabled: true }];
+    const list: Record<number, unknown> & { length: number } = { length: 1 };
+    tracks.forEach((t, i) => (list[i] = t));
+    Object.defineProperty(video, 'audioTracks', { configurable: true, get: () => list });
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await nextTick();
+    await w.find('.capmenu__btn').trigger('click');
+    await nextTick();
+    const radios = openAudioGroup(w).findAll('[role="radio"]');
+    expect(radios).toHaveLength(1);
+    expect(radios[0].text()).toBe('Audio 1'); // native label, not synthesized
+    expect(radios[0].text()).not.toBe('Original');
   });
 });

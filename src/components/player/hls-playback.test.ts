@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Hls from 'hls.js';
-import { attachHls, clampBandwidth, isNativeHlsSupported } from './hls-playback';
+import { attachHls, clampBandwidth, codecStringCarriesAudio, isNativeHlsSupported } from './hls-playback';
 
 // Fake hls.js: controllable isSupported, captured instances, manual event firing.
 interface FakeLevel {
@@ -15,10 +15,17 @@ interface FakeLevel {
   width: number;
   bitrate: number;
   name: string | undefined;
+  audioCodec?: string;
 }
 
 vi.mock('hls.js', () => {
-  const Events = { MANIFEST_PARSED: 'manifestParsed', ERROR: 'error', LEVEL_SWITCHED: 'levelSwitched' };
+  const Events = {
+    MANIFEST_PARSED: 'manifestParsed',
+    ERROR: 'error',
+    LEVEL_SWITCHED: 'levelSwitched',
+    LEVEL_LOADED: 'levelLoaded',
+    AUDIO_TRACK_SWITCHED: 'audioTrackSwitched',
+  };
   class FakeHls {
     static supported = true;
     static instances: FakeHls[] = [];
@@ -37,6 +44,8 @@ vi.mock('hls.js', () => {
     nextLevel = -1;
     autoLevelEnabled = true;
     bandwidthEstimate = 0;
+    // Audio rendition group surface (empty = no EXT-X-MEDIA group attached).
+    audioTracks: Array<{ index: number; name?: string; lang?: string; default?: boolean; autoselect?: boolean }> = [];
     constructor(config: Record<string, unknown>) {
       this.config = config;
       FakeHls.instances.push(this);
@@ -73,6 +82,7 @@ type FakeHlsInstance = {
   nextLevel: number;
   autoLevelEnabled: boolean;
   bandwidthEstimate: number;
+  audioTracks: Array<{ index: number; name?: string; lang?: string; default?: boolean; autoselect?: boolean }>;
   handlers: Record<string, Array<(...args: unknown[]) => void>>;
   emit(ev: string, data?: unknown): void;
 };
@@ -335,6 +345,97 @@ describe('hls-playback', () => {
     });
   });
 
+  describe('hasAudio / onLevelLoaded — muxed-audio signal (L2)', () => {
+    function levelWith(over: Partial<FakeLevel> = {}): FakeLevel {
+      return { height: 1080, width: 1920, bitrate: 5_000_000, name: '1080p', ...over };
+    }
+
+    it('reports false while every level is video-only (the `-an` bare-rung shape)', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      expect(handle.hasAudio()).toBe(false); // no levels parsed yet
+      FakeHls.instances[0].levels = [levelWith({ audioCodec: 'avc1.640029' }), levelWith({ audioCodec: 'hvc1.2.4.L153.B0' })];
+      expect(handle.hasAudio()).toBe(false);
+    });
+
+    it('reports true when a level manifest CODECS attribute names an audio stream', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      // The phlix single-audio mini-master shape: NO EXT-X-MEDIA group, but the
+      // stream-inf CODECS carries '…,mp4a.40.2' (TranscodeManager legacy codecs).
+      FakeHls.instances[0].levels = [levelWith({ audioCodec: 'mp4a.40.2' })];
+      expect(handle.hasAudio()).toBe(true);
+      FakeHls.instances[0].levels = [levelWith({ audioCodec: 'avc1.640029,mp4a.40.2' })];
+      expect(handle.hasAudio()).toBe(true);
+    });
+
+    it('answers false when no level declares audio (undeclared shape stays hidden)', async () => {
+      // Conservative law: hls.js's public LevelDetails carries no audio codec,
+      // so a manifest that declares nothing is unknowable → false → the menu
+      // stays hidden rather than guessing.
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      FakeHls.instances[0].levels = [levelWith({}), levelWith({ audioCodec: 'avc1.640029' })];
+      expect(handle.hasAudio()).toBe(false);
+    });
+
+    it('reports true whenever a real rendition group exists, video codecs aside', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      inst.levels = [levelWith({ audioCodec: 'avc1.640029' })];
+      inst.audioTracks = [{ index: 0, name: 'English', lang: 'en', default: true, autoselect: true }];
+      expect(handle.hasAudio()).toBe(true);
+    });
+
+    it('fires onLevelLoaded per LEVEL_LOADED and stops cleanly on unsubscribe', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      const cb = vi.fn();
+      const off = handle.onLevelLoaded(cb);
+
+      inst.emit('levelLoaded');
+      expect(cb).toHaveBeenCalledTimes(1);
+
+      off();
+      inst.emit('levelLoaded');
+      expect(cb).toHaveBeenCalledTimes(1);
+    });
+
+    it('iterates a snapshot: an unsubscribe DURING a notify still delivers to the sibling listener', async () => {
+      // The composable's presence tick must not let one subscriber tearing down
+      // another skip a notification already in flight for it (copy-iteration).
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      const b = vi.fn();
+      const offB = handle.onLevelLoaded(b);
+      const offA = handle.onLevelLoaded(() => offB());
+
+      inst.emit('levelLoaded');
+      expect(b).toHaveBeenCalledTimes(1); // b already copied into this notify
+
+      offA();
+      inst.emit('levelLoaded');
+      expect(b).toHaveBeenCalledTimes(1); // and stays unsubscribed afterwards
+    });
+  });
+
+  describe('codecStringCarriesAudio', () => {
+    it.each<[string | undefined, boolean]>([
+      ['mp4a.40.2', true],
+      ['avc1.640029,mp4a.40.2', true],
+      ['MP4A.40.2', true],
+      [' mp4a.40.5 ', true],
+      ['ac-3', true],
+      ['ec-3', true],
+      ['opus', true],
+      ['avc1.640029', false],
+      ['hvc1.2.4.L153.B0', false],
+      ['vp09.00.10.08', false],
+      ['av01.0.05M.08', false],
+      ['', false],
+      [undefined, false],
+    ])('classifies %s as %s', (codecs, expected) => {
+      expect(codecStringCarriesAudio(codecs)).toBe(expected);
+    });
+  });
+
   describe('attachHls native fallback', () => {
     it('sets video.src when hls.js is unsupported but native HLS is', async () => {
       FakeHls.supported = false;
@@ -344,6 +445,19 @@ describe('hls-playback', () => {
       expect(FakeHls.instances.length).toBe(0);
       handle.destroy();
       expect(video.removeAttribute).toHaveBeenCalledWith('src');
+    });
+
+    it('reports hasAudio false and a dead onLevelLoaded subscription on the native path', async () => {
+      // Native playback owns the element — presence is unknowable from here and
+      // MUST report false, so the player keeps the audio menu hidden (the
+      // synthesized 'Original' entry is reserved for KNOWINGLY muxed sources).
+      FakeHls.supported = false;
+      const handle = await attachHls(fakeVideo('probably'), 'http://h/native.m3u8');
+      expect(handle.hasAudio()).toBe(false);
+      const cb = vi.fn();
+      const off = handle.onLevelLoaded(cb);
+      expect(() => off()).not.toThrow();
+      expect(cb).not.toHaveBeenCalled();
     });
 
     // UI-1.1: on the native (Safari/iOS) path a non-zero startPosition seeks the

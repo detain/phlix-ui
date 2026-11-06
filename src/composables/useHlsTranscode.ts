@@ -76,7 +76,20 @@ export interface UseHlsTranscodeOptions {
    *  (e.g. a constrained TV tuning buffer lengths down to cap RAM). Merged OVER
    *  phlix-ui's defaults; never overrides the auth `xhrSetup` (see hls-playback). */
   hlsConfig?: Partial<import('hls.js').HlsConfig>;
+  /** Injectable availability probe for a rung's mini-master index, used by
+   *  {@link HlsTranscodeController.loadVariantPlaylist} (L1 forward-compat: a
+   *  server predating the index, or a rung dir whose self-heal regeneration
+   *  raced). `'absent'` (an explicit HTTP 404) is the ONLY outcome that falls
+   *  back to the legacy bare rung playlist; `'available'` and `'unknown'`
+   *  (5xx / network throw) load the mini-master unchanged so a transient
+   *  failure can never silently degrade a working stream. Defaults to a HEAD
+   *  request carrying the same bearer header hls.js uses. Overridden in tests. */
+  probeRungPlaylist?: (url: string) => Promise<RungPlaylistProbe>;
 }
+
+/** Outcome of a rung-playlist availability probe — see
+ *  {@link UseHlsTranscodeOptions.probeRungPlaylist}. */
+export type RungPlaylistProbe = 'available' | 'absent' | 'unknown';
 
 /**
  * A subtitle sidecar track exposed to the player, with its `url` already
@@ -118,6 +131,16 @@ export interface HlsTranscodeController {
   /** The currently selected audio track index, or `-1` when no audio track
    *  is active (e.g. native HLS path or a manifest with no audio groups). */
   currentAudioTrack: Ref<number>;
+  /** True when the attached stream carries audio at all — a selectable
+   *  rendition group OR audio muxed into the video segments (the rung's
+   *  manifest `CODECS` declares an audio elementary stream). The
+   *  player renders its single synthesized 'Original' audio track entry from
+   *  this when {@link audioTracks} is empty but audio plays; a source with
+   *  no audio (or the native-HLS path, where presence is unknowable here)
+   *  keeps the menu hidden. Re-evaluated on manifest parse, LEVEL_LOADED
+   *  (the codec reconciliation for a newly loaded level lands there), settled
+   *  switches, and rung reloads. */
+  hasAudio: Ref<boolean>;
   /** Pin a quality rung by level index for an IMMEDIATE switch, or pass `'auto'`
     *  to hand the choice back to ABR. Safe no-op before a stream is attached or on
     *  the native-HLS path. Updates {@link currentLevel}/{@link autoEnabled}
@@ -142,6 +165,9 @@ export interface HlsTranscodeController {
   /** Load a specific variant playlist directly (e.g. `media_voriginal_master.m3u8`)
    *  instead of using ABR level switching. This is used for the "Original"
    *  quality option when the original variant is not in the ABR ladder.
+   *  The rung's mini-master index is probed first; only an explicit 404 falls
+   *  back to the legacy bare rung playlist (L1 forward-compat — see
+   *  {@link UseHlsTranscodeOptions.probeRungPlaylist}).
    *  Calling this will clear the buffer and restart playback. */
   loadVariantPlaylist(variantId: string): void;
   /** Start (or restart) the transcode-to-play flow. `profile` is OPTIONAL: when
@@ -166,6 +192,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const variants = ref<Variant[] | null>(null);
   const audioTracks = ref<HlsAudioTrack[]>([]);
   const currentAudioTrack = ref<number>(-1);
+  /** Audio-carrying signal for the synthesized 'Original' menu entry — see
+   *  {@link HlsTranscodeController.hasAudio}. Synced from the handle
+   *  (`hasAudio()`), false while nothing is attached. */
+  const hasAudio = ref<boolean>(false);
   /** The transcode job ID, set once the start response arrives. */
   const jobId = ref<string | null>(null);
   /** The master playlist URL, set once the start response arrives. */
@@ -204,10 +234,19 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     currentAudioTrack.value = activeIndex ?? handle.getCurrentAudioTrack();
   }
 
+  /** Re-read the handle's audio-presence signal (rendition group OR muxed
+   *  segment audio). Called wherever the tracks/levels are re-read: the answer
+   *  only changes with a (re)parsed manifest or a level load. */
+  function syncAudioPresence(): void {
+    if (!handle) return;
+    hasAudio.value = handle.hasAudio();
+  }
+
   /** Return the audio track refs to their defaults (no handle attached). */
   function resetAudioTrackState(): void {
     audioTracks.value = [];
     currentAudioTrack.value = -1;
+    hasAudio.value = false;
   }
 
   /** Replace the exposed variants list. Overwrites only when non-empty so a
@@ -237,11 +276,21 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   // at every use (segment xhrSetup fires long after boot), never a hardcoded
   // localStorage instance.
   const getToken = opts.getToken ?? safeToken;
+  // The rung-index probe rides the SAME bearer custody as the playlist itself,
+  // so a hub-proxied or token-gated server answers it exactly as it answers hls.
+  const probeRungPlaylist =
+    opts.probeRungPlaylist ?? ((url: string) => defaultProbeRungPlaylist(url, getToken));
 
   let handle: HlsHandle | null = null;
   let unsubscribeLevelSwitched: (() => void) | null = null;
   let unsubscribeAudioTrackSwitched: (() => void) | null = null;
+  let unsubscribeLevelLoaded: (() => void) | null = null;
   let cancelled = false;
+  // Per-attempt token for loadVariantPlaylist's async probe: cleanup/reset
+  // (which bump `cancelled`) and superseding rung picks invalidate a probe that
+  // resolved late — a stale verdict must never load a source into a session
+  // that has moved on (mirrors the `runSeq` discipline in start()).
+  let rungProbeSeq = 0;
   let abortController: AbortController | null = null;
   // Per-run generation token: a new start() resets `cancelled`, so the flag
   // alone cannot tell an OLD run's post-`await` guards that it has been
@@ -311,7 +360,14 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         getToken,
         hlsConfig: opts.hlsConfig,
         startPosition,
-        onReady: () => syncLevelState(),
+        // MANIFEST_PARSED also re-fires when loadVariantPlaylist re-points the
+        // SAME instance at a rung playlist — this closure is therefore the
+        // per-rung refresh tick for levels AND audio presence (the rung's
+        // CODECS answer is only knowable once ITS manifest parses).
+        onReady: () => {
+          syncLevelState();
+          syncAudioPresence();
+        },
         onError: () => {
           if (!isStale()) {
             state.value = 'error';
@@ -331,10 +387,15 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       handle = attached;
       unsubscribeLevelSwitched = handle.onLevelSwitched((index) => syncLevelState(index));
       unsubscribeAudioTrackSwitched = handle.onAudioTrackSwitched((index) => syncAudioTrackState(index));
+      // A MUXED-audio level's codec answer is reconciled as its playlist
+      // loads — LEVEL_LOADED is the tick that turns `hasAudio` on for
+      // single-audio rungs (and re-answers it after a rung switch).
+      unsubscribeLevelLoaded = handle.onLevelLoaded(() => syncAudioPresence());
       // Seed from the handle now: covers the native/degraded shape (empty levels,
       // Auto) and a manifest that parsed before this point.
       syncLevelState();
       syncAudioTrackState();
+      syncAudioPresence();
       // Persist the resolved HLS master URL so the mini-player can continue
       // a transcoded title when the user docks away from the full player.
       try {
@@ -379,24 +440,61 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
    *  is used for the "Original" quality option when the original variant is
    *  not in the ABR ladder. Master-shaped on purpose: hls.js attaches the
    *  EXT-X-MEDIA audio group from it (see {@link RUNG_MINI_MASTER_SUFFIX});
-   *  the bare rung playlist would play silent on multi-audio titles. On an
-   *  older server without the index the request 404s → fatal hls.js error →
-   *  'error' state (loud by design; no bare-playlist fallback — silence is
-   *  the bug being cured). Calling this will clear the buffer and restart
+   *  the bare rung playlist would play silent on multi-audio titles.
+   *
+   *  L1 forward-compat (2026-11-06): a server predating the index (e.g. one
+   *  pinned behind a hub proxy), or a rung dir whose self-heal regeneration
+   *  raced, 404s the index. PROBE it first — one HEAD per attempt — and only
+   *  an explicit 'absent' loads the legacy bare rung playlist instead, exactly
+   *  once, with a console.warn. That restores pre-RUNGMASTER playback instead
+   *  of hard-failing (silent on multi-audio — the known shape of an old
+   *  server; correct on muxed-audio). An 'unknown' probe outcome (5xx, or a
+   *  throwing probe) loads the mini-master unchanged: hls.js's fatal path
+   *  stays the loud failure, so a transient blip can never silently degrade a
+   *  working stream. Exactly ONE `handle.loadSource` call runs per attempt —
+   *  the existing session lifecycle, never a parallel half-loaded one. A
+   *  cleanup/reset or a superseding rung pick while the probe is in flight
+   *  discards the late verdict. Calling this clears the buffer and restarts
    *  playback. */
   function loadVariantPlaylist(variantId: string): void {
     if (!handle || !masterUrl.value) return;
-    // Construct the rung's mini-master URL from the master URL: replace
-    // "master.m3u8" with "media_v{variantId}_master.m3u8" (wire contract:
-    // phlix-server TranscodeManager::writeVodPlaylists()).
-    const variantUrl = masterUrl.value.replace('master.m3u8', `media_v${variantId}${RUNG_MINI_MASTER_SUFFIX}`);
-    handle.loadSource(variantUrl);
-    // Reset level state since the variant playlist has different levels
-    resetLevelState();
+    // Construct the rung's playlist URLs from the master URL: replace
+    // "master.m3u8" with "media_v{variantId}_master.m3u8" (the mini-master
+    // index) or "media_v{variantId}.m3u8" (the legacy bare rung) — wire
+    // contract: phlix-server TranscodeManager::writeVodPlaylists().
+    const stem = masterUrl.value.replace('master.m3u8', `media_v${variantId}`);
+    const miniMasterUrl = `${stem}${RUNG_MINI_MASTER_SUFFIX}`;
+    const legacyPlaylistUrl = `${stem}.m3u8`;
+    const attempt = ++rungProbeSeq;
+    void (async () => {
+      let outcome: RungPlaylistProbe;
+      try {
+        outcome = await probeRungPlaylist(miniMasterUrl);
+      } catch {
+        // A throwing probe is unknowable, not absent — the loud path decides.
+        outcome = 'unknown';
+      }
+      // The probe may resolve after cleanup()/reset() tore the session down,
+      // or after a newer rung pick — a stale verdict must never load a source
+      // into (or clobber the state of) the moved-on session.
+      if (cancelled || attempt !== rungProbeSeq || !handle) return;
+      if (outcome === 'absent') {
+        console.warn(
+          `[phlix-ui] rung mini-master unavailable (${miniMasterUrl}) — this server has no per-rung index files; falling back to the legacy bare rung playlist (${legacyPlaylistUrl}). Multi-audio titles play without selectable audio tracks until the server ships the index.`,
+        );
+        handle.loadSource(legacyPlaylistUrl);
+      } else {
+        handle.loadSource(miniMasterUrl);
+      }
+      // Reset level state since the variant playlist has different levels
+      resetLevelState();
+    })();
   }
 
   function cleanup(): void {
     cancelled = true;
+    // Invalidate any in-flight rung probe (it checks the token before load).
+    rungProbeSeq++;
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -416,6 +514,14 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         /* already unsubscribed */
       }
       unsubscribeAudioTrackSwitched = null;
+    }
+    if (unsubscribeLevelLoaded) {
+      try {
+        unsubscribeLevelLoaded();
+      } catch {
+        /* already unsubscribed */
+      }
+      unsubscribeLevelLoaded = null;
     }
     if (handle) {
       try {
@@ -457,6 +563,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     variants,
     audioTracks,
     currentAudioTrack,
+    hasAudio,
     setLevel,
     setNextLevel,
     setAudioTrack,
@@ -474,5 +581,26 @@ function safeToken(): string | null {
     return defaultTokenStore().getAccessToken();
   } catch {
     return null;
+  }
+}
+
+/**
+ * Default rung-mini-master probe: one HEAD request carrying the SAME bearer
+ * header hls.js attaches to the playlist itself. Only an explicit HTTP 404 is
+ * decisive ('absent'); 2xx is 'available'; any other status or a network throw
+ * is 'unknown' — which never triggers the fallback (see the law documented on
+ * {@link UseHlsTranscodeOptions.probeRungPlaylist}).
+ */
+async function defaultProbeRungPlaylist(url: string, getToken: () => string | null): Promise<RungPlaylistProbe> {
+  try {
+    const token = getToken();
+    const res = await fetch(url, {
+      method: 'HEAD',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (res.status === 404) return 'absent';
+    return res.ok ? 'available' : 'unknown';
+  } catch {
+    return 'unknown';
   }
 }

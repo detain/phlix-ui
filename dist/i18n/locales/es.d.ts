@@ -225,6 +225,7 @@ export declare const ES_MESSAGES: {
         off: string;
         audio: string;
         audioTrack: string;
+        audioOriginal: string;
         captionStyle: string;
         size: string;
         captionSize: string;

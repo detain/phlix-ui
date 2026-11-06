@@ -314,6 +314,8 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
       getCurrentAudioTrack: () => -1,
       setAudioTrack: () => {},
       onAudioTrackSwitched: () => () => {},
+      onLevelLoaded: () => () => {},
+      hasAudio: () => false,
       loadSource: () => {},
     };
   }

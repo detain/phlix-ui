@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, type Mock } from 'vitest';
-import { useHlsTranscode, type TranscodeHttpClient } from './useHlsTranscode';
+import { useHlsTranscode, type RungPlaylistProbe, type TranscodeHttpClient } from './useHlsTranscode';
 import type { HlsHandle, HlsLevel } from '../components/player/hls-playback';
 
 function fakeVideo(): HTMLVideoElement {
@@ -25,6 +25,8 @@ interface Harness {
   /** Records every `handle.loadSource(url)` call the composable makes (pinned
    *  quality rungs load their per-rung mini-master through this seam). */
   loadSource: Mock<(url: string) => void>;
+  /** Records every rung mini-master availability probe (L1 fallback seam). */
+  probe: Mock<(url: string) => Promise<RungPlaylistProbe>>;
 }
 
 /**
@@ -50,6 +52,10 @@ interface MockHls {
   currentAudioTrack: number;
   /** Fire the `onAudioTrackSwitched` subscriber with a settled track index. */
   fireAudioTrackSwitched(index: number): void;
+  /** What the attached handle's `hasAudio()` answers (L2 muxed-audio signal). */
+  hasAudioValue: boolean;
+  /** Fire the `onLevelLoaded` subscriber (hls.js LEVEL_LOADED). */
+  fireLevelLoaded(): void;
 }
 
 function level(index: number, height: number, width: number, bitrate: number): HlsLevel {
@@ -68,6 +74,11 @@ function harness(opts: {
   hlsConfig?: Record<string, unknown>;
   levels?: HlsLevel[];
   nativeDegraded?: boolean;
+  /** L1: what the rung mini-master probe answers ('throws' = network boom).
+   *  Default 'available' — the shipped-server shape. */
+  probeOutcome?: RungPlaylistProbe | 'throws';
+  /** L2: what the mocked handle's hasAudio() reports (muxed-audio signal). */
+  hasAudioValue?: boolean;
 } = {}): Harness {
   const destroy = vi.fn();
   const loadSource = vi.fn<(url: string) => void>();
@@ -96,6 +107,8 @@ function harness(opts: {
     audioTracks: [],
     currentAudioTrack: -1,
     fireAudioTrackSwitched: () => undefined,
+    hasAudioValue: opts.hasAudioValue ?? false,
+    fireLevelLoaded: () => undefined,
   };
   const attach = vi.fn(async (_video: HTMLVideoElement, _url: string, attachOpts?: { onReady?: () => void }): Promise<HlsHandle> => {
     if (opts.attachRejects) throw new Error('attach failed');
@@ -117,6 +130,10 @@ function harness(opts: {
         getCurrentAudioTrack: () => -1,
         setAudioTrack: () => {},
         onAudioTrackSwitched: () => () => {},
+        // The native mirror of the L2 handle surface: presence unknowable (false),
+        // and no LEVEL_LOADED tick exists to subscribe to.
+        onLevelLoaded: () => () => {},
+        hasAudio: () => false,
         loadSource,
       };
     }
@@ -150,6 +167,11 @@ function harness(opts: {
         // keeps the level-switched `hls.unsubscribe` counter undisturbed.
         return () => {};
       },
+      onLevelLoaded: (cb: () => void): (() => void) => {
+        hls.fireLevelLoaded = cb;
+        return () => {};
+      },
+      hasAudio: () => hls.hasAudioValue,
       loadSource,
     };
   });
@@ -160,6 +182,14 @@ function harness(opts: {
   const statuses = opts.statuses ?? [{ status: 'running', playlist_ready: true, progress: 50 }];
   let i = 0;
   const get = vi.fn(async () => statuses[Math.min(i++, statuses.length - 1)]);
+  // L1 seam: records each probed URL; answers `probeOutcome` (default the
+  // shipped-server 'available'). Tests override per-call with mockResolvedValueOnce
+  // or park the verdict with mockImplementationOnce + a manual resolver.
+  const probe = vi.fn<(url: string) => Promise<RungPlaylistProbe>>(() =>
+    opts.probeOutcome === 'throws'
+      ? Promise.reject(new Error('probe network boom'))
+      : Promise.resolve(opts.probeOutcome ?? 'available'),
+  );
 
   const client = { post, get } as unknown as TranscodeHttpClient;
   const controller = useHlsTranscode({
@@ -171,8 +201,9 @@ function harness(opts: {
     maxWaitMs: 50,
     sleep: async () => {},
     hlsConfig: opts.hlsConfig as never,
+    probeRungPlaylist: probe,
   });
-  return { controller, attach, destroy, post, get, hls, loadSource };
+  return { controller, attach, destroy, post, get, hls, loadSource, probe };
 }
 
 describe('useHlsTranscode', () => {
@@ -698,8 +729,12 @@ describe('useHlsTranscode', () => {
   // hls.js parses EXT-X-MEDIA only from master-shaped playlists — loading the
   // bare `media_v{id}.m3u8` rung (the pre-cure path) yields ZERO audio tracks
   // on multi-audio titles, whose video rungs are `-an` by server design:
-  // silent playback, the 11-06 incident. No fallback to the bare playlist is
-  // wanted: an older server 404s → fatal hls.js error → loud 'error' state.
+  // silent playback, the 11-06 incident. L1 (2026-11-06) forward-compat: the
+  // index URL is HEAD-probed first and ONLY an explicit 404 falls back to the
+  // bare playlist exactly once with a warning (an old server pinned behind a
+  // hub proxy must not hard-fail playback); every other probe outcome keeps
+  // the mini-master and lets hls.js fail loud as before. The loads are
+  // therefore async — tests flush with flushRun() before asserting.
   describe('pinned-quality mini-master load (RUNGMASTER)', () => {
     const masterStart = { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' };
 
@@ -707,6 +742,7 @@ describe('useHlsTranscode', () => {
       const h = harness({ start: masterStart });
       await h.controller.start(fakeVideo(), 'm');
       h.controller.loadVariantPlaylist('original');
+      await flushRun();
       expect(h.loadSource).toHaveBeenCalledTimes(1);
       expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8');
       // The bare rung playlist IS the silence bug — it must never be loaded.
@@ -717,6 +753,7 @@ describe('useHlsTranscode', () => {
       const h = harness({ start: masterStart });
       await h.controller.start(fakeVideo(), 'm');
       h.controller.loadVariantPlaylist('720p');
+      await flushRun();
       expect(h.loadSource).toHaveBeenCalledTimes(1);
       expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p_master.m3u8');
     });
@@ -750,6 +787,7 @@ describe('useHlsTranscode', () => {
       // Switch the pinned rung — the NEW load must ALSO be a mini-master; a bare
       // 480p playlist would drop the audio group and silence the session.
       h.controller.loadVariantPlaylist('480p');
+      await flushRun();
       expect(h.loadSource).toHaveBeenLastCalledWith('http://h:8096/hls/job-1/media_v480p_master.m3u8');
       h.hls.fireAudioTrackSwitched(0);
       expect(h.controller.audioTracks.value).toHaveLength(1);
@@ -773,6 +811,154 @@ describe('useHlsTranscode', () => {
       const h = harness();
       expect(() => h.controller.loadVariantPlaylist('original')).not.toThrow();
       expect(h.loadSource).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── L1 — mini-master 404 falls back to the legacy bare rung (once) ────────
+  describe('mini-master probe fallback (L1)', () => {
+    it('an explicit 404 loads the legacy bare rung exactly once, warned, session intact', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const h = harness({ start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' }, probeOutcome: 'absent' });
+        await h.controller.start(fakeVideo(), 'm');
+        h.controller.loadVariantPlaylist('original');
+        await flushRun();
+        expect(h.probe).toHaveBeenCalledTimes(1);
+        expect(h.probe).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8');
+        // Exactly ONE load — the alternate URL through the existing lifecycle,
+        // never a parallel attach and never the mini-master too.
+        expect(h.loadSource).toHaveBeenCalledTimes(1);
+        expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal.m3u8');
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(String(warn.mock.calls[0][0])).toContain('media_voriginal_master.m3u8');
+        expect(String(warn.mock.calls[0][0])).toContain('media_voriginal.m3u8');
+        // The fallback is a degraded-but-playing path, not an error state.
+        expect(h.controller.state.value).toBe('ready');
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it('an available index takes the legacy playlist never at all (no warn, no retry)', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const h = harness({ start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' } });
+        await h.controller.start(fakeVideo(), 'm');
+        h.controller.loadVariantPlaylist('original');
+        await flushRun();
+        expect(h.probe).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8');
+        expect(h.loadSource).toHaveBeenCalledTimes(1);
+        expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8');
+        expect(h.loadSource).not.toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal.m3u8');
+        expect(warn).not.toHaveBeenCalled();
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it.each(['unknown', 'throws'] as const)(
+      'a non-404 probe outcome (%s) stays on the mini-master and loud — never a silent legacy retry',
+      async (outcome) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+          const h = harness({ start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' }, probeOutcome: outcome });
+          await h.controller.start(fakeVideo(), 'm');
+          h.controller.loadVariantPlaylist('720p');
+          await flushRun();
+          expect(h.probe).toHaveBeenCalledTimes(1);
+          expect(h.loadSource).toHaveBeenCalledTimes(1);
+          expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p_master.m3u8');
+          expect(h.loadSource).not.toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p.m3u8');
+          expect(warn).not.toHaveBeenCalled();
+        } finally {
+          warn.mockRestore();
+        }
+      },
+    );
+
+    it('the legacy playlist URL is never probed — only the index carries the signal', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const h = harness({ start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' }, probeOutcome: 'absent' });
+        await h.controller.start(fakeVideo(), 'm');
+        h.controller.loadVariantPlaylist('480p');
+        await flushRun();
+        expect(h.probe.mock.calls.every(([url]) => url.endsWith('_master.m3u8'))).toBe(true);
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it('reset() during an in-flight probe discards the late verdict (no stale load)', async () => {
+      let resolveProbe!: (p: RungPlaylistProbe) => void;
+      const h = harness({ start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' } });
+      await h.controller.start(fakeVideo(), 'm');
+      h.probe.mockImplementationOnce(() => new Promise<RungPlaylistProbe>((res) => (resolveProbe = res)));
+      h.controller.loadVariantPlaylist('original');
+      await flushRun(); // verdict parked — nothing loaded yet
+      expect(h.loadSource).not.toHaveBeenCalled();
+
+      h.controller.reset();
+      resolveProbe('absent');
+      await flushRun();
+      expect(h.loadSource).not.toHaveBeenCalled();
+      expect(h.controller.state.value).toBe('idle');
+    });
+
+    it('a superseding rung pick wins — the stale verdict must not double-load', async () => {
+      let resolveFirst!: (p: RungPlaylistProbe) => void;
+      const h = harness({ start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' } });
+      await h.controller.start(fakeVideo(), 'm');
+      h.probe.mockImplementationOnce(() => new Promise<RungPlaylistProbe>((res) => (resolveFirst = res)));
+      h.controller.loadVariantPlaylist('original'); // attempt 1 hangs
+      h.probe.mockResolvedValueOnce('available');
+      h.controller.loadVariantPlaylist('720p'); // attempt 2 supersedes
+      resolveFirst('absent'); // attempt 1's late 404 verdict
+      await flushRun();
+      expect(h.loadSource).toHaveBeenCalledTimes(1);
+      expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p_master.m3u8');
+    });
+  });
+
+  // ── L2 (composable half) — muxed-audio presence signal ─────────────────────
+  describe('muxed-audio presence (hasAudio)', () => {
+    const startCompleted = { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' };
+
+    it('starts false, seeds from the handle at attach', async () => {
+      const h = harness({ start: startCompleted, hasAudioValue: true });
+      expect(h.controller.hasAudio.value).toBe(false); // nothing attached yet
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.hasAudio.value).toBe(true); // seed sync after attach
+    });
+
+    it('refreshes on the LEVEL_LOADED tick (details-time answer) and on MANIFEST_PARSED', async () => {
+      const h = harness({ start: startCompleted });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.hasAudio.value).toBe(false); // video-only / -an rung
+      h.hls.hasAudioValue = true;
+      h.hls.fireLevelLoaded(); // muxed codec answer lands with the level details
+      expect(h.controller.hasAudio.value).toBe(true);
+      h.hls.hasAudioValue = false;
+      h.hls.fireReady(); // re-parsed manifest (e.g. next rung) re-answers
+      expect(h.controller.hasAudio.value).toBe(false);
+    });
+
+    it('reset clears the signal and a late LEVEL_LOADED cannot re-arm it', async () => {
+      const h = harness({ start: startCompleted, hasAudioValue: true });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.hasAudio.value).toBe(true);
+      const lateFire = h.hls.fireLevelLoaded;
+      h.controller.reset();
+      expect(h.controller.hasAudio.value).toBe(false);
+      h.hls.hasAudioValue = true; // the torn-down handle would still answer true
+      expect(() => lateFire()).not.toThrow();
+      expect(h.controller.hasAudio.value).toBe(false); // guard: handle is null
+    });
+
+    it('the native-HLS path keeps hasAudio false (unknown must hide the menu)', async () => {
+      const h = harness({ start: startCompleted, nativeDegraded: true });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.hasAudio.value).toBe(false);
     });
   });
 });

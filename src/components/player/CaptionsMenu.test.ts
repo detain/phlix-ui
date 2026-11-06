@@ -137,8 +137,25 @@ describe('CaptionsMenu — track picker', () => {
 });
 
 describe('CaptionsMenu — audio picker', () => {
-  it('hides the audio group when there is 0 or 1 audio track', async () => {
-    const w = mountMenu({ tracks: [EN], audioTracks: [track('en', 'English', 0)], open: true });
+  it('renders the single-entry audio group the Player synthesizes (L2 law)', async () => {
+    // The gate counts entries, not user options: the Player hands down exactly
+    // ONE entry for a muxed-audio title (its synthesized 'Original' — always
+    // the active one) or a single real native track. Multi-entry behavior is
+    // pinned byte-for-byte by the >1 test below.
+    const w = mountMenu({ tracks: [EN], audioTracks: [track('', 'Original', 0)], activeAudio: 0, open: true });
+    await nextTick();
+    const radios = w.get('[aria-label="Audio track"]').findAll('[role="radio"]');
+    expect(radios).toHaveLength(1);
+    expect(radios[0].text()).toBe('Original');
+    expect(radios[0].attributes('aria-checked')).toBe('true');
+    // The renderer stays dumb: it still emits the pick — the Player owns the
+    // highlighted no-op law for synthesized entries.
+    await radios[0].trigger('click');
+    expect(w.emitted('select-audio')?.[0]).toEqual([0]);
+  });
+
+  it('keeps the section hidden when there are no entries (no audio, or presence unknown)', async () => {
+    const w = mountMenu({ tracks: [EN], audioTracks: [], open: true });
     await nextTick();
     expect(w.find('[aria-label="Audio track"]').exists()).toBe(false);
   });

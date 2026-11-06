@@ -107,6 +107,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
   es: [
     'auth.emailPlaceholder',
     'player.audio',
+    'player.audioOriginal',
     'player.color',
     'player.qualityOriginal',
     'player.skipLabelIntro',
@@ -127,6 +128,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'music.pause',
     'palette.groupNavigation',
     'player.audio',
+    'player.audioOriginal',
     'player.directStream',
     'player.pause',
     'player.qualityAuto',
@@ -152,6 +154,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'parental.scheduleName',
     'parental.tags',
     'player.audio',
+    'player.audioOriginal',
     'player.pause',
     'player.qualityAuto',
     'player.qualityAutoActive',
@@ -193,6 +196,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
   ],
   pt_BR: [
     'auth.emailPlaceholder',
+    'player.audioOriginal',
     'player.miniPlayer',
     'player.qualityAuto',
     'player.qualityAutoActive',

@@ -10,8 +10,11 @@
  * The button (icon reflects on/off) opens a focus-trapped popover with: a
  * subtitle-track radio list (Off + each track — selection drives
  * `usePlayerStore.subtitleLang` and persists `usePreferencesStore.defaultSubtitleLang`),
- * an audio-track radio list (only when the browser exposes >1 audio track —
- * emitted up to the Player), and the four caption-style `Select`s
+ * an audio-track radio list (only when the Player hands down audio-track
+ * entries — a real multi-track list, or the single synthesized 'Original'
+ * entry for a muxed-audio title; a title with no audio hands down nothing and
+ * the section stays hidden — emitted up to the Player), and the four
+ * caption-style `Select`s
  * (size/color/background/edge → `usePreferencesStore.captionStyle`).
  *
  * Esc / click-outside close it and return focus to the button. The Player
@@ -39,7 +42,9 @@ const props = withDefaults(
   defineProps<{
     /** Subtitle/caption tracks enumerated from the `<video>` (Player owns it). */
     tracks?: TextTrackInfo[];
-    /** Audio tracks (only rendered when more than one is present). */
+    /** Audio-track entries (rendered whenever at least one is present — the
+     *  Player synthesizes the single 'Original' entry for muxed-audio titles;
+     *  silent titles get an empty list and no section). */
     audioTracks?: TextTrackInfo[];
     /** Index of the active audio track (-1 = none/unknown). */
     activeAudio?: number;
@@ -241,7 +246,7 @@ onBeforeUnmount(() => {
         <span class="capmenu__optlabel">{{ translate('player.addSubtitles') }}</span>
       </button>
 
-      <template v-if="audioTracks.length > 1">
+      <template v-if="audioTracks.length > 0">
         <h3 class="capmenu__title capmenu__title--sub">{{ translate('player.audio') }}</h3>
         <div class="capmenu__group" role="radiogroup" :aria-label="translate('player.audioTrack')" @keydown="onAudioKeydown">
           <button

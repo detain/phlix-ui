@@ -268,6 +268,7 @@ export const DEFAULT_MESSAGES = {
     off: 'Off',
     audio: 'Audio',
     audioTrack: 'Audio track',
+    audioOriginal: 'Original',
     captionStyle: 'Caption style',
     size: 'Size',
     captionSize: 'Caption size',

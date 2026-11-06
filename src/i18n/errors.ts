@@ -10,7 +10,7 @@
  *
  * WHY A SEPARATE LAYER AND NOT `errors.*` KEYS IN `DEFAULT_MESSAGES`:
  * every `src/i18n/locales/*.ts` bundle is `satisfies PhlixMessages` with exact
- * key-identity against the 523-key UI-chrome catalog, and downstream clients
+ * key-identity against the 524-key UI-chrome catalog, and downstream clients
  * (tizen, windows) PIN bundle↔installed equality at the release tag. Folding
  * ~205 registry-adjacent error strings into the main catalog would force churn
  * in every equality pin on each registry edit. The error catalog is instead a

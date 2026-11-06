@@ -2,7 +2,9 @@ import { type TextTrackInfo } from './captions';
 type __VLS_Props = {
     /** Subtitle/caption tracks enumerated from the `<video>` (Player owns it). */
     tracks?: TextTrackInfo[];
-    /** Audio tracks (only rendered when more than one is present). */
+    /** Audio-track entries (rendered whenever at least one is present — the
+     *  Player synthesizes the single 'Original' entry for muxed-audio titles;
+     *  silent titles get an empty list and no section). */
     audioTracks?: TextTrackInfo[];
     /** Index of the active audio track (-1 = none/unknown). */
     activeAudio?: number;
