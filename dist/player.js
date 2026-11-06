@@ -11727,7 +11727,7 @@ var jm = { class: "player__stage" }, Mm = ["src", "poster"], Nm = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-3bab76a6"]]), yh = "0.99.18", bh = ["aria-label"], xh = ["src", "poster"], Sh = { class: "mini__body" }, Ch = { class: "mini__title" }, wh = { class: "mini__controls" }, Th = ["aria-label"], Eh = ["aria-label", "aria-pressed"], Dh = ["aria-label"], Oh = ["aria-label"], kh = {
+}), [["__scopeId", "data-v-3bab76a6"]]), yh = "0.99.19", bh = ["aria-label"], xh = ["src", "poster"], Sh = { class: "mini__body" }, Ch = { class: "mini__title" }, wh = { class: "mini__controls" }, Th = ["aria-label"], Eh = ["aria-label", "aria-pressed"], Dh = ["aria-label"], Oh = ["aria-label"], kh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Ah = /*#__PURE__*/ X(/* @__PURE__ */ d({

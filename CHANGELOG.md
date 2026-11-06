@@ -12,7 +12,15 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — player: stale-audio-menu cure after legacy fallback + probe-shape pins (2026-11-06)
+## 0.99.19 - 2026-11-06
+
+### Release — 2 commits since the `v0.99.18` cut (`2158564a`): the player me-safety pair and its review cure. `3174b805` — **L1**: a rung mini-master index 404 (a server older than the phlix-server `1035e7de` contract) HEAD-probes before attach and degrades to the legacy bare `media_v{id}.m3u8` exactly once per pick with a warning naming both URLs, instead of hard-failing to the loud error state; any other probe outcome keeps the mini-master and the loud hls.js path (a 500 is never silently retried). **L2** owner ruling — audio-bearing sources with zero selectable tracks show exactly one highlighted "Original" entry (muxed-audio titles previously rendered an empty audio menu). `7e221f2e` — review-v2 Major: the audio menu can no longer show stale renditions after a legacy fallback — `syncAudioTrackState()` now runs beside `syncAudioPresence()` on every `MANIFEST_PARSED`/`LEVEL_LOADED`, so a bare `-an` rung empties the menu instead of leaving the previous manifest's renditions as dead clicks, and silent-stays-hidden stays honest (no synthesized entry for audio that does not exist); plus the `defaultProbeRungPlaylist` export with five fetch-shape pins and the corrected fallback warn prose (review minors m1/m2). Folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit carrying the M-UI-23 `0.99.19` stamp into the shipped bundles consumers vendor into `/app` (both fix lanes rebuilt dist bundle-substantive in their own commits; this cut re-stamps — churn vs `7e221f2e`'s committed dist is exactly the 4 stamp-bearing entry bundles).
+
+- Measured suite counts at this tip (full serial battery, settled tree with the rebuilt dist): `vitest --no-file-parallelism` = **329 files / 6785 passed / 10 skipped** — the exact 0.99.18-era floor (329/6738/10) plus `3174b805`'s 37 and `7e221f2e`'s 10 measured-red-first pins; `vue-tsc --noEmit` exit 0; `eslint .` exit 0.
+- Red-first/mutation evidence carried into the release record (lane-measured; at `3174b805` reviewer-attested by independent reproduction, register `.reviews/2026-11-06/REVIEW-ui-me-safety.md`): the L1/L2 lane's new test instances run against the parent tree's src measured **36 new instances RED / 421 green** — the green-at-parent instances are deliberate unchanged-behaviour law pins ('legacy never probed', '-an stays hidden', 'real tracks win', 'no-entries hidden'). Mutation kills: fallback-strip in the absent branch reddens **exactly 1** (the 404 pin); absent→unknown inversion reddens **3** (404 pin + both non-404 loud-path pins, zero collateral); CaptionsMenu gate revert (>0→>1) reddens **exactly 5**. `7e221f2e` (lane-measured, commit message): red-first **2 failed / 56 passed** on `useHlsTranscode.test.ts` before the composable cure; deleting the two added sync lines reddens **exactly the two staleness tests** (2 failed / 64 passed), zero collateral. Floor rise across the cut: 6738 → **6775** → **6785**, skips held at **10**.
+- Forward-record correction (m1, reviewer-mandated, re-measured independently at this cut): the `3174b805` lane entry below states its dist aggregate md5 as `3d653198cc416498403153ca57d3fa6d`; the committed dist at `3174b805`, re-extracted from that commit (`git archive 3174b805 dist`) and measured with the repo recipe (`find dist -type f | sort | xargs md5sum | md5sum`, 886 files), is `c2b217ae4e9d5b5d313ab0f2567d7b00` — matching the reviewer's figure. Determinism itself held (×2 identical; rebuild byte-equal to committed; `dist:check` 0); the historical line stands as written per the verbatim-history law.
+
+### player: stale-audio-menu cure after legacy fallback + probe-shape pins (2026-11-06)
 
 - **Major (review v2): the audio menu can no longer show stale renditions after a legacy
   fallback.** On a pre-mini-master server a pinned quality on a multi-audio title HEAD-probes
@@ -53,7 +61,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   `dist/composables/useHlsTranscode.d.ts` gains the `defaultProbeRungPlaylist` export
   (declared consumer type surface — additive). `dist:check` green on the committed tree.
 
-## Unreleased — player: mini-master 404 fallback + muxed-audio Original entry (2026-11-06)
+### player: mini-master 404 fallback + muxed-audio Original entry (2026-11-06)
 
 - **L1 — rung mini-master 404 now degrades to the legacy bare rung playlist.** `loadVariantPlaylist`
   (src/composables/useHlsTranscode.ts) HEAD-probes the per-rung `media_v{id}_master.m3u8` before
