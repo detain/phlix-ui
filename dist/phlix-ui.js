@@ -1300,7 +1300,7 @@ function co(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-DWjFG2nP.js")
+			component: () => import("./PlayerPage-B9VdsRF6.js")
 		},
 		{
 			path: `${t}/login`,

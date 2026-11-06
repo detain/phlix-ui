@@ -477,9 +477,10 @@ function beginTranscode(startPosition = 0): void {
  *  live HLS session. The menu already persisted the choice to prefs.
  *
  *  Special case: when the user explicitly selects "Original" quality, we load
- *  the original variant's playlist directly (media_voriginal.m3u8) instead of
- *  using ABR level switching. This is because the Original variant is filtered
- *  from the ABR ladder (SV-4.6) since copy segments may have drifting boundaries.
+ *  the original variant's mini-master index (media_voriginal_master.m3u8)
+ *  instead of using ABR level switching. This is because the Original variant
+ *  is filtered from the ABR ladder (SV-4.6) since copy segments may have
+ *  drifting boundaries.
  *  Even when levelIndexForVariant finds a height-matched ladder rung, it is a
  *  transcoded version, NOT the original copy the user expects.
  *
@@ -518,10 +519,11 @@ function healQualityPrefToAuto(): void {
  *  the one-shot guard) or `false` when we still lack the info to decide (only for
  *  an 'original' pref before `variants` have arrived — the variants watch retries).
  *
- *  'auto' (or an unknown/stale pref) leaves ABR in charge. For 'original' we ONLY
- *  load the untouched-source playlist (media_voriginal.m3u8) when the item ACTUALLY
- *  advertises it — the SAME availability check QualityMenu uses to show/hide the
- *  option. The v7 ABR ladder FOLDS the original rung when it duplicates the top
+ *  'auto' (or an unknown/stale pref) leaves ABR in charge. For 'original' we
+ *  ONLY load the untouched-source mini-master (media_voriginal_master.m3u8)
+ *  when the item ACTUALLY advertises it — the SAME availability check
+ *  QualityMenu uses to show/hide the option. The v7 ABR ladder FOLDS the
+ *  original rung when it duplicates the top
  *  rung, so an unconditional load would 404 → fatal hls.js error + no quality menu.
  *  When 'original' is folded (or a specific persisted rung is absent from this
  *  ladder), fall back gracefully (top rung, else ABR) and self-heal the pref. */

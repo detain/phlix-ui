@@ -105,7 +105,7 @@ export interface HlsTranscodeController {
     /** The master playlist URL, set once the start response arrives. Used to
      *  construct variant playlist URLs for non-ABR quality selection. */
     masterUrl: Ref<string | null>;
-    /** Load a specific variant playlist directly (e.g. `media_voriginal.m3u8`)
+    /** Load a specific variant playlist directly (e.g. `media_voriginal_master.m3u8`)
      *  instead of using ABR level switching. This is used for the "Original"
      *  quality option when the original variant is not in the ABR ladder.
      *  Calling this will clear the buffer and restart playback. */

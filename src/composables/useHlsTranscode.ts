@@ -33,6 +33,23 @@ import {
 /** State machine for the transcode-to-play flow. */
 export type TranscodeState = 'idle' | 'preparing' | 'ready' | 'error';
 
+/**
+ * Suffix of the per-rung MINI-MASTER index the client loads for a pinned
+ * quality — full name `media_v{id}_master.m3u8`. Contract authority:
+ * phlix-server `src/Media/Transcoding/TranscodeManager.php`,
+ * `writeVodPlaylists()`, which ships beside each bare `media_v{id}.m3u8` rung
+ * a master-shaped index carrying the `#EXT-X-MEDIA:TYPE=AUDIO` group plus a
+ * single `EXT-X-STREAM-INF` with `AUDIO="aud"` pointing at that rung.
+ *
+ * Why not the bare rung playlist: hls.js parses `EXT-X-MEDIA` only from
+ * master-shaped playlists. Multi-audio titles have video-only (`-an`) rungs,
+ * so loading the bare playlist yields ZERO audio tracks — silent playback
+ * and a dormant audio menu (the 2026-11-06 incident). The id→name form here
+ * is the wire contract: underscore before the suffix, never a hyphen (the
+ * server's playlist-name regex `media_(v\w+|a\d+|0)\.m3u8` only admits \w).
+ */
+const RUNG_MINI_MASTER_SUFFIX = '_master.m3u8';
+
 /** Minimal HTTP surface this composable needs (ApiClient-compatible). */
 export interface TranscodeHttpClient {
   post<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
@@ -122,7 +139,7 @@ export interface HlsTranscodeController {
   /** The master playlist URL, set once the start response arrives. Used to
    *  construct variant playlist URLs for non-ABR quality selection. */
   masterUrl: Ref<string | null>;
-  /** Load a specific variant playlist directly (e.g. `media_voriginal.m3u8`)
+  /** Load a specific variant playlist directly (e.g. `media_voriginal_master.m3u8`)
    *  instead of using ABR level switching. This is used for the "Original"
    *  quality option when the original variant is not in the ABR ladder.
    *  Calling this will clear the buffer and restart playback. */
@@ -357,13 +374,22 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
     syncAudioTrackState();
   }
 
-  /** Load a specific variant playlist directly (e.g. `media_voriginal.m3u8`).
-   *  Used for "Original" quality when the original variant is not in the ABR ladder.
-   *  This clears the buffer and restarts playback. */
+  /** Load a specific rung's MINI-MASTER index directly (e.g.
+   *  `media_voriginal_master.m3u8`) instead of using ABR level switching. This
+   *  is used for the "Original" quality option when the original variant is
+   *  not in the ABR ladder. Master-shaped on purpose: hls.js attaches the
+   *  EXT-X-MEDIA audio group from it (see {@link RUNG_MINI_MASTER_SUFFIX});
+   *  the bare rung playlist would play silent on multi-audio titles. On an
+   *  older server without the index the request 404s → fatal hls.js error →
+   *  'error' state (loud by design; no bare-playlist fallback — silence is
+   *  the bug being cured). Calling this will clear the buffer and restart
+   *  playback. */
   function loadVariantPlaylist(variantId: string): void {
     if (!handle || !masterUrl.value) return;
-    // Construct variant URL from master URL: replace "master.m3u8" with "media_v{variantId}.m3u8"
-    const variantUrl = masterUrl.value.replace('master.m3u8', `media_v${variantId}.m3u8`);
+    // Construct the rung's mini-master URL from the master URL: replace
+    // "master.m3u8" with "media_v{variantId}_master.m3u8" (wire contract:
+    // phlix-server TranscodeManager::writeVodPlaylists()).
+    const variantUrl = masterUrl.value.replace('master.m3u8', `media_v${variantId}${RUNG_MINI_MASTER_SUFFIX}`);
     handle.loadSource(variantUrl);
     // Reset level state since the variant playlist has different levels
     resetLevelState();

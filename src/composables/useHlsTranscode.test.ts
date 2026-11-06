@@ -22,6 +22,9 @@ interface Harness {
   /** Controls over the mocked HlsHandle, so reactivity tests can drive the
    *  handle's live getters + fire the `onReady`/`onLevelSwitched` callbacks. */
   hls: MockHls;
+  /** Records every `handle.loadSource(url)` call the composable makes (pinned
+   *  quality rungs load their per-rung mini-master through this seam). */
+  loadSource: Mock<(url: string) => void>;
 }
 
 /**
@@ -45,7 +48,8 @@ interface MockHls {
   // Audio track properties (P3B-S3)
   audioTracks: Array<{ index: number; name: string; lang: string; default: boolean; autoselect: boolean }>;
   currentAudioTrack: number;
-  fireAudioTrackSwitched?(index: number): void;
+  /** Fire the `onAudioTrackSwitched` subscriber with a settled track index. */
+  fireAudioTrackSwitched(index: number): void;
 }
 
 function level(index: number, height: number, width: number, bitrate: number): HlsLevel {
@@ -66,6 +70,7 @@ function harness(opts: {
   nativeDegraded?: boolean;
 } = {}): Harness {
   const destroy = vi.fn();
+  const loadSource = vi.fn<(url: string) => void>();
   const hls: MockHls = {
     levels: opts.levels ?? [],
     currentLevel: -1,
@@ -90,6 +95,7 @@ function harness(opts: {
     // Audio track properties (P3B-S3)
     audioTracks: [],
     currentAudioTrack: -1,
+    fireAudioTrackSwitched: () => undefined,
   };
   const attach = vi.fn(async (_video: HTMLVideoElement, _url: string, attachOpts?: { onReady?: () => void }): Promise<HlsHandle> => {
     if (opts.attachRejects) throw new Error('attach failed');
@@ -105,12 +111,13 @@ function harness(opts: {
         autoLevelEnabled: true,
         bandwidthEstimate: 0,
         onLevelSwitched: () => hls.unsubscribe,
-        // Audio track properties (P3B-S3)
+        // Audio track properties (P3B-S3) — the native path never fires audio
+        // switches (tracks come from video.audioTracks), so no capture here.
         audioTracks: [],
         getCurrentAudioTrack: () => -1,
         setAudioTrack: () => {},
         onAudioTrackSwitched: () => () => {},
-        loadSource: () => {},
+        loadSource,
       };
     }
     return {
@@ -137,8 +144,13 @@ function harness(opts: {
       },
       getCurrentAudioTrack: () => hls.currentAudioTrack,
       setAudioTrack: () => {},
-      onAudioTrackSwitched: () => () => {},
-      loadSource: () => {},
+      onAudioTrackSwitched: (cb: (trackIndex: number) => void): (() => void) => {
+        hls.fireAudioTrackSwitched = (index: number) => cb(index);
+        // Distinct unsubscribe per subscription — mirrors the real handle, and
+        // keeps the level-switched `hls.unsubscribe` counter undisturbed.
+        return () => {};
+      },
+      loadSource,
     };
   });
   const post = vi.fn(async () => {
@@ -160,7 +172,7 @@ function harness(opts: {
     sleep: async () => {},
     hlsConfig: opts.hlsConfig as never,
   });
-  return { controller, attach, destroy, post, get, hls };
+  return { controller, attach, destroy, post, get, hls, loadSource };
 }
 
 describe('useHlsTranscode', () => {
@@ -675,6 +687,92 @@ describe('useHlsTranscode', () => {
       expect(h.controller.currentLevel.value).toBe(-1);
       expect(h.controller.autoEnabled.value).toBe(true);
       expect(h.controller.activeLevelHeight.value).toBeNull();
+    });
+  });
+
+  // ── RUNGMASTER — pinned-quality loads the per-rung mini-master ─────────────
+  // Wire contract (authority: phlix-server src/Media/Transcoding/
+  // TranscodeManager.php, writeVodPlaylists()): every video rung ships a
+  // master-shaped index `media_v{id}_master.m3u8` carrying the
+  // #EXT-X-MEDIA:TYPE=AUDIO group plus ONE EXT-X-STREAM-INF with AUDIO="aud".
+  // hls.js parses EXT-X-MEDIA only from master-shaped playlists — loading the
+  // bare `media_v{id}.m3u8` rung (the pre-cure path) yields ZERO audio tracks
+  // on multi-audio titles, whose video rungs are `-an` by server design:
+  // silent playback, the 11-06 incident. No fallback to the bare playlist is
+  // wanted: an older server 404s → fatal hls.js error → loud 'error' state.
+  describe('pinned-quality mini-master load (RUNGMASTER)', () => {
+    const masterStart = { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' };
+
+    it('loadVariantPlaylist("original") loads the rung mini-master index, never the bare playlist', async () => {
+      const h = harness({ start: masterStart });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('original');
+      expect(h.loadSource).toHaveBeenCalledTimes(1);
+      expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8');
+      // The bare rung playlist IS the silence bug — it must never be loaded.
+      expect(h.loadSource).not.toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal.m3u8');
+    });
+
+    it('loadVariantPlaylist("720p") loads media_v720p_master.m3u8 (resolution rungs get the same treatment)', async () => {
+      const h = harness({ start: masterStart });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('720p');
+      expect(h.loadSource).toHaveBeenCalledTimes(1);
+      expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p_master.m3u8');
+    });
+
+    it('mini-master audio group populates audioTracks with the DEFAULT rendition active once the manifest settles', async () => {
+      const h = harness({ start: masterStart });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('original');
+      // What real hls.js does with a mini-master: parse fills hls.audioTracks
+      // from the EXT-X-MEDIA group, then AUDIO_TRACK_SWITCHED settles the
+      // DEFAULT rendition. The composable must surface both onto its refs.
+      h.hls.audioTracks = [
+        { index: 0, name: 'English', lang: 'en', default: true, autoselect: true },
+        { index: 1, name: 'Japanese', lang: 'ja', default: false, autoselect: false },
+      ];
+      h.hls.currentAudioTrack = 0;
+      h.hls.fireAudioTrackSwitched(0);
+      expect(h.controller.audioTracks.value).toHaveLength(2);
+      expect(h.controller.currentAudioTrack.value).toBe(0);
+      expect(h.controller.audioTracks.value.find((t) => t.index === 0)?.default).toBe(true);
+    });
+
+    it('audio tracks survive a quality switch: the next pinned rung also loads a mini-master and keeps the group', async () => {
+      const h = harness({ start: masterStart });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('720p');
+      h.hls.audioTracks = [{ index: 0, name: 'English', lang: 'en', default: true, autoselect: true }];
+      h.hls.currentAudioTrack = 0;
+      h.hls.fireAudioTrackSwitched(0);
+      expect(h.controller.audioTracks.value).toHaveLength(1);
+      // Switch the pinned rung — the NEW load must ALSO be a mini-master; a bare
+      // 480p playlist would drop the audio group and silence the session.
+      h.controller.loadVariantPlaylist('480p');
+      expect(h.loadSource).toHaveBeenLastCalledWith('http://h:8096/hls/job-1/media_v480p_master.m3u8');
+      h.hls.fireAudioTrackSwitched(0);
+      expect(h.controller.audioTracks.value).toHaveLength(1);
+      expect(h.controller.currentAudioTrack.value).toBe(0);
+    });
+
+    it("the 'auto'/master path is untouched: start attaches master.m3u8 and ABR level switching never re-loads a source", async () => {
+      const h = harness({
+        start: masterStart,
+        levels: [level(0, 1080, 1920, 5_000_000), level(1, 720, 1280, 2_800_000)],
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.attach.mock.calls[0][1]).toBe('http://h:8096/hls/job-1/master.m3u8');
+      h.controller.setLevel(1);
+      h.controller.setLevel('auto');
+      // The auto/ABR path never leaves the master — zero direct rung loads.
+      expect(h.loadSource).not.toHaveBeenCalled();
+    });
+
+    it('loadVariantPlaylist before a stream is attached is a safe no-op (guard clause)', () => {
+      const h = harness();
+      expect(() => h.controller.loadVariantPlaylist('original')).not.toThrow();
+      expect(h.loadSource).not.toHaveBeenCalled();
     });
   });
 });

@@ -12,6 +12,40 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — pinned-quality mini-master audio cure 2026-11-06 (RUNGMASTER)
+
+### Fixed
+
+- **A pinned quality ('Original' / an off-ladder resolution rung) no longer plays
+  silent on multi-audio titles.** `useHlsTranscode.loadVariantPlaylist` loaded the
+  bare `media_v{id}.m3u8` playlist, and hls.js 1.7.4 parses that shape with NO
+  `EXT-X-MEDIA` support — while the server's multi-audio video rungs are `-an`
+  (video-only) by design. Result: zero audio tracks and a dormant audio menu on
+  the pinned-quality path (the 2026-11-06 no-audio symptom). The load now targets
+  the rung's **mini-master index** `media_v{id}_master.m3u8` — the master-shaped
+  file the companion phlix-server lane writes beside each rung in
+  `src/Media/Transcoding/TranscodeManager.php::writeVodPlaylists()` (aud-group
+  `EXT-X-MEDIA` lines + one `EXT-X-STREAM-INF` with `AUDIO="aud"`). The suffix is
+  one in-file constant (`RUNG_MINI_MASTER_SUFFIX`) carrying the wire-contract
+  anchor; underscore form is the contract (the server name regex admits only
+  `\w`). Deliberately NO fallback to the bare playlist: against a server older
+  than the contract the 404 rides the existing fatal-error path to the loud
+  'error' state — silence was the bug. The 'auto'/master attach path is
+  byte-unchanged. Prose carried to the new filename in `Player.vue`,
+  `hls-playback.ts` and `quality.ts` docblocks.
+
+- Tests: 6 red-first pins in a new `RUNGMASTER` describe (mini-master URLs for
+  `original`/`720p` with a never-the-bare-playlist negative; audio group
+  populates with the DEFAULT rendition active after the manifest settles; tracks
+  survive a pinned 720p→480p switch — the second load is also mini-master-shaped;
+  the auto/master path never loads a source directly; un-attached load is a safe
+  no-op). Measured red pre-src: exactly 3 URL-law carriers (`media_v*.m3u8`
+  bare delivered); mutation-tooth re-proven post-green (suffix reverted → the
+  same 3 reds, zero collateral). Disclosure: no prior test pinned the derived
+  URL at all — the silence shipped through that gap; the harness now records
+  `loadSource` and captures the `AUDIO_TRACK_SWITCHED` subscriber. `dist/`
+  rebuilt in this same commit (src-substantive).
+
 ## 0.99.17 - 2026-11-06
 
 ### Release — 2 commits since the `v0.99.16` cut (`4d89b3a7`): the autoplay-mute stickiness cure (PLAYERMUTE — one `NotAllowedError` no longer silences the whole SPA session; the audio-path browser-side half of the 11-06 playback incident, client-side) plus the wave-5 routeGate fixture regen #36 re-vendor (W5UIGATE, which rode untagged after the v0.99.16 cut), folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit **bundle-substantive, not stamp-only**: the PLAYERMUTE lane changed app src (`Player.vue` + `usePlayerStore.ts`) without rebuilding the committed dist — the S176-class drift its own `dist:check` would catch — and this rebuild carries that cure plus the M-UI-23 `0.99.17` stamp into the shipped bundles consumers vendor into `/app`.

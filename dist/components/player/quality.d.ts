@@ -82,7 +82,8 @@ export declare function topLevelIndex(levels: readonly HlsLevel[]): number;
  *
  * This is the seed-path guard for the reported bug: the server's v7 ABR ladder
  * FOLDS the original rung when it merely duplicates the top rung, so for many
- * items `media_voriginal.m3u8` does NOT exist. Blindly seeding
+ * items `media_voriginal_master.m3u8` (the rung's mini-master index) does NOT
+ * exist. Blindly seeding
  * `loadVariantPlaylist('original')` from a stale `prefs.defaultQuality` then
  * 404s → a fatal hls.js error and no quality menu. Callers must only load the
  * original playlist when this returns `true`.

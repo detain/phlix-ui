@@ -2960,7 +2960,7 @@ describe('Player — quality menu wiring (R3.9)', () => {
 
   // Regression: a stale `defaultQuality === 'original'` (persisted from a prior
   // "Original" pick) must NOT blindly seed loadVariantPlaylist('original') — the
-  // v7 ABR ladder FOLDS the original rung on many items, so media_voriginal.m3u8
+  // v7 ABR ladder FOLDS the original rung on many items, so media_voriginal_master.m3u8
   // 404s → fatal hls.js error + no quality menu.
   it("seeds the original variant playlist when the item ADVERTISES original", async () => {
     usePreferencesStore().defaultQuality = 'original';
@@ -2987,7 +2987,7 @@ describe('Player — quality menu wiring (R3.9)', () => {
     ];
     tc().levels.value = ladder;
     await nextTick();
-    // Never requests the non-existent media_voriginal.m3u8.
+    // Never requests the non-existent media_voriginal_master.m3u8.
     expect(tc().loadVariantPlaylist).not.toHaveBeenCalled();
     // Falls back to the highest available rung (1080p → index 0) rather than 404ing.
     expect(tc().setNextLevel).toHaveBeenCalledWith(0);
