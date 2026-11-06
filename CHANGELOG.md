@@ -12,7 +12,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — pinned-quality mini-master audio cure 2026-11-06 (RUNGMASTER)
+## 0.99.18 - 2026-11-06
+
+### Release — 1 commit since the `v0.99.17` cut (`b958fb57`): the pinned-quality mini-master audio cure (RUNGMASTER — a pinned quality no longer plays silent on multi-audio titles; the client-side half of the 11-06 no-audio incident, paired with the phlix-server per-rung `media_v{id}_master.m3u8` mini-master emitter already origin-bound at `1035e7de`), folded verbatim from the pending Unreleased lane block below (house TW-ui law: bodies untouched, lane header demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit carrying the M-UI-23 `0.99.18` stamp into the shipped bundles consumers vendor into `/app` (RUNGMASTER had already rebuilt dist bundle-substantive in its own commit; this cut re-stamps).
+
+- Measured suite counts at this tip (full serial battery, settled tree with the rebuilt dist): `vitest --no-file-parallelism` = **329 files / 6738 passed / 10 skipped** — the exact 0.99.17-era floor (329/6732/10) plus RUNGMASTER's 6 measured-red-first pins; `vue-tsc --noEmit` exit 0; `eslint .` exit 0.
+
+### pinned-quality mini-master audio cure 2026-11-06 (RUNGMASTER)
 
 ### Fixed
 
