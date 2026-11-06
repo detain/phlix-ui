@@ -365,6 +365,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     buffered: import("vue").Ref<number, number>;
     volume: import("vue").Ref<number, number>;
     muted: import("vue").Ref<boolean, boolean>;
+    autoplayMuted: import("vue").Ref<boolean, boolean>;
     rate: import("vue").Ref<number, number>;
     quality: import("vue").Ref<string, string>;
     subtitleLang: import("vue").Ref<string | null, string | null>;
@@ -399,6 +400,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     pause: () => void;
     setVolume: (v: number) => void;
     toggleMute: () => void;
+    muteForAutoplay: () => void;
     setRate: (r: number) => void;
     setQuality: (q: string) => void;
     setSubtitle: (lang: string | null) => void;
@@ -412,7 +414,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "volume" | "playing" | "duration" | "miniPlayer" | "queue" | "quality" | "position" | "current" | "streamUrl" | "buffered" | "muted" | "rate" | "subtitleLang" | "hlsMasterUrl" | "resumeMap" | "lastCommand">, Pick<{
+}, "volume" | "playing" | "duration" | "miniPlayer" | "queue" | "quality" | "position" | "current" | "streamUrl" | "buffered" | "muted" | "autoplayMuted" | "rate" | "subtitleLang" | "hlsMasterUrl" | "resumeMap" | "lastCommand">, Pick<{
     current: import("vue").Ref<{
         stream_url?: string | null | undefined;
         duration?: number | null | undefined;
@@ -730,6 +732,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     buffered: import("vue").Ref<number, number>;
     volume: import("vue").Ref<number, number>;
     muted: import("vue").Ref<boolean, boolean>;
+    autoplayMuted: import("vue").Ref<boolean, boolean>;
     rate: import("vue").Ref<number, number>;
     quality: import("vue").Ref<string, string>;
     subtitleLang: import("vue").Ref<string | null, string | null>;
@@ -764,6 +767,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     pause: () => void;
     setVolume: (v: number) => void;
     toggleMute: () => void;
+    muteForAutoplay: () => void;
     setRate: (r: number) => void;
     setQuality: (q: string) => void;
     setSubtitle: (lang: string | null) => void;
@@ -1095,6 +1099,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     buffered: import("vue").Ref<number, number>;
     volume: import("vue").Ref<number, number>;
     muted: import("vue").Ref<boolean, boolean>;
+    autoplayMuted: import("vue").Ref<boolean, boolean>;
     rate: import("vue").Ref<number, number>;
     quality: import("vue").Ref<string, string>;
     subtitleLang: import("vue").Ref<string | null, string | null>;
@@ -1129,6 +1134,7 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     pause: () => void;
     setVolume: (v: number) => void;
     toggleMute: () => void;
+    muteForAutoplay: () => void;
     setRate: (r: number) => void;
     setQuality: (q: string) => void;
     setSubtitle: (lang: string | null) => void;
@@ -1142,4 +1148,4 @@ export declare const usePlayerStore: import("pinia").StoreDefinition<"phlix-play
     setMediaPositionState: () => void;
     bindMediaSession: (handlers: MediaSessionHandlers) => () => void;
     seedFromPreferences: () => void;
-}, "play" | "pause" | "closePlayer" | "next" | "seekTo" | "seekBy" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "mergeServerResume" | "setCurrent" | "updateProgress" | "playLocalFile" | "setVolume" | "toggleMute" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;
+}, "play" | "pause" | "closePlayer" | "next" | "seekTo" | "seekBy" | "inResumeBand" | "saveResume" | "resumePositionFor" | "clearResume" | "mergeServerResume" | "setCurrent" | "updateProgress" | "playLocalFile" | "setVolume" | "toggleMute" | "muteForAutoplay" | "setRate" | "setQuality" | "setSubtitle" | "setQueue" | "enqueue" | "showMiniPlayer" | "hideMiniPlayer" | "setMediaSessionMetadata" | "setMediaPositionState" | "bindMediaSession" | "seedFromPreferences">>;

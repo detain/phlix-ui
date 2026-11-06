@@ -173,83 +173,83 @@ function ue(e) {
 	return typeof e != "number" || !Number.isFinite(e) ? null : Math.min(1, Math.max(0, e));
 }
 var de = z("phlix-player", () => {
-	let e = ne(), t = S(null), n = S(""), i = S([]), a = S(!1), o = S(0), s = S(0), c = S(0), l = S(e.defaultVolume), u = S(!1), d = S(1), f = S(e.defaultQuality), p = S(e.defaultSubtitleLang), m = S(""), h = S(!1), g = S(ce()), _ = S(le()), v = S(null), y = 0, b = r(() => s.value > 0 ? o.value / s.value : 0), x = r(() => i.value[0] ?? null);
-	function C(e) {
-		_.value[e] = Date.now();
-	}
+	let e = ne(), t = S(null), n = S(""), i = S([]), a = S(!1), o = S(0), s = S(0), c = S(0), l = S(e.defaultVolume), u = S(!1), d = S(!1), f = S(1), p = S(e.defaultQuality), m = S(e.defaultSubtitleLang), h = S(""), g = S(!1), _ = S(ce()), v = S(le()), y = S(null), b = 0, x = r(() => s.value > 0 ? o.value / s.value : 0), C = r(() => i.value[0] ?? null);
 	function w(e) {
-		let t = Object.keys(g.value), n = !1;
-		for (let e of Object.keys(_.value)) e in g.value || (delete _.value[e], n = !0);
+		v.value[e] = Date.now();
+	}
+	function T(e) {
+		let t = Object.keys(_.value), n = !1;
+		for (let e of Object.keys(v.value)) e in _.value || (delete v.value[e], n = !0);
 		if (t.length <= e) return n;
-		t.sort((e, t) => (_.value[e] ?? 0) - (_.value[t] ?? 0));
+		t.sort((e, t) => (v.value[e] ?? 0) - (v.value[t] ?? 0));
 		let r = t.length - e;
 		for (let e = 0; e < r; e++) {
 			let n = t[e];
-			delete g.value[n], delete _.value[n];
+			delete _.value[n], delete v.value[n];
 		}
 		return !0;
 	}
-	let T, E = 0;
-	function D(e = !1) {
+	let E, D = 0;
+	function O(e = !1) {
 		if (typeof localStorage > "u") return;
 		let t = () => {
-			E = Date.now();
+			D = Date.now();
 			let e = () => {
-				localStorage.setItem(oe, JSON.stringify(g.value)), localStorage.setItem(se, JSON.stringify(_.value));
+				localStorage.setItem(oe, JSON.stringify(_.value)), localStorage.setItem(se, JSON.stringify(v.value));
 			};
 			try {
 				e();
 			} catch {
 				try {
-					w(Math.floor(Object.keys(g.value).length * .75)), e();
+					T(Math.floor(Object.keys(_.value).length * .75)), e();
 				} catch {}
 			}
-		}, n = Date.now() - E;
-		clearTimeout(T), e || n >= ae ? t() : T = setTimeout(t, ae - n);
+		}, n = Date.now() - D;
+		clearTimeout(E), e || n >= ae ? t() : E = setTimeout(t, ae - n);
 	}
-	function O(e, t) {
+	function k(e, t) {
 		return t > 0 && e > 30 && e < t * .95;
 	}
-	function k(e, t, n) {
-		if (O(t, n)) {
-			let n = !(e in g.value);
-			g.value[e] = Math.floor(t), C(e), n && w(200);
-		} else delete g.value[e], delete _.value[e];
-		D();
-	}
-	function A(e) {
-		return e ? g.value[e] ?? null : null;
+	function A(e, t, n) {
+		if (k(t, n)) {
+			let n = !(e in _.value);
+			_.value[e] = Math.floor(t), w(e), n && T(200);
+		} else delete _.value[e], delete v.value[e];
+		O();
 	}
 	function j(e) {
-		delete g.value[e], delete _.value[e], D(!0);
+		return e ? _.value[e] ?? null : null;
 	}
 	function M(e) {
+		delete _.value[e], delete v.value[e], O(!0);
+	}
+	function N(e) {
 		let t = !1;
-		for (let [n, r] of Object.entries(e)) n && !(n in g.value) && r > 0 && (g.value[n] = Math.floor(r), C(n), t = !0);
-		t && (w(200), D(!0));
+		for (let [n, r] of Object.entries(e)) n && !(n in _.value) && r > 0 && (_.value[n] = Math.floor(r), w(n), t = !0);
+		t && (T(200), O(!0));
 	}
-	function N(e, r = {}) {
-		t.value = e, r.streamUrl !== void 0 && (n.value = r.streamUrl), r.resetPosition !== !1 && (o.value = 0, s.value = typeof e.duration == "number" && isFinite(e.duration) && e.duration > 0 ? e.duration : 0, c.value = 0), pe(e);
+	function P(e, r = {}) {
+		H(), t.value = e, r.streamUrl !== void 0 && (n.value = r.streamUrl), r.resetPosition !== !1 && (o.value = 0, s.value = typeof e.duration == "number" && isFinite(e.duration) && e.duration > 0 ? e.duration : 0, c.value = 0), ge(e);
 	}
-	function P(e, n, r) {
-		o.value = e, n !== void 0 && (s.value > 0 ? isFinite(n) && n > s.value && (s.value = n) : s.value = n), r !== void 0 && (c.value = r), t.value && k(t.value.id, e, s.value);
-	}
-	function F(e) {
-		v.value = {
-			type: "seekTo",
-			value: e,
-			seq: ++y
-		};
+	function F(e, n, r) {
+		o.value = e, n !== void 0 && (s.value > 0 ? isFinite(n) && n > s.value && (s.value = n) : s.value = n), r !== void 0 && (c.value = r), t.value && A(t.value.id, e, s.value);
 	}
 	function I(e) {
-		v.value = {
-			type: "seekBy",
+		y.value = {
+			type: "seekTo",
 			value: e,
-			seq: ++y
+			seq: ++b
 		};
 	}
-	function L(e, t = {}) {
-		N({
+	function L(e) {
+		y.value = {
+			type: "seekBy",
+			value: e,
+			seq: ++b
+		};
+	}
+	function R(e, t = {}) {
+		P({
 			id: "local",
 			name: decodeURIComponent(e.split(/[?#]/)[0].split("/").pop() ?? "") || e,
 			type: "movie",
@@ -269,48 +269,54 @@ var de = z("phlix-player", () => {
 			resetPosition: !0
 		}), i.value = [];
 	}
-	function R() {
+	function z() {
 		a.value = !0, typeof navigator < "u" && navigator.mediaSession && (navigator.mediaSession.playbackState = "playing");
 	}
-	function z() {
-		a.value = !1, t.value && k(t.value.id, o.value, s.value), D(!0), typeof navigator < "u" && navigator.mediaSession && (navigator.mediaSession.playbackState = "paused");
-	}
-	function B(e) {
-		let t = ue(e);
-		t !== null && (l.value = t, t > 0 && (u.value = !1));
+	function B() {
+		a.value = !1, t.value && A(t.value.id, o.value, s.value), O(!0), typeof navigator < "u" && navigator.mediaSession && (navigator.mediaSession.playbackState = "paused");
 	}
 	function V() {
-		u.value = !u.value;
+		u.value || (u.value = !0, d.value = !0);
 	}
-	function H(e) {
-		d.value = e;
+	function H() {
+		d.value && (d.value = !1, u.value = !1);
 	}
 	function U(e) {
-		f.value = e;
+		let t = ue(e);
+		t !== null && (l.value = t, t > 0 && (u.value = !1, d.value = !1));
 	}
-	function ee(e) {
-		p.value = e;
+	function ee() {
+		u.value = !u.value, d.value = !1;
 	}
 	function te(e) {
-		i.value = [...e];
+		f.value = e;
 	}
 	function re(e) {
-		i.value.push(e);
+		p.value = e;
 	}
 	function ie(e) {
+		m.value = e;
+	}
+	function de(e) {
+		i.value = [...e];
+	}
+	function W(e) {
+		i.value.push(e);
+	}
+	function fe(e) {
 		let t = i.value.shift() ?? null;
-		return t && N(t, { streamUrl: e?.(t) ?? "" }), t;
+		return t && P(t, { streamUrl: e?.(t) ?? "" }), t;
 	}
-	function de() {
-		h.value = !0;
+	function pe() {
+		g.value = !0;
 	}
-	function W() {
-		h.value = !1;
+	function me() {
+		g.value = !1;
 	}
-	function fe() {
-		t.value && k(t.value.id, o.value, s.value), D(!0), a.value = !1, h.value = !1, t.value = null, n.value = "", m.value = "";
+	function he() {
+		t.value && A(t.value.id, o.value, s.value), O(!0), a.value = !1, g.value = !1, t.value = null, n.value = "", h.value = "";
 	}
-	function pe(e) {
+	function ge(e) {
 		if (typeof navigator > "u" || !("mediaSession" in navigator)) return;
 		let t = globalThis.MediaMetadata;
 		t && (navigator.mediaSession.metadata = new t({
@@ -320,18 +326,18 @@ var de = z("phlix-player", () => {
 			artwork: e.poster_url ? [{ src: e.poster_url }] : []
 		}));
 	}
-	function me() {
+	function _e() {
 		if (typeof navigator > "u" || !("mediaSession" in navigator)) return;
 		let e = navigator.mediaSession;
 		if (typeof e.setPositionState == "function" && s.value > 0 && Number.isFinite(s.value)) try {
 			e.setPositionState({
 				duration: s.value,
 				position: Math.min(Math.max(0, o.value), s.value),
-				playbackRate: d.value || 1
+				playbackRate: f.value || 1
 			});
 		} catch {}
 	}
-	function he(e) {
+	function ve(e) {
 		if (typeof navigator > "u" || !("mediaSession" in navigator)) return () => {};
 		let t = navigator.mediaSession, n = (e, n) => {
 			try {
@@ -348,9 +354,9 @@ var de = z("phlix-player", () => {
 			]) n(e, null);
 		};
 	}
-	function ge() {
+	function ye() {
 		let t = ue(e.defaultVolume);
-		t !== null && (l.value = t), f.value = e.defaultQuality, p.value = e.defaultSubtitleLang;
+		t !== null && (l.value = t), p.value = e.defaultQuality, m.value = e.defaultSubtitleLang;
 	}
 	return {
 		current: t,
@@ -362,42 +368,44 @@ var de = z("phlix-player", () => {
 		buffered: c,
 		volume: l,
 		muted: u,
-		rate: d,
-		quality: f,
-		subtitleLang: p,
-		hlsMasterUrl: m,
-		miniPlayer: h,
-		resumeMap: g,
-		lastCommand: v,
-		progress: b,
-		upNext: x,
-		inResumeBand: O,
-		saveResume: k,
-		resumePositionFor: A,
-		clearResume: j,
-		mergeServerResume: M,
-		setCurrent: N,
-		updateProgress: P,
-		seekTo: F,
-		seekBy: I,
-		playLocalFile: L,
-		play: R,
-		pause: z,
-		setVolume: B,
-		toggleMute: V,
-		setRate: H,
-		setQuality: U,
-		setSubtitle: ee,
-		setQueue: te,
-		enqueue: re,
-		next: ie,
-		showMiniPlayer: de,
-		hideMiniPlayer: W,
-		closePlayer: fe,
-		setMediaSessionMetadata: pe,
-		setMediaPositionState: me,
-		bindMediaSession: he,
-		seedFromPreferences: ge
+		autoplayMuted: d,
+		rate: f,
+		quality: p,
+		subtitleLang: m,
+		hlsMasterUrl: h,
+		miniPlayer: g,
+		resumeMap: _,
+		lastCommand: y,
+		progress: x,
+		upNext: C,
+		inResumeBand: k,
+		saveResume: A,
+		resumePositionFor: j,
+		clearResume: M,
+		mergeServerResume: N,
+		setCurrent: P,
+		updateProgress: F,
+		seekTo: I,
+		seekBy: L,
+		playLocalFile: R,
+		play: z,
+		pause: B,
+		setVolume: U,
+		toggleMute: ee,
+		muteForAutoplay: V,
+		setRate: te,
+		setQuality: re,
+		setSubtitle: ie,
+		setQueue: de,
+		enqueue: W,
+		next: fe,
+		showMiniPlayer: pe,
+		hideMiniPlayer: me,
+		closePlayer: he,
+		setMediaSessionMetadata: ge,
+		setMediaPositionState: _e,
+		bindMediaSession: ve,
+		seedFromPreferences: ye
 	};
 });
 // \0@oxc-project+runtime@0.156.0/helpers/esm/typeof.js
@@ -11022,7 +11030,7 @@ var Om = { class: "player__stage" }, km = ["src", "poster"], Am = [
 			Kt = !0;
 			let t = e.play();
 			t && typeof t.then == "function" && t.catch((t) => {
-				t instanceof DOMException && t.name === "NotAllowedError" && (e.muted = !0, m.muted = !0, e.play()?.catch(() => {}));
+				t instanceof DOMException && t.name === "NotAllowedError" && (m.muteForAutoplay(), e.muted = !0, e.play()?.catch(() => {}));
 			});
 		}
 		function Jt() {
@@ -11659,7 +11667,7 @@ var Om = { class: "player__stage" }, km = ["src", "poster"], Am = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-5479ff65"]]), gh = "0.99.16", _h = ["aria-label"], vh = ["src", "poster"], yh = { class: "mini__body" }, bh = { class: "mini__title" }, xh = { class: "mini__controls" }, Sh = ["aria-label"], Ch = ["aria-label", "aria-pressed"], wh = ["aria-label"], Th = ["aria-label"], Eh = {
+}), [["__scopeId", "data-v-c5f6d0ff"]]), gh = "0.99.17", _h = ["aria-label"], vh = ["src", "poster"], yh = { class: "mini__body" }, bh = { class: "mini__title" }, xh = { class: "mini__controls" }, Sh = ["aria-label"], Ch = ["aria-label", "aria-pressed"], wh = ["aria-label"], Th = ["aria-label"], Eh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Dh = /*#__PURE__*/ X(/* @__PURE__ */ d({

@@ -12,7 +12,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — autoplay-mute stickiness lane 2026-11-06 (PLAYERMUTE)
+## 0.99.17 - 2026-11-06
+
+### Release — 2 commits since the `v0.99.16` cut (`4d89b3a7`): the autoplay-mute stickiness cure (PLAYERMUTE — one `NotAllowedError` no longer silences the whole SPA session; the audio-path browser-side half of the 11-06 playback incident, client-side) plus the wave-5 routeGate fixture regen #36 re-vendor (W5UIGATE, which rode untagged after the v0.99.16 cut), folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit **bundle-substantive, not stamp-only**: the PLAYERMUTE lane changed app src (`Player.vue` + `usePlayerStore.ts`) without rebuilding the committed dist — the S176-class drift its own `dist:check` would catch — and this rebuild carries that cure plus the M-UI-23 `0.99.17` stamp into the shipped bundles consumers vendor into `/app`.
+
+- Measured suite counts at this tip (full serial battery, settled tree with the rebuilt dist): `vitest --no-file-parallelism` = **329 files / 6732 passed / 10 skipped** — the exact 0.99.16-era floor (329/6723/10) plus PLAYERMUTE's 9 measured-red-first pins; `vue-tsc --noEmit` exit 0; `eslint .` exit 0. Forward-record under the verbatim-history rule: the PLAYERMUTE commit message's "748-test player suite" figure matches no measurable cut (reviewed register: real cuts 725/712/764/6732); the entry below stays verbatim, this line is the correction.
+
+### autoplay-mute stickiness lane 2026-11-06 (PLAYERMUTE)
 
 ### Fixed
 
@@ -42,7 +48,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   navigation, pre-muted attempt never flags) — all measured RED at the parent
   before the fix, green after.
 
-## Unreleased — wave-5 routeGate fixture re-vendor 2026-11-04 (W5UIGATE)
+### wave-5 routeGate fixture re-vendor 2026-11-04 (W5UIGATE)
 
 - **The owed regen #36 re-vendor lands: `src/api/test/server-route-manifest.json` is now the
   `@phlix/contracts#v0.5.6` tag tree's `dist/server-route-manifest.json` BYTE-IDENTICAL**
