@@ -282,3 +282,50 @@ describe('AmbientCanvas — battery saver', () => {
     expect(remove).toHaveBeenCalledWith('levelchange', expect.any(Function));
   });
 });
+
+describe('AmbientCanvas — pre-blurred glow bitmap (no live CSS filter)', () => {
+  /** A ctx able to both sample a frame AND paint the glow bitmap. */
+  function fullCtx(data: Uint8ClampedArray) {
+    return {
+      ...fakeCtx(data),
+      filter: 'none',
+      fillStyle: '',
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn(),
+      scale: vi.fn(),
+      fillRect: vi.fn(),
+      createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+    };
+  }
+
+  it('paints the sampled glow into a bitmap and drops the live blur (is-bitmap)', async () => {
+    const ctx = fullCtx(solid(255, 0, 0));
+    stubCanvas(ctx);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,GLOW');
+    const { v } = videoEl({ width: 1920, height: 1080 });
+    const w = mountTracked({ enabled: true, video: v });
+    (w.vm as unknown as { sampleNow: () => void }).sampleNow();
+    await nextTick();
+    expect(w.classes()).toContain('is-bitmap');
+    expect(w.attributes('style')).toContain('data:image/png;base64,GLOW');
+    expect(w.attributes('style')).not.toContain('radial-gradient'); // no CSS gradient path
+    expect(ctx.createRadialGradient).toHaveBeenCalledTimes(3); // three glow layers
+    expect(ctx.filter).toBe('blur(3px)');
+  });
+
+  it('falls back to the CSS gradient (and its live filter) when the bitmap cannot be encoded', async () => {
+    const ctx = fullCtx(solid(0, 255, 0));
+    stubCanvas(ctx);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockImplementation(() => {
+      throw new DOMException('tainted', 'SecurityError');
+    });
+    const { v } = videoEl({ width: 1920, height: 1080 });
+    const w = mountTracked({ enabled: true, video: v });
+    (w.vm as unknown as { sampleNow: () => void }).sampleNow();
+    await nextTick();
+    expect(w.classes()).not.toContain('is-bitmap');
+    expect(w.attributes('style')).toContain('rgba(0, 255, 0');
+  });
+});

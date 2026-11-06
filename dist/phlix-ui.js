@@ -1302,7 +1302,7 @@ function lo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-BTz2s3yI.js")
+			component: () => import("./PlayerPage-BbWPOZn8.js")
 		},
 		{
 			path: `${t}/login`,

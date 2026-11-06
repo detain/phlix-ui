@@ -24,8 +24,14 @@ import {
   AMBIENT_SAMPLE_H,
   AMBIENT_SAMPLE_INTERVAL_MS,
   AMBIENT_SAMPLE_W,
+  ambientGlowLayers,
   ambientGradient,
+  GLOW_BOX_H,
+  GLOW_BOX_W,
+  GLOW_PAD_X,
+  GLOW_PAD_Y,
   isBatterySaving,
+  paintAmbientGlow,
   sampleAmbient,
   type BatteryLike,
 } from './ambient';
@@ -63,6 +69,39 @@ const glowOpacity = computed(() => Math.min(1, 0.85 * Math.max(0, props.intensit
 // ---- live gradient ----------------------------------------------------------
 /** null until the first successful sample → the static CSS glow shows through. */
 const liveBackground = ref<string | null>(null);
+/**
+ * Pre-blurred glow bitmap (data: URL) for the latest sample, or null. When set
+ * the layer drops its live CSS `filter: blur(60px)` — re-rasterising that
+ * full-width blur on every video repaint is what starved Firefox's compositor
+ * (see ambient.ts paintAmbientGlow). null → the CSS-gradient + filter fallback.
+ */
+const liveBitmap = ref<string | null>(null);
+
+let glowCanvas: HTMLCanvasElement | null = null;
+let glowCtx: CanvasRenderingContext2D | null = null;
+let glowUnavailable = false; // no 2D ctx / no toDataURL / tainted — never retry
+
+function renderGlowBitmap(sample: ReturnType<typeof sampleAmbient>): string | null {
+  if (glowUnavailable || typeof document === 'undefined') return null;
+  try {
+    if (!glowCtx) {
+      glowCanvas = document.createElement('canvas');
+      glowCanvas.width = GLOW_BOX_W + GLOW_PAD_X * 2;
+      glowCanvas.height = GLOW_BOX_H + GLOW_PAD_Y * 2;
+      glowCtx = glowCanvas.getContext('2d');
+      if (!glowCtx) throw new Error('no 2d context');
+    }
+    paintAmbientGlow(glowCtx, ambientGlowLayers(sample));
+    const url = glowCanvas?.toDataURL('image/png');
+    if (typeof url !== 'string' || !url.startsWith('data:image/')) throw new Error('no bitmap');
+    return url;
+  } catch {
+    glowUnavailable = true;
+    glowCtx = null;
+    glowCanvas = null;
+    return null;
+  }
+}
 
 let canvas: HTMLCanvasElement | null = null;
 let ctx: CanvasRenderingContext2D | null = null;
@@ -101,11 +140,15 @@ function sampleNow(): void {
   try {
     c.drawImage(v, 0, 0, AMBIENT_SAMPLE_W, AMBIENT_SAMPLE_H);
     const { data } = c.getImageData(0, 0, AMBIENT_SAMPLE_W, AMBIENT_SAMPLE_H);
-    liveBackground.value = ambientGradient(sampleAmbient(data, AMBIENT_SAMPLE_W, AMBIENT_SAMPLE_H));
+    const sample = sampleAmbient(data, AMBIENT_SAMPLE_W, AMBIENT_SAMPLE_H);
+    const bitmap = renderGlowBitmap(sample);
+    liveBitmap.value = bitmap;
+    liveBackground.value = bitmap ? null : ambientGradient(sample);
   } catch {
     // tainted canvas (cross-origin frame without CORS) etc. — stop, keep static
     ctxUnavailable = true;
     liveBackground.value = null;
+    liveBitmap.value = null;
   }
 }
 
@@ -205,7 +248,8 @@ onBeforeUnmount(() => {
 
 const glowStyle = computed(() => {
   const style: Record<string, string> = { opacity: String(glowOpacity.value) };
-  if (liveBackground.value) style.background = liveBackground.value;
+  if (liveBitmap.value) style.backgroundImage = `url("${liveBitmap.value}")`;
+  else if (liveBackground.value) style.background = liveBackground.value;
   return style;
 });
 
@@ -213,7 +257,7 @@ defineExpose({ sampleNow });
 </script>
 
 <template>
-  <div class="player__ambient" :class="{ 'is-active': active }" :style="active ? glowStyle : undefined" aria-hidden="true" />
+  <div class="player__ambient" :class="{ 'is-active': active, 'is-bitmap': active && !!liveBitmap }" :style="active ? glowStyle : undefined" aria-hidden="true" />
 </template>
 
 <style scoped>
@@ -232,6 +276,18 @@ defineExpose({ sampleNow });
     radial-gradient(45% 55% at 88% 70%, rgba(90, 120, 180, 0.45), transparent 70%),
     radial-gradient(50% 50% at 50% 50%, rgba(245, 165, 36, 0.25), transparent 75%);
   transition: opacity var(--dur-slower) var(--ease-out);
+}
+
+/* Pre-blurred bitmap mode: the blur is baked into the image, so NO live filter.
+   The bitmap carries a transparent feather pad (GLOW_PAD_X/Y of a
+   GLOW_BOX_W x GLOW_BOX_H box = 8/96 and 9/54), so the layer grows by that pad
+   past the glow box: box = 112% x 114% of the frame → pad 9.33% / 19% of the frame. */
+.player__ambient.is-bitmap {
+  inset: -26% -15.33%;
+  border-radius: 0;
+  filter: none;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 @media (prefers-reduced-motion: reduce) {

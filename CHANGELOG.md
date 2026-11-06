@@ -12,6 +12,37 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## 0.99.22 - 2026-11-06
+
+### player: presented frame rate restored — the playing path no longer re-rasterises live CSS blurs (2026-11-06)
+
+- **Symptom (field report, honeypot, Firefox on an RTX 3060 Ti):** every title — direct play
+  and HLS alike — looked like 5–10 fps. `getVideoPlaybackQuality()` showed the decoder fine
+  (240 frames decoded per 10 s, 0 dropped) while `requestVideoFrameCallback` counted only
+  ~6–9 presented frames/s: the compositor, not decode/network/server, was the bottleneck.
+  In-page A/B on the reporter's machine: baseline 8 fps, all page filters off 24 fps; the
+  full-page poster blur alone was the largest share (8 → 22), the glow blur, the frosted
+  chrome and the poster's `mask-image` each a few fps more.
+- **PlayerPage poster backdrop** (`src/pages/ambientBackdrop.ts`, new): the poster is
+  pre-rendered ONCE into a 64px-wide page-aspect canvas with the same `blur + saturate(1.35)`
+  and the old radial `mask-image` fade baked in (`destination-in`), then shown stretched
+  with **no CSS filter and no mask** (`.player-page__ambient.is-preblurred`). Any failure
+  (no 2D context, decode error, tainted canvas) returns `null` and keeps the previous CSS
+  path verbatim.
+- **AmbientCanvas glow:** each ~4 Hz sample now paints the three glow layers, blurred, into
+  a small bitmap (`paintAmbientGlow`, transparent feather pad so the soft edge the CSS blur
+  produced is kept) shown with `filter: none` (`.player__ambient.is-bitmap`). Geometry is
+  single-sourced in `ambientGlowLayers()`; `ambientGradient()` output stays byte-identical
+  (pinned) and remains the fallback.
+- **Hidden chrome:** the chrome hides by `opacity: 0` only (it must stay Tab-focusable), and
+  an invisible `backdrop-filter` is still computed over the playing video every frame — the
+  frost is now dropped while `.is-chrome-hidden` (after the fade-out on the big play button).
+- Measured: headless Firefox A/B of the built SPA against the live server, same title,
+  2 rounds — old bundle 17.4 / 16.9 presented fps, new 23.6 / 23.9 (source 23.976).
+- Pins: `ambientBackdrop.test.ts` (8, new), `ambient.test.ts` +2 (layer geometry +
+  byte-identical gradient, bitmap painter box mapping), `AmbientCanvas.test.ts` +2
+  (bitmap mode drops the filter; encode failure falls back to the CSS gradient).
+
 ## 0.99.21 - 2026-11-06
 
 ### Release — 1 commit since the `v0.99.20` cut (`e48d8d02`): the theme server-persistence wave `16431658` (four coordinated cures: per-user theme choice persisted to phlix-server via new `themeSettings` API + `useThemeSyncStore` — once-per-login adoption with the server-wins rule, 1 s-debounced coalescing PUTs, echo-suppressed loop guard, silent hub-404 degrade in both directions; `.aps__hint` disclosures for catalogue/sync failure; force-refresh catalogue load on mount so a freshly enabled plugin appears without reload; an honest per-user note on enabled `ui-theme` plugin cards). Folded verbatim from the pending Unreleased lane block below (house TW-ui law: bodies untouched, lane header demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only).

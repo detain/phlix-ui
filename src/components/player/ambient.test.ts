@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   averageRegion,
   sampleAmbient,
@@ -16,6 +16,14 @@ import {
   AMBIENT_SAMPLE_W,
   AMBIENT_SAMPLE_H,
   AMBIENT_SAMPLE_INTERVAL_MS,
+  ambientGlowLayers,
+  paintAmbientGlow,
+  GLOW_BLUR_PX,
+  GLOW_BOX_H,
+  GLOW_BOX_W,
+  GLOW_PAD_X,
+  GLOW_PAD_Y,
+  type GlowContext,
   type Rgb,
 } from './ambient';
 
@@ -131,5 +139,62 @@ describe('ambient — isBatterySaving', () => {
   });
   it('is false when discharging above 20%', () => {
     expect(isBatterySaving({ charging: false, level: 0.5 })).toBe(false);
+  });
+});
+
+describe('ambient — glow layers + bitmap painter', () => {
+  const sample = { left: { r: 10, g: 20, b: 30 }, right: { r: 40, g: 50, b: 60 }, center: { r: 70, g: 80, b: 90 } };
+
+  it('ambientGradient is built from the same layer geometry (single source)', () => {
+    const layers = ambientGlowLayers(sample);
+    expect(layers.map((l) => [l.cx, l.cy, l.rx, l.ry, l.stop])).toEqual([
+      [0.12, 0.3, 0.4, 0.6, 0.7],
+      [0.88, 0.7, 0.45, 0.55, 0.7],
+      [0.5, 0.5, 0.5, 0.5, 0.75],
+    ]);
+    // byte-identical to the pre-refactor literal (0.55*100 float noise must not leak)
+    expect(ambientGradient(sample)).toBe(
+      'radial-gradient(40% 60% at 12% 30%, rgba(10, 20, 30, 0.55), transparent 70%), ' +
+        'radial-gradient(45% 55% at 88% 70%, rgba(40, 50, 60, 0.5), transparent 70%), ' +
+        'radial-gradient(50% 50% at 50% 50%, rgba(70, 80, 90, 0.3), transparent 75%)',
+    );
+  });
+
+  it('paintAmbientGlow blurs once and fills exactly the glow box for every layer', () => {
+    const stops: Array<[number, string]> = [];
+    const transforms: number[][] = [];
+    const ctx = {
+      filter: 'none',
+      fillStyle: '' as unknown,
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn((x: number, y: number) => transforms.push([x, y])),
+      scale: vi.fn((x: number, y: number) => transforms.push([x, y])),
+      fillRect: vi.fn(),
+      createRadialGradient: vi.fn(() => ({ addColorStop: (o: number, c: string) => stops.push([o, c]) })),
+    };
+    paintAmbientGlow(ctx as unknown as GlowContext, ambientGlowLayers(sample));
+
+    expect(ctx.filter).toBe(`blur(${GLOW_BLUR_PX}px)`);
+    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, GLOW_BOX_W + GLOW_PAD_X * 2, GLOW_BOX_H + GLOW_PAD_Y * 2);
+    expect(ctx.fillRect).toHaveBeenCalledTimes(3);
+    // first layer: centre (pad + 0.12*W, pad + 0.3*H), radii (0.4*W, 0.6*H)
+    const x = GLOW_PAD_X + 0.12 * GLOW_BOX_W;
+    const y = GLOW_PAD_Y + 0.3 * GLOW_BOX_H;
+    const sx = 0.4 * GLOW_BOX_W;
+    const sy = 0.6 * GLOW_BOX_H;
+    expect(transforms[0]).toEqual([x, y]);
+    expect(transforms[1]).toEqual([sx, sy]);
+    // the fill rect maps back to exactly the glow box in canvas space
+    const [rx, ry, rw, rh] = ctx.fillRect.mock.calls[0] as number[];
+    expect(x + rx * sx).toBeCloseTo(GLOW_PAD_X);
+    expect(y + ry * sy).toBeCloseTo(GLOW_PAD_Y);
+    expect(rw * sx).toBeCloseTo(GLOW_BOX_W);
+    expect(rh * sy).toBeCloseTo(GLOW_BOX_H);
+    expect(stops.slice(0, 2)).toEqual([
+      [0, 'rgba(10, 20, 30, 0.55)'],
+      [0.7, 'rgba(10, 20, 30, 0)'],
+    ]);
   });
 });

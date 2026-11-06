@@ -50,6 +50,7 @@ import Button from '../components/ui/Button.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import Modal from '../components/ui/Modal.vue';
 import { usePageTitle } from '../composables/usePageTitle';
+import { preblurImage } from './ambientBackdrop';
 // Stale-while-revalidate item cache (UI-2.1, U-N2) — the SAME module-level singleton the
 // MediaDetailPage uses, so a browse→detail→player→back round trip reuses one cached item
 // within the 60s TTL instead of re-fetching /media/:id on every visit.
@@ -161,8 +162,24 @@ usePageTitle(() => item.value?.name);
 /** Poster-derived ambient backdrop. The url() value is escaped (backslash/quote
  *  escaped, CR/LF stripped) like Scrubber.previewThumbCss so a poster URL containing
  *  `)`/`"` can't break out of the declaration (the R3.2-hardened CSS pattern). */
+const ambientPosterUrl = computed(() => imgSrc(item.value?.poster_url) || '');
+/** One-time pre-blurred copy of the poster (see ./ambientBackdrop) — when set,
+ *  the layer drops its live CSS filter, which is what starved the compositor. */
+const ambientPreblurred = ref<string | null>(null);
+watch(
+  ambientPosterUrl,
+  (url) => {
+    ambientPreblurred.value = null;
+    if (!url) return;
+    const aspect = typeof window !== 'undefined' && window.innerHeight > 0 ? window.innerWidth / window.innerHeight : 16 / 9;
+    void preblurImage(url, document, aspect).then((dataUrl) => {
+      if (ambientPosterUrl.value === url) ambientPreblurred.value = dataUrl;
+    });
+  },
+  { immediate: true },
+);
 const ambientStyle = computed(() => {
-  const url = imgSrc(item.value?.poster_url);
+  const url = ambientPreblurred.value ?? ambientPosterUrl.value;
   if (!url) return undefined;
   const safe = url.replace(/[\\"]/g, '\\$&').replace(/[\r\n]/g, '');
   return { backgroundImage: `url("${safe}")` };
@@ -636,6 +653,7 @@ function onBlockingErrorOk(): void {
     <div
       v-if="ambientStyle && !loading && !error"
       class="player-page__ambient"
+      :class="{ 'is-preblurred': ambientPreblurred }"
       :style="ambientStyle"
       aria-hidden="true"
     />
@@ -718,6 +736,15 @@ function onBlockingErrorOk(): void {
   pointer-events: none;
   -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 75%);
   mask-image: radial-gradient(ellipse at center, #000 0%, transparent 75%);
+}
+/* The pre-blurred bitmap already carries the blur, saturate AND radial fade: no
+   live filter or mask,
+   so the compositor never re-blurs this full-page layer per video frame. */
+.player-page__ambient.is-preblurred {
+  filter: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  background-size: 100% 100%;
 }
 
 .player-page__stage {

@@ -2579,6 +2579,22 @@ onBeforeUnmount(() => {
   opacity: 0;
   pointer-events: none;
 }
+/* Hidden chrome is only opacity:0 (it must stay focusable so Tab can reveal it),
+   and an invisible backdrop-filter is STILL computed over the playing video every
+   frame — Firefox measured a few presented fps lost to it with the controls
+   hidden. Drop the frost while hidden; the delay lets the fade-out finish first. */
+.player.is-chrome-hidden .player__bigplay,
+.player.is-chrome-hidden .player__center-skip,
+.player.is-chrome-hidden .player__controls :deep(*),
+.player.is-chrome-hidden .player__direct-badge {
+  backdrop-filter: none;
+}
+.player.is-chrome-hidden .player__bigplay {
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    opacity var(--dur-base) var(--ease-out),
+    backdrop-filter 0s linear var(--dur-base);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .player,
