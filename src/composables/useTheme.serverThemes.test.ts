@@ -137,8 +137,14 @@ describe('AC: existing built-in themes are UNAFFECTED', () => {
     mountHost('');
     await nextTick();
     await new Promise((r) => setTimeout(r, 0));
-    expect(f).toHaveBeenCalledTimes(1);
+    // TW-theme-persist: a signed-in same-origin mount now makes TWO calls —
+    // the catalogue first, then the one-shot account-theme read (the stub
+    // answers both with `{themes:…}`, which the settings parser correctly
+    // reads as "no server theme saved"). The law under test is unchanged:
+    // the ''-base mount MUST fire the relative catalogue request.
+    expect(f).toHaveBeenCalledTimes(2);
     expect(String(f.mock.calls[0][0])).toBe('/api/v1/themes');
+    expect(String(f.mock.calls[1][0])).toBe('/api/v1/users/me/settings');
   });
 
   it('leaves the built-ins working when the catalogue fetch FAILS', async () => {
@@ -372,5 +378,108 @@ describe('a persisted plugin theme id survives hydration', () => {
     expect(prefs.theme).toBe('sample-dusk');
     prefs.theme = 'another-plugin-theme';
     expect(prefs.theme).toBe('another-plugin-theme');
+  });
+});
+
+/**
+ * TW-theme-persist (2026-11-06) — the THIRD leg of `useTheme`: one-shot
+ * server-side adoption on an authenticated mount. The same silent laws hold:
+ * hub 404s change nothing, unknown server values never clobber local state,
+ * and an adopted value must never echo back as a PUT.
+ */
+function syncRouter(stub: { themes?: unknown[] | 'fail' | 404; settingsBody?: unknown; settingsFail?: boolean }) {
+  const calls: { url: string; method: string }[] = [];
+  const f = vi.fn(async (input: unknown, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method ?? 'GET';
+    calls.push({ url, method });
+    if (url.includes('/api/v1/themes')) {
+      if (stub.themes === 'fail') throw new Error('offline');
+      if (stub.themes === 404) return jsonResponse({ error: 'not found' }, 404);
+      return jsonResponse({ themes: stub.themes ?? [MIDNIGHT, DUSK] });
+    }
+    if (url.includes('/api/v1/users/me/settings')) {
+      if (stub.settingsFail) throw new Error('offline');
+      return jsonResponse(stub.settingsBody ?? { settings: {} });
+    }
+    throw new Error(`unexpected ${method} ${url}`);
+  });
+  vi.stubGlobal('fetch', f);
+  return { f, calls };
+}
+
+/** Drain the chained microtasks (catalogue THEN settings) plus DOM flushes. */
+async function flush(n = 4) {
+  for (let i = 0; i < n; i += 1) {
+    await new Promise((r) => setTimeout(r, 0));
+    await nextTick();
+  }
+}
+
+describe('AC: the server-side theme is adopted on an authenticated mount', () => {
+  it('adopts a known plugin theme and repaints <html> through the normal pipeline', async () => {
+    const r = syncRouter({ settingsBody: { settings: { theme: 'sample-dusk' } } });
+    signIn();
+    mountHost();
+    await flush();
+    expect(usePreferencesStore().theme).toBe('sample-dusk');
+    expect(el().getAttribute('data-theme')).toBe('midnight'); // DUSK layers on midnight
+    expect(el().style.getPropertyValue('--bg')).toBe('#05060a');
+    // The adoption painted from the catalogue — and the boot cache moved with it.
+    expect(JSON.parse(localStorage.getItem(THEME_CACHE_KEY) ?? '{}').id).toBe('sample-dusk');
+    // The loop guard: an adoption is not a selection; zero PUTs, ever.
+    expect(r.calls.filter((c) => c.method === 'PUT')).toEqual([]);
+  });
+
+  it('adopts a different built-in over the stale local choice', async () => {
+    syncRouter({ settingsBody: { settings: { theme: 'midnight' } } });
+    signIn();
+    usePreferencesStore().theme = 'daylight';
+    mountHost();
+    await flush();
+    expect(usePreferencesStore().theme).toBe('midnight');
+    expect(el().getAttribute('data-theme')).toBe('midnight');
+    expect(el().getAttribute('style')).toBeNull(); // built-in stays stylesheet-only
+  });
+
+  it('leaves local state alone when the server name-drops an unknown theme', async () => {
+    const r = syncRouter({ settingsBody: { settings: { theme: 'phlix-fossil' } } });
+    signIn();
+    usePreferencesStore().theme = 'daylight';
+    mountHost();
+    await flush();
+    expect(usePreferencesStore().theme).toBe('daylight');
+    expect(r.calls.filter((c) => c.method === 'PUT')).toEqual([]);
+  });
+
+  it('is a complete non-event on a hub mount where BOTH routes 404', async () => {
+    const r = syncRouter({ themes: 404 });
+    signIn();
+    mountHost();
+    await flush();
+    expect(usePreferencesStore().theme).toBe('nocturne');
+    expect(el().getAttribute('data-theme')).toBe('nocturne');
+    expect(el().getAttribute('style')).toBeNull();
+    // A dead catalogue means the settings route is dead too (same hub) — the
+    // sync stops before spending the request, and surfaces nothing.
+    expect(r.calls.filter((c) => c.url.includes('me/settings'))).toEqual([]);
+  });
+
+  it('survives a settings-endpoint transport failure mid-sync', async () => {
+    syncRouter({ settingsFail: true });
+    signIn();
+    usePreferencesStore().theme = 'daylight';
+    mountHost();
+    await flush();
+    expect(usePreferencesStore().theme).toBe('daylight');
+  });
+
+  it('fetches the setting exactly once per session', async () => {
+    const r = syncRouter({ settingsBody: { settings: { theme: 'midnight' } } });
+    signIn();
+    mountHost();
+    await flush();
+    await flush();
+    expect(r.calls.filter((c) => c.url.includes('me/settings'))).toHaveLength(1);
   });
 });

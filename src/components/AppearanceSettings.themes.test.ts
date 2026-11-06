@@ -11,6 +11,7 @@ import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import AppearanceSettings from './AppearanceSettings.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { ACCESS_TOKEN_KEY } from '../api/tokenStore';
 
 /**
  * S86 — the theme PICKER surfaces plugin themes alongside the three built-ins.
@@ -162,5 +163,128 @@ describe('AC: the sample plugin\'s theme is SELECTABLE in the picker', () => {
     expect(f).toHaveBeenCalled();
     expect(String(f.mock.calls[0][0])).toBe('/api/v1/themes');
     expect(w.findAll('.aps__theme')).toHaveLength(5);
+  });
+});
+
+/**
+ * TW-theme-persist (2026-11-06) — the picker's server-sync leg:
+ * force-refresh on mount, the two honest inline disclosures, and the debounced
+ * PUT of the selection. Signed-out mounts must stay PUT-free (an anonymous
+ * choice is device-local by definition).
+ */
+const EMBER = {
+  id: 'sample-ember', name: 'Sample Ember', dark: true, extends: 'midnight',
+  tokens: { '--bg': '#0a0505', '--text': '#f5ece6' }, source: 'sample-theme', builtIn: false,
+};
+
+function settingsRouter(opts: { themes: unknown[]; put?: { status?: number } }) {
+  const calls: { url: string; method: string; body?: unknown }[] = [];
+  const f = vi.fn(async (input: unknown, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method ?? 'GET';
+    calls.push({ url, method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+    if (url.includes('/api/v1/themes')) return jsonResponse({ themes: opts.themes });
+    if (url.includes('/api/v1/users/me/settings') && method === 'PUT') {
+      const status = opts.put?.status ?? 200;
+      return {
+        ok: status >= 200 && status < 300,
+        status,
+        headers: { get: () => 'application/json' },
+        json: async () => ({ error: 'nope' }),
+        text: async () => '{"error":"nope"}',
+      } as unknown as Response;
+    }
+    throw new Error(`unexpected ${method} ${url}`);
+  });
+  vi.stubGlobal('fetch', f);
+  return { f, calls, puts: () => calls.filter((c) => c.method === 'PUT') };
+}
+
+async function mountPickerTimed(apiBase = 'https://media.example') {
+  const w = mount(AppearanceSettings, {
+    props: { panel: 'appearance' as const },
+    global: { provide: { apiBase } },
+  });
+  wrappers.push(w);
+  await vi.advanceTimersByTimeAsync(0);
+  return w;
+}
+
+describe('AC: the picker syncs the selection to the server', () => {
+  it('force-refreshes the catalogue on every mount — a theme enabled while open appears', async () => {
+    // First mount sees one plugin theme.
+    const w1 = await mountPicker();
+    expect(w1.findAll('.aps__theme')).toHaveLength(5);
+    w1.unmount();
+
+    // A second mount (the gallery was open while a theme plugin was enabled)
+    // MUST refetch: without `force` the idempotent store would silently keep
+    // the stale single-plugin list.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ themes: [MIDNIGHT, DUSK, CONTRAST, EMBER] })));
+    const w2 = await mountPicker();
+    expect(w2.findAll('.aps__theme')).toHaveLength(6);
+  });
+
+  it('discloses a failed catalogue fetch inline while still showing the built-ins', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    const w = await mountPicker();
+    expect(w.findAll('.aps__theme')).toHaveLength(3);
+    expect(w.text()).toContain('Theme catalogue unavailable');
+  });
+
+  it('PUTs the selection once the debounce settles', async () => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, 'test-access-token');
+    const r = settingsRouter({ themes: [MIDNIGHT, DUSK, CONTRAST] });
+    vi.useFakeTimers();
+    const w = await mountPickerTimed();
+    await w.findAll('.aps__theme')[1].trigger('click'); // Daylight (not the default)
+    expect(r.puts()).toHaveLength(0); // debounced, not instantaneous
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(r.puts()).toHaveLength(1);
+    expect(r.puts()[0].body).toEqual({ theme: 'daylight' });
+  });
+
+  it('coalesces a rapid burst into exactly ONE PUT of the final value', async () => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, 'test-access-token');
+    const r = settingsRouter({ themes: [MIDNIGHT, DUSK, CONTRAST] });
+    vi.useFakeTimers();
+    const w = await mountPickerTimed();
+    await w.findAll('.aps__theme')[1].trigger('click');
+    await vi.advanceTimersByTimeAsync(400);
+    await w.findAll('.aps__theme')[2].trigger('click');
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(r.puts()).toHaveLength(1);
+    expect(r.puts()[0].body).toEqual({ theme: 'midnight' });
+  });
+
+  it('arrow-key selection PUTs too', async () => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, 'test-access-token');
+    const r = settingsRouter({ themes: [MIDNIGHT, DUSK, CONTRAST] });
+    vi.useFakeTimers();
+    const w = await mountPickerTimed();
+    await w.find('.aps__themes').trigger('keydown', { key: 'ArrowRight' });
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(r.puts().map((p) => p.body)).toEqual([{ theme: 'daylight' }]);
+  });
+
+  it('discloses "device only" on a failed save without rolling back the choice', async () => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, 'test-access-token');
+    settingsRouter({ themes: [MIDNIGHT, DUSK, CONTRAST], put: { status: 500 } });
+    vi.useFakeTimers();
+    const w = await mountPickerTimed();
+    await w.findAll('.aps__theme')[1].trigger('click');
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(w.text()).toContain('Saved on this device only');
+    expect(usePreferencesStore().theme).toBe('daylight'); // no rollback, no repaint
+    expect(w.findAll('.aps__theme')[1].attributes('aria-checked')).toBe('true');
+  });
+
+  it('stays PUT-free when signed out', async () => {
+    const r = settingsRouter({ themes: [MIDNIGHT, DUSK, CONTRAST] });
+    vi.useFakeTimers();
+    const w = await mountPickerTimed(); // no ACCESS_TOKEN_KEY
+    await w.findAll('.aps__theme')[1].trigger('click');
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(r.puts()).toHaveLength(0);
   });
 });

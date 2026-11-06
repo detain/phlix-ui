@@ -1168,6 +1168,13 @@ onMounted(() => {
           <p v-if="p.summary || p.description" class="admin-plugins__card-summary">
             {{ p.summary || p.description }}
           </p>
+          <p
+            v-if="p.type === 'ui-theme' && p.installed && p.enabled"
+            class="admin-plugins__card-theme-note"
+          >
+            Theme plugins appear under Settings → Appearance for each signed-in
+            user — enabling one here does not change anyone's theme.
+          </p>
           <div v-if="p.tags.length" class="admin-plugins__card-tags">
             <span v-for="tag in p.tags" :key="tag" class="admin-plugins__tag">{{ tag }}</span>
           </div>
@@ -1775,6 +1782,17 @@ onMounted(() => {
   font-size: var(--text-sm);
   color: var(--text-muted);
   line-height: var(--leading-normal, 1.5);
+}
+/* Per-user note on enabled theme-plugin cards: this grid's only "what does
+   enabling actually do" line. Quiet by design — muted xs copy on a thin
+   accent spine, so it reads as an aside, not a warning. */
+.admin-plugins__card-theme-note {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: var(--leading-normal, 1.5);
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--accent-soft, var(--border-strong));
 }
 .admin-plugins__card-tags {
   display: flex;

@@ -35,6 +35,7 @@ import { MemoryTokenStore } from './memoryTokenStore';
 import { SyncPlayApi } from '../syncplay';
 import { photoApi } from '../photos';
 import { fetchThemes } from '../themes';
+import { fetchThemeSetting, putThemeSetting } from '../themeSettings';
 import { fetchRecommendations } from '../recommendations';
 import { fetchNextUp } from '../nextUp';
 import { fetchMostWatched } from '../mostWatched';
@@ -268,6 +269,18 @@ describe('route gate — themes.ts (fetchThemes)', () => {
     it('issues exactly GET /api/v1/themes', async () => {
         await driveGated(server, 'fetchThemes', () => fetchThemes(BASE));
         expectGateClean(server, ['GET /api/v1/themes'], 1);
+    });
+});
+
+describe('route gate — themeSettings.ts (fetchThemeSetting / putThemeSetting)', () => {
+    it('issues exactly GET + PUT /api/v1/users/me/settings', async () => {
+        await driveGated(server, 'fetchThemeSetting', () => fetchThemeSetting(BASE));
+        await driveGated(server, 'putThemeSetting', () => putThemeSetting(BASE, 'daylight'));
+        expectGateClean(
+            server,
+            ['GET /api/v1/users/me/settings', 'PUT /api/v1/users/me/settings'],
+            2,
+        );
     });
 });
 

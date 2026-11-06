@@ -79,6 +79,7 @@ const GATED_API = [
     'syncplay.ts',
     'photos.ts',
     'themes.ts',
+    'themeSettings.ts',
     'recommendations.ts',
     'nextUp.ts',
     'mostWatched.ts',

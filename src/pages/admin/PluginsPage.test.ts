@@ -1931,3 +1931,49 @@ describe('Admin PluginsPage — hostile catalog URLs are inert (M-UI-11)', () =>
     w.unmount();
   });
 });
+
+/**
+ * TW-theme-persist (2026-11-06) — theme plugins are PER-USER. Enabling one
+ * here registers it for the server; it changes nobody's look until that user
+ * picks it under Settings → Appearance. The card copy must say so, and only
+ * for an ENABLED ui-theme card.
+ */
+describe('Admin PluginsPage — theme-plugin per-user hint', () => {
+  const themeEntry = (over: Record<string, unknown>) => ({
+    name: 'sample-theme', title: 'Sample Theme', type: 'ui-theme',
+    summary: 'A demonstration theme.', description: '',
+    repo: 'https://github.com/detain/phlix-plugin-sample-theme', author: 'detain',
+    tags: [], installed: true, enabled: true, ...over,
+  });
+  const withThemes = (plugins: unknown[]) => ({
+    ...CATALOG,
+    catalogs: [{ ...CATALOG.catalogs[0], plugins: [...CATALOG.catalogs[0].plugins, ...plugins] }],
+  });
+
+  it('shows the per-user note on an ENABLED ui-theme card only', async () => {
+    const { client } = makeClient({
+      catalog: withThemes([
+        themeEntry({}),
+        themeEntry({ name: 'ghost-theme', title: 'Ghost Theme', enabled: false }),
+        themeEntry({ name: 'fresh-theme', title: 'Fresh Theme', installed: false, enabled: false }),
+      ]),
+    });
+    const w = mountPage(client);
+    await flushPromises();
+    const notes = w.findAll('.admin-plugins__card-theme-note');
+    expect(notes).toHaveLength(1);
+    expect(notes[0].text()).toContain('Settings');
+    expect(notes[0].text()).toContain('Appearance');
+    expect(notes[0].text()).toMatch(/each signed-in user|per user/i);
+    expect(notes[0].text()).toMatch(/does not change anyone/i);
+    w.unmount();
+  });
+
+  it('shows no note for enabled non-theme plugins', async () => {
+    const { client } = makeClient({});
+    const w = mountPage(client);
+    await flushPromises();
+    expect(w.findAll('.admin-plugins__card-theme-note')).toHaveLength(0);
+    w.unmount();
+  });
+});

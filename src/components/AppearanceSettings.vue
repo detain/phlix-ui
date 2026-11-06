@@ -15,7 +15,11 @@
  *
  * Every control writes straight to the store, which persists to localStorage and
  * (via `useTheme` at the app root) reflects theme/accent/density onto <html>
- * instantly — there is no Save button; changes apply live.
+ * instantly — there is no Save button; changes apply live. The THEME additionally
+ * gets a debounced server-side save per selection and a once-per-login adoption
+ * pull (TW-theme-persist); its two quiet inline disclosures live under the
+ * gallery. `appearance` also force-refreshes the catalogue on mount so a theme
+ * enabled while this panel sits open appears without a page reload.
  */
 import { computed, ref, onBeforeUnmount, onMounted } from 'vue';
 import Switch from './ui/Switch.vue';
@@ -25,6 +29,7 @@ import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import { usePreferencesStore, type ThemeName } from '../stores/usePreferencesStore';
 import { useThemesStore } from '../stores/useThemesStore';
+import { useThemeSyncStore } from '../stores/useThemeSyncStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
 import { useApiBase } from '../composables/useApiBase';
@@ -41,6 +46,7 @@ withDefaults(defineProps<{ panel?: 'appearance' | 'playback' }>(), { panel: 'app
 
 const prefs = usePreferencesStore();
 const themesStore = useThemesStore();
+const themeSync = useThemeSyncStore();
 const toasts = useToastStore();
 const { t } = useMessages();
 const apiBase = useApiBase();
@@ -63,10 +69,13 @@ const BUILT_IN_THEMES: ThemeChoice[] = [
 ];
 
 // Pull the catalogue in so plugin themes show up here even in a host app whose
-// root does not call `useTheme()`. Idempotent. An EMPTY apiBase is the normal
-// hosted case (server/hub inject '' for same-origin relative URLs) and DOES
-// fetch; only an explicit `null` base no-ops inside the store.
-onMounted(() => void themesStore.load(apiBase.value));
+// root does not call `useTheme()`. An EMPTY apiBase is the normal hosted case
+// (server/hub inject '' for same-origin relative URLs) and DOES fetch; only an
+// explicit `null` base no-ops inside the store. `force` because this gallery
+// stays open while an admin ENABLES a theme plugin in another tab — the
+// idempotent non-forced load would silently keep showing the stale list, and
+// a settings gallery is cheap to refetch.
+onMounted(() => void themesStore.load(apiBase.value, true));
 
 /**
  * Built-ins first (stable, always present), then whatever theme plugins the
@@ -176,9 +185,22 @@ function moveRadio(e: KeyboardEvent, count: number, current: number): number | n
   radios[next]?.focus();
   return next;
 }
+/**
+ * The single selection path (click AND arrow-key arms): the instant local
+ * write/repaint stays EXACTLY as it was, and the choice additionally gets a
+ * debounced server-side save so it follows the account to other devices.
+ * `queuePut` coalesces — when a host also runs `useTheme` (whose prefs
+ * watcher performs the same call), the burst still costs one PUT. Hosts
+ * without `useTheme` get the save from right here. Signed out, it no-ops:
+ * an anonymous preference is device-local by definition.
+ */
+function selectTheme(value: ThemeName): void {
+  prefs.theme = value;
+  themeSync.queuePut(apiBase.value, value);
+}
 function onThemeKeydown(e: KeyboardEvent): void {
   const next = moveRadio(e, THEMES.value.length, themeRovingIndex.value);
-  if (next !== null) prefs.theme = THEMES.value[next].value;
+  if (next !== null) selectTheme(THEMES.value[next].value);
 }
 function onAccentKeydown(e: KeyboardEvent): void {
   const next = moveRadio(e, ACCENTS.length, accentRovingIndex.value);
@@ -226,7 +248,7 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
           :tabindex="themeRovingIndex === i ? 0 : -1"
           :data-theme="t.base"
           :style="t.tokens"
-          @click="prefs.theme = t.value"
+          @click="selectTheme(t.value)"
         >
           <span class="aps__preview">
             <span class="aps__preview-bar"></span>
@@ -238,6 +260,11 @@ onBeforeUnmount(() => clearTimeout(resetTimer));
           </span>
         </button>
       </div>
+      <!-- Honest, unobtrusive disclosures — the degrade itself stays silent
+           (built-ins always render); these only tell the user WHY the list is
+           short or WHY the account copy may differ from this screen. -->
+      <p v-if="themesStore.error" class="aps__hint">{{ t('settings.themeCatalogueUnavailable') }}</p>
+      <p v-if="themeSync.putFailed" class="aps__hint">{{ t('settings.themeSavedLocally') }}</p>
     </section>
 
     <section class="aps__group">

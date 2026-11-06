@@ -624,6 +624,9 @@ export const DEFAULT_MESSAGES = {
   settings: {
     // Appearance section titles + radiogroup labels
     theme: 'Theme',
+    // TW-theme-persist disclosures — quiet inline hints, never toasts.
+    themeCatalogueUnavailable: 'Theme catalogue unavailable — showing the built-in themes.',
+    themeSavedLocally: 'Saved on this device only — the server could not store it.',
     accent: 'Accent',
     accentColor: 'Accent color',
     display: 'Display',

@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { watchEffect } from 'vue';
+import { watch, watchEffect } from 'vue';
 import {
   usePreferencesStore,
   readStoredPreferences,
@@ -15,6 +15,7 @@ import {
 } from '../stores/usePreferencesStore';
 import { useThemesStore } from '../stores/useThemesStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useThemeSyncStore } from '../stores/useThemeSyncStore';
 import { useApiBase } from './useApiBase';
 import { deriveAccentVars } from './color';
 import {
@@ -152,12 +153,22 @@ export function applyStoredThemeEarly(defaultTheme?: ThemeName, defaultTv?: bool
  *  - re-applies whenever the chosen theme or the catalogue changes;
  *  - keeps the `localStorage` boot cache in step with what is on screen, so the
  *    next load repaints it with no flash.
+ *
+ * The theme-sync leg (TW-ui-theme-persist, 2026-11-06) adds the account copy:
+ *  - one authenticated pull of `GET /api/v1/users/me/settings` per login — a
+ *    known server-side theme ADOPTS over the stale local value (repaint and
+ *    boot cache ride the effects above; the store writes the preference, never
+ *    the DOM). Every failure — hub 404s included — is a silent local-only
+ *    degrade; see `useThemeSyncStore` for the full law set;
+ *  - a debounced push of every SELECTION (`watch(prefs.theme)` → `queuePut`),
+ *    with the adoption-echo loop guard living inside the store.
  */
 export function useTheme() {
   const prefs = usePreferencesStore();
   const themes = useThemesStore();
   const auth = useAuthStore();
   const apiBase = useApiBase();
+  const themeSync = useThemeSyncStore();
 
   // Load the catalogue when (and only when) it can succeed. `load()` is
   // idempotent and swallows its own failures, so this is safe to re-run.
@@ -187,6 +198,24 @@ export function useTheme() {
     if (isBuiltInThemeId(prefs.theme)) writeCachedTheme(null);
     else if (active !== null) writeCachedTheme(active);
   });
+
+  // Server-side persistence leg: exactly one authenticated pull per login
+  // (the store self-guards; logout re-arms), plus a debounced push whenever a
+  // SELECTION changes the preference. The pull writes `prefs.theme` through
+  // the store, so repaint + boot cache ride the existing effects above —
+  // nothing here touches the DOM. The loop guard (an adoption must not echo
+  // back as a PUT) lives in `useThemeSyncStore.queuePut`.
+  watchEffect(() => {
+    if (!auth.isLoggedIn) {
+      themeSync.endSession();
+      return;
+    }
+    void themeSync.syncFromServer(apiBase.value);
+  });
+  watch(
+    () => prefs.theme,
+    (theme) => themeSync.queuePut(apiBase.value, theme),
+  );
 
   return prefs;
 }

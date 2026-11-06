@@ -12,6 +12,68 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — themes: server-side persistence of the theme choice + picker disclosures + force-refresh + per-user plugin copy (2026-11-06)
+
+- **The picker now persists `theme` to the server (the web-portal half of the
+  per-user theme contract).** phlix-server validates `PUT /api/v1/users/me/settings`
+  (body `{theme}`) against BuiltInThemes ∪ ThemeSourceRegistry — unknown/fossil ids
+  get a flat 400 `{"error"}` — and `GET` (envelope `{settings:{…}}`) carries the
+  `theme` key ONLY while a set string is held server-side (both read from
+  phlix-server `7d15183b` disk). `src/api/themeSettings.ts` (new):
+  `fetchThemeSetting`/`putThemeSetting` over the shared `ApiClient`; a missing,
+  non-string or empty theme resolves to `null`; transport/auth failures REJECT by
+  design so the store holds the single silent catch (and the hub 404-degradation
+  law is checkable in exactly one place).
+- **`src/stores/useThemeSyncStore.ts` (new) owns the three sync laws.**
+  (1) Once-per-login adoption: an authenticated mount awaits the catalogue, then
+  GETs; a server theme that is KNOWN (built-in or catalogue) and differs from
+  local prefs is ADOPTED — prefs write, repaint, boot cache — so the server value
+  wins across devices (console choices included; last-write-wins). Unknown ids
+  never clobber local state; any failure (hub 404, 401, offline) is a SILENT
+  no-op — never a toast, never blocks anything.
+  (2) Debounced persistence: click and arrow-key selections keep their instant
+  local write/repaint and queue a 1 s-coalesced PUT; a rapid burst persists its
+  final value exactly once.
+  (3) Echo suppression: the store tracks the value last confirmed (or
+  optimistically assumed) server-side and never PUTs it back — a GET adoption
+  cannot echo. A failed PUT sets `putFailed` for disclosure only: the local
+  choice stands, nothing rolls back, nothing repaints.
+- **`useTheme` grows the theme-sync leg** (`watchEffect` login gate →
+  `syncFromServer`/`endSession`; `watch(prefs.theme)` → `queuePut`). Signed-out
+  hosts issue ZERO settings requests (pinned); built-in application keeps
+  `<html>` free of an inline `style` attribute (pre-existing pins untouched).
+- **AppearanceSettings: force-refresh + two disclosures.** The mount now calls
+  `themesStore.load(apiBase, true)`, so a theme plugin enabled moments ago shows
+  without a page reload. When the catalogue fetch failed the panel discloses
+  `Theme catalogue unavailable — showing the built-in themes.`, and when a
+  selection's server sync failed, `Saved on this device only — the server could
+  not store it.` Both reuse the `.aps__hint` idiom and add NO `.aps__theme`
+  element, so the pinned 3-card degrade behavior keeps its teeth.
+- **PluginsPage names the per-user reality.** An installed-and-enabled `ui-theme`
+  catalog card carries a one-line plain-English note (the page's zero-`t()` copy
+  idiom): the theme appears under Settings → Appearance for each signed-in user —
+  enabling one there changes nobody's theme.
+- **i18n:** two keys `settings.themeCatalogueUnavailable` /
+  `settings.themeSavedLocally` land in `messages.ts` + all 7 locale files — the
+  catalogue reaches the measured 526-leaf count (README/errors.ts/errors.test.ts
+  prose rotated from the measured parity red, in this commit).
+- **Route gate:** `themeSettings.ts` joins the S280 enumeration census and a new
+  `routeGate.api.test.ts` drive pins its distinct `[GET, …], [PUT, …]` tuples
+  against the vendored 415-route contracts manifest — both routes are
+  server-registered, so the gate answers them clean.
+- Measured evidence (red-first + mutation-killed, this lane): the pins ran
+  **10 failed / 124 passed** across 5 files against the parent tree before any
+  implementation; final full serial battery **331 files / 6835 passed /
+  10 skipped (exit 0)** — the 0.99.20 floor (329/6797/10) + 2 new test files +
+  38 new pins (7 api / 15 store / 7 picker-sync / 6 adoption / 2 plugins-page)
+  + 1 DISCLOSED golden rotation (the empty-apiBase mount now also fetches
+  `/api/v1/users/me/settings` — 2 calls, justified in-test). Mutation kills:
+  stripping `queuePut` from the select handler reddens exactly **4** (PUT pins,
+  zero collateral); stripping BOTH echo guards reddens exactly **2** (entry guard
+  and fire-time recheck each survive alone — recorded honestly as a
+  defense-in-depth pair); removing the sync try/catch reddens exactly **1**
+  (`swallows a settings-endpoint failure without touching local state`).
+
 ## 0.99.20 - 2026-11-06
 
 ### Release — 1 commit since the `v0.99.19` cut (`a6c9d466`): the playback URL-contract cure `c8c608f4`. The 2026-11-06 hub.phlix "can't play" incident class is dead at the root: pinned-quality loads now consume the signed per-rung mini-master URLs the server mints (`playlist_url` / `url` on each variant, phlix-server `f4f01949`) VERBATIM — probe, load and legacy fallback all read the server's own signatures, and no client-side string surgery ever touches a signed URL again. A rung the ladder never advertises (older server / off-wire pick) still derives its index, but strictly PATH-scoped (split at `?`, rename inside the path, re-append the master's query — the `/hls/{job}`-prefix-scoped signer authorises it). `parseVariants` carries the new fields snake/camel-tolerant with absence keeping 'older server' decidable; `setVariants` resolves them at the boundary (the `setSubtitleTracks` law) into an internal mirror that outlives the post-load `resetLevelState`, so consecutive pinned picks keep their exact advertised URLs. Folded verbatim from the pending Unreleased lane block below (house TW-ui law: bodies untouched, lane header demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit carrying the M-UI-23 `0.99.20` stamp into the shipped bundles consumers vendor into `/app` (the fix lane's dist already rode `c8c608f4` bundle-substantive; this cut re-stamps).
