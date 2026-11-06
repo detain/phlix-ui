@@ -3489,6 +3489,8 @@ var sn = {
 	},
 	settings: {
 		theme: "Theme",
+		themeCatalogueUnavailable: "Theme catalogue unavailable — showing the built-in themes.",
+		themeSavedLocally: "Saved on this device only — the server could not store it.",
 		accent: "Accent",
 		accentColor: "Accent color",
 		display: "Display",
@@ -11749,7 +11751,7 @@ var Pm = { class: "player__stage" }, Fm = ["src", "poster"], Im = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-3bab76a6"]]), Sh = "0.99.20", Ch = ["aria-label"], wh = ["src", "poster"], Th = { class: "mini__body" }, Eh = { class: "mini__title" }, Dh = { class: "mini__controls" }, Oh = ["aria-label"], kh = ["aria-label", "aria-pressed"], Ah = ["aria-label"], jh = ["aria-label"], Mh = {
+}), [["__scopeId", "data-v-3bab76a6"]]), Sh = "0.99.21", Ch = ["aria-label"], wh = ["src", "poster"], Th = { class: "mini__body" }, Eh = { class: "mini__title" }, Dh = { class: "mini__controls" }, Oh = ["aria-label"], kh = ["aria-label", "aria-pressed"], Ah = ["aria-label"], jh = ["aria-label"], Mh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Nh = /*#__PURE__*/ X(/* @__PURE__ */ d({

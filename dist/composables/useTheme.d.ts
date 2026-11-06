@@ -50,6 +50,15 @@ export declare function applyStoredThemeEarly(defaultTheme?: ThemeName, defaultT
  *  - re-applies whenever the chosen theme or the catalogue changes;
  *  - keeps the `localStorage` boot cache in step with what is on screen, so the
  *    next load repaints it with no flash.
+ *
+ * The theme-sync leg (TW-ui-theme-persist, 2026-11-06) adds the account copy:
+ *  - one authenticated pull of `GET /api/v1/users/me/settings` per login — a
+ *    known server-side theme ADOPTS over the stale local value (repaint and
+ *    boot cache ride the effects above; the store writes the preference, never
+ *    the DOM). Every failure — hub 404s included — is a silent local-only
+ *    degrade; see `useThemeSyncStore` for the full law set;
+ *  - a debounced push of every SELECTION (`watch(prefs.theme)` → `queuePut`),
+ *    with the adoption-echo loop guard living inside the store.
  */
 export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     theme: import("vue").Ref<string, string>;

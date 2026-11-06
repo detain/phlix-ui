@@ -477,6 +477,8 @@ export declare const JA_MESSAGES: {
     };
     settings: {
         theme: string;
+        themeCatalogueUnavailable: string;
+        themeSavedLocally: string;
         accent: string;
         accentColor: string;
         display: string;

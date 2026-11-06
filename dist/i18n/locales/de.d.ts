@@ -476,6 +476,8 @@ export declare const DE_MESSAGES: {
     };
     settings: {
         theme: string;
+        themeCatalogueUnavailable: string;
+        themeSavedLocally: string;
         accent: string;
         accentColor: string;
         display: string;
