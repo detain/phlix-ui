@@ -1198,7 +1198,10 @@ let autoplayAttempted = false;
  *  always permits muted autoplay); if even that rejects we leave the existing
  *  play control / center button as the "tap to play" affordance. Never throws an
  *  unhandled rejection. Skipped while a resume prompt is showing (autoplay applies
- *  after the user resolves resume) or while transcoding (HLS owns readiness). */
+ *  after the user resolves resume) or while transcoding (HLS owns readiness).
+ *  The fallback mute is recorded on the store as AUTOPLAY-FORCED (not user
+ *  choice), so it belongs to this source's attempt alone — `setCurrent` releases
+ *  it when new media loads and each item retries unmuted first. */
 function attemptAutoplay(): void {
   if (!props.autoplay || autoplayAttempted) return;
   if (showResume.value || transcodeBlocking.value) return;
@@ -1210,8 +1213,11 @@ function attemptAutoplay(): void {
     p.catch((err: unknown) => {
       // Gesture not carried through navigation → retry muted (always allowed).
       if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        // Store truth first (records the mute as autoplay-forced, not user
+        // choice, so it releases on the next media load), then the element —
+        // the muted retry below must see a muted element in THIS tick.
+        player.muteForAutoplay();
         v.muted = true;
-        player.muted = true;
         void v.play()?.catch(() => {
           /* still blocked — the play control stays as the tap-to-play affordance */
         });

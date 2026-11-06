@@ -12,6 +12,36 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — autoplay-mute stickiness lane 2026-11-06 (PLAYERMUTE)
+
+### Fixed
+
+- **One `NotAllowedError` could no longer silence the whole session.** On a
+  deep link / reload / SPA entry, `Player.vue`'s autoplay fallback wrote
+  `player.muted = true` straight onto the session-long store singleton, and
+  `onLoadedMetadata` re-pushed that `muted` onto EVERY subsequent source — so
+  a single policy rejection left every later direct-play title without audio
+  (symptom: silent playback estate-wide until reload, only a small mute icon
+  showing why). The mute is now two-state: `muted` plus `autoplayMuted` in
+  `usePlayerStore` records WHY it is on. `muteForAutoplay()` (the sole write
+  from the fallback, replacing the direct ref assignment) marks the mute as
+  forced for THIS source only; `setCurrent` — the media-change path the store
+  already owns — releases a forced mute so the next item retries autoplay
+  unmuted first, and re-forcing on a fresh rejection stays lawful. A user
+  action (`toggleMute`, or any `setVolume` above zero) adopts the mute as the
+  user's own: it persists across items and the forced flag never outlives
+  `muted`. The muted-retry sequence itself, the element mirrors (Player.vue
+  store→video watch, `onLoadedMetadata`, MiniPlayer) and `prefs.defaultVolume`
+  behavior are untouched. Brief coordinates were phantom-derived (the file is
+  `src/components/Player.vue`, not `components/player/Player.vue`; the cited
+  commit `78f21e4` does not exist in this repo — disk truth: fix lands atop
+  the v0.99.16-era tip). 9 pins: 5 store-level (release-on-load, user-mute
+  immunity, force-nothing-when-muted, unmute clears the flag, re-force
+  per-source) + 4 component-level (next item's FIRST `play()` observed
+  unmuted via a policy-faithful stub, item-2 re-force, user mute survives
+  navigation, pre-muted attempt never flags) — all measured RED at the parent
+  before the fix, green after.
+
 ## Unreleased — wave-5 routeGate fixture re-vendor 2026-11-04 (W5UIGATE)
 
 - **The owed regen #36 re-vendor lands: `src/api/test/server-route-manifest.json` is now the

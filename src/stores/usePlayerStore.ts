@@ -122,6 +122,15 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   const volume = ref(prefs.defaultVolume);
   const muted = ref(false);
+  /** WHY `muted` is on, kept apart so the two mutes cannot be confused:
+   *  true = the AUTOPLAY fallback silenced this source (browser policy — obey
+   *  it for this attempt), false = any mute here is the USER's choice.
+   *  `setCurrent` releases a forced mute when new media loads — a rejected
+   *  `play()` belongs to ONE source's autoplay attempt and must never leak
+   *  into the rest of the session (the production no-audio bug) — while a
+   *  user mute persists until the user changes it. Invariant: this flag is
+   *  only ever true while `muted` is true (every unmute path clears it). */
+  const autoplayMuted = ref(false);
   const rate = ref(1);
   const quality = ref(prefs.defaultQuality);
   const subtitleLang = ref<string | null>(prefs.defaultSubtitleLang);
@@ -270,6 +279,11 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   // ---- transport ----------------------------------------------------------
   function setCurrent(media: MediaItem, opts: { resetPosition?: boolean; streamUrl?: string } = {}): void {
+    // New media = new autoplay attempt at the user's preferred loudness. An
+    // autoplay-forced mute from the PREVIOUS source is released here (never a
+    // user mute); if this source's play() is rejected again, Player.vue forces
+    // the fallback once more — the browser's law per attempt, not per session.
+    releaseAutoplayMute();
     current.value = media;
     if (opts.streamUrl !== undefined) streamUrl.value = opts.streamUrl;
     if (opts.resetPosition !== false) {
@@ -354,14 +368,38 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     persistResume(true);
     if (typeof navigator !== 'undefined' && navigator.mediaSession) navigator.mediaSession.playbackState = 'paused';
   }
+  /**
+   * Enact the autoplay fallback's mute for the CURRENT source only (Player.vue
+   * calls this when `play()` rejects with NotAllowedError, before retrying the
+   * element muted). No-op when the store is already muted: a user mute silences
+   * the same element, so nothing is being FORCED — and the per-media release
+   * must never get the chance to erase the user's choice later.
+   */
+  function muteForAutoplay(): void {
+    if (muted.value) return;
+    muted.value = true;
+    autoplayMuted.value = true;
+  }
+  /** Release the mute the autoplay fallback forced — called on every media
+   *  load (setCurrent) so stickiness dies with its source. Acts only while
+   *  `autoplayMuted` is set; a user-chosen mute is not ours to clear. */
+  function releaseAutoplayMute(): void {
+    if (!autoplayMuted.value) return;
+    autoplayMuted.value = false;
+    muted.value = false;
+  }
   function setVolume(v: number): void {
     const vol = normalizeVolume(v);
     if (vol === null) return; // refuse NaN/±Infinity — keep the last good volume
     volume.value = vol;
-    if (vol > 0) muted.value = false;
+    if (vol > 0) {
+      muted.value = false;
+      autoplayMuted.value = false; // raising the volume is a USER unmute — the
+    }                              // forced state must not outlive `muted` (invariant)
   }
   function toggleMute(): void {
     muted.value = !muted.value;
+    autoplayMuted.value = false; // whatever this action just did, it is the user's choice now
   }
   function setRate(r: number): void {
     rate.value = r;
@@ -485,6 +523,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     buffered,
     volume,
     muted,
+    autoplayMuted,
     rate,
     quality,
     subtitleLang,
@@ -508,6 +547,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     pause,
     setVolume,
     toggleMute,
+    muteForAutoplay,
     setRate,
     setQuality,
     setSubtitle,

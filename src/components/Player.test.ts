@@ -2587,6 +2587,117 @@ describe('Player — autoplay on load (U2)', () => {
     w.unmount();
   });
 
+  // ---- the no-audio regression: forced mute must die with its source -------
+  /** Mounts a player whose play() obeys real autoplay policy: unmuted attempts
+   *  reject with NotAllowedError, a muted attempt resolves and "plays". */
+  function policyVideo(video: HTMLVideoElement, state: Record<string, number | boolean>) {
+    const mutedAt: boolean[] = [];
+    (video as unknown as { play: () => Promise<void> }).play = vi.fn(() => {
+      mutedAt.push(state.muted === true);
+      if (state.muted === true) {
+        state.paused = false;
+        return Promise.resolve();
+      }
+      return Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+    }) as unknown as HTMLVideoElement['play'];
+    return mutedAt;
+  }
+  const settle = async () => {
+    await nextTick();
+    await Promise.resolve(); // let the play() rejection handler run
+    await nextTick();
+  };
+
+  it('an autoplay-forced mute does not leak: the next item retries play() UNMUTED', async () => {
+    const { w, video, state } = mountPlayer({ autoplay: true });
+    const store = usePlayerStore();
+    const mutedAt: boolean[] = [];
+    let call = 0;
+    // A cold deep link has no carried gesture (first unmuted attempt blocked);
+    // once anything has played, the session autoplays unmuted — the production
+    // case the stickiness bug stole: every LATER item did have sound available.
+    (video as unknown as { play: () => Promise<void> }).play = vi.fn(() => {
+      call += 1;
+      mutedAt.push(state.muted === true);
+      if (call === 1) return Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+      state.paused = false;
+      return Promise.resolve();
+    }) as unknown as HTMLVideoElement['play'];
+    video.dispatchEvent(new Event('canplay'));
+    await settle();
+    expect(store.muted).toBe(true); // item 1 is force-muted (browser's law)
+    expect(store.autoplayMuted).toBe(true);
+    await w.setProps({ media: episode({ id: 'e2', name: 'Episode 2', episode_number: 2 }), streamUrl: 'http://x/e2' });
+    await nextTick();
+    expect(store.muted).toBe(false); // the forced mute died with item 1
+    expect(store.autoplayMuted).toBe(false);
+    expect(video.muted).toBe(false); // mirrored onto the live element
+    state.paused = true; // a fresh source starts paused
+    video.dispatchEvent(new Event('canplay'));
+    await nextTick();
+    expect(mutedAt).toEqual([false, true, false]); // item 2's FIRST attempt was unmuted…
+    expect(store.muted).toBe(false); // …and it played with sound
+    w.unmount();
+  });
+
+  it('item 2 force-mutes again when its own unmuted attempt is rejected', async () => {
+    const { w, video, state } = mountPlayer({ autoplay: true });
+    const store = usePlayerStore();
+    const mutedAt = policyVideo(video, state);
+    video.dispatchEvent(new Event('canplay'));
+    await settle();
+    expect(store.autoplayMuted).toBe(true); // item 1 forced
+    await w.setProps({ media: episode({ id: 'e2', name: 'Episode 2', episode_number: 2 }), streamUrl: 'http://x/e2' });
+    await nextTick();
+    state.paused = true;
+    video.dispatchEvent(new Event('canplay'));
+    await settle();
+    expect(mutedAt).toEqual([false, true, false, true]); // every source: unmuted first, then forced
+    expect(store.muted).toBe(true); // the muted-retry fallback still works
+    expect(store.autoplayMuted).toBe(true);
+    w.unmount();
+  });
+
+  it('a user mute survives media changes (only the forced one is released)', async () => {
+    const { w, video, state } = mountPlayer({ autoplay: true });
+    const store = usePlayerStore();
+    store.toggleMute(); // explicit user mute on item 1 — never a forced transition
+    await nextTick();
+    expect(video.muted).toBe(true); // mirrored onto the element
+    await w.setProps({ media: episode({ id: 'e2', name: 'Episode 2', episode_number: 2 }), streamUrl: 'http://x/e2' });
+    await nextTick();
+    expect(store.muted).toBe(true); // the per-media release skipped this mute
+    expect(store.autoplayMuted).toBe(false);
+    expect(video.muted).toBe(true);
+    state.paused = true;
+    video.dispatchEvent(new Event('canplay'));
+    await settle();
+    expect(store.muted).toBe(true); // and the new source respects it too
+    w.unmount();
+  });
+
+  it('a mute the user already chose is never recorded as autoplay-forced', async () => {
+    const { w, video, state } = mountPlayer({ autoplay: true });
+    const store = usePlayerStore();
+    store.toggleMute(); // user muted BEFORE the attempt
+    let call = 0;
+    (video as unknown as { play: () => Promise<void> }).play = vi.fn(() => {
+      call += 1;
+      if (call === 1) return Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+      state.paused = false;
+      return Promise.resolve();
+    }) as unknown as HTMLVideoElement['play'];
+    video.dispatchEvent(new Event('canplay'));
+    await settle();
+    expect(state.muted).toBe(true); // the element retried muted (browser law obeyed)
+    expect(store.muted).toBe(true); // store agrees…
+    expect(store.autoplayMuted).toBe(false); // …but the fallback FORCED nothing
+    await w.setProps({ media: episode({ id: 'e2', name: 'Episode 2', episode_number: 2 }), streamUrl: 'http://x/e2' });
+    await nextTick();
+    expect(store.muted).toBe(true); // so the next item stays muted (the user's choice)
+    w.unmount();
+  });
+
   it('re-arms autoplay when the media changes', async () => {
     const { w, video, state } = mountPlayer({ autoplay: true });
     video.dispatchEvent(new Event('canplay'));

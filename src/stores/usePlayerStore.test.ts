@@ -657,3 +657,61 @@ describe('ui-min2w — a corrupted volume can never poison the player store', ()
     expect(p.volume).toBe(0.5);
   });
 });
+
+// The two mutes are different state: what the autoplay fallback forces belongs
+// to its source; what the user chooses outlives every media change. These pins
+// redden if the singleton `muted` stickiness is ever reintroduced.
+describe('usePlayerStore — autoplay-forced vs user mute (per-source law)', () => {
+  it('setCurrent releases an autoplay-forced mute', () => {
+    const p = usePlayerStore();
+    p.muteForAutoplay();
+    expect(p.muted).toBe(true);
+    expect(p.autoplayMuted).toBe(true);
+    p.setCurrent(media('next')); // new item loads…
+    expect(p.muted).toBe(false); // …at the user's preferred loudness
+    expect(p.autoplayMuted).toBe(false);
+  });
+
+  it('setCurrent never releases a user mute', () => {
+    const p = usePlayerStore();
+    p.toggleMute(); // explicit user mute on item 1
+    p.setCurrent(media('item2'));
+    expect(p.muted).toBe(true); // user choice persists across items
+    expect(p.autoplayMuted).toBe(false);
+  });
+
+  it('muteForAutoplay forces nothing when the user already muted', () => {
+    const p = usePlayerStore();
+    p.toggleMute();
+    p.muteForAutoplay(); // the fallback adds nothing to an already-muted element
+    expect(p.muted).toBe(true);
+    expect(p.autoplayMuted).toBe(false); // nothing forced → nothing releasable later
+    p.setCurrent(media('b'));
+    expect(p.muted).toBe(true); // the per-media release must skip this user mute
+  });
+
+  it('a user unmute (toggle or volume-up) clears the forced state', () => {
+    const p = usePlayerStore();
+    p.muteForAutoplay();
+    p.toggleMute(); // click unmute after a forced mute — user intent wins
+    expect(p.muted).toBe(false);
+    expect(p.autoplayMuted).toBe(false);
+    p.muteForAutoplay(); // forced again (a later rejected attempt)…
+    p.setVolume(0.6); // …and raising the volume is likewise a user unmute
+    expect(p.muted).toBe(false);
+    expect(p.autoplayMuted).toBe(false);
+    // invariant: the flag never outlives `muted` — releasing on load is a no-op here
+    p.setCurrent(media('c'));
+    expect(p.muted).toBe(false);
+    expect(p.autoplayMuted).toBe(false);
+  });
+
+  it('muteForAutoplay is the fallback, not a one-way door — it re-applies per source', () => {
+    const p = usePlayerStore();
+    p.muteForAutoplay();
+    p.setCurrent(media('d')); // release
+    p.muteForAutoplay(); // this source rejected too → forced again, correctly
+    expect(p.muted).toBe(true);
+    expect(p.autoplayMuted).toBe(true);
+  });
+});
