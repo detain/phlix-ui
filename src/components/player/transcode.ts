@@ -34,8 +34,9 @@ export interface SubtitleTrack {
 
 /**
  * A server-provided quality rung, mirroring the wire shape verbatim.
- * Only the fields needed for the quality menu (height, bitrate, label) are
- * captured; full fidelity is not needed since hls.js is the primary source.
+ * Only the fields needed for the quality menu (height, bitrate, label) and for
+ * URL-contract-compliant pinned loads (`url`, `playlistUrl`) are captured;
+ * full fidelity is not needed since hls.js is the primary source.
  */
 export interface Variant {
   id: string;
@@ -43,6 +44,18 @@ export interface Variant {
   height: number;
   width: number;
   bitrate: number;
+  /** The rung's signed BARE media playlist (`media_v{id}.m3u8`), relative on
+   *  the wire (phlix-server `TranscodeManager::getJobVariants()` + `Transcode
+   *  Controller::signVariantUrls()`; the controller resolves it against the API
+   *  base when exposing). Absent on ladders predating the field. */
+  url?: string;
+  /** The rung's signed MINI-MASTER index (`media_v{id}_master.m3u8`) — the
+   *  URL-contract law (phlix-server f4f01949, 2026-11-06): pinned-quality
+   *  loads use this value VERBATIM and never re-derive it by string surgery on
+   *  a signed URL. Relative on the wire; resolved when exposed. Absent on
+   *  ladders predating the field (the client then keeps its PATH-scoped
+   *  derivation fallback). */
+  playlistUrl?: string;
 }
 
 /** Result of starting (or reusing) a transcode job. */
@@ -117,6 +130,10 @@ export function parseSubtitleTracks(value: unknown): SubtitleTrack[] {
  * Normalizes the server's `variants` array (per-rung snake- or camelCase) into
  * a list of {@link Variant}. Tolerates a missing/null value (→ null), junk
  * entries (skipped), and either casing so a contract tweak doesn't break it.
+ * The signed rung URLs (`url` / `playlist_url`, URL-contract law f4f01949)
+ * ride through verbatim — relative, still exactly as signed; an entry without
+ * them (or with a non-string/empty value) parses WITHOUT the keys, keeping
+ * 'advertised vs older server' decidable for the pinned-load path.
  */
 export function parseVariants(value: unknown): Variant[] | null {
   if (value == null) return null;
@@ -134,12 +151,15 @@ export function parseVariants(value: unknown): Variant[] | null {
     const o = entry as Record<string, unknown>;
     const height = num(o.height);
     if (height <= 0) continue;
+    const playlistUrlRaw = o.playlist_url ?? o.playlistUrl;
     out.push({
       id: str(o.id),
       label: str(o.label),
       height,
       width: num(o.width),
       bitrate: num(o.bitrate),
+      ...(typeof o.url === 'string' && o.url !== '' ? { url: o.url } : {}),
+      ...(typeof playlistUrlRaw === 'string' && playlistUrlRaw !== '' ? { playlistUrl: playlistUrlRaw } : {}),
     });
   }
   return out.length > 0 ? out : null;

@@ -856,6 +856,179 @@ describe('useHlsTranscode', () => {
       }
     });
 
+    // The 2026-11-06 hub.phlix "can't play" incident: production master URLs
+    // are SIGNED (phlix-server TranscodeController::start mints `master_url`
+    // with the prefix-scoped `?exp=&sig=` token). Whole-URL construction that
+    // swaps the `master.m3u8` extension out and re-appends a suffix landed the
+    // suffix INSIDE the sig query value — the request path lost `.m3u8`, every
+    // server answered 404, and both probe arms died. Every fixture until now
+    // used an UNSIGNED master_url, which is why CI never saw it. These two
+    // pins drive the real production shape; the `endsWith` pins cannot catch
+    // this class (the mangled URL also ends with `_master.m3u8`).
+    const signedMaster = '/hls/job-1/master.m3u8?exp=1793986052&sig=Cmw8gp_TEST_SIGNATURE';
+
+    it('a SIGNED master URL keeps the query after the playlist suffix (available probe)', async () => {
+      const h = harness({ start: { job_id: 'job-1', master_url: signedMaster, status: 'completed' } });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('original');
+      await flushRun();
+      expect(h.probe).toHaveBeenCalledWith(
+        'http://h:8096/hls/job-1/media_voriginal_master.m3u8?exp=1793986052&sig=Cmw8gp_TEST_SIGNATURE',
+      );
+      expect(h.loadSource).toHaveBeenCalledTimes(1);
+      expect(h.loadSource).toHaveBeenCalledWith(
+        'http://h:8096/hls/job-1/media_voriginal_master.m3u8?exp=1793986052&sig=Cmw8gp_TEST_SIGNATURE',
+      );
+      // The mangled incident shape must be impossible, not merely unchosen.
+      expect(h.probe.mock.calls.flat().some((url) => /sig=[^?]*_master\.m3u8$/.test(url))).toBe(false);
+    });
+
+    it('a SIGNED master URL keeps the query on the legacy fallback too (404 probe)', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const h = harness({ start: { job_id: 'job-1', master_url: signedMaster, status: 'completed' }, probeOutcome: 'absent' });
+        await h.controller.start(fakeVideo(), 'm');
+        h.controller.loadVariantPlaylist('original');
+        await flushRun();
+        expect(h.probe).toHaveBeenCalledWith(
+          'http://h:8096/hls/job-1/media_voriginal_master.m3u8?exp=1793986052&sig=Cmw8gp_TEST_SIGNATURE',
+        );
+        expect(h.loadSource).toHaveBeenCalledTimes(1);
+        expect(h.loadSource).toHaveBeenCalledWith(
+          'http://h:8096/hls/job-1/media_voriginal.m3u8?exp=1793986052&sig=Cmw8gp_TEST_SIGNATURE',
+        );
+        expect(h.loadSource.mock.calls.flat().some((url) => /sig=[^?]*\.m3u8$/.test(url))).toBe(false);
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    // ── URL-contract law (2026-11-06, phlix-server f4f01949) ────────────────
+    // The wire now advertises each rung's SIGNED mini-master index as
+    // `playlist_url` (and its signed bare rung as `url`). Pinned-quality loads
+    // must use those values VERBATIM; the client never re-derives a signed URL
+    // by surgery (the v0.99.19 defect: the index name was appended AFTER the
+    // master's `?exp=…&sig=…` query — extension-less path, 404, "can't play").
+    // Every rung URL carries its OWN exp/sig (the signer mints per URL against
+    // the /hls/{job} prefix), so a test that sees the master's token on a rung
+    // URL would prove a re-append, not a read of the field.
+    const advertisedStart = {
+      job_id: 'job-1',
+      master_url: '/hls/job-1/master.m3u8?exp=111&sig=MASTER_TOKEN',
+      status: 'completed',
+      variants: [
+        {
+          id: '720p', label: '720p', height: 720, width: 1280, bitrate: 2_800_000,
+          url: '/hls/job-1/media_v720p.m3u8?exp=222&sig=RUNG720_BARE',
+          playlist_url: '/hls/job-1/media_v720p_master.m3u8?exp=333&sig=RUNG720_INDEX',
+        },
+        {
+          id: 'original', label: 'Original', height: 1088, width: 1920, bitrate: 9_000_000,
+          url: '/hls/job-1/media_voriginal.m3u8?exp=444&sig=ORIG_BARE',
+          playlist_url: '/hls/job-1/media_voriginal_master.m3u8?exp=555&sig=ORIG_INDEX',
+        },
+      ],
+    };
+
+    it('an advertised playlist_url is loaded VERBATIM — never a master-URL derivation', async () => {
+      const h = harness({ start: advertisedStart });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('original');
+      await flushRun();
+      // The rung's OWN signature — distinct from the master's by fixture design,
+      // so this pin cannot pass via query-re-append or derivation.
+      expect(h.probe).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8?exp=555&sig=ORIG_INDEX');
+      expect(h.loadSource).toHaveBeenCalledTimes(1);
+      expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8?exp=555&sig=ORIG_INDEX');
+      // The master's token must NEVER ride onto a rung URL (re-append class).
+      expect(h.loadSource.mock.calls.flat().some((u) => String(u).includes('MASTER_TOKEN'))).toBe(false);
+    });
+
+    it('a decisive 404 on the advertised index falls back to the advertised bare url VERBATIM', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const h = harness({ start: advertisedStart, probeOutcome: 'absent' });
+        await h.controller.start(fakeVideo(), 'm');
+        h.controller.loadVariantPlaylist('720p');
+        await flushRun();
+        expect(h.probe).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p_master.m3u8?exp=333&sig=RUNG720_INDEX');
+        expect(h.loadSource).toHaveBeenCalledTimes(1);
+        // The server's own signed bare rung (its own token) — not a derivation.
+        expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v720p.m3u8?exp=222&sig=RUNG720_BARE');
+        expect(String(warn.mock.calls[0][0])).toContain('rung mini-master unavailable');
+        expect(h.controller.state.value).toBe('ready');
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it('consecutive pinned picks keep using advertised URLs — the rung-load state reset must not lose the ladder', async () => {
+      // After the first pinned load the composable resets its exposed level
+      // state (clearing the public `variants` ref); the internal advertised
+      // ladder must still answer for the SECOND pick — otherwise a later pick
+      // silently regresses to derivation while the server offered exact URLs.
+      const h = harness({ start: advertisedStart });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('720p');
+      await flushRun();
+      h.controller.loadVariantPlaylist('original');
+      await flushRun();
+      expect(h.loadSource).toHaveBeenCalledTimes(2);
+      expect(h.loadSource).toHaveBeenLastCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8?exp=555&sig=ORIG_INDEX');
+    });
+
+    it('a rung id the ladder never advertises falls back to the PATH-scoped derivation (older/edge ladders)', async () => {
+      // '480p' is absent from the fixture ladder: the safe derivation stays as
+      // the forward/back-compat path — rename inside the PATH only, master's
+      // query re-appended verbatim (prefix-scoped signer authorises it).
+      const h = harness({ start: advertisedStart });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('480p');
+      await flushRun();
+      expect(h.probe).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v480p_master.m3u8?exp=111&sig=MASTER_TOKEN');
+      expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_v480p_master.m3u8?exp=111&sig=MASTER_TOKEN');
+    });
+
+    it('variants arriving late on a status poll are advertised sources too', async () => {
+      const h = harness({
+        start: { job_id: 'job-1', master_url: '/hls/job-1/master.m3u8?exp=111&sig=MASTER_TOKEN', status: 'running' },
+        statuses: [{ status: 'running', playlist_ready: true, progress: 80, variants: advertisedStart.variants }],
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      h.controller.loadVariantPlaylist('original');
+      await flushRun();
+      expect(h.loadSource).toHaveBeenCalledWith('http://h:8096/hls/job-1/media_voriginal_master.m3u8?exp=555&sig=ORIG_INDEX');
+    });
+
+    it('LAW: the index suffix never lands inside a signed query — every emitted URL keeps it in the PATH', async () => {
+      // Mutation-toothed sweep over BOTH shapes (advertised + derived): in any
+      // URL carrying a query, the filename (incl. '_master.m3u8') must live
+      // strictly before the first '?' — the exact incident shape
+      // `…media_voriginal?exp=…&sig=…_master.m3u8` is asserted impossible.
+      const seen: string[] = [];
+      const collect = (u: string) => {
+        seen.push(u);
+        return Promise.resolve('available' as RungPlaylistProbe);
+      };
+      for (const start of [advertisedStart, { job_id: 'j2', master_url: '/hls/j2/master.m3u8?exp=9&sig=SIGNED', status: 'completed' }]) {
+        const h = harness({ start });
+        h.probe.mockImplementation(collect);
+        await h.controller.start(fakeVideo(), 'm');
+        for (const rung of ['original', '720p']) {
+          h.controller.loadVariantPlaylist(rung);
+          await flushRun();
+        }
+      }
+      expect(seen.length).toBe(4);
+      for (const url of seen) {
+        expect(url).toContain('_master.m3u8');
+        const q = url.indexOf('?');
+        // Unsigned derived shapes may have no query at all; a signed one must
+        // carry the filename BEFORE it.
+        expect(q === -1 || url.indexOf('_master.m3u8') < q).toBe(true);
+      }
+    });
+
     it.each(['unknown', 'throws'] as const)(
       'a non-404 probe outcome (%s) stays on the mini-master and loud — never a silent legacy retry',
       async (outcome) => {

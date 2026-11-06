@@ -12,6 +12,64 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — playback: pinned-quality loads use the server-advertised playlist_url (URL-contract law) (2026-11-06)
+
+- **`loadVariantPlaylist` consumes the signed rung URLs the server now mints.**
+  phlix-server `f4f01949` grew the wire contract: every playable variant on the
+  transcode `start`/`status` response carries its own signed mini-master index as
+  `playlist_url` (and the signed bare rung as `url`). `parseVariants`
+  (src/components/player/transcode.ts) now carries both fields (`playlistUrl`,
+  snake/camel-tolerant, non-empty strings only; a predating entry parses WITHOUT
+  the keys so 'advertised vs older server' stays decidable), `setVariants`
+  resolves them against the API base once at the boundary (same law as
+  `setSubtitleTracks`) into an internal mirror that outlives the post-load
+  `resetLevelState` clearing of the public ref, and `loadVariantPlaylist` uses
+  the rung's advertised `playlistUrl` VERBATIM for the probe + load, the
+  advertised bare `url` for the L1 'absent' fallback — no client-side surgery on
+  a server-signed URL, ever.
+- **The 2026-11-06 hub.phlix "can't play" incident class is structurally dead.**
+  The v0.99.19 client appended `_master.m3u8` to the SIGNED master URL's whole
+  string — the filename landed inside the `sig=` query VALUE, the request path
+  lost its extension, and every pinned-quality pick 404'd. A rung the ladder
+  never advertises (older server, or a pick off the wire list) still derives —
+  but only via the PATH-scoped helpers (`derivedRungIndexUrl` /
+  `derivedRungLegacyUrl`): split at the first `?`, rename inside the path,
+  re-append the master's query verbatim (the prefix-scoped signer authorises the
+  master's token for every file under `/hls/{job}`).
+- **Tests**: red-first measured **6 failed / 107 passed** on the two files before
+  the src cure (the four advertised-consumption composable pins + two
+  `parseVariants` field pins; the PATH-scoped-derivation and LAW sweep pins
+  stayed green at parent by design — they guard the WIP split cure). New law
+  pins: advertised URL loaded verbatim with its OWN signature (a distinct
+  per-URL token proves it is read, not re-appended — the master's token must
+  never ride a rung URL), decisive-404 → advertised bare url verbatim,
+  consecutive picks keep the advertised ladder across the state reset,
+  late-arriving status-poll variants are advertised sources too, un-advertised
+  ids fall back to the PATH-scoped derivation, and a mutation-toothed sweep: in
+  EVERY emitted URL carrying a query, the `_master.m3u8` filename must sit
+  strictly before the `?`. Mutation kills: stripping the advertised preference
+  reddens **exactly 4** (the consumption pins, zero collateral); restoring the
+  whole-URL surgery reddens **exactly 4** signed-shape pins (2 WIP signed-master
+  + the un-advertised derivation pin + the LAW sweep), unsigned pins untouched.
+  Full serial battery at this tip: `vitest --no-file-parallelism` = **329 files /
+  6797 passed / 10 skipped** (floor 6785 + 2 signed-master pins + 10 new
+  URL-contract pins); `vue-tsc --noEmit` exit 0; `eslint .` exit 0.
+- **dist** rebuilt in this commit; determinism proved ×2 from the same tree
+  (`diff -r` exit 0). Aggregate md5 (repo recipe `find dist -type f | sort |
+  xargs md5sum | md5sum`) = `7bdeaeda3a15f1b82dd75e40cf1060b4` (886 files, still
+  stamped 0.99.19 — the version bump is the release cut's job); content-only
+  aggregate (`sort | xargs cat | md5sum`) = `8996ef7e09ea74c0e05613ae87ff0884`. Carriers rotate
+  `dist/PlayerPage-kwMAZlDu.js` → `dist/PlayerPage-BUnWXFam.js`
+  (675faa2a6427c3fd7413fa2aebbec15e), `dist/PlayerPage-DAswZ8i8.cjs` →
+  `dist/PlayerPage-DFDk18x-.cjs` (46bc42c2f3d0b43281e4968c5e06155c);
+  `dist/phlix-ui.js` e9d65424a588f04ba567e6101bbad3b8, `dist/player.js`
+  32f56ff007e9b877bfb1e491f29ee23d. Law greps green in both new carriers +
+  player.js: `playlist_url` wire parse, `_master.m3u8`, fallback warn
+  `rung mini-master unavailable`. Declaration surface (additive):
+  `dist/components/player/transcode.d.ts` Variant gains `url?`/`playlistUrl?`;
+  `dist/composables/useHlsTranscode.d.ts` unchanged surface. `dist:check` green
+  once dist rides this commit.
+
 ## 0.99.19 - 2026-11-06
 
 ### Release — 2 commits since the `v0.99.18` cut (`2158564a`): the player me-safety pair and its review cure. `3174b805` — **L1**: a rung mini-master index 404 (a server older than the phlix-server `1035e7de` contract) HEAD-probes before attach and degrades to the legacy bare `media_v{id}.m3u8` exactly once per pick with a warning naming both URLs, instead of hard-failing to the loud error state; any other probe outcome keeps the mini-master and the loud hls.js path (a 500 is never silently retried). **L2** owner ruling — audio-bearing sources with zero selectable tracks show exactly one highlighted "Original" entry (muxed-audio titles previously rendered an empty audio menu). `7e221f2e` — review-v2 Major: the audio menu can no longer show stale renditions after a legacy fallback — `syncAudioTrackState()` now runs beside `syncAudioPresence()` on every `MANIFEST_PARSED`/`LEVEL_LOADED`, so a bare `-an` rung empties the menu instead of leaving the previous manifest's renditions as dead clicks, and silent-stays-hidden stays honest (no synthesized entry for audio that does not exist); plus the `defaultProbeRungPlaylist` export with five fetch-shape pins and the corrected fallback warn prose (review minors m1/m2). Folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`). No dependency-pin changes at this cut: contracts `#v0.5.6` and syncplay `#v0.1.7` held (lock diff = the two own version echoes only). `dist/` rebuilt in the release commit carrying the M-UI-23 `0.99.19` stamp into the shipped bundles consumers vendor into `/app` (both fix lanes rebuilt dist bundle-substantive in their own commits; this cut re-stamps — churn vs `7e221f2e`'s committed dist is exactly the 4 stamp-bearing entry bundles).

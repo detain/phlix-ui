@@ -39,7 +39,11 @@ export type TranscodeState = 'idle' | 'preparing' | 'ready' | 'error';
  * phlix-server `src/Media/Transcoding/TranscodeManager.php`,
  * `writeVodPlaylists()`, which ships beside each bare `media_v{id}.m3u8` rung
  * a master-shaped index carrying the `#EXT-X-MEDIA:TYPE=AUDIO` group plus a
- * single `EXT-X-STREAM-INF` with `AUDIO="aud"` pointing at that rung.
+ * single `EXT-X-STREAM-INF` with `AUDIO="aud"` pointing at that rung. Since
+ * the f4f01949 URL contract the server also SIGNS that index and hands it on
+ * the wire as each variant's `playlist_url` — the name built from this suffix
+ * is only the fallback derivation ({@link derivedRungIndexUrl}) for a rung
+ * the ladder never advertised.
  *
  * Why not the bare rung playlist: hls.js parses `EXT-X-MEDIA` only from
  * master-shaped playlists. Multi-audio titles have video-only (`-an`) rungs,
@@ -166,10 +170,14 @@ export interface HlsTranscodeController {
   /** The master playlist URL, set once the start response arrives. Used to
    *  construct variant playlist URLs for non-ABR quality selection. */
   masterUrl: Ref<string | null>;
-  /** Load a specific variant playlist directly (e.g. `media_voriginal_master.m3u8`)
-   *  instead of using ABR level switching. This is used for the "Original"
-   *  quality option when the original variant is not in the ABR ladder.
-   *  The rung's mini-master index is probed first; only an explicit 404 falls
+  /** Load a specific variant playlist directly (e.g. the rung's
+   *  `media_voriginal_master.m3u8`) instead of using ABR level switching. This
+   *  is used for the "Original" quality option when the original variant is
+   *  not in the ABR ladder. The URL comes from the server's advertised
+   *  `playlist_url` when the ladder carries one (URL-contract law — consume it
+   *  VERBATIM); only a rung the ladder never advertises falls back to a
+   *  PATH-scoped derivation from the master URL.
+   *  The chosen index is probed first; only an explicit 404 falls
    *  back to the legacy bare rung playlist (L1 forward-compat — see
    *  {@link UseHlsTranscodeOptions.probeRungPlaylist}).
    *  Calling this will clear the buffer and restart playback. */
@@ -259,10 +267,25 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   }
 
   /** Replace the exposed variants list. Overwrites only when non-empty so a
-   *  later poll never clobbers variants the start response already surfaced. */
+   *  later poll never clobbers variants the start response already surfaced.
+   *  Boundary resolution (same law as {@link setSubtitleTracks}): the wire's
+   *  signed rung URLs are server-relative, so `url`/`playlistUrl` are joined
+   *  against the API base ONCE here — every downstream use then holds a fully
+   *  formed, fully signed absolute URL it may consume VERBATIM (URL-contract
+   *  law, phlix-server f4f01949). The internal {@link advertisedVariants}
+   *  mirror records the same resolved list; it survives the post-load
+   *  {@link resetLevelState} so consecutive pinned picks keep finding their
+   *  exact server-minted URLs (the public ref is level-state and clears). */
   function setVariants(v: Variant[] | null): void {
     if (!v || v.length === 0) return;
-    variants.value = v;
+    const base = opts.apiBase();
+    const resolved = v.map((entry) => ({
+      ...entry,
+      ...(entry.url ? { url: resolveStreamUrl(base, entry.url) } : {}),
+      ...(entry.playlistUrl ? { playlistUrl: resolveStreamUrl(base, entry.playlistUrl) } : {}),
+    }));
+    advertisedVariants = resolved;
+    variants.value = resolved;
   }
 
   /** Replace the exposed track list, resolving each sidecar URL against the API
@@ -295,6 +318,12 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   let unsubscribeAudioTrackSwitched: (() => void) | null = null;
   let unsubscribeLevelLoaded: (() => void) | null = null;
   let cancelled = false;
+  // Server-advertised quality ladder (resolved URLs), owned by setVariants:
+  // loadVariantPlaylist consults it for each rung's signed `playlist_url`/
+  // `url`. The public `variants` ref is part of level state and clears after a
+  // rung load (resetLevelState); this mirror lives for the transcode session
+  // and is dropped by cleanup() with the rest of the session's URLs.
+  let advertisedVariants: Variant[] = [];
   // Per-attempt token for loadVariantPlaylist's async probe: cleanup/reset
   // (which bump `cancelled`) and superseding rung picks invalidate a probe that
   // resolved late — a stale verdict must never load a source into a session
@@ -461,6 +490,20 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
    *  EXT-X-MEDIA audio group from it (see {@link RUNG_MINI_MASTER_SUFFIX});
    *  the bare rung playlist would play silent on multi-audio titles.
    *
+   *  URL-contract law (2026-11-06, phlix-server f4f01949): the start/status
+   *  wire advertises each rung's signed index as `playlist_url` (and its
+   *  signed bare rung as `url`), already resolved here by {@link setVariants}.
+   *  When the rung IS advertised, those values are consumed VERBATIM — each
+   *  carries its own prefix-scoped signature, and no client-side string
+   *  surgery may touch a signed URL. The v0.99.19 defect proved why: the
+   *  index name was appended to the SIGNED master URL's whole string,
+   *  landing `_master.m3u8` inside the `sig=` query VALUE — an extension-less
+   *  path, 404 on every server shape (hub.phlix "can't play" incident).
+   *  Only a rung the ladder never advertises (older server, or an id off the
+   *  wire list) falls back to {@link derivedRungIndexUrl}: the rename runs on
+   *  the PATH alone and the master's query re-attaches verbatim, which the
+   *  prefix-scoped signer authorises.
+   *
    *  L1 forward-compat (2026-11-06): a server predating the index (e.g. one
    *  pinned behind a hub proxy), or a rung dir whose self-heal regeneration
    *  raced, 404s the index. PROBE it first — one HEAD per attempt — and only
@@ -477,13 +520,13 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
    *  playback. */
   function loadVariantPlaylist(variantId: string): void {
     if (!handle || !masterUrl.value) return;
-    // Construct the rung's playlist URLs from the master URL: replace
-    // "master.m3u8" with "media_v{variantId}_master.m3u8" (the mini-master
-    // index) or "media_v{variantId}.m3u8" (the legacy bare rung) — wire
-    // contract: phlix-server TranscodeManager::writeVodPlaylists().
-    const stem = masterUrl.value.replace('master.m3u8', `media_v${variantId}`);
-    const miniMasterUrl = `${stem}${RUNG_MINI_MASTER_SUFFIX}`;
-    const legacyPlaylistUrl = `${stem}.m3u8`;
+    // Advertised URLs win; the PATH-scoped derivation is the un-advertised
+    // fallback (see the law above). Both candidates exist for every rung:
+    // the index is what loads, the bare playlist is what the L1 'absent'
+    // verdict degrades to.
+    const advertised = advertisedVariants.find((v) => v.id === variantId);
+    const miniMasterUrl = advertised?.playlistUrl ?? derivedRungIndexUrl(masterUrl.value, variantId);
+    const legacyPlaylistUrl = advertised?.url ?? derivedRungLegacyUrl(masterUrl.value, variantId);
     const attempt = ++rungProbeSeq;
     void (async () => {
       let outcome: RungPlaylistProbe;
@@ -551,6 +594,7 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       handle = null;
     }
     // Clear job tracking since this session's stream is done.
+    advertisedVariants = [];
     jobId.value = null;
     masterUrl.value = null;
   }
@@ -601,6 +645,42 @@ function safeToken(): string | null {
   } catch {
     return null;
   }
+}
+
+/** Splits a stream URL into its path and its query — the query keeps its
+ *  leading `?` (absent query splits to `''`), so `${path}${query}` rejoins
+ *  verbatim. Exists so the rung-URL derivations below can never mutate a
+ *  signed URL's PATH with query material or vice versa. */
+function splitMasterUrl(url: string): [path: string, query: string] {
+  const q = url.indexOf('?');
+  return q === -1 ? [url, ''] : [url.slice(0, q), url.slice(q)];
+}
+
+/**
+ * Derive a rung's mini-master INDEX URL from the master URL — the fallback
+ * for a rung the server never advertised (older ladder shape or an id off the
+ * wire list; the URL-contract law prefers the advertised `playlist_url`).
+ * The rename runs on the PATH only: production master URLs are signed
+ * (phlix-server `TranscodeController::start` mints `master_url` with the
+ * prefix-scoped `?exp=&sig=` token), and a whole-URL replace would strand the
+ * suffix inside the sig query value — an extension-less path that 404s on
+ * every server shape (the 2026-11-06 hub.phlix "can't play" incident). The
+ * master's query re-attaches verbatim: `SignedUrl::canonicalResource` binds
+ * the sig to the `/hls/{job}` prefix, so the master's token is exactly the
+ * token every file under the job dir validates against. Pure; same inputs,
+ * same URL out.
+ */
+function derivedRungIndexUrl(masterUrl: string, variantId: string): string {
+  const [masterPath, masterQuery] = splitMasterUrl(masterUrl);
+  return `${masterPath.replace('master.m3u8', `media_v${variantId}`)}${RUNG_MINI_MASTER_SUFFIX}${masterQuery}`;
+}
+
+/** Derive a rung's LEGACY bare playlist URL — {@link derivedRungIndexUrl}'s
+ *  sibling for the L1 'absent' verdict (same PATH-only law, same query
+ *  re-attach). Wire contract: phlix-server `TranscodeManager::writeVodPlaylists()`. */
+function derivedRungLegacyUrl(masterUrl: string, variantId: string): string {
+  const [masterPath, masterQuery] = splitMasterUrl(masterUrl);
+  return `${masterPath.replace('master.m3u8', `media_v${variantId}`)}.m3u8${masterQuery}`;
 }
 
 /**

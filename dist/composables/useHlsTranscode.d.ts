@@ -131,10 +131,14 @@ export interface HlsTranscodeController {
     /** The master playlist URL, set once the start response arrives. Used to
      *  construct variant playlist URLs for non-ABR quality selection. */
     masterUrl: Ref<string | null>;
-    /** Load a specific variant playlist directly (e.g. `media_voriginal_master.m3u8`)
-     *  instead of using ABR level switching. This is used for the "Original"
-     *  quality option when the original variant is not in the ABR ladder.
-     *  The rung's mini-master index is probed first; only an explicit 404 falls
+    /** Load a specific variant playlist directly (e.g. the rung's
+     *  `media_voriginal_master.m3u8`) instead of using ABR level switching. This
+     *  is used for the "Original" quality option when the original variant is
+     *  not in the ABR ladder. The URL comes from the server's advertised
+     *  `playlist_url` when the ladder carries one (URL-contract law — consume it
+     *  VERBATIM); only a rung the ladder never advertises falls back to a
+     *  PATH-scoped derivation from the master URL.
+     *  The chosen index is probed first; only an explicit 404 falls
      *  back to the legacy bare rung playlist (L1 forward-compat — see
      *  {@link UseHlsTranscodeOptions.probeRungPlaylist}).
      *  Calling this will clear the buffer and restart playback. */

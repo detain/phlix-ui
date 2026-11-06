@@ -12,6 +12,7 @@ import {
   parseTranscodeStart,
   parseTranscodeStatus,
   parseSubtitleTracks,
+  parseVariants,
   isPlayable,
   isFailedStatus,
   resolveStreamUrl,
@@ -169,6 +170,52 @@ describe('transcode helpers', () => {
     it('defaults to an empty list when the server omits subtitles', () => {
       expect(parseTranscodeStart({ job_id: 'j', master_url: '/m' }).subtitles).toEqual([]);
       expect(parseTranscodeStatus({ status: 'running' }).subtitles).toEqual([]);
+    });
+  });
+
+  // URL-contract law (phlix-server f4f01949, 2026-11-06): every playable
+  // variant advertises its signed bare-rung playlist (`url`) and its signed
+  // mini-master index (`playlist_url`), relative on the wire — the composable
+  // resolves them against the API base. Entries predating the fields must
+  // parse WITHOUT the keys, so 'advertised vs older server' stays decidable.
+  describe('parseVariants URL fields (URL-contract law)', () => {
+    it('carries url + playlist_url verbatim from the wire', () => {
+      const out = parseVariants([
+        {
+          id: '720p', label: '720p', height: 720, width: 1280, bitrate: 2_800_000,
+          url: '/hls/j/media_v720p.m3u8?exp=2&sig=B',
+          playlist_url: '/hls/j/media_v720p_master.m3u8?exp=3&sig=I',
+        },
+      ]);
+      expect(out).toEqual([
+        {
+          id: '720p', label: '720p', height: 720, width: 1280, bitrate: 2_800_000,
+          url: '/hls/j/media_v720p.m3u8?exp=2&sig=B',
+          playlistUrl: '/hls/j/media_v720p_master.m3u8?exp=3&sig=I',
+        },
+      ]);
+    });
+
+    it('omits the keys for entries predating the url fields (older server)', () => {
+      const out = parseVariants([{ id: 'original', label: 'Original', height: 1080, width: 1920, bitrate: 9_000_000 }]);
+      expect(out).toHaveLength(1);
+      expect(out?.[0]?.url).toBeUndefined();
+      expect(out?.[0]?.playlistUrl).toBeUndefined();
+    });
+
+    it('treats non-string or empty url values as absent (parse-at-the-boundary)', () => {
+      const out = parseVariants([
+        { id: '480p', label: '480p', height: 480, width: 854, bitrate: 1_100_000, url: 42, playlist_url: '' },
+      ]);
+      expect(out?.[0]?.url).toBeUndefined();
+      expect(out?.[0]?.playlistUrl).toBeUndefined();
+    });
+
+    it('tolerates camelCase playlistUrl on the wire (either-casing law)', () => {
+      const out = parseVariants([
+        { id: '1080p', label: '1080p', height: 1080, width: 1920, bitrate: 5_000_000, playlistUrl: '/hls/j/media_v1080p_master.m3u8?exp=1&sig=A' },
+      ]);
+      expect(out?.[0]?.playlistUrl).toBe('/hls/j/media_v1080p_master.m3u8?exp=1&sig=A');
     });
   });
 
