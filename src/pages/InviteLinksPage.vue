@@ -594,7 +594,7 @@ onMounted(() => loadLinks(true));
                 :disabled="!formServerId"
                 @click="createLink"
               >
-                Create Invite
+                Create invite
               </Button>
             </template>
           </footer>

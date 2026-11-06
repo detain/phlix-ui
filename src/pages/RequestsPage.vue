@@ -440,7 +440,7 @@ onUnmounted(() => applySearch.cancel());
           :loading="submitting"
           @click="createRequest"
         >
-          Submit Request
+          Submit request
         </Button>
       </template>
     </Modal>

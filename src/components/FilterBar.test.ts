@@ -202,6 +202,18 @@ describe('FilterBar — advanced panel', () => {
     await nextTick();
     expect(store.selectedGenres).toEqual(['Sci-Fi', 'Drama']);
   });
+
+  it('the genre Combobox carries the visible "Genres" heading as its accessible name (CU-113)', async () => {
+    // [review ui__webux #8] WCAG 4.1.2: the panel's other fields name
+    // themselves to AT (Sort by / Year from / Year to / the Type and Rating
+    // groups); the genres input was the one nameless edit field on the main
+    // browse surface ("blank, edit text"). The house pattern is
+    // aria-label == the visible field heading, so that is what is pinned.
+    const w = mountBar();
+    await w.find('.filterbar__toggle').trigger('click'); // expand
+    const genreInput = w.findComponent(Combobox).find('input');
+    expect(genreInput.attributes('aria-label')).toBe('Genres');
+  });
 });
 
 describe('FilterBar — sort + order', () => {

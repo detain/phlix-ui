@@ -158,7 +158,12 @@ describe('BookDetailPage — actions', () => {
     const w = await mountAt(makeRouter());
     await flushPromises();
     await findBtnByText(w, 'Download')!.trigger('click');
-    expect(open).toHaveBeenCalledWith('https://dl/x.epub', '_blank');
+    // CU-101 [review ui__secaudit #1]: the opened page must never hold a
+    // window.opener handle back to this tab (reverse tabnabbing). Every other
+    // window.open sink in src/ passes the features argument; this site now
+    // matches the house form. Pinned here, and census-pinned estate-wide by
+    // src/__tests__/window-open-noopener.test.ts.
+    expect(open).toHaveBeenCalledWith('https://dl/x.epub', '_blank', 'noopener,noreferrer');
     w.unmount();
   });
 });
@@ -184,7 +189,9 @@ describe('BookDetailPage — hostile download_url (M-UI-11)', () => {
     await flushPromises();
     await findBtnByText(w, 'Download')!.trigger('click');
     await flushPromises();
-    expect(openSpy).toHaveBeenCalledWith('https://dl/x.epub', '_blank');
+    // CU-101: same features-argument law as the action test above — the hostile
+    // guard must not be cured by re-opening the leak it protects.
+    expect(openSpy).toHaveBeenCalledWith('https://dl/x.epub', '_blank', 'noopener,noreferrer');
     w.unmount();
   });
 });

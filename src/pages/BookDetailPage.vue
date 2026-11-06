@@ -84,7 +84,7 @@ function downloadBook(): void {
     // M-UI-11 [review ui__seceng MIN-1 class]: download_url is server wire data.
     const safe = book.value?.download_url ? safeHref(book.value.download_url) : undefined;
     if (safe) {
-        window.open(safe, '_blank');
+        window.open(safe, '_blank', 'noopener,noreferrer');
     }
 }
 

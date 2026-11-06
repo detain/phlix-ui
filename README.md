@@ -25,7 +25,9 @@ Vue app.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
 - ⚡ **Code-split + lazy-routed** — the entry bundle is ~387 KiB raw (~95 KiB gzipped at gzip's default level 6 — max level 9 measures ~93 KiB; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
   player, and the palette load on demand as lazy chunks.
-- ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme, full keyboard support, honored
+- ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme as verified by the
+  on-demand Playwright a11y suite (see Testing — not part of the blocking per-push
+  gate), full keyboard support, honored
   reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
@@ -378,9 +380,9 @@ exactly one segment per category the language uses:
 Every `{placeholder}` (`{count}`, `{name}`, …) is preserved verbatim — braces and
 names intact, positioned naturally. `src/i18n/locales.test.ts` asserts key-set
 identity, placeholder parity, segment counts, and English-leak absence for each
-bundle. The one allowed deviation is `player.subtitleDownloads`, where English
-hardcodes a plural (`'{count} downloads'`, no singular branch); the inflected
-locales supply the honest two-slot form and `ja` one segment.
+bundle. No key is exempt: every shipped entry follows the law, `player.subtitleDownloads`
+included (its English catalog value carries the two-segment `{count} download | {count}
+downloads` form, mirrored by the inflected locales, with `ja` collapsing to one segment).
 
 **Adding a 7th locale.**
 

@@ -12,6 +12,18 @@
  * login flow never crashes; a host that needs durable custody takes over via
  * {@link TokenStore} (the R-UI-10 seam in `client.ts`).
  *
+ * Residue caveat (review w01L7 Info, probe P3.2): when an ERASE is what threw
+ * on the way into degradation, the cleared rows can survive in storage. The
+ * degraded instance never reads them again — but a FRESH instance (a reload)
+ * constructs against live storage and would re-adopt them. "Lives until
+ * reload" is the durability promise; a degraded clear is only a session-scoped
+ * one. Durable erase-under-duress is what host custody (the seam above) is for.
+ *
+ * Multi-tab caveat (review w01L7 Info, probe P4): once latched, the mirror
+ * outranks live storage — an external tab's fresher localStorage writes stay
+ * invisible to the degraded instance until reload. Observable consequence of
+ * the migrate-at-latch design, recorded so nobody documents it as a bug.
+ *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */

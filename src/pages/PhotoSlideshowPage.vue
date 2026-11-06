@@ -333,7 +333,7 @@ watch([libraryId, albumId], () => {
                 />
                 <div v-else class="slide-placeholder">
                     <Icon name="image" />
-                    <p>Failed to load image</p>
+                    <p>Couldn’t load image</p>
                 </div>
 
                 <!-- Caption overlay -->

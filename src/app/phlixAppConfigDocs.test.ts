@@ -3,8 +3,11 @@
  *
  * The README's `Configuration — PhlixAppConfig` table presents itself as the field
  * reference for `createPhlixApp`. It shipped for weeks claiming completeness while
- * omitting 11 of the 23 real fields — including the wsUrl/wsPath socket seams —
- * because nothing mechanically compared the table against the interface.
+ * omitting 11 of the then-23 real fields — including the wsUrl/wsPath socket seams —
+ * because nothing mechanically compared the table against the interface. (The count
+ * is authoring-time history: the interface grows on purpose — it declares 24 fields
+ * today — and this guard compares the README against the LIVE interface, never
+ * against this comment.)
  *
  * This test IS that comparison: every field declared in `src/app/types.ts`
  * (`export interface PhlixAppConfig`) must have a table row in `README.md`, and

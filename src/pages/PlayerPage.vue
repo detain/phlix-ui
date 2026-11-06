@@ -532,7 +532,7 @@ async function load(): Promise<void> {
       applyItem(client, cached.item, run);
       return;
     }
-    error.value = 'Failed to load media item';
+    error.value = 'Couldn’t load media item';
     loading.value = false;
     return;
   }

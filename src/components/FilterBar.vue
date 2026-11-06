@@ -421,6 +421,7 @@ onBeforeUnmount(() => {
             :key="genreComboKey"
             :model-value="genreToAdd"
             :options="genreOptions"
+            label="Genres"
             placeholder="Add a genre…"
             @update:model-value="addGenre"
           />

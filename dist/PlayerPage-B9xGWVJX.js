@@ -3554,7 +3554,7 @@ var Na = { class: "player-page__stage" }, Pa = {
 						Ne(a, o.item, t);
 						return;
 					}
-					O.value = "Failed to load media item", D.value = !1;
+					O.value = "Couldn’t load media item", D.value = !1;
 				}
 			}
 		}
@@ -3669,7 +3669,7 @@ var Na = { class: "player-page__stage" }, Pa = {
 			}, 8, ["modelValue"])
 		], 2));
 	}
-}), [["__scopeId", "data-v-d40ba349"]]);
+}), [["__scopeId", "data-v-794d4505"]]);
 export { Ia as default };
 
-//# sourceMappingURL=PlayerPage-BpnBaVeo.js.map
+//# sourceMappingURL=PlayerPage-B9xGWVJX.js.map

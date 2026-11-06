@@ -1613,7 +1613,7 @@ describe('PlayerPage — a superseded applyItem() must not write the new item’
     gate.resolve(jsonResponse({})); // 200 with no `item`
     await flushPromises();
     await flushPromises();
-    expect(w.text()).not.toContain('Failed to load media item');
+    expect(w.text()).not.toContain('Couldn’t load media item');
     expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
   });
 
@@ -1637,7 +1637,7 @@ describe('PlayerPage — a superseded applyItem() must not write the new item’
     emptyGate.resolve(jsonResponse({}));
     await flushPromises();
     await flushPromises();
-    expect(w2.text()).toContain('Failed to load media item');
+    expect(w2.text()).toContain('Couldn’t load media item');
     expect(w2.findComponent(Player).exists()).toBe(false);
   });
 });

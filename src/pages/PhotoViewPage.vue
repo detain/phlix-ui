@@ -106,6 +106,13 @@ async function loadPhoto(): Promise<void> {
         }
     } catch (e) {
         if (seq !== loadSeq) return;
+        // CU-073 skip boundary, stated next to the string (review w01L7 Info):
+        // HomeRow's identical ternary WAS cured because its fallback renders as
+        // chrome label text — one component, two voices. This one lands in the
+        // EmptyState DESCRIPTION slot (the `:description="error"` binding on the
+        // error EmptyState below), which is message content by contract (the
+        // sibling title already carries the cured voice), so the errMessage-class
+        // skip holds here on purpose, not by omission.
         error.value = e instanceof Error ? e.message : 'Failed to load photo';
         photo.value = null;
     } finally {

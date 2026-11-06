@@ -153,7 +153,7 @@ describe('RequestsPage — create', () => {
     poster.dispatchEvent(new Event('input'));
     await flushPromises();
 
-    await findBtnByText(w, 'Submit Request')!.trigger('click');
+    await findBtnByText(w, 'Submit request')!.trigger('click');
     await flushPromises();
 
     expect(post).toHaveBeenCalledWith('/api/v1/me/requests', {
@@ -173,7 +173,7 @@ describe('RequestsPage — create', () => {
     await findBtnByText(w, 'New request')!.trigger('click');
     await flushPromises();
     // No tmdb/title entered → submit is a no-op.
-    await findBtnByText(w, 'Submit Request')!.trigger('click');
+    await findBtnByText(w, 'Submit request')!.trigger('click');
     await flushPromises();
     expect(post).not.toHaveBeenCalled();
     w.unmount();
@@ -369,7 +369,7 @@ describe('RequestsPage — cleared number fields stay empty (ui__webux UI-m23)',
     season.dispatchEvent(new Event('input'));
     await flushPromises();
 
-    await findBtnByText(w, 'Submit Request')!.trigger('click');
+    await findBtnByText(w, 'Submit request')!.trigger('click');
     await flushPromises();
 
     const body = (post.mock.calls as unknown as Array<[string, Record<string, unknown>]>)[0][1];

@@ -209,7 +209,7 @@ describe('InviteLinksPage — create modal', () => {
     w.unmount();
   });
 
-  it('Create Invite POSTs max_uses/expires_in/permission/server_id and copies the URL', async () => {
+  it('Create invite POSTs max_uses/expires_in/permission/server_id and copies the URL', async () => {
     const { client, post } = makeClient();
     const w = mountPage(client);
     await flushPromises();
@@ -219,7 +219,7 @@ describe('InviteLinksPage — create modal', () => {
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
     await flushPromises();
 
-    await findBtnByText(w, 'Create Invite')!.trigger('click');
+    await findBtnByText(w, 'Create invite')!.trigger('click');
     await flushPromises();
 
     expect(post).toHaveBeenCalledWith('/api/v1/me/invite-links', {
@@ -244,11 +244,11 @@ describe('InviteLinksPage — create modal', () => {
     await flushPromises();
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
     await flushPromises();
-    await findBtnByText(w, 'Create Invite')!.trigger('click');
+    await findBtnByText(w, 'Create invite')!.trigger('click');
     await flushPromises();
 
     // Form replaced by the result reveal.
-    expect(findBtnByText(w, 'Create Invite')).toBeUndefined();
+    expect(findBtnByText(w, 'Create invite')).toBeUndefined();
     expect(document.querySelector('.invite-result')).not.toBeNull();
     expect(document.querySelector('[data-testid="created-url"]')?.textContent).toBe('https://hub/invite/new');
     expect(document.querySelector('[data-testid="created-token"]')?.textContent).toBe(NEW_TOKEN);
@@ -261,7 +261,7 @@ describe('InviteLinksPage — create modal', () => {
     await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     expect(document.querySelector('.invite-result')).toBeNull();
-    expect(findBtnByText(w, 'Create Invite')).toBeDefined();
+    expect(findBtnByText(w, 'Create invite')).toBeDefined();
     w.unmount();
   });
 
@@ -273,7 +273,7 @@ describe('InviteLinksPage — create modal', () => {
     await flushPromises();
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
     await flushPromises();
-    await findBtnByText(w, 'Create Invite')!.trigger('click');
+    await findBtnByText(w, 'Create invite')!.trigger('click');
     await flushPromises();
 
     writeText.mockClear(); // drop the auto-copy from createLink()
@@ -300,7 +300,7 @@ describe('InviteLinksPage — create modal', () => {
     // so drive the guard by emitting an empty value then invoking create.
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', '');
     await flushPromises();
-    const createBtn = findBtnByText(w, 'Create Invite')!;
+    const createBtn = findBtnByText(w, 'Create invite')!;
     // Button is disabled with no server; assert it and that no POST happened.
     expect(createBtn.attributes('disabled')).toBeDefined();
     expect(post).not.toHaveBeenCalled();

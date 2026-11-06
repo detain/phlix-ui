@@ -327,6 +327,7 @@ var fe = { class: "filterbar__main" }, pe = { class: "filterbar__search" }, me =
 						key: P.value,
 						"model-value": N.value,
 						options: Ue.value,
+						label: "Genres",
 						placeholder: "Add a genre…",
 						"onUpdate:modelValue": We
 					}, null, 8, ["model-value", "options"]))]),
@@ -455,7 +456,7 @@ var fe = { class: "filterbar__main" }, pe = { class: "filterbar__search" }, me =
 			}, "Clear all")], 64)) : u("", !0)])
 		], 2));
 	}
-}), O = /* @__PURE__ */ e({ default: () => k }), k = /*#__PURE__*/ r(D, [["__scopeId", "data-v-89627c82"]]);
+}), O = /* @__PURE__ */ e({ default: () => k }), k = /*#__PURE__*/ r(D, [["__scopeId", "data-v-c7477b8a"]]);
 export { O as n, k as t };
 
-//# sourceMappingURL=FilterBar-CeSyKTII.js.map
+//# sourceMappingURL=FilterBar-Bt3hphuo.js.map

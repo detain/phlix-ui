@@ -8,7 +8,7 @@ import { i as o, n as s, r as c, t as l } from "./MediaGrid-DnDm-Wg9.js";
 import { t as u } from "./MediaCard-B_SVtQUZ.js";
 import { n as d } from "./Icon-55iG1rR7.js";
 import { t as f } from "./useImageSrc-CSM61b-l.js";
-import { t as p } from "./FilterBar-CeSyKTII.js";
+import { t as p } from "./FilterBar-Bt3hphuo.js";
 import { t as ee } from "./EmptyState-DjfWh3kt.js";
 import { t as te } from "./Button-BLpPomsd.js";
 import { t as ne } from "./MetadataMatchModal-Bd-y6OuY.js";
@@ -771,4 +771,4 @@ var tt = { class: "library-page" }, nt = {
 }), [["__scopeId", "data-v-5a218806"]]);
 export { Z as default };
 
-//# sourceMappingURL=LibraryPage-jKKqEC5W.js.map
+//# sourceMappingURL=LibraryPage-D1P9JVpy.js.map

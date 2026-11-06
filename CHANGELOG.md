@@ -12,6 +12,66 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — w02 L3 review-cure batch 2026-11-07 (CU-085/CU-086/CU-099/CU-101/CU-113 + folded w01 L7 residuals)
+
+- **CU-101 (ui__secaudit #1):** `BookDetailPage.vue`’s download `window.open` was the sole
+  sink omitting the `'noopener'` windowFeatures argument — an opened external destination
+  (server `download_url`, admitted to ANY http(s) origin by `safeHref`) kept a
+  `window.opener` handle back to the SPA tab (reverse tabnabbing). Now `'_blank',
+  'noopener,noreferrer'`, matching the house form of the other five sites. The two
+  call-shape pins rotated in the same commit from measured red, and a new estate-wide
+  tripwire — `src/__tests__/window-open-noopener.test.ts` — enumerates every `window.open(`
+  call under `src/`, requires the `noopener` features argument at each, and pins the exact
+  per-file census so an unreviewed new sink reddens before any reviewer has to notice.
+- **CU-113 (ui__webux #8):** the FilterBar genre Combobox passed no `label`, leaving the
+  only nameless edit field on the main browse surface (WCAG 4.1.2 — announced “blank,
+  edit text”). It now carries `label="Genres"`, the same accessible-name-equals-visible-
+  heading pattern as Sort by / Year from / Year to / the Type and Rating groups. Red-first
+  pin in `FilterBar.test.ts`.
+- **CU-085 (ui__docmaint #5):** the README pluralization section licensed an “allowed
+  deviation” for `player.subtitleDownloads` that no longer exists — the shipped English
+  catalog carries the compliant two-segment pipe form (`{count} download | {count}
+  downloads`, `src/i18n/messages.ts:304`), mirrored by the inflected locales with `ja`
+  collapsing. The paragraph now states the truth: no key is exempt.
+- **CU-086 (ui__docmaint #6):** the PhlixAppConfig README guard-test header narrated
+  “11 of the 23 real fields” as open prose; the interface declares 24 today. The count is
+  now explicitly authoring-time history, with the law restated: the guard compares
+  against the live interface, never against the comment.
+- **CU-099 (ui__pm #4):** the ♿ WCAG 2.1 AA / axe-clean headline outruns CI reality for a
+  reader who stops at the feature bullets — the a11y harness is on-demand, disclosed only
+  at README bottom. The bullet now carries the qualifying clause (verified by the
+  on-demand suite, not the blocking gate). Scheduling the suite was NOT taken in this
+  lane: the visual/a11y baselines are environment-fragile by the same disclosure, and a
+  weekly-cron workflow plus its pin-gate are a CI-policy change beyond a fix lane.
+- **CU-105 (ui__secaudit #5) — attested, held:** `socketHint.ts` accepting `ws://` is
+  deliberate operator-seam policy, not an oversight, with the proof on the line: the
+  admitted grammar (`src/api/socketHint.ts:59`) mirrors the hub’s server-side
+  `configuredSocketBaseUrl` validator by wire-contract law (`socketHint.ts:53-58`), the
+  seam is fail-soft by its own header doctrine (`socketHint.ts:20-30`, “never as console
+  noise by default” `:34-36`), no secret ever rides the URL — the bearer travels in the
+  `Sec-WebSocket-Protocol` handshake (`src/syncplay/syncplay.ts:672` `buildWsProtocols`,
+  `src/api/hubRelay.ts:246-248`) while the URL slots carry only room/serverId
+  (`syncplay.ts:630/641`, `hubRelay.ts:159/163`); the page-derived legacy path escalates
+  scheme with the document, and the acceptance of `ws://` for localhost/LAN is an
+  intentional pin (`src/api/socketHint.test.ts:47/50`). Tightening the admitted scheme is
+  a bearer-dial policy call owned above this package; behavior left untouched.
+- **Folded from review w01 L7 (minor 1):** the same-class Title Case modal action buttons
+  its CU-072 rotation left standing now follow COPY LAW 1 — `Create Invite` →
+  `Create invite` (InviteLinksPage) and `Submit Request` → `Submit request`
+  (RequestsPage); ten label pins rotate in the same commit from measured red.
+- **Folded from review w01 L7 (minor 2):** the direct-render voice sweep is completed —
+  `PlayerPage.vue`’s authored `!mediaItem` string becomes “Couldn’t load media item”
+  (pins rotate; the `not.toContain` twin rotates in the same direction, it cannot
+  redden — disclosed), and `PhotoSlideshowPage.vue`’s verbatim twin becomes
+  “Couldn’t load image”. The `errMessage`-class fallbacks (`playerErrors.ts`) stay the
+  documented skip.
+- **Folded from review w01 L7 (infos):** `PhotoViewPage.vue`’s catch fallback gains the
+  skip-boundary comment the HomeRow comparison demanded (label slot vs message slot),
+  and `tokenStore.ts`’s header states both multi-tab caveats the probes surfaced
+  mechanically — a degraded clear is only session-scoped (erase residue can be
+  re-adopted by a fresh instance; durable erase-under-duress is host custody’s job),
+  and post-latch the mirror outranks an external tab’s fresher storage writes.
+
 ## Unreleased — w01 L7 review-cure batch 2026-11-06 (CU-072/CU-073/CU-074/CU-075/CU-078/CU-083)
 
 - **CU-072 (ui__copywriter #2):** inline button copy follows COPY LAW 1 — `New Invite` →
