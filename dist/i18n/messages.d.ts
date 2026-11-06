@@ -28,9 +28,10 @@
  *     page copy, except initialisms (MCP, HLS, DLNA, SyncPlay) and the brand
  *     theme names. Titles and headings are not exempt (R15 swept per-key; this
  *     is the per-surface declaration it always wanted).
- *  2. Typography — the typographic set only: `’` for apostrophes and `“ ”` for
- *     embedded quotation. No straight `'` or `"` inside any value, in any
- *     locale. Pinned by the tripwire walk in `locales.test.ts`.
+ *  2. Typography — each locale ships its own typographic quote set: `’` and
+ *     `“ ”` for English, `„ “` for German, and so on. No straight `'` or `"`
+ *     inside any value, in any locale. Pinned by the tripwire walk in
+ *     `locales.test.ts`.
  *  3. End punctuation — a complete status/error sentence carries a period;
  *     labels, titles and buttons never do (the M-UI-37 sweep + siblings).
  *
@@ -337,6 +338,9 @@ export declare const DEFAULT_MESSAGES: {
         watched: string;
         markWatchedAria: string;
         markUnwatchedAria: string;
+        /** CU-074 (ui__copywriter #4) — settled noun/verb pair, not drift: the rail
+         *  is the noun (BrowsePage’s inline “Continue watching”), the action is the
+         *  verb (this key + the player’s resume keys). Netflix idiom; keep both. */
         resumeProgress: string;
         moreInfo: string;
         moreActions: string;

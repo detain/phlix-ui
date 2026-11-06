@@ -385,13 +385,13 @@ onMounted(() => loadLinks(true));
         <p class="invite-links__subtitle">Create and manage invite links for sharing access to your servers.</p>
       </div>
       <Button variant="solid" size="md" left-icon="plus" @click="openCreateModal">
-        New Invite
+        New invite
       </Button>
     </header>
 
     <PageHint :links="hubPageHelp['invite-links'].links" :details="hubPageHelp['invite-links'].details">
       Give someone access to a library on one of your servers by sending them a URL.
-      <strong>New Invite</strong> creates a link scoped to a server and permission, with an
+      <strong>New invite</strong> creates a link scoped to a server and permission, with an
       optional use limit and expiry. <strong>Revoke</strong> disables a link immediately.
     </PageHint>
 

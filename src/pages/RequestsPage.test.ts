@@ -138,7 +138,7 @@ describe('RequestsPage — create', () => {
     const w = mountPage(client);
     await flushPromises();
 
-    await findBtnByText(w, 'New Request')!.trigger('click');
+    await findBtnByText(w, 'New request')!.trigger('click');
     await flushPromises();
 
     const form = document.querySelector('.request-form') as HTMLElement;
@@ -170,7 +170,7 @@ describe('RequestsPage — create', () => {
     const { client, post } = makeClient({ requests: [] });
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Request')!.trigger('click');
+    await findBtnByText(w, 'New request')!.trigger('click');
     await flushPromises();
     // No tmdb/title entered → submit is a no-op.
     await findBtnByText(w, 'Submit Request')!.trigger('click');
@@ -345,7 +345,7 @@ describe('RequestsPage — cleared number fields stay empty (ui__webux UI-m23)',
     const { client, post } = makeClient({ requests: [] });
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Request')!.trigger('click');
+    await findBtnByText(w, 'New request')!.trigger('click');
     await flushPromises();
 
     const form = document.querySelector('.request-form') as HTMLElement;
@@ -383,7 +383,7 @@ describe('RequestsPage — cleared number fields stay empty (ui__webux UI-m23)',
     const { client } = makeClient({ requests: [] });
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Request')!.trigger('click');
+    await findBtnByText(w, 'New request')!.trigger('click');
     await flushPromises();
 
     const form = document.querySelector('.request-form') as HTMLElement;

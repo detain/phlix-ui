@@ -258,7 +258,7 @@ watch(() => props.id, () => {
                     />
                     <div v-else class="image-placeholder">
                         <Icon name="image" />
-                        <p>Failed to load image</p>
+                        <p>Couldn’t load image</p>
                     </div>
                 </div>
 

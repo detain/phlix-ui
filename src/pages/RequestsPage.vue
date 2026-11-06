@@ -235,11 +235,11 @@ onUnmounted(() => applySearch.cancel());
         <h1 id="requests-heading" class="requests__title">Media requests</h1>
         <p class="requests__subtitle">Request movies or TV series to be added to your library.</p>
       </div>
-      <Button variant="solid" size="sm" @click="showCreateModal = true">New Request</Button>
+      <Button variant="solid" size="sm" @click="showCreateModal = true">New request</Button>
     </header>
 
     <PageHint :links="hubPageHelp.requests.links" :details="hubPageHelp.requests.details">
-      Ask a server owner to add a specific movie or show. <strong>New Request</strong> takes
+      Ask a server owner to add a specific movie or show. <strong>New request</strong> takes
       the title and its TMDB id; a request moves from Pending to Approved or Rejected as the
       owner acts on it. Requesting something does not download it.
     </PageHint>

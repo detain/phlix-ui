@@ -658,7 +658,7 @@ async function performSimilarSearch(
     // Silently ignore abort errors — they're expected when the user closes the modal
     // or starts a new search before the previous one completes.
     if (_e instanceof Error && _e.name === 'AbortError') return;
-    similarError.value = 'Failed to load similar media. Please try again.';
+    similarError.value = 'Couldn’t load similar titles. Please try again.';
     similarResults.value = [];
   } finally {
     similarLoading.value = false;

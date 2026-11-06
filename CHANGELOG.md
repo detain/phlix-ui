@@ -12,6 +12,32 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
+## Unreleased — w01 L7 review-cure batch 2026-11-06 (CU-072/CU-073/CU-074/CU-075/CU-078/CU-083)
+
+- **CU-072 (ui__copywriter #2):** inline button copy follows COPY LAW 1 — `New Invite` →
+  `New invite` and `New Request` → `New request` in the InviteLinksPage/RequestsPage header
+  buttons and PageHint strong text (the modal titles were already sentence case). The exact-label
+  test pins rotate in the same commit.
+- **CU-073 (ui__copywriter #3):** the retired `Failed to` voice leaves the direct-render copy — the
+  Player’s similar-titles panel now says “Couldn’t load similar titles. Please try again.”, the
+  PhotoViewPage broken-image caption “Couldn’t load image”, and the HomeRow error fallback now
+  matches its adjacent toast. `errMessage(e, …)`-style exception-message fallbacks stay the
+  documented skip; `PhotoViewPage.vue`’s catch fallback is deliberately untouched.
+- **CU-074 (ui__copywriter #4):** a docblock on `itemActions.resumeProgress` pins the settled
+  noun/verb pair — the rail is “Continue watching” (noun), the action is “Resume” (verb) —
+  deliberate Netflix idiom, not drift.
+- **CU-075 (ui__copywriter #5):** COPY LAW 2 prose now states the real mandate — each locale ships
+  its locale-appropriate typographic quote set (English `’`/`“ ”`, German `„ “`, …); what is banned
+  in every locale is the straight `'`/`"`. Comment-only.
+- **CU-078 (ui__crossfe #3 + ui__fedev #5):** `LocalStorageTokenStore` cannot throw at a host — the
+  constructor feature-checks `window.localStorage` (SSR and storage-disabled webviews start with no
+  storage), every method try/catches its storage touch, and the first failure migrates the still-
+  readable keys and latches custody to an in-memory mirror: a degraded session lives until reload
+  while login never crashes. Four degradation tests pin the contract.
+- **CU-083 (ui__docmaint #3):** README config table — `defaultTheme?` is typed `ThemeName`, the open
+  string alias it actually is (built-in ids and plugin themes both ride the seam), matching
+  `src/app/types.ts`.
+
 ## 0.99.22 - 2026-11-06
 
 ### player: presented frame rate restored — the playing path no longer re-rasterises live CSS blurs (2026-11-06)

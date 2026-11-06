@@ -115,11 +115,11 @@ describe('InviteLinksPage — list + states', () => {
 });
 
 describe('InviteLinksPage — create modal', () => {
-  it('New Invite opens the modal and loads the server dropdown', async () => {
+  it('New invite opens the modal and loads the server dropdown', async () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     expect(document.querySelector('.modal')).not.toBeNull();
     expect(get).toHaveBeenCalledWith('/api/v1/me/servers');
@@ -132,7 +132,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     expect(document.querySelector('.modal')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -149,7 +149,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
 
     const options = w.findAllComponents(Select)[0].props('options') as ReadonlyArray<{
@@ -168,7 +168,7 @@ describe('InviteLinksPage — create modal', () => {
     const w = mountPage(client);
     await flushPromises();
     // Server names resolve only once /me/servers has loaded (via the modal).
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     expect(w.text()).toContain('Home Theater');
     w.unmount();
@@ -178,7 +178,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client } = makeClient({ servers: [{ serverName: 'Nameless', status: 'online' }] });
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     expect(w.findAllComponents(Select)[0].props('options')).toHaveLength(0);
     w.unmount();
@@ -188,7 +188,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client } = makeClient({ servers: [{ serverId: 'srv-9', status: 'online' }] });
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     const options = w.findAllComponents(Select)[0].props('options') as ReadonlyArray<{ label: unknown }>;
     expect(options[0].label).toBe('srv-9');
@@ -199,7 +199,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client, get } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     // The server select is the first Select in the modal; its @change → loadLibraries.
     const serverSelect = w.findAllComponents(Select)[0];
@@ -213,7 +213,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client, post } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     // Select a server so create is enabled + server_id is set.
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
@@ -240,7 +240,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
     await flushPromises();
@@ -258,7 +258,7 @@ describe('InviteLinksPage — create modal', () => {
     await findBtnByText(w, 'Done')!.trigger('click');
     await flushPromises();
     expect(document.querySelector('.modal')).toBeNull();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     expect(document.querySelector('.invite-result')).toBeNull();
     expect(findBtnByText(w, 'Create Invite')).toBeDefined();
@@ -269,7 +269,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     w.findAllComponents(Select)[0].vm.$emit('update:modelValue', 'srv-1');
     await flushPromises();
@@ -294,7 +294,7 @@ describe('InviteLinksPage — create modal', () => {
     const { client, post } = makeClient();
     const w = mountPage(client);
     await flushPromises();
-    await findBtnByText(w, 'New Invite')!.trigger('click');
+    await findBtnByText(w, 'New invite')!.trigger('click');
     await flushPromises();
     // Force createLink() without a server via the exposed path: click is disabled,
     // so drive the guard by emitting an empty value then invoking create.

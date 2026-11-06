@@ -158,7 +158,7 @@ almost always pass two: `app` and `apiBase`:
 | `features?` | `Record<string, boolean>` | Arbitrary feature-flag map. Recognized keys include `resumeSync` (cross-device continue-watching pull on login; default true on the server, false on the hub). |
 | `commands?` | `Command[]` | App-injected ⌘K command-palette entries (registered alongside the built-ins). |
 | `hubRelay?` | `HubRelayConfig` | Hub-relay pending-command consumer config (S298): the host supplies the server id + a token provider (tokens expire hourly; re-read on every reconnect). When present, the app opens the hub's SyncPlay relay socket at boot so "Alexa, play X" can reach the player. |
-| `defaultTheme?` | `'nocturne' \| 'daylight' \| 'midnight'` | Initial theme for a first-time visitor. A stored user choice always wins. |
+| `defaultTheme?` | `ThemeName` | Initial theme for a first-time visitor. An open string alias: the three built-in ids (`nocturne`, `daylight`, `midnight`) and registered plugin themes both ride this seam (`BUILT_IN_THEME_IDS` / `isBuiltInThemeId` pin the built-in set). A stored user choice always wins. |
 | `defaultTv?` | `boolean` | Initial TV mode for a first-time visitor (10-foot sizing + visible focus rings). A stored user toggle always wins; applied pre-mount like `defaultTheme`. |
 | `branding?` | `BrandingConfig` | Per-app brand: `wordmark?`, `logoSrc?`, `logoAlt?`, `tagline?`. |
 | `homeRows?` | `HomeRow[]` | Browse home-row shelves: `{ id, title, query? }` (query is a partial `LibraryQueryParams`, incl. `libraryId`). Rendered _in addition to_ the automatic per-library rails. |
