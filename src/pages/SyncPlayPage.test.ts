@@ -56,7 +56,6 @@ function makeSession(over: Partial<SyncPlaySession> = {}): SyncPlaySession {
   return {
     id: 'sess-1',
     roomId: 'room-1',
-    serverId: 'srv-1',
     createdBy: 'user-1',
     createdAt: '2026-01-01T00:00:00Z',
     state: 'paused',
@@ -67,7 +66,6 @@ function makeSession(over: Partial<SyncPlaySession> = {}): SyncPlaySession {
     lastSync: '2026-01-01T00:00:00Z',
     activeUsers: [],
     roles: {},
-    permissions: {},
     ...over,
   };
 }
@@ -76,7 +74,6 @@ function makeUser(over: Partial<SyncPlayUser> = {}): SyncPlayUser {
   return {
     id: 'u1',
     name: 'Ada',
-    profileId: 1,
     role: 'owner',
     isOnline: true,
     lastSeen: '2026-01-01T00:00:00Z',

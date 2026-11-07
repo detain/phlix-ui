@@ -11,8 +11,21 @@
  * plural) with thousands separators. It used to inline `track{{ n !== 1 ? 's' : '' }}`,
  * both untranslatable and unformatted — the same defect as the three other music
  * surfaces that carried it in a slightly different syntactic shape.
+ *
+ * CU-115 (review ui__webux): two hosts use this card with two DIFFERENT
+ * interaction semantics, and the old always-button form gave neither a URL:
+ *   • `to` provided (and a router injected) → MediaCard's custom-RouterLink
+ *     pattern: the stretched `.album-card__link` overlay is a REAL anchor, so
+ *     middle-click / copy-link / new-tab work while `navigate` still SPA-
+ *     intercepts the plain left click (it deliberately does not receive
+ *     `.prevent` — vue-router's own guard lets modifier clicks fall through
+ *     to the href; a pre-emptive preventDefault would make every click dead).
+ *   • no `to` (e.g. MusicLibraryPage, where selecting an album switches an
+ *     in-page view instead of navigating) → honest button + `click` emit;
+ *     no fake href is fabricated for a destination that is not a route.
  */
 import { computed } from 'vue';
+import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useImageSrc } from '../composables/useImageSrc';
 import type { MusicAlbum } from '../types/music';
@@ -20,11 +33,18 @@ import Icon from './Icon.vue';
 
 const props = defineProps<{
   album: MusicAlbum;
+  /** Route the card links to when it has one. Absent → button + `click` emit. */
+  to?: RouteLocationRaw;
 }>();
 
 defineEmits<{
   (e: 'click', album: MusicAlbum): void;
 }>();
+
+// `useRouter()` is inject-based and undefined for standalone mounts — which is
+// exactly the branch signal needed: anchor mode requires BOTH a destination and
+// a router to resolve and intercept it.
+const router = useRouter();
 
 const { t } = useMessages();
 /** S241: album art may be a root-relative server path; resolve against the media base. */
@@ -41,7 +61,7 @@ function formatYear(year: number | null): string {
 </script>
 
 <template>
-  <button type="button" class="album-card" @click="$emit('click', album)">
+  <article class="album-card">
     <div class="album-card__cover-wrap">
       <img
         v-if="album.albumArtUrl"
@@ -64,11 +84,27 @@ function formatYear(year: number | null): string {
         </span>
       </span>
     </div>
-  </button>
+    <RouterLink v-if="to && router" :to="to" custom v-slot="{ href, navigate }">
+      <!-- M-UI-11 sink census — EXPLICITLY TRUSTED, no safeHref: `href` is
+           vue-router's own resolution of the app-declared `to` location
+           ({name, params}); no wire-supplied URL reaches this binding. -->
+      <a :href="href" class="album-card__link" :aria-label="album.title" @click="navigate" />
+    </RouterLink>
+    <button
+      v-else
+      type="button"
+      class="album-card__link"
+      :aria-label="album.title"
+      @click="$emit('click', album)"
+    />
+  </article>
 </template>
 
 <style scoped>
 .album-card {
+  /* CU-115: root is a plain <article>; the interactive affordance is the
+     stretched overlay below (anchor when `to` is given, button otherwise). */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-3, 12px);
@@ -77,7 +113,6 @@ function formatYear(year: number | null): string {
   background: var(--surface-2, #27272a);
   border: 1px solid var(--border, #3f3f46);
   text-align: left;
-  cursor: pointer;
   transition:
     border-color var(--dur-fast, 0.18s) var(--ease-out, ease),
     transform var(--dur-fast, 0.18s) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
@@ -86,7 +121,20 @@ function formatYear(year: number | null): string {
   border-color: var(--border-strong, #52525b);
   transform: translateY(-2px);
 }
-.album-card:focus-visible {
+.album-card__link {
+  position: absolute;
+  inset: 0;
+  /* the overlay covers the padding box; the radius keeps its focus ring on
+     the card's silhouette */
+  border-radius: inherit;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.album-card__link:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring, rgba(245, 165, 36, 0.4));
 }

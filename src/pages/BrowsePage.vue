@@ -532,7 +532,7 @@ function onSeeAll(row: HomeRowConfig): void {
 
     <MediaRow
       v-if="continueItems.length"
-      title="Continue watching"
+      :title="t('browse.continueWatching')"
       :items="continueItems"
       :can-match="auth.isAdmin"
       hide-when-empty
@@ -556,7 +556,7 @@ function onSeeAll(row: HomeRowConfig): void {
          them but never hydrates (S32 state-wipe lesson). -->
     <MediaRow
       v-if="showNextUp"
-      title="Next up"
+      :title="t('browse.nextUp')"
       :items="nextUpItems"
       :can-match="auth.isAdmin"
       hide-when-empty
@@ -598,7 +598,7 @@ function onSeeAll(row: HomeRowConfig): void {
          above. -->
     <MediaRow
       v-if="showRecommended"
-      title="Recommended"
+      :title="t('browse.recommended')"
       :items="recommendedItems"
       :can-match="auth.isAdmin"
       hide-when-empty
@@ -621,7 +621,7 @@ function onSeeAll(row: HomeRowConfig): void {
          up — hide-when-empty handles the empty case gracefully. -->
     <MediaRow
       v-if="showMostWatched"
-      title="Most watched"
+      :title="t('browse.mostWatched')"
       :items="mostWatchedItems"
       :can-match="auth.isAdmin"
       hide-when-empty
@@ -701,8 +701,8 @@ function onSeeAll(row: HomeRowConfig): void {
     <EmptyState
       v-else-if="showEmpty"
       icon="film"
-      title="No libraries yet"
-      description="Once a library is added it shows up here as its own section."
+      :title="t('browse.noLibrariesTitle')"
+      :description="t('browse.noLibrariesDescription')"
     />
 
     <MetadataMatchModal

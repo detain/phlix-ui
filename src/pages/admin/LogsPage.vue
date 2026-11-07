@@ -14,6 +14,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, inject, typ
 import { ApiClient } from '../../api/client';
 import { AdminLogsApi, ALL_LOGS, type LogFile } from '../../api/admin/logs';
 import { useToastStore } from '../../stores/useToastStore';
+import { plural } from '../../utils/plural';
 import { errMessage } from '../../api/errors';
 import Select from '../../components/ui/Select.vue';
 import PageHint from '../../components/ui/PageHint.vue';
@@ -433,25 +434,65 @@ async function loadList(): Promise<void> {
   }
 }
 
-async function refresh(): Promise<void> {
+/** CU-116: timestamp label of the most recent failed read (null = healthy). */
+const pollFailedAt = ref<string | null>(null);
+/** CU-116: consecutive-failure counter — only the 0→1 transition toasts. */
+let failureStreak = 0;
+/** CU-116 (webux #12): delta announcement replacing the <pre>-wide aria-live. */
+const updateNote = ref('');
+
+/**
+ * CU-116 (review ui__webux #11/#12) — the background-poll discipline:
+ *   • a failed tick NEVER blanks what is already on screen: last-good lines
+ *     stay, a small timestamped toolbar note says the update failed, and the
+ *     full-pane EmptyState is reserved for the honest case (nothing loaded).
+ *   • toasts fire for interactive attempts (`manual` — the Refresh/Retry
+ *     buttons) or the FIRST failure of a background streak. A 5s auto-refresh
+ *     failure used to toast every tick forever; the UI-M18 stack cap only hid
+ *     the stream behind eviction, it did not stop it.
+ *   • success clears the failure state and announces the DELTA (count of
+ *     lines new since the previous read) through the small status element —
+ *     the blanket `aria-live` on the <pre> used to re-announce every visible
+ *     byte on every tick (webux #12).
+ */
+async function refresh(manual = false): Promise<void> {
   const file = selected.value;
   if (file === '') return;
   loading.value = true;
-  contentError.value = null;
   try {
     const res = file === ALL_LOGS ? await api.tailAll(lineCount.value) : await api.tail(file, lineCount.value);
+    const prev = new Set(lines.value);
+    let arrived = 0;
+    for (const l of res.lines) if (!prev.has(l)) arrived++;
     lines.value = res.lines;
     truncated.value = res.truncated;
+    contentError.value = null;
+    pollFailedAt.value = null;
+    failureStreak = 0;
+    // The FIRST fill of an empty pane is not an arrival — there is nothing to
+    // have missed. Only re-reads over existing content announce a delta.
+    updateNote.value = arrived > 0 && prev.size > 0
+      ? `${arrived} new ${plural(arrived, { one: 'line', other: 'lines' })}`
+      : '';
     void nextTick(() => {
       if (preEl.value) preEl.value.scrollTop = preEl.value.scrollHeight;
     });
   } catch (e) {
-    contentError.value = errMessage(e, 'Failed to read log.');
-    toasts.error(contentError.value);
+    const msg = errMessage(e, 'Failed to read log.');
+    if (lines.value.length === 0) {
+      // Nothing to preserve — the pane-level error state is the honest view.
+      contentError.value = msg;
+    }
+    pollFailedAt.value = new Date().toLocaleTimeString();
+    if (manual || failureStreak === 0) {
+      toasts.error(msg);
+    }
+    failureStreak++;
   } finally {
     loading.value = false;
   }
 }
+
 
 function stopTimer(): void {
   if (timer !== null) {
@@ -531,11 +572,22 @@ onBeforeUnmount(() => {
           @update:model-value="(v) => (lineCount = Number(v))"
         />
       </label>
-      <Button variant="outline" size="sm" :loading="loading" :disabled="selected === ''" @click="refresh">
+      <Button variant="outline" size="sm" :loading="loading" :disabled="selected === ''" @click="() => void refresh(true)">
         Refresh
       </Button>
       <Switch v-model="autoRefresh" label="Auto-refresh (5s)" class="admin-logs__toggle" />
     </div>
+
+    <!-- CU-116 (webux #11): failed background ticks leave the visible tail alone
+         and mark themselves here instead of blanking the pane and toasting. -->
+    <p v-if="pollFailedAt" class="admin-logs__poll-error" role="status">
+      Last update failed at {{ pollFailedAt }} — showing the most recent successful read.
+    </p>
+    <!-- CU-116 (webux #12): the compact announcement channel — a line COUNT,
+         not the log body. -->
+    <p v-if="updateNote" class="admin-logs__update" role="status" data-testid="logs-update-note">
+      {{ updateNote }}
+    </p>
 
     <p v-if="truncated" class="admin-logs__truncated" role="note">
       Showing the most recent {{ lineCount }} lines
@@ -562,10 +614,13 @@ onBeforeUnmount(() => {
       :description="contentError"
     >
       <template #actions>
-        <Button variant="solid" size="sm" left-icon="rewind" @click="refresh">Retry</Button>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="() => void refresh(true)">Retry</Button>
       </template>
     </EmptyState>
-    <pre v-else ref="preEl" class="admin-logs__output" data-testid="logs-output" aria-live="polite"><template v-if="processedLines.length === 0">(no output)</template><template v-else v-for="(line, i) in processedLines" :key="i"><span v-html="line.content"></span>&#10;</template></pre>
+    <!-- CU-116 (webux #12): the WHOLE tail used to carry aria-live="polite",
+       so every 5s tick re-announced every visible byte. The delta note below is
+       the announcement channel now. -->
+    <pre v-else ref="preEl" class="admin-logs__output" data-testid="logs-output"><template v-if="processedLines.length === 0">(no output)</template><template v-else v-for="(line, i) in processedLines" :key="i"><span v-html="line.content"></span>&#10;</template></pre>
   </section>
 </template>
 
@@ -610,6 +665,16 @@ onBeforeUnmount(() => {
   gap: var(--space-2);
   font-size: var(--text-sm);
   color: var(--text-muted);
+}
+.admin-logs__poll-error {
+  margin: 0 0 var(--space-2);
+  color: var(--warning);
+  font-size: var(--text-xs);
+}
+.admin-logs__update {
+  margin: 0 0 var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
 }
 .admin-logs__truncated {
   font-size: var(--text-sm);

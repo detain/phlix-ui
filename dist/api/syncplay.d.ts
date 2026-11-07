@@ -8,6 +8,7 @@
  * @license MIT
  */
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayStateUpdate, SyncPlayPlaybackCommand } from '../types/syncplay';
+import type { SyncPlayGroup, SyncPlayGroupListItem } from '@phlix/contracts';
 /** Input for creating a new SyncPlay group. */
 export interface CreateRoomInput {
     name: string;
@@ -52,41 +53,28 @@ export interface JoinRoomInput {
 /**
  * One group as the server actually puts it on the wire.
  *
- * This is `GroupState::getState()` (phlix-server
- * `src/Session/SyncPlay/GroupState.php`) verbatim — snake_case, `members` as a
- * DICTIONARY keyed by member id — plus the reduced row shape
- * `SyncPlaySnapshotService::listGroups()` emits for the listing (`id`/`name`
- * instead of `group_id`/`group_name`, no `members` at all). Every field is
- * optional because the two shapes overlap only partially and the
- * `getRawSnapshot()` fallback path drops `members` entirely.
+ * The key vocabulary is NOT restated here (review ui__fedev CU-095): it comes
+ * from `@phlix/contracts`, whose S415 golden-vector gate pins both shapes —
+ * the full `GroupState::getState()` state (`SyncPlayGroup`) and the reduced
+ * listing row (`SyncPlayGroupListItem`, keys `id`/`name`/`member_count`/
+ * `has_password`/`current_media`/`is_playing`). Which arm arrives depends on
+ * the route, and the `getRawSnapshot()` fallback path drops `members`
+ * entirely, so this adapter type is the PARTIAL union of both arms — with
+ * `members` and `queue` widened to what the reader below actually tolerates:
+ * members arrives as a dict keyed by member id from `getState()` but as a
+ * plain `[]` from the snapshot fallback, and the queue's contents are never
+ * consumed by the UI.
  *
  * ⚠ There is no `session` envelope and no camelCase anywhere in the SyncPlay
  * REST contract. Modelling the response as the UI's own `SyncPlaySession` is
  * what made `joinRoom()` read `res.session` (always `undefined`) — so the raw
  * shape is named honestly here and mapped by {@link groupToSession}.
  */
-export interface RawSyncPlayGroup {
-    group_id?: string;
-    group_name?: string;
-    /** Listing rows use the short spelling. */
-    id?: string;
-    name?: string;
-    member_count?: number;
+export interface RawSyncPlayGroup extends Omit<Partial<SyncPlayGroup & SyncPlayGroupListItem>, 'members' | 'queue'> {
     /** Dict keyed by member id from `getState()`; `[]` from the raw-snapshot fallback. */
     members?: Record<string, RawSyncPlayMember> | RawSyncPlayMember[];
-    host_id?: string | null;
-    has_password?: boolean;
-    current_media_id?: string | null;
-    current_media_duration?: number;
-    playback_position?: number;
-    /** `playing` | `paused` | `buffering` | `stopped` (GroupState::STATE_*). */
-    playback_state?: string;
-    is_playing?: boolean;
+    /** Never consumed by the UI — kept opaque so a shape change cannot be silently depended on. */
     queue?: unknown[];
-    /** Unix seconds. */
-    created_at?: number;
-    /** Unix seconds. */
-    last_activity_at?: number;
 }
 /** One member inside {@link RawSyncPlayGroup.members}. */
 export interface RawSyncPlayMember {
@@ -125,7 +113,9 @@ export interface JoinedGroup {
  *
  * The server carries no per-member online flag (membership IS presence: a
  * disconnected member is removed from the group), so `isOnline` is `true` for
- * every returned member, and `profileId` has no server counterpart at all.
+ * every returned member. CU-095: an earlier revision also fabricated a
+ * `profileId: 0` here — the wire has no such field and no consumer ever read
+ * it, so the view-model no longer carries one.
  */
 export declare function normalizeMembers(raw: RawSyncPlayGroup | undefined): SyncPlayUser[];
 /**

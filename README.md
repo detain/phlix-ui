@@ -358,7 +358,7 @@ mirrors: mechanical enforcement, zero review burden.
 
 The package ships **complete** translations of the whole English catalog for six
 locales: `es`, `fr`, `de`, `it`, `pt_BR`, `ja`. Each is a `satisfies PhlixMessages`
-object (same 26 groups, same key set), so the compiler rejects any missing or extra
+object (same 27 groups, same key set), so the compiler rejects any missing or extra
 key against `DEFAULT_MESSAGES`. They ride the existing config-time seam unchanged —
 a bundle is just a full `PhlixMessages` passed as `PhlixAppConfig.messages`:
 
@@ -420,7 +420,7 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-533-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
+542-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
 equality on every ui tag since the `v0.99.5` era (now `v0.99.24`-era) — the catalog's
 205 error strings per locale (129 dotted registry entries plus 76 flat generic-message
 entries; 1,435 across the seven error catalogs) would churn every equality pin
@@ -790,12 +790,16 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
   `CHANGELOG` before upgrading.
 - **Browser baseline** — the committed `dist/` is built at a pinned `build.target: 'es2021'`
   (both Vite configs; guarded by `src/test/build-pins.test.ts`), so its JS needs Chrome/Edge 85+,
-  Firefox 79+, Safari 14+. The CSS raises the floor on its own: `style.css` uses `color-mix()`
-  with no `@supports` fallback, so the true baseline of the prebuilt bundle is ~Chrome/Edge 111+,
-  Firefox 113+, Safari 16.2+ (mid-2023). Direct browser consumers (`/app` on server/hub) and
-  bundle-vendoring clients (windows) meet that today; hosts that recompile from source choose
-  their own targets. Raising or widening this baseline is a deliberate act, not a Vite bump's
-  side effect — that silence is exactly what the pin prevents.
+  Firefox 79+, Safari 14+. The CSS no longer raises a floor of its own: every shipped
+  `color-mix()` rule carries a static approximation in an `@supports not (color: color-mix(…))`
+  block (the same doctrine the `dvh` fallback uses), the one JS-bound inline use
+  (`AppBackdrop`) degrades through its scoped static rule, and the floor test is
+  `src/components/cssFloorFallback.test.ts`. Engines older than the mid-2023 color-mix
+  generation — the Tizen 6.5 widget, whose Chromium sits around 79–87 — therefore lose
+  tints/glows, not layout. Direct browser consumers (`/app` on server/hub) and
+  bundle-vendoring clients (windows) sit above the JS floor today; hosts that recompile from
+  source choose their own targets. Raising or widening this baseline is a deliberate act, not
+  a Vite bump's side effect — that silence is exactly what the pin prevents.
 - **Dependency audit** — `npm run audit` execs `scripts/audit-gate.mjs`: the full tree at
   `--audit-level=low`, passing only on a clean audit or a subset of the script's justified
   EXACT-SET advisory allow-list (registry-drift advisories with measured no-in-range-fix proofs;

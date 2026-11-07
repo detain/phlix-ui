@@ -1,19 +1,29 @@
 /**
- * SyncPlay collaborative playback types.
+ * SyncPlay collaborative playback types — the UI's own view-model.
  *
- * Local fallback definitions mirroring @phlix/contracts v0.3.6 until the
- * npm package is updated. These match the server-side SyncPlay session/room DTOs
- * for coordinated multi-user playback with roles, permissions, and chat.
+ * The WIRE vocabulary is NOT declared here. `@phlix/contracts` owns it
+ * (S415 authority ruling: server source, live paths only) and the adapter in
+ * `src/api/syncplay.ts` maps wire → the shapes below. What this file models is
+ * what the components/stores actually speak: a normalized session/room/member
+ * view. An earlier revision presented itself as a mirror of an older
+ * contracts release (the pre-S415 v0.3.x era) and shipped seven wire DTOs the
+ * server never emits — that fiction is retired (review ui__fedev, CU-095);
+ * anything that mirrors the wire must
+ * `import type` from the contracts package, never restate it.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
-export type SyncPlayRole = 'none' | 'contributor' | 'editor' | 'owner';
-export type SyncPlayPermission = 'play' | 'pause' | 'seek' | 'chat' | 'control';
+/**
+ * Role + permission vocabularies are re-exported from @phlix/contracts (SSOT),
+ * exactly like `MediaType` in ./media-item.ts — do not turn them back into
+ * literal unions (law in `src/types/media-item.ts:15-18`).
+ */
+import type { SyncPlayRole, SyncPlayPermission } from '@phlix/contracts';
+export type { SyncPlayRole, SyncPlayPermission };
 export interface SyncPlaySession {
     id: string;
     roomId: string;
-    serverId: string;
     createdBy: string;
     createdAt: string;
     state: 'waiting' | 'playing' | 'paused' | 'ended';
@@ -29,12 +39,10 @@ export interface SyncPlaySession {
     lastSync: string;
     activeUsers: SyncPlayUser[];
     roles: Record<string, SyncPlayRole>;
-    permissions: Record<string, SyncPlayPermission[]>;
 }
 export interface SyncPlayUser {
     id: string;
     name: string;
-    profileId: number;
     role: SyncPlayRole;
     isOnline: boolean;
     lastSeen: string;

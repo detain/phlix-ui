@@ -6,7 +6,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { SyncPlayApi, getSyncPlayApi } from './syncplay';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { SyncPlayApi, getSyncPlayApi, groupToSession, normalizeMembers } from './syncplay';
 import type {
   CreateRoomInput,
   JoinRoomInput,
@@ -122,5 +125,46 @@ describe('SyncPlayApi — Response envelope interfaces', () => {
     };
     expect(response.groups).toHaveLength(1);
     expect(response.groups![0]!.id).toBe('sp_abc123');
+  });
+});
+
+// CU-095 (review ui__fedev #1/#2/#3): the wire vocabulary belongs to
+// @phlix/contracts (S415 golden-vector gate); this adapter maps it and NOTHING
+// else. These pins are the tripwires for the three fiction classes the review
+// convicted: the stale "mirroring contracts v0.3.6" header, the verbatim
+// re-declared unions, and the fabricated fields the adapter hardcoded.
+describe('CU-095 — contracts is the SSOT, view-model carries no wire phantoms', () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const typesSrc = readFileSync(join(here, '../types/syncplay.ts'), 'utf8');
+  const apiSrc = readFileSync(join(here, './syncplay.ts'), 'utf8');
+
+  it('the types file no longer claims to mirror a stale contracts version', () => {
+    expect(typesSrc).not.toMatch(/mirroring @phlix\/contracts/i);
+    expect(typesSrc).not.toContain('v0.3.6');
+  });
+
+  it('role/permission vocabularies are re-exported from contracts, never re-declared', () => {
+    expect(typesSrc).toMatch(/import type \{[^}]*SyncPlayRole[^}]*\} from '@phlix\/contracts'/);
+    expect(typesSrc).toMatch(/export type \{[^}]*SyncPlayRole[^}]*\}/);
+    // A literal union here would drift from the golden vectors silently.
+    expect(typesSrc).not.toMatch(/export type SyncPlayRole = '/);
+    expect(typesSrc).not.toMatch(/export type SyncPlayPermission = '/);
+  });
+
+  it('RawSyncPlayGroup derives its keys from the contracts group shapes', () => {
+    expect(apiSrc).toMatch(/Omit<Partial<SyncPlayGroup & SyncPlayGroupListItem>/);
+    // The hand-rolled vocabulary must not creep back in (fedev #2 convicted
+    // the listing key `current_media` being missing from the local restatement).
+    expect(apiSrc).not.toMatch(/group_id\?: string;\s*\n\s*group_name\?:/);
+    expect(apiSrc).not.toMatch(/has_password\?: boolean;/);
+  });
+
+  it('groupToSession fabricates no serverId/permissions and normalizeMembers no profileId', () => {
+    const session = groupToSession({ group_id: 'g1', playback_state: 'paused' });
+    expect(session).not.toHaveProperty('serverId');
+    expect(session).not.toHaveProperty('permissions');
+    const members = normalizeMembers({ members: { u1: { id: 'u1', name: 'Ann', is_host: true, joined_at: 1 } } });
+    expect(members[0]).not.toHaveProperty('profileId');
+    expect(members[0]!.role).toBe('owner');
   });
 });

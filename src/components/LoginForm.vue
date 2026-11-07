@@ -135,6 +135,12 @@ async function handleSubmit(): Promise<void> {
     <template #footer>
       {{ t('auth.loginFooterPrompt') }}
       <RouterLink :to="signupPath" class="login__link">{{ t('auth.signupLink') }}</RouterLink>
+      <!-- CU-094 (review ui__enduser): a locked-out visitor's only offered next
+           step used to be creating a SECOND account. Self-service password
+           reset does not exist estate-wide (reset is admin-only — the server's
+           admin users API), so the honest path is stated plainly rather than a
+           dead link being faked. -->
+      <p class="login__hint">{{ t('auth.passwordRecoveryHint') }}</p>
     </template>
   </AuthCard>
 </template>
@@ -189,4 +195,19 @@ async function handleSubmit(): Promise<void> {
 .login__link:hover {
   text-decoration: underline;
 }
+.login__hint {
+  margin: var(--space-2) 0 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+  /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);
+     Tizen 6.5's Chromium and other declared-floor engines predate it, where the
+     declaration would be DROPPED and the surface degrade to the initial value.
+     Static approximations from the default (Nocturne) palette, per the repo's
+     own @supports-not doctrine (cf. the dvh block in Player.vue). Themed
+     consumers get the default-palette approximation on older engines. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .login__banner { border: 1px solid rgba(239, 94, 87, 0.5); }
+}
+
 </style>

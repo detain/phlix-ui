@@ -17,7 +17,6 @@ function makeSession(position = 100, rate = 1, state: SyncPlaySession['state'] =
   return {
     id: 'sess-1',
     roomId: 'room-1',
-    serverId: 'srv-1',
     createdBy: 'user-1',
     createdAt: new Date().toISOString(),
     state,
@@ -28,7 +27,6 @@ function makeSession(position = 100, rate = 1, state: SyncPlaySession['state'] =
     lastSync: new Date().toISOString(),
     activeUsers: [],
     roles: {},
-    permissions: {},
   };
 }
 

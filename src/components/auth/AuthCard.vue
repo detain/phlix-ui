@@ -199,4 +199,18 @@ const wordmark = computed(() => branding.value.wordmark ?? 'Phlix');
     animation: none;
   }
 }
+  /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);
+     Tizen 6.5's Chromium and other declared-floor engines predate it, where the
+     declaration would be DROPPED and the surface degrade to the initial value.
+     Static approximations from the default (Nocturne) palette, per the repo's
+     own @supports-not doctrine (cf. the dvh block in Player.vue). Themed
+     consumers get the default-palette approximation on older engines. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .authcard::after {
+    background:
+      linear-gradient(180deg, var(--accent-soft), transparent 30%),
+      repeating-linear-gradient(180deg, transparent 0 12px, rgb(9, 8, 6) 12px 20px, transparent 20px 32px);
+  }
+}
+
 </style>

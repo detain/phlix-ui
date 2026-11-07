@@ -164,10 +164,15 @@ function mountPage(router: Router, name = 'Radiohead'): VueWrapper {
       provide: { apiBase: '' },
       stubs: {
         Icon: { props: ['name'], template: '<span class="icon" :data-icon="name" />' },
+        // CU-115: mirrors MusicAlbumCard's dual contract — anchor overlay when
+        // `to` is provided (this page's album tiles), button + emit otherwise
+        // (MusicLibraryPage's in-page selection).
         MusicAlbumCard: {
-          props: ['album'],
+          props: ['album', 'to'],
           emits: ['click'],
-          template: '<button class="album-card" @click="$emit(\'click\', album)">{{ album.title }}</button>',
+          template:
+            '<RouterLink v-if="to" :to="to" custom v-slot="{ href, navigate }"><a class="album-card" :href="href" @click="navigate">{{ album.title }}</a></RouterLink>' +
+            '<button v-else class="album-card" @click="$emit(\'click\', album)">{{ album.title }}</button>',
         },
       },
     },

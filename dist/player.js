@@ -3205,6 +3205,7 @@ var cn = {
 		orContinueWith: "or continue with",
 		loginFooterPrompt: "New to Phlix?",
 		signupLink: "Create an account",
+		passwordRecoveryHint: "Locked out? Ask your server admin to reset your password.",
 		signupFooterPrompt: "Already have an account?",
 		signInLink: "Sign in",
 		emailRequired: "Enter your email.",
@@ -3470,7 +3471,17 @@ var cn = {
 		itemRemoved: "Removed “{name}”.",
 		itemRemoveFailed: "Couldn’t remove “{name}”.",
 		unknownError: "Something went wrong.",
-		loadTitlesError: "Couldn’t load titles"
+		loadTitlesError: "Couldn’t load titles",
+		noMediaTitle: "No media found",
+		noMediaHint: "Try adjusting your filters."
+	},
+	browse: {
+		continueWatching: "Continue watching",
+		nextUp: "Next up",
+		recommended: "Recommended",
+		mostWatched: "Most watched",
+		noLibrariesTitle: "No libraries yet",
+		noLibrariesDescription: "Once a library is added it shows up here as its own section."
 	},
 	playlist: {
 		loadError: "Couldn’t load this playlist.",
@@ -8054,7 +8065,7 @@ var pl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 			onClick: n[0] ||= (e) => r("remove")
 		}, [u(Y, { name: "x" })], 8, tu)) : a("", !0)], 2));
 	}
-}), [["__scopeId", "data-v-551f7599"]]), ru = ["aria-label"], iu = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-6addaaaa"]]), ru = ["aria-label"], iu = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "Spinner",
 	props: {
 		size: {},
@@ -8099,7 +8110,7 @@ var pl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 			class: "phlix-badge__icon"
 		}, null, 8, ["name"])) : a("", !0), w(t.$slots, "default", {}, void 0, !0)], 10, au));
 	}
-}), [["__scopeId", "data-v-269446f3"]]), su = {
+}), [["__scopeId", "data-v-1e0d86a2"]]), su = {
 	class: "phlix-empty",
 	role: "status"
 }, cu = { class: "phlix-empty__icon" }, lu = { class: "phlix-empty__title" }, uu = {
@@ -10123,7 +10134,6 @@ function rp(e) {
 	}))).map((e) => ({
 		id: e.id ?? "",
 		name: e.name ?? "Unknown",
-		profileId: 0,
 		role: e.is_host === !0 ? "owner" : "contributor",
 		isOnline: !0,
 		lastSeen: tp(e.joined_at)
@@ -10153,7 +10163,6 @@ function op(e) {
 	return {
 		id: n,
 		roomId: n,
-		serverId: "",
 		createdBy: t.host_id ?? "",
 		createdAt: tp(t.created_at),
 		state: r,
@@ -10163,8 +10172,7 @@ function op(e) {
 		serverTime: $f(t.last_activity_at, Math.floor(Date.now() / 1e3)),
 		lastSync: tp(t.last_activity_at),
 		activeUsers: rp(t),
-		roles: Object.fromEntries(rp(t).map((e) => [e.id, e.role])),
-		permissions: {}
+		roles: Object.fromEntries(rp(t).map((e) => [e.id, e.role]))
 	};
 }
 var sp = class {
@@ -10572,7 +10580,7 @@ var Ip = class extends Error {
 			})
 		])) : a("", !0);
 	}
-}), [["__scopeId", "data-v-3f63f0ac"]]), Jp = ["aria-label"], Yp = ["aria-checked", "tabindex"], Xp = ["aria-checked", "tabindex"], Zp = {
+}), [["__scopeId", "data-v-2dfa4284"]]), Jp = ["aria-label"], Yp = ["aria-checked", "tabindex"], Xp = ["aria-checked", "tabindex"], Zp = {
 	key: 0,
 	class: "syncplay-modal__fields"
 }, Qp = { class: "syncplay-modal__field" }, $p = {
@@ -10801,7 +10809,7 @@ var Ip = class extends Error {
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-3772af96"]]), Em = {
+}), [["__scopeId", "data-v-d0015165"]]), Em = {
 	key: 0,
 	class: "syncplay-controls"
 }, Dm = ["aria-label"], Om = { class: "syncplay-controls__wait-label" }, km = { class: "syncplay-controls__transport" }, Am = ["aria-label"], jm = ["aria-label"], Mm = ["aria-label"], Nm = { class: "syncplay-controls__status-label" }, Pm = 10, Fm = /*#__PURE__*/ X(/* @__PURE__ */ d({
@@ -10892,7 +10900,7 @@ var Ip = class extends Error {
 			}, null, 8, ["name"]), s("span", Nm, E(O(l).syncStatus === "synced" ? O(c)("syncplay.synced") : O(l).syncStatus === "outOfSync" ? O(c)("syncplay.outOfSync") : O(c)("syncplay.reSyncing")), 1)], 2)
 		])) : a("", !0);
 	}
-}), [["__scopeId", "data-v-338c0ffc"]]);
+}), [["__scopeId", "data-v-276195ff"]]);
 // src/utils/subtitleSrc.ts
 function Im(e, t) {
 	return String(Sd(e, t));

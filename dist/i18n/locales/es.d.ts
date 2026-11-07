@@ -136,6 +136,7 @@ export declare const ES_MESSAGES: {
         orContinueWith: string;
         loginFooterPrompt: string;
         signupLink: string;
+        passwordRecoveryHint: string;
         signupFooterPrompt: string;
         signInLink: string;
         emailRequired: string;
@@ -404,6 +405,16 @@ export declare const ES_MESSAGES: {
         itemRemoveFailed: string;
         unknownError: string;
         loadTitlesError: string;
+        noMediaTitle: string;
+        noMediaHint: string;
+    };
+    browse: {
+        continueWatching: string;
+        nextUp: string;
+        recommended: string;
+        mostWatched: string;
+        noLibrariesTitle: string;
+        noLibrariesDescription: string;
     };
     playlist: {
         loadError: string;

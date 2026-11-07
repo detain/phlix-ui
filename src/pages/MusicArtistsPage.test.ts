@@ -239,6 +239,18 @@ describe('MusicArtistsPage', () => {
     w.unmount();
   });
 
+  it('renders each tile as a real anchor with a resolvable href (CU-115)', async () => {
+    // The click-nav above is only half the law: middle-click / copy-link /
+    // drag-to-bookmark need a URL in the DOM, not just a handler.
+    stubFetch({ artists: [{ name: 'Aphex Twin', album_count: 13 }] });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    const tile = w.find('.artist-card');
+    expect(tile.element.tagName).toBe('A');
+    expect(tile.attributes('href')).toBe('/app/music/artist/Aphex%20Twin');
+    w.unmount();
+  });
+
   // ---- S110: paging + the true count -------------------------------------
   describe('paging (S110)', () => {
     it('requests a bounded page and shows the DB total, not the page length', async () => {

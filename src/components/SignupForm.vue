@@ -236,4 +236,14 @@ async function handleSubmit(): Promise<void> {
 .signup__link:hover {
   text-decoration: underline;
 }
+  /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);
+     Tizen 6.5's Chromium and other declared-floor engines predate it, where the
+     declaration would be DROPPED and the surface degrade to the initial value.
+     Static approximations from the default (Nocturne) palette, per the repo's
+     own @supports-not doctrine (cf. the dvh block in Player.vue). Themed
+     consumers get the default-palette approximation on older engines. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .signup__banner { border: 1px solid rgba(239, 94, 87, 0.5); }
+}
+
 </style>

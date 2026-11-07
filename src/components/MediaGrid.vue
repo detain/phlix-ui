@@ -31,6 +31,7 @@ import type { MediaItem } from '../types/media-item';
 import MediaCard from './MediaCard.vue';
 import Icon from './Icon.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
+import { useMessages } from '../composables/useMessages';
 import {
   COL_GAP,
   REM_BASIS_PX,
@@ -156,6 +157,7 @@ defineSlots<{
 }>();
 
 const prefs = usePreferencesStore();
+const { t } = useMessages();
 const cardSize = computed(() => props.cardSize ?? prefs.cardSize ?? 200);
 
 const sizerEl = ref<HTMLElement | null>(null);
@@ -647,9 +649,12 @@ watch(
     <!-- empty -->
     <div v-else-if="items.length === 0" class="media-grid-empty" role="status">
       <slot name="empty">
+        <!-- CU-093 (review ui__enduser): this pair and the BrowsePage rails were
+             English-only literals shipped to consumers with seven locales;
+             they now ride the catalog like every other surface. -->
         <Icon name="film" class="media-grid-empty__icon" />
-        <p class="media-grid-empty__title">No media found</p>
-        <p class="media-grid-empty__hint">Try adjusting your filters.</p>
+        <p class="media-grid-empty__title">{{ t('library.noMediaTitle') }}</p>
+        <p class="media-grid-empty__hint">{{ t('library.noMediaHint') }}</p>
       </slot>
     </div>
 

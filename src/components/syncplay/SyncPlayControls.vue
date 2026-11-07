@@ -387,4 +387,21 @@ watch(
     transform: rotate(360deg);
   }
 }
+  /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);
+     Tizen 6.5's Chromium and other declared-floor engines predate it, where the
+     declaration would be DROPPED and the surface degrade to the initial value.
+     Static approximations from the default (Nocturne) palette, per the repo's
+     own @supports-not doctrine (cf. the dvh block in Player.vue). Themed
+     consumers get the default-palette approximation on older engines. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .syncplay-controls__wait {
+    background: rgba(232, 163, 61, 0.15);
+    border: 1px solid rgba(232, 163, 61, 0.4);
+  }
+  .syncplay-controls__btn--primary:hover { background: rgb(247, 179, 69); }
+  .syncplay-controls__status--synced { background: rgba(97, 192, 115, 0.15); }
+  .syncplay-controls__status--outOfSync { background: rgba(239, 94, 87, 0.15); }
+  .syncplay-controls__status--re-syncing { background: rgba(232, 163, 61, 0.15); }
+}
+
 </style>

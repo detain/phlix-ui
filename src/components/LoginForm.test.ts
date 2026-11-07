@@ -251,6 +251,14 @@ describe('LoginForm', () => {
     expect(push).toHaveBeenCalledWith('/hub');
   });
 
+  it('offers the admin-reset guidance to a locked-out visitor (CU-094)', () => {
+    // Self-service password reset does not exist estate-wide; the footer must
+    // name the real recovery path instead of leaving "create an account" as
+    // the only alternative to a failed sign-in.
+    const { w } = mountForm();
+    expect(w.find('.login__hint').text()).toBe('Locked out? Ask your server admin to reset your password.');
+  });
+
   it('keeps the submit button focusable-but-blocked while auth.loading (CU-117)', async () => {
     const { w, auth } = mountForm();
     auth.loading = true;

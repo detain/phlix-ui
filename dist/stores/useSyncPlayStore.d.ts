@@ -102,7 +102,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         currentSession?: {
             id: string;
             roomId: string;
-            serverId: string;
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
@@ -114,13 +113,11 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             activeUsers: {
                 id: string;
                 name: string;
-                profileId: number;
-                role: import("../types/syncplay").SyncPlayRole;
+                role: import("@phlix/contracts").SyncPlayRole;
                 isOnline: boolean;
                 lastSeen: string;
             }[];
-            roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-            permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+            roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
         } | undefined;
         memberCount: number;
         roomId?: string | undefined;
@@ -130,7 +127,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         participants?: {
             userId: string;
             username: string;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isSynced: boolean;
             lastPosition: number;
             latency: number;
@@ -142,7 +139,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         currentSession?: {
             id: string;
             roomId: string;
-            serverId: string;
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
@@ -154,13 +150,11 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             activeUsers: {
                 id: string;
                 name: string;
-                profileId: number;
-                role: import("../types/syncplay").SyncPlayRole;
+                role: import("@phlix/contracts").SyncPlayRole;
                 isOnline: boolean;
                 lastSeen: string;
             }[];
-            roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-            permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+            roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
         } | undefined;
         memberCount: number;
         roomId?: string | undefined;
@@ -170,7 +164,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         participants?: {
             userId: string;
             username: string;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isSynced: boolean;
             lastPosition: number;
             latency: number;
@@ -179,7 +173,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     currentSession: import("vue").Ref<{
         id: string;
         roomId: string;
-        serverId: string;
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
@@ -191,17 +184,14 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         activeUsers: {
             id: string;
             name: string;
-            profileId: number;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isOnline: boolean;
             lastSeen: string;
         }[];
-        roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-        permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+        roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
     } | null, SyncPlaySession | {
         id: string;
         roomId: string;
-        serverId: string;
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
@@ -213,26 +203,22 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         activeUsers: {
             id: string;
             name: string;
-            profileId: number;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isOnline: boolean;
             lastSeen: string;
         }[];
-        roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-        permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+        roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
     } | null>;
     members: import("vue").Ref<{
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[], SyncPlayUser[] | {
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[]>;
@@ -261,8 +247,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     onlineMembers: import("vue").ComputedRef<{
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[]>;
@@ -293,7 +278,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         currentSession?: {
             id: string;
             roomId: string;
-            serverId: string;
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
@@ -305,13 +289,11 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             activeUsers: {
                 id: string;
                 name: string;
-                profileId: number;
-                role: import("../types/syncplay").SyncPlayRole;
+                role: import("@phlix/contracts").SyncPlayRole;
                 isOnline: boolean;
                 lastSeen: string;
             }[];
-            roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-            permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+            roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
         } | undefined;
         memberCount: number;
         roomId?: string | undefined;
@@ -321,7 +303,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         participants?: {
             userId: string;
             username: string;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isSynced: boolean;
             lastPosition: number;
             latency: number;
@@ -333,7 +315,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         currentSession?: {
             id: string;
             roomId: string;
-            serverId: string;
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
@@ -345,13 +326,11 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             activeUsers: {
                 id: string;
                 name: string;
-                profileId: number;
-                role: import("../types/syncplay").SyncPlayRole;
+                role: import("@phlix/contracts").SyncPlayRole;
                 isOnline: boolean;
                 lastSeen: string;
             }[];
-            roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-            permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+            roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
         } | undefined;
         memberCount: number;
         roomId?: string | undefined;
@@ -361,7 +340,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         participants?: {
             userId: string;
             username: string;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isSynced: boolean;
             lastPosition: number;
             latency: number;
@@ -370,7 +349,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     currentSession: import("vue").Ref<{
         id: string;
         roomId: string;
-        serverId: string;
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
@@ -382,17 +360,14 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         activeUsers: {
             id: string;
             name: string;
-            profileId: number;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isOnline: boolean;
             lastSeen: string;
         }[];
-        roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-        permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+        roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
     } | null, SyncPlaySession | {
         id: string;
         roomId: string;
-        serverId: string;
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
@@ -404,26 +379,22 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         activeUsers: {
             id: string;
             name: string;
-            profileId: number;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isOnline: boolean;
             lastSeen: string;
         }[];
-        roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-        permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+        roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
     } | null>;
     members: import("vue").Ref<{
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[], SyncPlayUser[] | {
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[]>;
@@ -452,8 +423,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     onlineMembers: import("vue").ComputedRef<{
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[]>;
@@ -484,7 +454,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         currentSession?: {
             id: string;
             roomId: string;
-            serverId: string;
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
@@ -496,13 +465,11 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             activeUsers: {
                 id: string;
                 name: string;
-                profileId: number;
-                role: import("../types/syncplay").SyncPlayRole;
+                role: import("@phlix/contracts").SyncPlayRole;
                 isOnline: boolean;
                 lastSeen: string;
             }[];
-            roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-            permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+            roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
         } | undefined;
         memberCount: number;
         roomId?: string | undefined;
@@ -512,7 +479,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         participants?: {
             userId: string;
             username: string;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isSynced: boolean;
             lastPosition: number;
             latency: number;
@@ -524,7 +491,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         currentSession?: {
             id: string;
             roomId: string;
-            serverId: string;
             createdBy: string;
             createdAt: string;
             state: "waiting" | "playing" | "paused" | "ended";
@@ -536,13 +502,11 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
             activeUsers: {
                 id: string;
                 name: string;
-                profileId: number;
-                role: import("../types/syncplay").SyncPlayRole;
+                role: import("@phlix/contracts").SyncPlayRole;
                 isOnline: boolean;
                 lastSeen: string;
             }[];
-            roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-            permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+            roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
         } | undefined;
         memberCount: number;
         roomId?: string | undefined;
@@ -552,7 +516,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         participants?: {
             userId: string;
             username: string;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isSynced: boolean;
             lastPosition: number;
             latency: number;
@@ -561,7 +525,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     currentSession: import("vue").Ref<{
         id: string;
         roomId: string;
-        serverId: string;
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
@@ -573,17 +536,14 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         activeUsers: {
             id: string;
             name: string;
-            profileId: number;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isOnline: boolean;
             lastSeen: string;
         }[];
-        roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-        permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+        roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
     } | null, SyncPlaySession | {
         id: string;
         roomId: string;
-        serverId: string;
         createdBy: string;
         createdAt: string;
         state: "waiting" | "playing" | "paused" | "ended";
@@ -595,26 +555,22 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         activeUsers: {
             id: string;
             name: string;
-            profileId: number;
-            role: import("../types/syncplay").SyncPlayRole;
+            role: import("@phlix/contracts").SyncPlayRole;
             isOnline: boolean;
             lastSeen: string;
         }[];
-        roles: Record<string, import("../types/syncplay").SyncPlayRole>;
-        permissions: Record<string, import("../types/syncplay").SyncPlayPermission[]>;
+        roles: Record<string, import("@phlix/contracts").SyncPlayRole>;
     } | null>;
     members: import("vue").Ref<{
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[], SyncPlayUser[] | {
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[]>;
@@ -643,8 +599,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     onlineMembers: import("vue").ComputedRef<{
         id: string;
         name: string;
-        profileId: number;
-        role: import("../types/syncplay").SyncPlayRole;
+        role: import("@phlix/contracts").SyncPlayRole;
         isOnline: boolean;
         lastSeen: string;
     }[]>;

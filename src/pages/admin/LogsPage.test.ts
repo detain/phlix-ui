@@ -11,6 +11,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import LogsPage from './LogsPage.vue';
 import Select from '../../components/ui/Select.vue';
 import Switch from '../../components/ui/Switch.vue';
+import Button from '../../components/ui/Button.vue';
 import EmptyState from '../../components/ui/EmptyState.vue';
 import { ALL_LOGS } from '../../api/admin/logs';
 import { useToastStore } from '../../stores/useToastStore';
@@ -418,6 +419,117 @@ describe('Admin LogsPage — renderer overhaul', () => {
     // vacuous pass).
     expect(pre.element.querySelector('.json-key')).not.toBeNull();
     expect(pre.element.querySelector('.json-number')).not.toBeNull();
+    w.unmount();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CU-116 (review ui__webux #11/#12): the background-poll discipline. A failed
+// tick keeps what is on screen, marks the toolbar, and toasts at most once per
+// streak; the announcement channel is the delta note, not the whole log body.
+// ---------------------------------------------------------------------------
+describe('Admin LogsPage — background-poll discipline (CU-116)', () => {
+  /** List always fine; tail-all succeeds `okRounds` times, then fails forever. */
+  function makeFlakyClient(okRounds: number, linesForRound?: (n: number) => string[]) {
+    let tails = 0;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/logs') {
+        return { files: [{ name: 'app.log', size: 1, modified_at: 't' }] };
+      }
+      if (endpoint === '/api/v1/admin/logs/tail-all') {
+        tails++;
+        if (tails > okRounds) throw new Error('tail down');
+        return {
+          files: ['app.log'],
+          lines: linesForRound ? linesForRound(tails) : ['line A', 'line B'],
+          truncated: false,
+        };
+      }
+      throw new Error(`unexpected ${endpoint}`);
+    });
+    return { get, tailCount: () => tails };
+  }
+  const retarget = (w: ReturnType<typeof mountPage>, lines: number) => {
+    // Any change of the Lines select re-runs the (non-manual) read path.
+    w.findAllComponents(Select)[1].vm.$emit('update:modelValue', lines);
+    return flushPromises();
+  };
+
+  it('a failed background re-read keeps the visible tail and marks the toolbar', async () => {
+    const { get } = makeFlakyClient(1);
+    const w = mountPage({ get } as unknown as ApiClient);
+    await flushPromises();
+    expect(w.find('[data-testid="logs-output"]').text()).toContain('line A');
+    await retarget(w, 1000); // background tick → fails
+    expect(w.find('[data-testid="logs-output"]').text(), 'tail preserved').toContain('line A');
+    expect(w.findComponent(EmptyState).exists(), 'pane NOT blanked').toBe(false);
+    expect(w.find('.admin-logs__poll-error').text()).toContain('Last update failed at');
+    w.unmount();
+  });
+
+  it('toasts once per failure streak, not once per 5s tick', async () => {
+    const { get } = makeFlakyClient(1);
+    const w = mountPage({ get } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    const errToasts = () => toasts.toasts.filter((t) => t.message === 'tail down').length;
+    expect(errToasts()).toBe(0);
+    await retarget(w, 1000); // streak starts → exactly one toast
+    expect(errToasts()).toBe(1);
+    await retarget(w, 1500); // second tick, same streak
+    await retarget(w, 2000); // third tick — the old code had toasted 3 times here
+    expect(errToasts(), 'stream suppressed within the streak').toBe(1);
+    w.unmount();
+  });
+
+  it('a manual Retry toasts even mid-streak, and a fresh streak re-alerts', async () => {
+    const { get } = makeFlakyClient(1);
+    const w = mountPage({ get } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    const errToasts = () => toasts.toasts.filter((t) => t.message === 'tail down').length;
+    await retarget(w, 1000); // background → toast 1
+    const refreshBtn = w.findAllComponents(Button).find((b) => b.text().includes('Refresh'));
+    await refreshBtn!.trigger('click'); // manual inside the streak → toast 2
+    await flushPromises();
+    expect(errToasts()).toBe(2);
+    w.unmount();
+  });
+
+  it('success clears the failure mark and the next streak starts alerting again', async () => {
+    let failNext = false;
+    const get = vi.fn(async (endpoint: string) => {
+      if (endpoint === '/api/v1/admin/logs') return { files: [{ name: 'app.log', size: 1, modified_at: 't' }] };
+      if (endpoint === '/api/v1/admin/logs/tail-all') {
+        if (failNext) throw new Error('tail down');
+        return { files: ['app.log'], lines: ['line A'], truncated: false };
+      }
+      throw new Error(`unexpected ${endpoint}`);
+    });
+    const w = mountPage({ get } as unknown as ApiClient);
+    const toasts = useToastStore();
+    await flushPromises();
+    failNext = true;
+    await retarget(w, 1000);
+    expect(w.find('.admin-logs__poll-error').exists()).toBe(true);
+    failNext = false;
+    await retarget(w, 1500); // recovery
+    expect(w.find('.admin-logs__poll-error').exists(), 'note cleared on success').toBe(false);
+    failNext = true;
+    await retarget(w, 2000); // NEW streak → toasts again (not muted by the old one)
+    expect(toasts.toasts.filter((t) => t.message === 'tail down').length).toBe(2);
+    w.unmount();
+  });
+
+  it('the log body is no longer a live region; the delta note is (CU-116 #12)', async () => {
+    const { get } = makeFlakyClient(99, (n) => (n === 1 ? ['line A'] : ['line A', 'line B']));
+    const w = mountPage({ get } as unknown as ApiClient);
+    await flushPromises();
+    const pre = w.find('[data-testid="logs-output"]');
+    expect(pre.attributes('aria-live'), 'blanket live region removed').toBeUndefined();
+    expect(w.find('[data-testid="logs-update-note"]').exists(), 'quiet until something arrives').toBe(false);
+    await retarget(w, 1000);
+    expect(w.find('[data-testid="logs-update-note"]').text()).toBe('1 new line');
     w.unmount();
   });
 });

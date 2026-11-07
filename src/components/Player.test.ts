@@ -559,7 +559,6 @@ describe('Player — SyncPlay drift correction (U-I1)', () => {
     return {
       id: 'sess-1',
       roomId: 'room-1',
-      serverId: 'srv-1',
       createdBy: 'user-1',
       createdAt: '2026-07-12T00:00:00Z',
       state,
@@ -570,7 +569,6 @@ describe('Player — SyncPlay drift correction (U-I1)', () => {
       lastSync: '2026-07-12T00:00:00Z',
       activeUsers: [],
       roles: {},
-      permissions: {},
     };
   }
 

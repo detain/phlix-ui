@@ -19,7 +19,7 @@
  * that, a 2,197-artist library looked like a 100-artist library.
  */
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { RouterLink, type RouteLocationRaw } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
@@ -30,7 +30,6 @@ import MusicPager from '../components/MusicPager.vue';
 import type { MusicArtist } from '../types/music';
 
 const { t } = useMessages();
-const router = useRouter();
 const apiBase = useMediaApiBase();
 /** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
  *  them against the same (possibly relay-proxied) base the payload came from. */
@@ -106,8 +105,17 @@ async function goToOffset(next: number): Promise<void> {
     await loadArtists(next);
 }
 
-function goToArtist(artist: MusicArtist): void {
-    void router.push({ name: 'music-artist', params: { name: artist.name } });
+/**
+ * CU-115 (review ui__webux): the tiles used to be `<button @click=push(...)>` —
+ * navigation with no URL. They are anchors now (MediaCard's custom-RouterLink
+ * pattern): middle-click, "copy link address" and drag-to-bookmark work, and
+ * `navigate` still SPA-intercepts a plain left click (and only that —
+ * ctrl/cmd/shift/middle fall through to the native href). A page component is
+ * ONLY ever rendered inside the installed router, so there is no
+ * router-less branch to model here (unlike embeddable MediaCard).
+ */
+function artistLocation(artist: MusicArtist): RouteLocationRaw {
+    return { name: 'music-artist', params: { name: artist.name } };
 }
 </script>
 
@@ -170,13 +178,17 @@ function goToArtist(artist: MusicArtist): void {
 
             <!-- Artists grid -->
             <div v-else class="artists-page__grid">
-                <button
+                <RouterLink
                     v-for="artist in artists"
                     :key="artist.id"
-                    type="button"
-                    class="artist-card"
-                    @click="goToArtist(artist)"
+                    :to="artistLocation(artist)"
+                    custom
+                    v-slot="{ href, navigate }"
                 >
+                <!-- M-UI-11 sink census — EXPLICITLY TRUSTED, no safeHref: `href` is
+                     vue-router's own resolution of the app-declared music-artist
+                     location ({name, params}); no wire-supplied URL reaches here. -->
+                <a :href="href" class="artist-card" @click="navigate">
                     <div class="artist-card__art">
                         <svg v-if="!artist.imageUrl" viewBox="0 0 100 100" class="artist-card__placeholder">
                             <rect x="10" y="10" width="80" height="80" rx="40" fill="#3b2d5c"/>
@@ -195,7 +207,8 @@ function goToArtist(artist: MusicArtist): void {
                         <h3 class="artist-card__name">{{ artist.name }}</h3>
                         <span class="artist-card__meta" data-count="albums">{{ artistAlbumLabel(artist) }}</span>
                     </div>
-                </button>
+                </a>
+                </RouterLink>
             </div>
         </div>
 
@@ -258,6 +271,8 @@ function goToArtist(artist: MusicArtist): void {
 
 /* Artist card */
 .artist-card {
+    /* CU-115: the tile is an <a> now — inherit the type/color treatment the
+       button used to get from defaults (no underline, no link blue). */
     display: flex;
     flex-direction: column;
     gap: var(--space-3, 12px);
@@ -267,6 +282,8 @@ function goToArtist(artist: MusicArtist): void {
     border: 1px solid var(--border, #3f3f46);
     cursor: pointer;
     text-align: left;
+    text-decoration: none;
+    color: inherit;
     transition: transform var(--dur-fast, 0.18s) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
                 border-color var(--dur-fast, 0.18s) var(--ease-out, ease),
                 background var(--dur-fast, 0.18s) var(--ease-out, ease);

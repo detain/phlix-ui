@@ -6,7 +6,8 @@
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { mount, type VueWrapper } from '@vue/test-utils';
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
+import { createRouter, createMemoryHistory } from 'vue-router';
 import MusicAlbumCard from './MusicAlbumCard.vue';
 import type { MusicAlbum } from '../types/music';
 
@@ -27,16 +28,29 @@ function album(over: Partial<MusicAlbum> = {}): MusicAlbum {
 function mountCard(
   a: MusicAlbum,
   messages?: Record<string, Record<string, string>>,
+  extra: { to?: Record<string, unknown>; withRouter?: boolean } = {},
 ): VueWrapper {
+  const plugins = extra.withRouter ? [makeTestRouter()] : [];
   const w = mount(MusicAlbumCard, {
-    props: { album: a },
+    props: { album: a, ...(extra.to ? { to: extra.to } : {}) },
     global: {
+      plugins,
       provide: messages ? { phlixConfig: { messages } } : {},
       stubs: { Icon: { props: ['name'], template: '<i :data-icon="name" />' } },
     },
   });
   wrappers.push(w);
   return w;
+}
+
+function makeTestRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<div />' } },
+      { path: '/album/:id', name: 'album', component: { template: '<div />' } },
+    ],
+  });
 }
 
 afterEach(() => {
@@ -77,6 +91,38 @@ describe('MusicAlbumCard track count', () => {
     const w = mountCard(a);
     expect(w.find('.album-card__year').text()).toBe('1997');
     await w.find('button').trigger('click');
+    expect(w.emitted('click')).toEqual([[a]]);
+  });
+
+  // CU-115 (review ui__webux): a card WITH a route must carry a real URL.
+  it('renders a stretched anchor overlay when given `to` inside a router', async () => {
+    const router = makeTestRouter();
+    const w = mount(MusicAlbumCard, {
+      props: { album: album({ id: 'ok-computer' }), to: { name: 'album', params: { id: 'ok-computer' } } },
+      global: {
+        plugins: [router],
+        provide: {},
+        stubs: { Icon: { props: ['name'], template: '<i :data-icon="name" />' } },
+      },
+    });
+    wrappers.push(w);
+    const link = w.find('a.album-card__link');
+    expect(link.exists(), 'anchor overlay').toBe(true);
+    expect(link.attributes('href')).toBe('/album/ok-computer');
+    expect(w.find('button').exists(), 'no button in anchor mode').toBe(false);
+    await link.trigger('click');
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe('album');
+  });
+
+  it('stays an honest button when there is no destination (in-page select hosts)', () => {
+    // Inside a router but WITHOUT `to` — MusicLibraryPage's case: selecting an
+    // album switches a view, it is not a route; fabricating an href would lie.
+    const a = album();
+    const w = mountCard(a, undefined, { withRouter: true });
+    expect(w.find('button.album-card__link').exists()).toBe(true);
+    expect(w.find('a.album-card__link').exists()).toBe(false);
+    void w.find('button').trigger('click');
     expect(w.emitted('click')).toEqual([[a]]);
   });
 

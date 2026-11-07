@@ -24,7 +24,7 @@
  * cheaper server-side (0.95 ms vs 134 ms, measured on production).
  */
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { type RouteLocationRaw } from 'vue-router';
 import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
@@ -41,7 +41,6 @@ const props = defineProps<{
 }>();
 
 const { t } = useMessages();
-const router = useRouter();
 const apiBase = useMediaApiBase();
 /** S241: image URLs in the media payload are ROOT-RELATIVE server paths; resolve
  *  them against the same (possibly relay-proxied) base the payload came from. */
@@ -148,12 +147,12 @@ onMounted(() => {
  * second route param, so a consumer's existing `/music/album/:name` route keeps
  * working unchanged.
  */
-function goToAlbum(album: MusicAlbum): void {
-    void router.push({
+function albumLocation(album: MusicAlbum): RouteLocationRaw {
+    return {
         name: 'music-album',
         params: { name: album.title },
         query: { artist: album.artist ?? props.name },
-    });
+    };
 }
 
 /**
@@ -269,7 +268,7 @@ const trackCountLabel = computed(() =>
                             v-for="album in albums"
                             :key="album.id"
                             :album="album"
-                            @click="goToAlbum"
+                            :to="albumLocation(album)"
                         />
                     </div>
                 </div>

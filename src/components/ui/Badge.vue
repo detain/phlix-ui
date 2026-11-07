@@ -69,4 +69,17 @@ withDefaults(
 .phlix-badge--warning { background: var(--warning-bg); color: var(--warning); border-color: color-mix(in srgb, var(--warning) 35%, transparent); }
 .phlix-badge--error   { background: var(--error-bg); color: var(--error); border-color: color-mix(in srgb, var(--error) 35%, transparent); }
 .phlix-badge--info    { background: var(--info-bg); color: var(--info); border-color: color-mix(in srgb, var(--info) 35%, transparent); }
+  /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);
+     Tizen 6.5's Chromium and other declared-floor engines predate it, where the
+     declaration would be DROPPED and the surface degrade to the initial value.
+     Static approximations from the default (Nocturne) palette, per the repo's
+     own @supports-not doctrine (cf. the dvh block in Player.vue). Themed
+     consumers get the default-palette approximation on older engines. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .phlix-badge--success { border-color: rgba(97, 192, 115, 0.35); }
+  .phlix-badge--warning { border-color: rgba(232, 163, 61, 0.35); }
+  .phlix-badge--error   { border-color: rgba(239, 94, 87, 0.35); }
+  .phlix-badge--info    { border-color: rgba(90, 169, 214, 0.35); }
+}
+
 </style>

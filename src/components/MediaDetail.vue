@@ -1541,4 +1541,23 @@ onBeforeUnmount(() => {
     transition: none;
   }
 }
+  /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);
+     Tizen 6.5's Chromium and other declared-floor engines predate it, where the
+     declaration would be DROPPED and the surface degrade to the initial value.
+     Static approximations from the default (Nocturne) palette, per the repo's
+     own @supports-not doctrine (cf. the dvh block in Player.vue). Themed
+     consumers get the default-palette approximation on older engines. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .media-detail__ambient-scrim {
+    background:
+      linear-gradient(to bottom, rgba(11, 10, 8, 0.55) 0%, rgba(11, 10, 8, 0.35) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
+      linear-gradient(to right, rgba(11, 10, 8, 0.55) 0%, transparent 60%);
+  }
+  .media-detail__backdrop-scrim {
+    background:
+      linear-gradient(to bottom, rgba(11, 10, 8, 0.55) 0%, rgba(11, 10, 8, 0.35) 35%, var(--bg, rgba(0, 0, 0, 0.9)) 100%),
+      linear-gradient(to right, rgba(11, 10, 8, 0.55) 0%, transparent 60%);
+  }
+}
+
 </style>

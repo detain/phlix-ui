@@ -218,7 +218,9 @@ function viewShared(): void {
   margin-bottom: var(--space-5);
   padding: var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--success-bg, color-mix(in srgb, var(--success) 12%, transparent));
+  /* CU-076: the var DEFAULT (used only when --success-bg is undefined) was a
+     color-mix — a static rgba default is floor-independent and strictly safer. */
+  background: var(--success-bg, rgba(97, 192, 115, 0.12));
   border: 1px solid color-mix(in srgb, var(--success) 40%, transparent);
   color: var(--success);
   font-size: var(--text-sm);
@@ -242,4 +244,15 @@ function viewShared(): void {
   display: grid;
   gap: var(--space-3);
 }
+  /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);
+     Tizen 6.5's Chromium and other declared-floor engines predate it, where the
+     declaration would be DROPPED and the surface degrade to the initial value.
+     Static approximations from the default (Nocturne) palette, per the repo's
+     own @supports-not doctrine (cf. the dvh block in Player.vue). Themed
+     consumers get the default-palette approximation on older engines. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .accept-invite__success { border: 1px solid rgba(97, 192, 115, 0.4); }
+  .accept-invite__error { border: 1px solid rgba(239, 94, 87, 0.5); }
+}
+
 </style>

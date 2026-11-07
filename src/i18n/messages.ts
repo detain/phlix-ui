@@ -159,6 +159,11 @@ export const DEFAULT_MESSAGES = {
     // the "go to the other screen" link independently of the submit buttons)
     loginFooterPrompt: 'New to Phlix?',
     signupLink: 'Create an account',
+    // CU-094 (review ui__enduser): self-service password reset does not exist
+    // estate-wide — reset is an admin capability — so the login footer names
+    // the real path instead of leaving "create another account" as the only
+    // offered next step.
+    passwordRecoveryHint: 'Locked out? Ask your server admin to reset your password.',
     signupFooterPrompt: 'Already have an account?',
     signInLink: 'Sign in',
     // Validation + failures
@@ -501,6 +506,21 @@ export const DEFAULT_MESSAGES = {
     itemRemoveFailed: 'Couldn’t remove “{name}”.',
     unknownError: 'Something went wrong.',
     loadTitlesError: 'Couldn’t load titles',
+    // CU-093 (review ui__enduser): the shared grid's empty state — it rendered
+    // raw English on every locale.
+    noMediaTitle: 'No media found',
+    noMediaHint: 'Try adjusting your filters.',
+  },
+  // CU-093 (review ui__enduser): BrowsePage's rail headings and its
+  // first-run empty state were hand-coded English literals on an app
+  // shipping seven locales.
+  browse: {
+    continueWatching: 'Continue watching',
+    nextUp: 'Next up',
+    recommended: 'Recommended',
+    mostWatched: 'Most watched',
+    noLibrariesTitle: 'No libraries yet',
+    noLibrariesDescription: 'Once a library is added it shows up here as its own section.',
   },
   playlist: {
     loadError: "Couldn’t load this playlist.",

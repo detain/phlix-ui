@@ -6,6 +6,47 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w15L2 review-cure lane 2026-11-07 (UI fix program)
+
+- **Login recovery guidance.** The sign-in footer now states the real
+  password-recovery path (“Locked out? Ask your server admin to reset your
+  password.”) instead of leaving account-creation as the only offered next
+  step; self-service reset remains an admin capability estate-wide. One new
+  localized key, mirrored across all seven catalogs.
+- **Music navigation is link navigation.** The artist tiles and album cards
+  render as real anchors (custom-RouterLink overlay) with resolvable hrefs —
+  middle-click, copy-link and new-tab work — while a plain click still
+  SPA-navigates; hosts whose selection is an in-page view change (not a
+  route) keep an honest button and no fabricated URL.
+- **Logs page poll discipline.** A failed background poll no longer blanks
+  the tail or shouts: the last successful read stays on screen with a small
+  timestamped toolbar note, toasts fire only on manual refresh/retry or the
+  FIRST failure of a streak, and the whole log body is no longer an
+  `aria-live` region — a compact “N new lines” status announces deltas
+  instead of every visible byte every five seconds.
+- **Browse rails and the grid empty state are catalog-bound.** The four
+  home rails, the first-run libraries empty state and the shared grid’s
+  empty state join the i18n catalog (533 → 542 keys, 27 groups; de / es /
+  fr / it / ja / pt_BR mirrored), replacing hand-coded English on a
+  seven-locale product.
+- **SyncPlay view-model truth.** The types module no longer claims to mirror
+  a stale contracts release; role/permission vocabularies are re-exported
+  from the contracts package (SSOT law), the wire adapter’s group shape is
+  derived from `@phlix/contracts` — restoring the listing row’s
+  `current_media` to the vocabulary — and the adapter-fabricated
+  `serverId`/`permissions`/`profileId` fields are deleted with their
+  fixtures.
+- **CSS floor matches the declared support.** Every shipped `color-mix()`
+  rule now carries a static approximation in an `@supports not` block (the
+  repo’s own dvh doctrine), the one script-bound inline use degrades through
+  its existing scoped fallback rule, and a new floor test
+  (`src/components/cssFloorFallback.test.ts`) plus a re-anchored README
+  baseline keep the promise: older Chromium (Tizen 6.5-era) loses tints, not
+  layout.
+- **Build.** `dist/` regenerated, byte-ident across two consecutive builds
+  and committed with the source. Test suite measured green on this content:
+  337 files / 6,950 passing | 10 skipped (parent: 335 / 6,931 | 10).
+
 ## 0.99.24 - 2026-11-07
 
 - **Why this release exists.** The `v0.99.23` tag's tree rotated
