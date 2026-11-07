@@ -72,6 +72,26 @@ describe('LoginForm', () => {
     expect(w.text()).toContain('Enter your password.');
   });
 
+  /**
+   * ui__webux CU-111 — the inline errors had no clear path: once validate()
+   * fired a message, fixing the field left the lie on screen until the next
+   * submit. Each field now clears its own error as it is edited.
+   */
+  it('editing a field clears its inline error (ui__webux CU-111)', async () => {
+    const { w } = mountForm();
+    await submit(w);
+    await flushPromises();
+    expect(w.text()).toContain('Enter your username or email.');
+    expect(w.text()).toContain('Enter your password.');
+
+    await setIdentifier(w, 'jane');
+    expect(w.text()).not.toContain('Enter your username or email.');
+    expect(w.text(), 'the untouched field keeps its message').toContain('Enter your password.');
+
+    await setPassword(w, 'hunter2hunter2');
+    expect(w.text()).not.toContain('Enter your password.');
+  });
+
   it('accepts a plain username (no email-format gate) and submits it as the identifier', async () => {
     const { w, auth } = mountForm();
     const login = vi.spyOn(auth, 'login').mockResolvedValue(true);

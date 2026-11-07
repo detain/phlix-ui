@@ -39,18 +39,25 @@ async function mountPage(opts: {
   client: ApiClient;
   router?: Router;
   token?: string;
+  config?: { routerBase: string };
 }): Promise<{ w: VueWrapper; router: Router }> {
   // `isLoggedIn` is a token-PRESENCE computed on the auth store — seed the token
   // store BEFORE the store is created so a mounted page reads the desired state.
   if (opts.loggedIn) localStorage.setItem('access_token', 'seeded-token');
   setActivePinia(createPinia());
   const router = opts.router ?? makeRouter();
-  await router.push(`/app/invite/${opts.token ?? TOKEN}`);
+  const base = opts.config?.routerBase ?? '/app';
+  await router.push(`${base}/invite/${opts.token ?? TOKEN}`);
   await router.isReady();
   const w = mount(AcceptInvitePage, {
     props: { token: opts.token ?? TOKEN, client: opts.client },
     attachTo: document.body,
-    global: { plugins: [router] },
+    global: {
+      plugins: [router],
+      // CU-112: without this provide, `config` is null and the page falls back
+      // to the '/app' default — the pre-existing pins below ride that path.
+      provide: opts.config ? { phlixConfig: opts.config } : undefined,
+    },
   });
   return { w, router };
 }
@@ -98,6 +105,47 @@ describe('AcceptInvitePage — logged out', () => {
       path: '/app/signup',
       query: { redirect: `/app/invite/${TOKEN}` },
     });
+    w.unmount();
+  });
+});
+
+describe('AcceptInvitePage — configured routerBase (ui__webux CU-112)', () => {
+  it('derives every internal hop from the mounted SPA root, not a literal /app', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/hub/invite/:token', name: 'accept-invite', component: { template: '<div/>' } },
+        { path: '/hub/login', name: 'login', component: { template: '<div/>' } },
+        { path: '/hub/signup', name: 'signup', component: { template: '<div/>' } },
+        { path: '/hub/shared-with-me', name: 'shared-with-me', component: { template: '<div/>' } },
+      ],
+    });
+    const { client } = makeClient();
+    const { w } = await mountPage({ loggedIn: false, client, router, config: { routerBase: '/hub' } });
+    const push = vi.spyOn(router, 'push');
+    await findBtnByText(w, 'Sign in')!.trigger('click');
+    expect(push).toHaveBeenCalledWith({
+      path: '/hub/login',
+      query: { redirect: `/hub/invite/${TOKEN}` },
+    });
+    w.unmount();
+  });
+
+  it('View Shared Libraries honors the configured root too', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/hub/invite/:token', name: 'accept-invite', component: { template: '<div/>' } },
+        { path: '/hub/shared-with-me', name: 'shared-with-me', component: { template: '<div/>' } },
+      ],
+    });
+    const { client } = makeClient();
+    const { w } = await mountPage({ loggedIn: true, client, router, config: { routerBase: '/hub' } });
+    const push = vi.spyOn(router, 'push');
+    await findBtnByText(w, 'Accept invite')!.trigger('click');
+    await flushPromises();
+    await findBtnByText(w, 'View shared libraries')!.trigger('click');
+    expect(push).toHaveBeenCalledWith('/hub/shared-with-me');
     w.unmount();
   });
 });

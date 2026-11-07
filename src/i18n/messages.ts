@@ -171,6 +171,7 @@ export const DEFAULT_MESSAGES = {
     passwordChoose: 'Choose a password.',
     passwordMinLength: 'Password must be at least 8 characters.',
     passwordMismatch: 'Passwords do not match.',
+    confirmPasswordRequired: 'Confirm your password.',
     signInFailed: 'Couldn’t sign in.',
     // M4 (fedev review): boot session validation could not reach the server.
     // The tokens are KEPT (network = unknown, not rejected); this is the

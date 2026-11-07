@@ -145,6 +145,7 @@ export declare const DE_MESSAGES: {
         passwordChoose: string;
         passwordMinLength: string;
         passwordMismatch: string;
+        confirmPasswordRequired: string;
         signInFailed: string;
         serverUnreachable: string;
         signupFailed: string;

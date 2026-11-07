@@ -1020,6 +1020,30 @@ describe('MusicLibraryPage', () => {
       wrapper.unmount();
     });
 
+    /**
+     * ui__webux CU-110 — mirrors the album page's m21 cure: the takeover error
+     * banner carries a wired retry. Recovery re-stubs the live fake server, and
+     * clicking retry must clear the banner and render the grid (loadArtists).
+     */
+    it('error banner offers a retry that reloads the listing (ui__webux CU-110)', async () => {
+      stubMusicServer(prodLibrary());
+      vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('artists down'))));
+      const wrapper = mountPage();
+      await flushPromises();
+
+      expect(wrapper.find('.music-page__error').exists(), 'the failure must be stated').toBe(true);
+      const retry = wrapper.find('[data-testid="music-retry"]');
+      expect(retry.exists()).toBe(true);
+
+      // The server recovers; retry re-runs the live loader and the grid renders.
+      stubMusicServer(prodLibrary());
+      await retry.trigger('click');
+      await flushPromises();
+      expect(wrapper.find('.music-page__error').exists()).toBe(false);
+      expect(wrapper.findAll('.artist-card').length, 'the grid really reloaded').toBeGreaterThan(0);
+      wrapper.unmount();
+    });
+
     it('a failed artist page keeps the grid, the count and the pager navigable', async () => {
       // The dead end this closes was NEW with S110's pager: zeroing `total` on
       // failure removed the pager, so a blip on page 7 of 22 left an empty grid, no

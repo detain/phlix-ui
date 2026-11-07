@@ -3216,6 +3216,7 @@ var cn = {
 		passwordChoose: "Choose a password.",
 		passwordMinLength: "Password must be at least 8 characters.",
 		passwordMismatch: "Passwords do not match.",
+		confirmPasswordRequired: "Confirm your password.",
 		signInFailed: "Couldn’t sign in.",
 		serverUnreachable: "Couldn’t reach the server. Check your connection and try again.",
 		signupFailed: "Couldn’t create your account. Please try again.",

@@ -81,6 +81,39 @@ describe('SignupForm', () => {
     expect(w.text()).toContain('Choose a password.');
   });
 
+  /**
+   * ui__webux CU-111 — the confirm arm checked mismatch before presence, so an
+   * EMPTY box was told "Passwords do not match." — a lie about a field that was
+   * never filled. Presence now wins; the mismatch copy is reserved for real
+   * disagreements between the two boxes.
+   */
+  it('an empty confirm states it is required, not mismatched (ui__webux CU-111)', async () => {
+    const { w, auth } = mountForm();
+    const signup = vi.spyOn(auth, 'signup');
+    await setEmail(w, 'n@b.c');
+    await setUsername(w, 'nick');
+    await setPassword(w, 'longenough');
+    await submit(w);
+    await flushPromises();
+    expect(signup).not.toHaveBeenCalled();
+    expect(w.text()).toContain('Confirm your password.');
+    expect(w.text(), 'an empty box is never told it mismatches').not.toContain('Passwords do not match.');
+  });
+
+  /**
+   * ui__webux CU-111 — editing a field clears its own message (mirrors the
+   * login form's cure); untouched fields keep theirs.
+   */
+  it('editing a field clears its inline error (ui__webux CU-111)', async () => {
+    const { w } = mountForm();
+    await submit(w);
+    await flushPromises();
+    expect(w.text()).toContain('Enter your email.');
+    await setEmail(w, 'n@b.c');
+    expect(w.text()).not.toContain('Enter your email.');
+    expect(w.text(), 'untouched fields keep their messages').toContain('Choose a username.');
+  });
+
   it('rejects an invalid email format', async () => {
     const { w, auth } = mountForm();
     const signup = vi.spyOn(auth, 'signup');

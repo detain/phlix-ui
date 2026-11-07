@@ -13,7 +13,7 @@
  * route to the app home; failures surface a SINGLE top banner (R13-15 —
  * the duplicate error toast is gone).
  */
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import AuthCard from './auth/AuthCard.vue';
 import AuthField from './auth/AuthField.vue';
@@ -82,10 +82,22 @@ function validate(): boolean {
     : password.value.length < 8
       ? t('auth.passwordMinLength')
       : null;
-  confirmError.value =
-    confirmPassword.value !== password.value ? t('auth.passwordMismatch') : null;
+  // CU-111 — an empty confirm box is a MISSING field, not a mismatch: saying
+  // "Passwords do not match." before the user ever typed one is a lie.
+  confirmError.value = !confirmPassword.value
+    ? t('auth.confirmPasswordRequired')
+    : confirmPassword.value !== password.value
+      ? t('auth.passwordMismatch')
+      : null;
   return !emailError.value && !usernameError.value && !passwordError.value && !confirmError.value;
 }
+
+// CU-111 — an inline error that lingers after the fix reads as a lie: editing a
+// field clears its own message. validate() re-derives all four on the next submit.
+watch(email, () => { emailError.value = null; });
+watch(username, () => { usernameError.value = null; });
+watch(password, () => { passwordError.value = null; });
+watch(confirmPassword, () => { confirmError.value = null; });
 
 async function handleSubmit(): Promise<void> {
   if (!validate()) return;
@@ -94,9 +106,10 @@ async function handleSubmit(): Promise<void> {
   if (ok) {
     emit('success');
     // Honor an internal `?redirect=` hop (e.g. the public invite-accept flow) but
-    // ONLY when it is a safe same-origin `/app/` path — never an absolute or
-    // protocol-relative URL (open-redirect guard). Otherwise land on the app home.
-    const redirect = safeRedirect(route.query.redirect);
+    // ONLY when it is a safe path under the CONFIGURED SPA root — never an
+    // absolute or protocol-relative URL (open-redirect guard). CU-112: the base
+    // comes from config, it is not a hardcoded '/app'. Otherwise land on home.
+    const redirect = safeRedirect(route.query.redirect, config?.routerBase ?? '/app');
     if (redirect) {
       void router.replace(redirect);
     } else {

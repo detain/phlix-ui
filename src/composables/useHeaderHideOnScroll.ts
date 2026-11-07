@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { onScopeDispose, readonly, ref, type DeepReadonly, type Ref } from 'vue';
+import { onScopeDispose, readonly, ref, watch, type DeepReadonly, type Ref } from 'vue';
 
 /** Return shape of {@link useHeaderHideOnScroll}. */
 export interface UseHeaderHideOnScroll {
@@ -13,6 +13,8 @@ export interface UseHeaderHideOnScroll {
   isHidden: DeepReadonly<Ref<boolean>>;
   /** Current scroll direction. */
   scrollDirection: DeepReadonly<Ref<'up' | 'down' | 'none'>>;
+  /** Bring the header back now (CU-108): the focus-custody reveal, also callable by hosts. */
+  reveal: () => void;
 }
 
 /**
@@ -22,12 +24,22 @@ export interface UseHeaderHideOnScroll {
  * threshold, revealing it again when scrolling up. The header stays visible
  * when `prefers-reduced-motion: reduce` is set.
  *
+ * CU-108 — hiding is `transform: translateY(-100%)` (visual only), so the bar's
+ * links and buttons stay in the tab order while it is off-screen. Focus custody
+ * law: when a `barRef` is provided and focus lands inside the bar (focusin
+ * bubbles), the bar reveals itself, and while focus is inside it the hide arm of
+ * `onScroll` is suppressed — keyboard focus can never sit on chrome the user
+ * cannot see. Without `barRef` the pre-CU-108 posture ships byte-identically.
+ *
  * SSR-safe: no listeners are attached when `window` is unavailable.
  *
  * @example
  * const { isHidden, scrollDirection } = useHeaderHideOnScroll();
+ * // or with focus custody:
+ * const barRef = ref<HTMLElement | null>(null);
+ * const { isHidden } = useHeaderHideOnScroll(barRef);
  */
-export function useHeaderHideOnScroll(): UseHeaderHideOnScroll {
+export function useHeaderHideOnScroll(barRef?: Ref<HTMLElement | null>): UseHeaderHideOnScroll {
   /** px of scroll before the header hides — prevents micro-scrolls triggering hide. */
   const THRESHOLD = 50;
 
@@ -37,6 +49,25 @@ export function useHeaderHideOnScroll(): UseHeaderHideOnScroll {
 
   /** Check if user prefers reduced motion — if so, never hide the header. */
   const prefersReducedMotion = ref(false);
+
+  /** True while DOM focus sits inside the header bar (CU-108 focus custody). */
+  function focusInsideBar(): boolean {
+    const bar = barRef?.value;
+    if (!bar || typeof document === 'undefined') return false;
+    const active = document.activeElement;
+    return active !== null && active !== document.body && bar.contains(active);
+  }
+
+  /**
+   * Bring the bar back and reset the delta reference (CU-108). Shared by the
+   * scroll-up reveal paths and focus custody, so a re-hide needs a fresh
+   * scroll of `THRESHOLD` px past wherever the user actually is.
+   */
+  function reveal(): void {
+    isHidden.value = false;
+    scrollDirection.value = 'none';
+    lastScrollY.value = typeof window !== 'undefined' ? window.scrollY : 0;
+  }
 
   function onScroll(): void {
     if (typeof window === 'undefined') return;
@@ -54,9 +85,11 @@ export function useHeaderHideOnScroll(): UseHeaderHideOnScroll {
     }
 
     // Hide header on scroll down past threshold, show on scroll up
-    // Only hide if user has scrolled down enough AND is not at the top
+    // Only hide if user has scrolled down enough AND is not at the top.
+    // CU-108: while focus is inside the bar it must not slide out from under
+    // the keyboard — a hidden-but-focused header is focus stolen by CSS.
     if (currentScrollY > THRESHOLD) {
-      isHidden.value = scrollDirection.value === 'down';
+      isHidden.value = scrollDirection.value === 'down' && !focusInsideBar();
     } else {
       // At top of page — always show header
       isHidden.value = false;
@@ -91,6 +124,34 @@ export function useHeaderHideOnScroll(): UseHeaderHideOnScroll {
       motionQuery = null;
     });
 
+    // CU-108: focus custody. `focusin` bubbles, so one listener on the bar
+    // itself catches focus landing on ANY chrome inside it — tabbing into the
+    // header reveals it instead of typing blind into an off-screen bar. The
+    // ref binds after mount, hence the watch (an element that appears later,
+    // or is swapped, re-arms the listener).
+    if (barRef) {
+      const onFocusIn = (): void => {
+        if (isHidden.value) reveal();
+      };
+      let attachedBar: HTMLElement | null = null;
+      const stopBarWatch = watch(
+        barRef,
+        (bar) => {
+          const next = bar ?? null;
+          if (next === attachedBar) return;
+          attachedBar?.removeEventListener('focusin', onFocusIn);
+          attachedBar = next;
+          attachedBar?.addEventListener('focusin', onFocusIn);
+        },
+        { immediate: true },
+      );
+      onScopeDispose(() => {
+        stopBarWatch();
+        attachedBar?.removeEventListener('focusin', onFocusIn);
+        attachedBar = null;
+      });
+    }
+
     // Initialize state on mount
     onScroll();
   }
@@ -98,5 +159,6 @@ export function useHeaderHideOnScroll(): UseHeaderHideOnScroll {
   return {
     isHidden: readonly(isHidden),
     scrollDirection: readonly(scrollDirection),
+    reveal,
   };
 }

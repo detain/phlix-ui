@@ -103,6 +103,32 @@ describe('ConnectPage', () => {
     expect(push).toHaveBeenCalledWith('/app');
   });
 
+  it('moves focus into the origin-confirm dialog when it arms (ui__webux CU-114)', async () => {
+    // Focus only exists on ATTACHED nodes, so this test mounts against the live
+    // document body (mountPage above does not attach — it never needed to).
+    stubFetch(okHealth);
+    const router = makeRouter();
+    router.push('/app/connect');
+    await router.isReady();
+    const w = mount(ConnectPage, {
+      attachTo: document.body,
+      global: { plugins: [router], provide: { phlixConfig: { routerBase: '/app' } } },
+    });
+    wrappers.push(w);
+    await w.find('input[name="server-address"]').setValue('192.168.1.50:8096');
+    await w.find('form').trigger('submit.prevent');
+    await flushPromises();
+    // The dialog armed…
+    const confirm = w.find('.connect__confirm');
+    expect(confirm.exists()).toBe(true);
+    // …is name-able for AT (role+label pair, not a bare div)…
+    expect(confirm.attributes('aria-labelledby')).toBe('connect-origin-confirm-text');
+    expect(document.getElementById('connect-origin-confirm-text')).not.toBeNull();
+    // …and focus is ON the Continue button, so keyboard/TV users can act.
+    const continueBtn = confirm.findAll('button')[0];
+    expect(document.activeElement).toBe(continueBtn.element);
+  });
+
   it('does NOT re-prompt the origin confirm for an already-confirmed origin', async () => {
     localStorage.setItem(CONNECTION_API_BASE_KEY, 'https://srv:8096');
     localStorage.setItem('phlix.connection.confirmedOrigin', 'https://srv:8096');

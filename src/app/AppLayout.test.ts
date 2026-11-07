@@ -62,6 +62,20 @@ describe('AppLayout', () => {
     expect(main.attributes('tabindex')).toBe('-1'); // programmatically focusable, not a tab stop
   });
 
+  it('reveals the sticky bar when focus reaches chrome inside it (CU-108)', async () => {
+    const w = mountLayout();
+    // Scroll far down — the bar hides (visual-only transform, chrome still focusable).
+    Object.defineProperty(window, 'scrollY', { configurable: true, get: () => 400 });
+    window.dispatchEvent(new Event('scroll'));
+    await flushPromises();
+    expect(w.get('header.shell__bar').classes()).toContain('is-hidden');
+
+    // Tabbing into the nav (focusin bubbles to the bar) must bring it back.
+    await w.get('.shell__nav .N').trigger('focusin');
+    await flushPromises();
+    expect(w.get('header.shell__bar').classes()).not.toContain('is-hidden');
+  });
+
   it('mounts the AppBackdrop atmosphere gated on prefs.atmosphere', async () => {
     const w = mountLayout();
     const prefs = usePreferencesStore();

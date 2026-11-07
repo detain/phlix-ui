@@ -204,6 +204,30 @@ describe('MusicArtistsPage', () => {
     w.unmount();
   });
 
+  /**
+   * ui__webux CU-110 — mirrors the album page's m21 cure: the error pane must
+   * carry a WIRED retry, not a dead-end message. Flipping the stub from reject
+   * to a resolved artist list and clicking retry clears the pane and renders
+   * the grid, proving the button re-issues the live loader (loadArtists).
+   */
+  it('error state offers a retry that reloads the listing (ui__webux CU-110)', async () => {
+    stubFetch({ error: true });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('.artists-page__error').exists()).toBe(true);
+
+    const retry = w.find('[data-testid="artists-retry"]');
+    expect(retry.exists()).toBe(true);
+
+    // The server recovers; retry re-runs the load and the grid renders.
+    stubFetch();
+    await retry.trigger('click');
+    await flushPromises();
+    expect(w.find('.artists-page__error').exists()).toBe(false);
+    expect(w.find('.artist-card').exists()).toBe(true);
+    w.unmount();
+  });
+
   it('navigates to the music-artist route with the name param on click', async () => {
     stubFetch({ artists: [{ name: 'Aphex Twin', album_count: 13 }] });
     const router = makeRouter();

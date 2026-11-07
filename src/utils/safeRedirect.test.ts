@@ -53,3 +53,39 @@ describe('safeRedirect — open-redirect guard', () => {
     expect(safeRedirect('/app/')).toBe('/app/');
   });
 });
+
+describe('safeRedirect — configured base (ui__webux CU-112)', () => {
+  // A host mounted at a custom root must accept ITS paths and reject the
+  // old default's — the guard checks the prefix the routes actually live at.
+  it.each([
+    ['/console/', '/console/'],
+    ['/console/invite/abc123', '/console/invite/abc123'],
+  ])('base "/console" accepts %s → %s', (input, expected) => {
+    expect(safeRedirect(input, '/console')).toBe(expected);
+  });
+
+  it.each([
+    ['an /app path under a /console mount', '/app/x'],
+    ['a bare foreign internal path', '/x'],
+    ['the bare base itself', '/console'],
+  ])('base "/console" rejects %s → null', (_label, input) => {
+    expect(safeRedirect(input, '/console')).toBeNull();
+  });
+
+  // base '' = document-root mount: any '/'-path qualifies, but the
+  // protocol-relative and backslash traps still reject (defence-in-depth).
+  it.each([
+    ['/x', '/x'],
+    ['/', '/'],
+  ])('base "" accepts %s → %s', (input, expected) => {
+    expect(safeRedirect(input, '')).toBe(expected);
+  });
+
+  it.each([
+    ['protocol-relative', '//evil.example'],
+    ['backslash trick', '/\\evil.example'],
+    ['relative path', 'x'],
+  ])('base "" still rejects %s → null', (_label, input) => {
+    expect(safeRedirect(input, '')).toBeNull();
+  });
+});

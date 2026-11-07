@@ -332,7 +332,10 @@ function readConfig(): PhlixAppConfig {
  * tests can assert the built-in pages are lazy `() => import()` route chunks.
  */
 export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
-    const base = config.routerBase || '/app';
+    // CU-112: `??` not `||` — an explicit '' means "mounted at the document
+    // root" and must survive to the route table (mirrors the loginPath law at
+    // the provide site). Absent config still defaults to '/app'.
+    const base = config.routerBase ?? '/app';
 
     // `meta.title` carries the STATIC page title for each built-in route. Where a
     // translatable string already exists in the i18n catalog the value is that
@@ -343,7 +346,7 @@ export function buildRoutes(config: PhlixAppConfig): RouteRecordRaw[] {
     // until then. `catchall` likewise has no static title (the app name shows).
     const routes: RouteRecordRaw[] = [
         {
-            path: base,
+            path: base === '' ? '/' : base,
             name: 'browse',
             meta: { title: 'shell.browse' },
             component: () => import('../pages/BrowsePage.vue'),

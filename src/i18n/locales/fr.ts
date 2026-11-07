@@ -152,6 +152,7 @@ export const FR_MESSAGES = {
     passwordChoose: 'Choisissez un mot de passe.',
     passwordMinLength: 'Le mot de passe doit comporter au moins 8 caractères.',
     passwordMismatch: 'Les mots de passe ne correspondent pas.',
+    confirmPasswordRequired: 'Confirmez votre mot de passe.',
     signInFailed: 'Échec de la connexion.',
     serverUnreachable: 'Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.',
     signupFailed: 'Impossible de créer votre compte. Veuillez réessayer.',

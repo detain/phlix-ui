@@ -439,6 +439,16 @@ async function confirmRemove(): Promise<void> {
       </EmptyState>
 
       <!--
+        CU-109: `v-else` against the error EmptyState above. A failed load used
+        to render BOTH messages — the EmptyState and MediaGrid's own empty
+        "No media found / Try adjusting your filters." — asserting at once that
+        loading failed and that the library is empty. One statement wins: while
+        `store.error` is set the grid (and its pager chrome) is not rendered,
+        and the EmptyState's Retry re-runs the full fetch. Loads here are full
+        replaces (`fetchMedia`/`reload`, never appends), so any rows a failed
+        filter-change left behind belong to the superseded query — replaced by
+        the error pane rather than shown as if current.
+
         ONE MediaGrid mount, whatever the view mode (S67/S68). `data-view-mode`
         reflects the persisted preference onto the grid root as a hook for
         NON-LAYOUT concerns only (e2e/unit selectors, per-mode colour/spacing
@@ -530,6 +540,7 @@ async function confirmRemove(): Promise<void> {
         directions; don't "fix" the renderer by deleting a branch.
       -->
       <div
+        v-else
         class="library-table"
         :role="tableSemantics ? 'table' : undefined"
         :aria-label="tableSemantics ? `${libraryName} titles` : undefined"

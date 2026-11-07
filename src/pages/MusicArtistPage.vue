@@ -29,6 +29,7 @@ import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
+import Button from '../components/ui/Button.vue';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
 import MusicPager from '../components/MusicPager.vue';
 import Icon from '../components/Icon.vue';
@@ -212,6 +213,12 @@ const trackCountLabel = computed(() =>
         <div v-else-if="error" class="artist-page__error" role="alert">
             <Icon name="alert-circle" class="artist-page__error-icon" />
             <p>{{ error }}</p>
+            <!-- ui__webux CU-110 (mirrors the album page's m21 cure): Retry
+                 re-runs loadArtist(), which resets error itself — a transient
+                 failure no longer strands the reader. -->
+            <Button variant="outline" size="sm" data-testid="artist-retry" @click="loadArtist">
+                {{ t('common.retry') }}
+            </Button>
         </div>
 
         <!-- Artist detail -->

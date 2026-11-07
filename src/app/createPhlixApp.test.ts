@@ -191,6 +191,17 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     expect(routes.find((r) => r.name === 'settings')?.path).toBe('/app/settings');
   });
 
+  it('treats an explicit empty routerBase as a document-root mount (ui__webux CU-112)', () => {
+    // The `||` law used to silently coerce '' back to '/app' while loginPath's
+    // `??` law honored it — the pair disagreed about what '/' means. buildRoutes
+    // now uses `??`: '' really means the routes live at the root.
+    const routes = buildRoutes({ app: 'server', apiBase: '', routerBase: '' });
+    expect(routes.find((r) => r.name === 'browse')?.path).toBe('/');
+    expect(routes.find((r) => r.name === 'settings')?.path).toBe('/settings');
+    expect(routes.find((r) => r.name === 'login')?.path).toBe('/login');
+    expect(routes.find((r) => r.name === 'media')?.path).toBe('/media/:id');
+  });
+
   it('registers the MCP token manager for the hub — and NOT for the media server', () => {
     // S243. The paired assertions are the point: a "the route exists" test alone
     // would also pass if the route were registered unconditionally, which is the

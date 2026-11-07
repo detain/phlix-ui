@@ -13,7 +13,7 @@
  * profiles, sets a 4-or-6-digit PIN and clears it. Each mutation refetches the
  * affected list (matching the React source). Errors surface as toasts.
  */
-import { ref, computed, onMounted, inject, type ComputedRef } from 'vue';
+import { ref, computed, onMounted, inject, watch, type ComputedRef } from 'vue';
 import { ApiClient } from '../../api/client';
 import {
   AdminUsersApi,
@@ -191,6 +191,12 @@ function clearUserErrors(): void {
   emailError.value = null;
   passwordError.value = null;
 }
+
+// CU-111 — an inline error that lingers after the fix reads as a lie: editing a
+// field clears its own message. validateUserForm() re-derives all three on submit.
+watch(username, () => { usernameError.value = null; });
+watch(email, () => { emailError.value = null; });
+watch(password, () => { passwordError.value = null; });
 
 /** Populate per-field errors for the user form; true when the form is valid. */
 function validateUserForm(): boolean {

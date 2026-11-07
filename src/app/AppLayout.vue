@@ -24,8 +24,11 @@ import { useHeaderHideOnScroll } from '../composables/useHeaderHideOnScroll';
 
 const prefs = usePreferencesStore();
 const drawer = ref(false);
+const barRef = ref<HTMLElement | null>(null);
 const { t } = useMessages();
-const { isHidden: headerHidden } = useHeaderHideOnScroll();
+// CU-108: the bar ref hands the composable focus custody — focus entering the
+// (visually hidden, still focusable) bar reveals it instead of stealing focus.
+const { isHidden: headerHidden } = useHeaderHideOnScroll(barRef);
 </script>
 
 <template>
@@ -33,7 +36,7 @@ const { isHidden: headerHidden } = useHeaderHideOnScroll();
     <a class="shell__skip" href="#main">{{ t('shell.skipToContent') }}</a>
     <AppBackdrop :enabled="prefs.atmosphere" />
 
-    <header class="shell__bar" :class="{ 'is-hidden': headerHidden }">
+    <header ref="barRef" class="shell__bar" :class="{ 'is-hidden': headerHidden }">
       <div class="shell__inner">
         <div class="shell__brand">
           <slot name="logo"><span class="shell__wordmark">Phlix<span class="shell__dot">.</span></span></slot>

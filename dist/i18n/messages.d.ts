@@ -159,6 +159,7 @@ export declare const DEFAULT_MESSAGES: {
         passwordChoose: string;
         passwordMinLength: string;
         passwordMismatch: string;
+        confirmPasswordRequired: string;
         signInFailed: string;
         serverUnreachable: string;
         signupFailed: string;

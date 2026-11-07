@@ -94,12 +94,25 @@ watch(address, () => {
   pendingUrl.value = null;
 });
 
+// CU-114 — the origin-confirm alertdialog arms asynchronously (after the probe
+// resolves), OUTSIDE the user's focus path: a keyboard or remote-driven (Tizen/
+// Roku-style) user had no idea it opened. Move focus to Continue the moment it
+// appears; `aria-labelledby` names it for AT once focus lands.
+const continueBtnRef = ref<InstanceType<typeof Button> | null>(null);
+watch(pendingOrigin, async (origin) => {
+  if (!origin) return;
+  await nextTick();
+  (continueBtnRef.value?.$el as HTMLElement | undefined)?.focus?.();
+});
+
 /** Resolve where to go once connected: the route that bounced us here, else home.
  *  secaudit m3: the same `safeRedirect` law LoginForm and SignupForm honor —
  *  vue-router keeps a rejected value inside the SPA, but the asymmetry invited
- *  a future copy of this pattern into a `location.href` sink. */
+ *  a future copy of this pattern into a `location.href` sink.
+ *  CU-112: the guard is checked against the CONFIGURED SPA root (config), not
+ *  a hardcoded '/app'. */
 function destination(): string {
-  return safeRedirect(route.query['redirect']) ?? homePath.value;
+  return safeRedirect(route.query['redirect'], config?.routerBase ?? '/app') ?? homePath.value;
 }
 
 function commit(url: string): void {
@@ -333,13 +346,22 @@ async function chooseCandidate(candidate: ConnectCandidate): Promise<void> {
           </button>
 
           <!-- One-time confirm before the first authed call sends the Bearer
-               token to a NEW origin (typo / hostile-address guard). -->
-          <div v-if="pendingOrigin" class="connect__confirm" role="alertdialog">
-            <p class="connect__confirm-text">
+               token to a NEW origin (typo / hostile-address guard).
+               CU-114: this alertdialog ARMS outside the user's focus path (it
+               appears after submit resolves), so keyboard/TV users were never
+               told it exists. Focus moves to Continue when it opens, and the
+               dialog is NAME-ABLE via aria-labelledby for AT announcement. -->
+          <div
+            v-if="pendingOrigin"
+            class="connect__confirm"
+            role="alertdialog"
+            aria-labelledby="connect-origin-confirm-text"
+          >
+            <p id="connect-origin-confirm-text" class="connect__confirm-text">
               {{ t('connect.originConfirm', { origin: pendingOrigin }) }}
             </p>
             <div class="connect__confirm-actions">
-              <Button type="button" variant="solid" size="md" @click="confirmOrigin">
+              <Button ref="continueBtnRef" type="button" variant="solid" size="md" @click="confirmOrigin">
                 {{ t('connect.confirmContinue') }}
               </Button>
               <Button type="button" variant="ghost" size="md" @click="cancelOrigin">

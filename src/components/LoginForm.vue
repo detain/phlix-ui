@@ -14,7 +14,7 @@
  * flow is unchanged: `useAuthStore.login` -> on success emit `success` + route
  * to the app home.
  */
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import AuthCard from './auth/AuthCard.vue';
 import AuthField from './auth/AuthField.vue';
@@ -67,6 +67,11 @@ function validate(): boolean {
   return !identifierError.value && !passwordError.value;
 }
 
+// CU-111 — an inline error that lingers after the fix reads as a lie: editing a
+// field clears its own message. validate() re-derives both on the next submit.
+watch(identifier, () => { identifierError.value = null; });
+watch(password, () => { passwordError.value = null; });
+
 async function handleSubmit(): Promise<void> {
   if (!validate()) return;
   submitFailed.value = false;
@@ -74,9 +79,10 @@ async function handleSubmit(): Promise<void> {
   if (ok) {
     emit('success');
     // Honor an internal `?redirect=` hop (e.g. the public invite-accept flow) but
-    // ONLY when it is a safe same-origin `/app/` path — never an absolute or
-    // protocol-relative URL (open-redirect guard). Otherwise land on the app home.
-    const redirect = safeRedirect(route.query.redirect);
+    // ONLY when it is a safe path under the CONFIGURED SPA root — never an
+    // absolute or protocol-relative URL (open-redirect guard). CU-112: the base
+    // comes from config, it is not a hardcoded '/app'. Otherwise land on home.
+    const redirect = safeRedirect(route.query.redirect, config?.routerBase ?? '/app');
     if (redirect) {
       void router.replace(redirect);
     } else {

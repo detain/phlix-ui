@@ -37,6 +37,7 @@ import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
 import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
+import Button from '../components/ui/Button.vue';
 import MusicArtistCard from '../components/MusicArtistCard.vue';
 import MusicAlbumCard from '../components/MusicAlbumCard.vue';
 import MusicTrackList from '../components/MusicTrackList.vue';
@@ -228,6 +229,23 @@ async function loadAlbums(artist: MusicArtist, offset: number): Promise<void> {
     error.value = t('music.pageLoadFailed');
   } finally {
     loading.value = false;
+  }
+}
+
+/**
+ * CU-110: the exit for the shared error banner — re-run the CURRENT view's
+ * loader at the offset that failed (each loader clears `error` at entry, so a
+ * recovery replaces the banner with its grid). The albums arm needs the still-
+ * selected artist; the artists view never had one, so the artists arm is the
+ * total fallback. The tracks view does not set this banner today (its embedded
+ * detail catch keeps its own prefix silent — see the banner's comment), and the
+ * fallback reloads artists honestly if that ever changes without a new arm.
+ */
+function retryCurrentView(): void {
+  if (view.value === 'albums' && selectedArtist.value) {
+    void loadAlbums(selectedArtist.value, albumOffset.value);
+  } else {
+    void loadArtists(artistOffset.value);
   }
 }
 
@@ -435,6 +453,12 @@ function goBack(): void {
     <div v-if="error" class="music-page__error" role="alert">
       <Icon name="alert-circle" class="music-page__error-icon" />
       <p class="music-page__error-text">{{ error }}</p>
+      <!-- ui__webux CU-110 (mirrors the album page's m21 cure): the banner used
+           to be a dead end. Retry re-runs the CURRENT view's loader at the
+           failed page's offset (both loaders reset error themselves). -->
+      <Button variant="outline" size="sm" data-testid="music-retry" @click="retryCurrentView">
+        {{ t('common.retry') }}
+      </Button>
     </div>
 
     <!-- Artists grid. The pager sits OUTSIDE the grid so its `aria-controls` can

@@ -25,6 +25,7 @@ import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useMusicPlayer } from '../composables/useMusicPlayer';
 import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
+import Button from '../components/ui/Button.vue';
 import Icon from '../components/Icon.vue';
 import MusicPager from '../components/MusicPager.vue';
 import type { MusicTrack } from '../types/music';
@@ -206,6 +207,12 @@ function onSeek(event: Event): void {
     <div v-if="error" class="tracks-page__error" role="alert">
       <Icon name="alert-circle" class="tracks-page__error-icon" />
       <p class="tracks-page__error-text">{{ error }}</p>
+      <!-- ui__webux CU-110 (mirrors the album page's m21 cure): the banner used
+           to be a dead end. Retry re-runs loadTracks() at the failed page's
+           offset (the loader resets error itself). -->
+      <Button variant="outline" size="sm" data-testid="tracks-retry" @click="loadTracks(offset)">
+        {{ t('common.retry') }}
+      </Button>
     </div>
 
     <!-- The pager's `aria-controls` IDREF is on THIS always-rendered wrapper, not on

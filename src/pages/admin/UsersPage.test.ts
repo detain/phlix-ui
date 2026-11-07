@@ -298,6 +298,30 @@ describe('Admin UsersPage — create / edit / delete', () => {
     w.unmount();
   });
 
+  /**
+   * ui__webux CU-111 — the per-field errors had no clear path: once
+   * validateUserForm() fired them, fixing the field left the message on screen
+   * until the next submit. Editing a field now clears its own error, while the
+   * untouched fields keep theirs.
+   */
+  it('editing a field clears its inline error (ui__webux CU-111)', async () => {
+    const { client } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Add user')!.trigger('click');
+    await flushPromises();
+    await findBtn(w, 'Create')!.trigger('click');
+    await flushPromises();
+    expect(fieldErrorTexts()).toContain('Username is required.');
+
+    const inputs = document.querySelectorAll<HTMLInputElement>('.admin-users__input');
+    inputs[0].value = 'dave'; inputs[0].dispatchEvent(new Event('input'));
+    await flushPromises();
+    expect(fieldErrorTexts(), 'the fixed field no longer lies').not.toContain('Username is required.');
+    expect(fieldErrorTexts(), 'untouched fields keep their messages').toContain('Email is required.');
+    w.unmount();
+  });
+
   it('rejects a malformed email inline', async () => {
     const { client, post } = makeClient();
     const w = mountPage(client);

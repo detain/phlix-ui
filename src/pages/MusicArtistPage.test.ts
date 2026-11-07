@@ -204,6 +204,28 @@ describe('MusicArtistPage', () => {
     w.unmount();
   });
 
+  /**
+   * ui__webux CU-110 — mirrors the album page's m21 cure: the takeover error
+   * pane carries a wired retry that re-issues the live loader (loadArtist).
+   */
+  it('error state offers a retry that reloads the artist (ui__webux CU-110)', async () => {
+    stubFetch({ error: true });
+    const w = mountPage(makeRouter());
+    await flushPromises();
+    expect(w.find('.artist-page__error').exists()).toBe(true);
+
+    const retry = w.find('[data-testid="artist-retry"]');
+    expect(retry.exists()).toBe(true);
+
+    // The server recovers; retry re-runs the load and the albums render.
+    stubFetch();
+    await retry.trigger('click');
+    await flushPromises();
+    expect(w.find('.artist-page__error').exists()).toBe(false);
+    expect(w.find('.album-card').exists()).toBe(true);
+    w.unmount();
+  });
+
   it('shows the albums empty state when the artist has none', async () => {
     stubFetch({ albums: [{ name: 'Discovery', artist: 'Daft Punk', track_count: 14 }] });
     const w = mountPage(makeRouter());

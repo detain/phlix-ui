@@ -306,6 +306,11 @@ describe('LibraryPage', () => {
     const empty = w.findComponent(EmptyState);
     expect(empty.exists()).toBe(true);
     expect(empty.text()).toContain('library offline');
+    // CU-109: the grid (and MediaGrid's "No media found" empty pane inside it)
+    // is gated v-else, so a failed load states EXACTLY ONE message instead of
+    // claiming both "load failed" and "library is empty" at once.
+    expect(w.find('.library-table').exists()).toBe(false);
+    expect(w.text()).not.toContain('No media found');
     const before = fn.mock.calls.length;
     await empty.find('button').trigger('click');
     await flushPromises();

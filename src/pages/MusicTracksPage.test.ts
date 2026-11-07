@@ -146,6 +146,28 @@ describe('MusicTracksPage', () => {
     w.unmount();
   });
 
+  /**
+   * ui__webux CU-110 — mirrors the album page's m21 cure: the error banner
+   * carries a wired retry that re-issues the live loader (loadTracks).
+   */
+  it('error state offers a retry that reloads the tracks (ui__webux CU-110)', async () => {
+    stubFetch({ error: true });
+    const w = mountPage();
+    await flushPromises();
+    expect(w.find('.tracks-page__error').exists(), 'the failure must be stated').toBe(true);
+
+    const retry = w.find('[data-testid="tracks-retry"]');
+    expect(retry.exists()).toBe(true);
+
+    // The server recovers; retry re-runs the load and the rows render.
+    stubFetch();
+    await retry.trigger('click');
+    await flushPromises();
+    expect(w.find('.tracks-page__error').exists()).toBe(false);
+    expect(w.findAll('.track-row')).toHaveLength(2);
+    w.unmount();
+  });
+
   it('filters the visible rows by the search query', async () => {
     stubFetch({ tracks: [rawTrack('t1', 'Airbag'), rawTrack('t2', 'Paranoid Android')] });
     const w = mountPage();

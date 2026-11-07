@@ -24,6 +24,7 @@ import { useMessages } from '../composables/useMessages';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
 import { ApiClient, MUSIC_PAGE_SIZE } from '../api/client';
+import Button from '../components/ui/Button.vue';
 import Icon from '../components/Icon.vue';
 import MusicPager from '../components/MusicPager.vue';
 import type { MusicArtist } from '../types/music';
@@ -151,6 +152,14 @@ function goToArtist(artist: MusicArtist): void {
             <div v-else-if="error && artists.length === 0" class="artists-page__error" role="alert">
                 <Icon name="alert-circle" class="artists-page__error-icon" />
                 <p>{{ error }}</p>
+                <!-- ui__webux CU-110 (mirrors the album page's m21 cure): the
+                     message used to be a dead end. Retry re-runs loadArtists()
+                     at the failed page's offset (the loader resets error
+                     itself), so a transient failure no longer strands the
+                     listing. -->
+                <Button variant="outline" size="sm" data-testid="artists-retry" @click="loadArtists(offset)">
+                    {{ t('common.retry') }}
+                </Button>
             </div>
 
             <!-- Empty state -->

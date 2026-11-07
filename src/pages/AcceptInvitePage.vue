@@ -61,14 +61,20 @@ const submitting = ref(false);
 const accepted = ref(false);
 const error = ref<string | null>(null);
 
+/** CU-112: every internal hop is derived from the CONFIGURED SPA root (the
+ *  house `config?.routerBase ?? '/app'` law LoginForm/SignupForm/PhlixApp
+ *  follow) — no hardcoded '/app' literals, so a host mounted elsewhere
+ *  (e.g. '/hub') routes correctly instead of 404-ing out of the SPA. */
+const base = computed(() => config?.routerBase ?? '/app');
+
 /** The `?redirect=` value the auth buttons carry so login/signup returns here. */
 const loginTo = computed(() => ({
-  path: '/app/login',
-  query: { redirect: `/app/invite/${props.token}` },
+  path: `${base.value}/login`,
+  query: { redirect: `${base.value}/invite/${props.token}` },
 }));
 const signupTo = computed(() => ({
-  path: '/app/signup',
-  query: { redirect: `/app/invite/${props.token}` },
+  path: `${base.value}/signup`,
+  query: { redirect: `${base.value}/invite/${props.token}` },
 }));
 
 /**
@@ -121,7 +127,7 @@ async function accept(): Promise<void> {
 }
 
 function viewShared(): void {
-  void router.push('/app/shared-with-me');
+  void router.push(`${base.value}/shared-with-me`);
 }
 </script>
 

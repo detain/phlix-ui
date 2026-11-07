@@ -6,7 +6,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { effectScope, nextTick } from 'vue';
+import { effectScope, nextTick, ref, type Ref } from 'vue';
 import { useHeaderHideOnScroll } from './useHeaderHideOnScroll';
 
 function simulateScroll(scrollY: number): void {
@@ -195,6 +195,125 @@ describe('useHeaderHideOnScroll (R5.1)', () => {
       // isHidden starts false, scrollDirection starts 'none'
       expect(hidden.value).toBe(false);
       expect(direction.value).toBe('none');
+    } finally {
+      scope.stop();
+    }
+  });
+});
+
+/**
+ * CU-108 — the hiding is `transform: translateY(-100%)` (visual only), so the
+ * bar's chrome stays in the tab order while it is off-screen. With a `barRef`
+ * the composable takes focus custody: focus entering the bar reveals it, and
+ * while focus is inside it, scroll-down must not re-hide it.
+ */
+function makeBar(): { bar: HTMLElement; inner: HTMLButtonElement; barRef: Ref<HTMLElement | null> } {
+  const bar = document.createElement('header');
+  const inner = document.createElement('button');
+  bar.appendChild(inner);
+  document.body.appendChild(bar);
+  return { bar, inner, barRef: ref(bar) };
+}
+
+describe('useHeaderHideOnScroll — focus custody (CU-108)', () => {
+  it('reveals a hidden bar when focus lands inside it', async () => {
+    const { bar, inner, barRef } = makeBar();
+    const scope = effectScope();
+    try {
+      let result!: ReturnType<typeof useHeaderHideOnScroll>;
+      scope.run(() => {
+        result = useHeaderHideOnScroll(barRef);
+      });
+
+      simulateScroll(100);
+      await nextTick();
+      expect(result.isHidden.value).toBe(true);
+
+      // jsdom fires a bubbling `focusin` from .focus() — the bar's listener
+      // must catch it and bring the chrome back.
+      inner.focus();
+      await nextTick();
+      expect(result.isHidden.value).toBe(false);
+    } finally {
+      inner.blur();
+      scope.stop();
+      bar.remove();
+    }
+  });
+
+  it('suppresses hiding while focus stays inside the bar', async () => {
+    const { bar, inner, barRef } = makeBar();
+    const scope = effectScope();
+    try {
+      let result!: ReturnType<typeof useHeaderHideOnScroll>;
+      scope.run(() => {
+        result = useHeaderHideOnScroll(barRef);
+      });
+
+      inner.focus();
+      simulateScroll(100);
+      await nextTick();
+      expect(result.scrollDirection.value).toBe('down'); // the scroll still reads as down
+      expect(result.isHidden.value).toBe(false); // but the bar cannot slide out from under focus
+    } finally {
+      inner.blur();
+      scope.stop();
+      bar.remove();
+    }
+  });
+
+  it('attach-after-setup re-arms the listener (the ref binds post-mount)', async () => {
+    const barRef = ref<HTMLElement | null>(null);
+    const scope = effectScope();
+    try {
+      let result!: ReturnType<typeof useHeaderHideOnScroll>;
+      scope.run(() => {
+        result = useHeaderHideOnScroll(barRef);
+      });
+
+      simulateScroll(100);
+      await nextTick();
+      expect(result.isHidden.value).toBe(true);
+
+      // The element only exists after mount (template-ref timing): the watch
+      // must adopt it, and focus must then reach the still-hidden bar's chrome.
+      const { bar, inner } = makeBar();
+      barRef.value = bar;
+      await nextTick();
+      inner.focus();
+      await nextTick();
+      expect(result.isHidden.value).toBe(false);
+      inner.blur();
+      bar.remove();
+    } finally {
+      scope.stop();
+    }
+  });
+
+  it('reveal() re-shows the bar and re-bases the scroll delta', async () => {
+    const scope = effectScope();
+    try {
+      let result!: ReturnType<typeof useHeaderHideOnScroll>;
+      scope.run(() => {
+        result = useHeaderHideOnScroll();
+      });
+
+      simulateScroll(100);
+      await nextTick();
+      expect(result.isHidden.value).toBe(true);
+
+      result.reveal();
+      expect(result.isHidden.value).toBe(false);
+
+      // A 40px continuation is below THRESHOLD from the re-based origin — no
+      // re-hide until a full scroll delta accrues again.
+      simulateScroll(140);
+      await nextTick();
+      expect(result.isHidden.value).toBe(false);
+
+      simulateScroll(200);
+      await nextTick();
+      expect(result.isHidden.value).toBe(true);
     } finally {
       scope.stop();
     }

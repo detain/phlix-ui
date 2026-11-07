@@ -6,6 +6,67 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w14 L3 2026-11-08 (CU-108/CU-109/CU-110/CU-111/CU-112/CU-114 + folded w12 L2 info rows)
+
+Review-cure batch (the `.reviews/2026-11-04/` ui webux register; seventh fix wave). Six
+behavior cures across focus custody, error recovery, form UX, and router-base honesty —
+each with red-first or mutation-toothed pins; the committed bundle is rebuilt (src moved),
+determinism proven ×2 (`diff -r` zero) with identities disclosed at the end.
+
+- **CU-108** the hide-on-scroll header no longer strands keyboard focus off-screen:
+  `useHeaderHideOnScroll` accepts the bar element and reveals the bar when focus enters
+  it, and suppresses hiding while focus stays inside it; a `reveal()` handle re-bases the
+  scroll delta. `AppLayout` passes the bar ref. Five new pins (four composable, one
+  mounted-layout) prove reveal-on-focusin, suppression, late-attach re-arm, and re-base.
+- **CU-109** `LibraryPage` can no longer show "failed to load" and "No media found" at
+  once: the grid is now the `v-else` of the error `EmptyState`, so a failed load renders
+  exactly one message. The existing retry-pin was extended (assertion-only).
+- **CU-110** the four music pages' error panes (artists, artist, tracks, library-albums)
+  gained the album page's wired-retry treatment (their register sibling had one): each
+  Retry button re-invokes the page's own loader (and the library page retries the view
+  actually in focus), so recovery is offered, not decorative. Four tests arm the failure,
+  click, and prove the listing returns.
+- **CU-111** inline validation errors clear the moment the field they point at is edited
+  (`LoginForm` 2 watches, `SignupForm` 4, admin `UsersPage` create-form 3), and signup's
+  confirm arm splits required-vs-mismatch — an empty confirm says it is required instead
+  of claiming a mismatch it never checked. New catalog leaf `auth.confirmPasswordRequired`
+  in all seven locales; measured UI-chrome catalog size moved 532 → 533, and the three
+  prose tripwire sites (`src/i18n/errors.ts`, `src/i18n/errors.test.ts`, README) rotated
+  from their measured red in this same change. Consumers re-vendoring the next tag will
+  rotate their locale-equality pins (disclosed for that wave). Four tests.
+- **CU-112** the open-redirect guard generalizes to the CONFIGURED SPA root:
+  `safeRedirect(value, base = '/app')` checks the prefix the routes are actually mounted
+  at, `LoginForm`/`SignupForm`/`ConnectPage` pass `config?.routerBase ?? '/app'`,
+  `AcceptInvitePage` derives every hop (login/signup redirects and shared-with-me) from
+  the same base — zero hardcoded `/app` literals left in it — and `buildRoutes` aligns
+  with the logout-path law (`??`, so an explicit `''` is an honest document-root mount,
+  home route `/`). Default `'/app'` behavior is byte-identical; the old datasets are
+  untouched and thirteen new pins cover custom base, root mount, and derivation.
+- **CU-114** `ConnectPage`'s origin-confirm `alertdialog` (armed after address submit,
+  previously outside the focus path entirely) now receives focus on its Continue action
+  and is named via `aria-labelledby`; the focus-landing test proves `document.activeElement`
+  lands on it and the label resolves.
+- **Folded/banked** (from `REVIEW-w12L2ui.md`): README's locale-framing sentence was the
+  dotted-subset half-truth the review flagged — it now states the full shape (205 error
+  strings per locale: 129 dotted + 76 flat; 1,435 across the seven catalogs); the fold
+  rides the 533 rotation above (README entered the change anyway). Banked with
+  attestation: the M4 mutation-log wording nit (no repo change needed), the unpinned
+  `#v0.5.6` prose token (a currency-gate design question, not a defect), and the
+  LogsPage string-companion doctrine (adjudicated FOR its lane).
+- **Bundle identity** (rebuilt; determinism `diff -r` ×2 zero): `dist/phlix-ui.js`
+  `5196f57bbdef18073bdc13c992743842 → db2d03556330c38ad7013fae070390c3`, `dist/player.js`
+  `66be3d1041989c1ee1238bc47ef40004 → 31cfc705408539abd69a5207b6648b1e`, `dist/style.css`
+  `1ad6b48d5225cb1379a994030b9f796c → 1cedbc441f64daa5abeef0d8ec45c3aa`, UMD pair
+  `12e14c4d442f53db05ad8c45a73f8bfa → c1b6ac7335e60d3c40b8dcd6910a2424` /
+  `a8e86238b752235ed13fb7556f4fe294 → de77dbf132245da7e7b68e57cec68bd2`, `dist/player.css`
+  `9e1f4f79bfd2da8b862bbc7c353eff01` HELD. 130 hash-named lazy chunks rotated (260
+  file-pairs), the Player page carrier among them: `PlayerPage-zfZ5G8aN.js`
+  `304ce411c6c3d0872e11ec805926ce7d → PlayerPage-CjKjMmhk.js c7e62d651d812411c13d25c0ea231f7c`
+  (+ cjs `BCWXNU7O → DeYX0jWD`).
+- **Gates**: serial suite 335 files / 6,904 → 6,931 passing, 10 skipped unchanged
+  (+27 pins attributed above); `vue-tsc` type-clean inside both builds; `eslint` RC=0;
+  `dist:check` green post-commit (a third build dirty-free).
+
 ## Unreleased — w12 L2 2026-11-07 (CU-084/CU-087/CU-098/CU-100/CU-120 + banked w11 L9/w13 L1 rows)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, sixth ui wave). Documentation
