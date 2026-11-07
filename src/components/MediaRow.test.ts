@@ -451,8 +451,11 @@ describe('MediaRow — content-visibility placement, built stylesheet (S222)', (
  * clips to its padding box (the scrollport), and the rail had zero `padding-top`,
  * so the top of `.media-card:hover`'s lift was clipped away on every home rail.
  *
- * NUMBERS re-verified at tip `58b1e5e4` (MediaRow.vue/MediaCard.vue/dist-style.css
- * byte-identical since the S222 audit pin `24b60e49`):
+ * NUMBERS re-verified at tip `58b1e5e4` (MediaRow.vue byte-identical since the
+ * S222 audit pin `24b60e49`; CU-079/w11 L9 later split the MediaCard lift rule
+ * into an ungated `:focus-within` arm plus a `@media (hover: hover)`-gated
+ * `:hover` arm — the transform VALUE is untouched, and both arms are pinned
+ * below with their gate state):
  *  - Lift: `translateY(-8px) scale(1.025)` (pinned below — this test is the
  *    coupling that keeps the headroom honest if the lift ever changes).
  *  - S222's recorded headless-Chromium probe (no chromium on this venue; the
@@ -559,12 +562,25 @@ describe('MediaRow — hover-lift headroom in the rail scroll box, built stylesh
   it('pins the lift the headroom was sized for, unchanged', () => {
     // Coupling guard: if the transform grows, the 12px floor silently fails —
     // changing this string MUST be a conscious act paired with the clearance.
-    const lift = /([^{}]+)\{transform:translateY\(-8px\)\s?scale\(1\.025\)\}/.exec(css);
-    expect(lift).not.toBeNull();
-    const selector = lift![1];
-    expect(selector).toContain('media-card');
-    expect(selector).toContain(':hover');
-    expect(selector).toContain(':focus-within');
-    expect(css.match(/translateY\(-8px\)scale\(1\.025\)/g) ?? []).toHaveLength(1);
+    // CU-079 (w11 L9) split the compound `:hover, :focus-within` rule: the
+    // keyboard arm stays at the top level (the only visible affordance on a
+    // remote), the pointer arm moved behind `@media (hover: hover)` — so the
+    // lift ships as exactly these two arms. Brace depth tells gated from
+    // top-level: inside an @media block the selector sits at depth 1.
+    const RULE = /([^{}]+)\{transform:translateY\(-8px\)\s?scale\(1\.025\)\}/g;
+    const arms = [...css.matchAll(RULE)];
+    expect(arms).toHaveLength(2);
+    const depthAt = (i: number) =>
+      (css.slice(0, i).match(/\{/g) ?? []).length - (css.slice(0, i).match(/\}/g) ?? []).length;
+    const hover = arms.filter((a) => a[1].includes(':hover'));
+    const focus = arms.filter((a) => a[1].includes(':focus-within'));
+    expect(hover).toHaveLength(1);
+    expect(focus).toHaveLength(1);
+    expect(hover[0][1]).toContain('media-card');
+    expect(focus[0][1]).toContain('media-card');
+    expect(depthAt(hover[0].index)).toBe(1); // gated: inside @media (hover: hover)
+    expect(depthAt(focus[0].index)).toBe(0); // keyboard arm stays ungated
+    // No third copy of the lift anywhere in the shipped sheet.
+    expect(css.match(/translateY\(-8px\)scale\(1\.025\)/g) ?? []).toHaveLength(2);
   });
 });
