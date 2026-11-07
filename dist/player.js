@@ -11884,7 +11884,7 @@ var Rm = { class: "player__stage" }, zm = ["src", "poster"], Bm = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-101a562c"]]), Eh = "0.99.23", Dh = ["aria-label"], Oh = ["src", "poster"], kh = { class: "mini__body" }, Ah = { class: "mini__title" }, jh = { class: "mini__controls" }, Mh = ["aria-label"], Nh = ["aria-label", "aria-pressed"], Ph = ["aria-label"], Fh = ["aria-label"], Ih = {
+}), [["__scopeId", "data-v-101a562c"]]), Eh = "0.99.24", Dh = ["aria-label"], Oh = ["src", "poster"], kh = { class: "mini__body" }, Ah = { class: "mini__title" }, jh = { class: "mini__controls" }, Mh = ["aria-label"], Nh = ["aria-label", "aria-pressed"], Ph = ["aria-label"], Fh = ["aria-label"], Ih = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Lh = /*#__PURE__*/ X(/* @__PURE__ */ d({

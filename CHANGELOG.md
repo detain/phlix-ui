@@ -6,6 +6,56 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## 0.99.24 - 2026-11-07
+
+- **Why this release exists.** The `v0.99.23` tag's tree rotated
+  `@phlix/syncplay` `#v0.1.7` -> `#v0.1.8` inside its release ritual, and that
+  client runtime REGRESSED inbound watch-party frame handling: `ui-ci`
+  42339700757 failed attempt 1 with 11 deterministic syncplay inbound-decode
+  reds (`src/api/syncplay.ws.test.ts` ×8,
+  `src/stores/useSyncPlayStore.actions.test.ts` ×2,
+  `src/stores/useSyncPlayStore.join.test.ts` ×1). The erratum commit
+  `1a9f5472` reverted the syncplay pin to `#v0.1.7` (the `@phlix/contracts`
+  `#v0.5.7` half of that rotation was innocent and is kept) and turned CI
+  green (`ui-ci` 42341836545, attempt-1 success). `v0.99.24` is the clean
+  release cut atop that erratum tip, giving consumers a tagged dist whose
+  behavior matches its claim.
+- **Consumers: pin `#v0.99.24`, never `#v0.99.23`.** The pushed `v0.99.23` tag
+  is a truthful historical record whose published `dist/` is known-bad (its
+  tarball still carries the 0.1.8 client that can silently swallow
+  play/seek frames); per pushed-tag law it is NOT moved or retired here.
+  S181 pin-skew pressure keeps any consumer still on `#v0.99.22` red until the
+  `.24` wave lands.
+- **Content delta: none beyond the stamp.** No `src/` changes ride this cut —
+  it ships exactly the erratum-corrected dependency state (syncplay
+  `github:detain/phlix-syncplay#v0.1.7`, peel `1a80b1d1`; contracts
+  `github:detain/phlix-contracts#v0.5.7`, peel `bedfe69b`; registry trio
+  byte-ident at `5d1783a71a3c4e128b2021327cad3717` / `90b79e355055307d5ba2cc0ef98e2300` /
+  `8c92c0703eae8a429c509ff16e0d185d`). `package-lock.json` carries only the two
+  own-version echoes (npm@11, empty userconfig, lock-only install idempotent —
+  zero graph drift). i18n catalogs HELD (533 keys).
+- **Measured suite counts.** Baseline at the untouched erratum tip
+  `1a9f5472`: full serial battery `vitest --no-file-parallelism` = 335 files /
+  6,931 passing | 10 skipped, exit 0. At this ritual tree: the identical
+  335 / 6,931 | 10, exit 0 (the release added and removed no tests). The
+  version-rotation tripwires (`readme-version-currency` ×3, `dist-version-stamp`
+  ×2) were measured RED at the bump-first state and rotated green by the README
+  trio and the rebuilt `dist/` in this same commit.
+- **`dist/` rebuilt IN THIS COMMIT.** Two consecutive full builds
+  byte-identical (`diff -r` exit 0, 889 files); aggregate md5
+  (`find dist -type f | sort | xargs md5sum | md5sum`) =
+  `36f2e3a06ab44139155ecedc595ee9b3`. Entries old -> new: `phlix-ui.js`
+  `5d5a0aca9035074096c96749c23afc9e → b000d72d5a93a9365682dc9a109f654c`,
+  `player.js` `85645e4ba1567e2292ae969a726cd39c → b5bfb4c6ce951faf12cc95d5768a47dd`,
+  UMD pair `5f010353c9612ffe30c8642237444d40 → d4e23ca8464e56a11dcc9d3ece1e5d7c`
+  / `0a82cbe5713d799ebbe102ccaccac38b → ae409dea7d9fe9a34bedab838fa4e5b9`.
+  Because the version literal is length-stable, exactly these four stamped
+  files rotate and EVERY other dist file — all chunk carriers, all source
+  maps, `style.css` `1cedbc441f64daa5abeef0d8ec45c3aa`, `player.css`
+  `9e1f4f79bfd2da8b862bbc7c353eff01` — is byte-for-byte identical to the
+  erratum tip's committed dist (verified via `git archive HEAD dist` diff).
+  `dist:check` green post-commit.
+
 ## 0.99.23 — fix-forward erratum (2026-11-08)
 
 - **Syncplay pin reverted to `#v0.1.7` — the `#v0.1.8` half of the release's
