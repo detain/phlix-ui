@@ -367,6 +367,29 @@ describe('Admin LogsPage — renderer overhaul', () => {
     w.unmount();
   });
 
+  // Companion to the DOM-level "CU-102 legs" pin below, asserted on the STRING
+  // fed to v-html (this file's own doctrine: the DOM re-serializes entities
+  // back to characters, hiding the law). Entity-exact coverage of both non-JSON
+  // legs: markup between two decorated tokens (loop leg) and an apostrophe
+  // after the final token (tail leg). Mutation proof: stripping either leg's
+  // escapeHtml call reddens this test and the DOM-level pin.
+  it('inter-match and trailing fragments both route through escapeHtml', async () => {
+    const w = await mountAll(['app-2026-07-18.log     {"a":1}']);
+    const highlight = (w.vm as unknown as Record<string, unknown>).highlightJson as
+      | ((text: string) => string)
+      | undefined;
+    expect(typeof highlight).toBe('function');
+
+    const html = highlight!('{"a":1 <bad> "b":"x" tail\'y}');
+    // Loop leg: raw text between matches arrives escaped, never as live markup.
+    expect(html).toContain('&lt;bad&gt;');
+    expect(html).not.toContain('<bad>');
+    // Tail leg: text after the final match escapes the apostrophe entity.
+    expect(html).toContain('tail&#39;y');
+    expect(html).not.toContain("tail'y");
+    w.unmount();
+  });
+
   it('markup payload in a log line stays inert text (regression pin)', async () => {
     const w = await mountAll([
       'app-2026-07-18.log     {"xss":"<img src=x onerror=alert(1)>"}',

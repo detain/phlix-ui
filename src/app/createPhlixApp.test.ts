@@ -213,6 +213,17 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     ).toBe(false);
   });
 
+  it('route totals match the README enumeration — hub 20 / server 19 including the catch-all', () => {
+    // The README prose states nineteen hub + eighteen server named routes
+    // "plus a named 404 catch-all (twenty and nineteen in total)". Any route
+    // added or removed without rotating that sentence reddens here. The
+    // catch-all's NAME and last position are already pinned above.
+    const hub = buildRoutes({ app: 'hub', apiBase: '', routerBase: '/app' });
+    const server = buildRoutes({ app: 'server', apiBase: '', routerBase: '/app' });
+    expect(hub.length).toBe(20);
+    expect(server.length).toBe(19);
+  });
+
   it('the MCP token route is per-USER, not admin-gated', () => {
     // The endpoints are `/me/…` and are gated on `$request->userId` alone, so a
     // `requiresAdmin` here would lock ordinary hub users out of their own

@@ -37,6 +37,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { ERROR_CODES, type ErrorCode } from '@phlix/contracts';
 import {
   ERROR_MESSAGES,
@@ -87,6 +88,33 @@ describe('error catalog registry parity', () => {
     // Guards against a silent re-pin changing the vocabulary without a catalog update.
     expect(ERROR_CODES.length).toBe(205);
     expect(new Set(ERROR_CODES).size).toBe(205);
+  });
+
+  it('registry shape: 129 dotted codes collapse into 37 distinct domains, 76 flat', () => {
+    // The README's error-catalog prose cites these figures; a registry rotation
+    // that changes this shape must rotate the prose too (both legs are pinned).
+    const dotted = REGISTRY_KEYS.filter((code) => code.includes('.'));
+    const flat = REGISTRY_KEYS.filter((code) => !code.includes('.'));
+    const domains = new Set(dotted.map((code) => code.slice(0, code.lastIndexOf('.'))));
+    expect(dotted.length).toBe(129);
+    expect(flat.length).toBe(76);
+    expect(domains.size).toBe(37);
+  });
+
+  it('the README error-catalog sentence carries the measured registry shape verbatim', () => {
+    // Literals mirror the shape pin above; together they force prose and
+    // registry to rotate as one (the measured shape is asserted where it is
+    // derived, and the README must state those same numbers).
+    const rel = '../../README.md';
+    const text = readFileSync(new URL(rel, import.meta.url), 'utf8');
+    for (const claim of [
+      '205 codes at the current',
+      '129 dotted names that collapse into',
+      '37 distinct domains',
+      '76 flat',
+    ]) {
+      expect(text, `README.md: missing "${claim}" (rotate the prose to the measured shape)`).toContain(claim);
+    }
   });
 
   for (const locale of LOCALES) {

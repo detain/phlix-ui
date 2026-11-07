@@ -180,9 +180,10 @@ createPhlixApp({
 (`/app/login`, `/app/signup`, `/app/connect`), settings (`/app/settings`), explore similar
 (`/app/explore`), recommendations (`/app/recommendations`), watch history (`/app/history`), SyncPlay
 (`/app/syncplay`), music (`/app/music`), parental controls (`/app/parental`), profiles
-(`/app/profiles`), playlists (`/app/playlists` and `/app/playlists/:id`), and MCP tokens
+(`/app/profiles`), playlists (`/app/playlists` and `/app/playlists/:id` — the server entity behind
+them is named *collection* end to end), and MCP tokens
 (`/app/mcp-tokens`, mounted only when `app: 'hub'`) — nineteen named routes for the hub, eighteen
-for the server, plus a 404 catch-all.
+for the server, plus a named 404 catch-all (twenty and nineteen in total).
 
 **Transport (same-origin vs cross-origin).** The Quick-start snippet points `apiBase` at a
 *different* origin than the one serving the SPA, so the browser will only let `/api/v1` calls
@@ -408,7 +409,9 @@ downloads` form, mirrored by the inflected locales, with `ja` collapsing to one 
 ### Error catalog (`src/i18n/errors.ts`) — deliberately NOT in `DEFAULT_MESSAGES`
 
 The wire carries stable error codes (the registry lives in `@phlix/contracts`
-— `ERROR_CODES`, 205 codes / 37 domains at the current `#v0.5.6` pin); clients localize
+— `ERROR_CODES`, 205 codes at the current `#v0.5.6` pin: 129 dotted names that collapse into
+37 distinct domains (a code's domain is its dotted path up to the final segment), 76 flat);
+clients localize
 code→message and the server's English `error` text is debug fallback only. This
 file is that localization layer: one flat `Record<ErrorCode, string>` per locale
 (`en` + the six locale tags), plus `ERROR_TITLES` (the three Browse EmptyState
@@ -678,9 +681,11 @@ const dispose = commands.register({
 ## Admin surface
 
 The server admin pages — Dashboard, Server Traffic, Users, Logs, Webhooks, Services, Integrations,
-Backup, Cast Devices, DLNA Server, Remote Access, Live TV / DVR, Collections, Watch History,
+Backup, Cast Devices, DLNA Server, Remote Access, Live TV / DVR, Collections, Watch history,
 SyncPlay, Libraries, Duplicates, Plugins, Transcoding, Tasks, Settings — are produced as lazy routes, with
-no static JS in the entry. The `pages` default of `buildAdminRoutes()`/`adminMenu()` in
+no static JS in the entry. The Collections page is the playlist-management surface: the server-side
+entity is named *collection* end to end, the same data the member-facing `/app/playlists` pages read.
+The `pages` default of `buildAdminRoutes()`/`adminMenu()` in
 `src/app/admin.ts` is the source of truth for that list and its sidebar order (the backing
 registry `defaultAdminPages` is module-private); `buildHubAdminRoutes` mounts the smaller hub set instead.
 Note the two hub lists are **not** the same set: the exported `hubAdminPages` registry is the 4
@@ -761,7 +766,7 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
 
 **Releasing (checklist — every step, or the README rots):** bump `package.json`
 version, tag `vX.Y.Z`, publish — then rotate this README's **Status stamp** (top of file), the
-**install-example pin** (Quick start), and the **bundle-size figures** (`⚡` bullet + Build output
+**install-example pin** (Install), and the **bundle-size figures** (`⚡` bullet + Build output
 table) to the new tag/bytes. Review has repeatedly flagged the stamp+pin trio as the README's
 most consequential currency defect when it silently lags (it did: `v0.99.10` sat three releases).
 

@@ -6,6 +6,39 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w12 L2 2026-11-07 (CU-084/CU-087/CU-098/CU-100/CU-120 + banked w11 L9/w13 L1 rows)
+
+Review-cure batch (`.reviews/2026-11-04/` ui registers, sixth ui wave). Documentation
+currency plus two tripwires that make the corrected claims self-enforcing; no shipped
+behavior changed, so the committed bundle is byte-identical (proven ×2).
+
+- **CU-084** README error-catalog section: "205 codes / 37 domains" was a figure readers
+  could not reproduce — the sentence now defines the shape mechanically (a code's domain
+  is its dotted path up to the final segment; 129 dotted names collapse into 37 distinct
+  domains, 76 are flat). Two new pins in `src/i18n/errors.test.ts`: a literal registry-shape
+  pin (129/76/37, derived from `ERROR_CODES`) and a README-verbatim claim check, so a
+  registry rotation reddens until the prose rotates with it.
+- **CU-087** README route enumeration: the 404 catch-all is *named* (`catchall`, position
+  already pinned) — the sentence now says "a named 404 catch-all" and states the totals
+  (twenty hub / nineteen server). New count pin in `src/app/createPhlixApp.test.ts`; the
+  mutation that makes the hub-only MCP route unconditional reddens it with its two
+  neighbours.
+- **CU-098** Playlist-vs-Collections vocabulary reconciled in the two README surfaces that
+  enumerate them: the member-facing playlist routes note the server entity is named
+  *collection* end to end, and the admin-surface paragraph states the Collections page is
+  the playlist-management surface over that same data.
+- **CU-100** README admin enumeration label now matches the registry source of truth:
+  "Watch history" (was "Watch History").
+- **CU-120** README refresh checklist pointed at the "install-example pin (Quick start)" —
+  the pin lives under Install; the pointer follows.
+- **Banked rows**: the w11 L9 LogsPage non-JSON-escape leg cure was already landed by
+  w13 L1 (attested); this lane adds the string-level companion pin on `highlightJson`'s
+  own output (entity-exact, per the file's doctrine that the DOM hides entities), and
+  re-proved both legs by mutation — stripping either leg's `escapeHtml` call reddens both
+  pins. Stale-era carrier-hash assertions: grep-clean (zero hits; the split-gate uses
+  hyphen-anchored prefixes). README version trio (Status / install pin / locale era) is
+  consistent at `v0.99.22` and left untouched for the gate that enforces it.
+
 ## Unreleased — w13 L1 2026-11-07 (CU-088/CU-091/CU-092/CU-122/CU-123/CU-124 + banked w11 L9 minors)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, fifth ui wave). Red-first: each
