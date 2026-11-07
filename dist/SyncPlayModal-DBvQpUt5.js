@@ -335,21 +335,12 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	}
 }, me = 250, he = class e {
 	constructor(t) {
-		B(this, "send", void 0), B(this, "now", void 0), B(this, "memberId", void 0), B(this, "memberName", void 0), B(this, "options", void 0), B(this, "timeSync", void 0), B(this, "seekThrottleMs", void 0), B(this, "seekWindowOpen", !1), B(this, "pendingSeek", null), B(this, "seekFlushTimer", null), B(this, "group", null), B(this, "destroyed", !1), B(this, "lastPingSendTime", null), B(this, "consecutiveSyncRejections", 0), this.options = t, this.send = t.send, this.now = t.now, this.memberId = t.memberId, this.memberName = t.memberName ?? "User", this.timeSync = new pe(t.now), this.seekThrottleMs = e.parseSeekThrottleMs(t.seekThrottleMs);
+		B(this, "send", void 0), B(this, "now", void 0), B(this, "memberId", void 0), B(this, "memberName", void 0), B(this, "options", void 0), B(this, "timeSync", void 0), B(this, "seekThrottleMs", void 0), B(this, "seekWindowOpen", !1), B(this, "pendingSeek", null), B(this, "seekFlushTimer", null), B(this, "group", null), B(this, "lastPingSendTime", null), B(this, "consecutiveSyncRejections", 0), this.options = t, this.send = t.send, this.now = t.now, this.memberId = t.memberId, this.memberName = t.memberName ?? "User", this.timeSync = new pe(t.now), this.seekThrottleMs = e.parseSeekThrottleMs(t.seekThrottleMs);
 	}
 	static parseSeekThrottleMs(e) {
 		if (e === void 0) return me;
 		if (typeof e != "number" || !Number.isFinite(e) || e < 0) throw TypeError(`SyncPlayClient: seekThrottleMs must be a finite number >= 0 (0 disables the seek coalescing throttle), got ${String(e)}`);
 		return e;
-	}
-	static parsePasswordHash(e) {
-		if (e !== void 0) {
-			if (typeof e != "string" || !/^([0-9a-f]{64})$/.test(e)) {
-				let t = typeof e == "string" ? ` of length ${e.length}` : "";
-				throw TypeError(`SyncPlayClient: passwordHash must be undefined or 64 lowercase hex characters (unsalted SHA-256 hex; SPEC §4/§8.2, canonical form of the server gate SyncPlayManager::groupPasswordGate) — this library ships canonical form only: a present-but-malformed value is refused as a local fail-fast (stricter than the server, whose gate case-folds before matching) and is never shipped or coerced. Got a ${typeof e}${t}.`);
-			}
-			return e;
-		}
 	}
 	getTimeSync() {
 		return this.timeSync;
@@ -366,25 +357,21 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	getSynchronizedTime() {
 		return this.timeSync.getSynchronizedTime(this.now());
 	}
-	createGroup(t, n) {
-		let r = e.parsePasswordHash(n);
-		if (this.destroyed) return;
-		let i = {
-			group_name: t,
+	createGroup(e, t) {
+		let n = {
+			group_name: e,
 			member_id: this.memberId,
 			member_name: this.memberName
 		};
-		r !== void 0 && (i.password_hash = r), this.dispatch(F.GROUP_CREATE, i);
+		t !== void 0 && (n.password_hash = t), this.dispatch(F.GROUP_CREATE, n);
 	}
-	joinGroup(t, n) {
-		let r = e.parsePasswordHash(n);
-		if (this.destroyed) return;
-		let i = {
-			group_id: t,
+	joinGroup(e, t) {
+		let n = {
+			group_id: e,
 			member_id: this.memberId,
 			member_name: this.memberName
 		};
-		r !== void 0 && (i.password_hash = r), this.dispatch(F.GROUP_JOIN, i);
+		t !== void 0 && (n.password_hash = t), this.dispatch(F.GROUP_JOIN, n);
 	}
 	leaveGroup() {
 		return this.group !== null && (this.cancelSeekCoalescing(), this.dispatch(F.GROUP_LEAVE, {
@@ -412,7 +399,7 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 		return this.group === null ? !1 : this.seekWindowOpen ? (this.pendingSeek = {
 			from: e,
 			to: t
-		}, !0) : (this.dispatchSeek(e, t), this.seekThrottleMs > 0 && !this.seekWindowOpen && this.openSeekWindow(), !0);
+		}, !0) : (this.dispatchSeek(e, t), this.seekThrottleMs > 0 && this.openSeekWindow(), !0);
 	}
 	dispatchSeek(e, t) {
 		this.group !== null && this.dispatch(F.PLAYBACK_SEEK, {
@@ -436,7 +423,7 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	closeSeekWindow() {
 		this.seekWindowOpen = !1, this.seekFlushTimer = null;
 		let e = this.pendingSeek;
-		e !== null && (this.pendingSeek = null, this.group !== null && (this.dispatchSeek(e.from, e.to), !this.destroyed && this.group !== null && this.seekThrottleMs > 0 && !this.seekWindowOpen && this.openSeekWindow()));
+		e !== null && (this.pendingSeek = null, this.group !== null && (this.dispatchSeek(e.from, e.to), this.openSeekWindow()));
 	}
 	cancelSeekCoalescing() {
 		this.pendingSeek = null, this.seekFlushTimer !== null && (clearTimeout(this.seekFlushTimer), this.seekFlushTimer = null), this.seekWindowOpen = !1;
@@ -465,7 +452,6 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 		}), !0);
 	}
 	pingTime() {
-		if (this.destroyed) return;
 		let e = this.now(), t = this.lastPingSendTime;
 		if (t !== null) {
 			let n = e - t;
@@ -475,13 +461,12 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	}
 	onDisconnect() {
 		var e, t;
-		this.cancelSeekCoalescing(), this.timeSync.reset(), this.consecutiveSyncRejections = 0, this.group = null, this.lastPingSendTime = null, (e = (t = this.options).onDisconnect) == null || e.call(t);
+		this.cancelSeekCoalescing(), this.timeSync.reset(), this.group = null, this.lastPingSendTime = null, (e = (t = this.options).onDisconnect) == null || e.call(t);
 	}
 	destroy() {
-		this.destroyed = !0, this.cancelSeekCoalescing(), this.timeSync.reset(), this.group = null, this.lastPingSendTime = null;
+		this.cancelSeekCoalescing(), this.timeSync.reset(), this.group = null, this.lastPingSendTime = null;
 	}
 	handleIncoming(e) {
-		if (this.destroyed) return;
 		let t = le(e);
 		if (t === null) {
 			var n, r;
@@ -494,14 +479,6 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 			return;
 		}
 		let o = t;
-		if ("protocol_version" in o) {
-			let e = o.protocol_version;
-			if (typeof e != "number" || !Number.isInteger(e) || e > 1) {
-				var s, c;
-				(s = (c = this.options).onFrameDropped) == null || s.call(c, "malformed", o);
-				return;
-			}
-		}
 		switch (o.type) {
 			case F.TIME_PONG:
 				this.handleTimePong(o);
@@ -549,8 +526,8 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 				this.handlePlaybackQueueBroadcast(o);
 				break;
 			default:
-				var l, u;
-				(l = (u = this.options).onUnknownFrame) == null || l.call(u, o);
+				var s, c;
+				(s = (c = this.options).onUnknownFrame) == null || s.call(c, o);
 		}
 	}
 	handleTimePong(e) {
@@ -561,19 +538,18 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 		let i = this.now(), a = r ?? t;
 		this.lastPingSendTime = null;
 		let o = typeof n.server_time == "number" && Number.isFinite(n.server_time) ? n.server_time : null;
-		if (o === null) {
-			var s, c;
-			this.consecutiveSyncRejections += 1, (s = (c = this.options).onSyncDegraded) == null || s.call(c, this.consecutiveSyncRejections);
-		} else if (this.timeSync.addSample(a, o, o, i)) {
-			var l, u;
-			this.consecutiveSyncRejections = 0, (l = (u = this.options).onSync) == null || l.call(u, {
-				offset: this.timeSync.getOffset(),
-				latency: this.timeSync.getLatency(),
-				isStable: this.timeSync.isStable()
-			});
-		} else {
-			var d, f;
-			this.consecutiveSyncRejections += 1, (d = (f = this.options).onSyncDegraded) == null || d.call(f, this.consecutiveSyncRejections);
+		if (o !== null) {
+			if (this.timeSync.addSample(a, o, o, i)) {
+				var s, c;
+				this.consecutiveSyncRejections = 0, (s = (c = this.options).onSync) == null || s.call(c, {
+					offset: this.timeSync.getOffset(),
+					latency: this.timeSync.getLatency(),
+					isStable: this.timeSync.isStable()
+				});
+			} else {
+				var l, u;
+				this.consecutiveSyncRejections += 1, (l = (u = this.options).onSyncDegraded) == null || l.call(u, this.consecutiveSyncRejections);
+			}
 		}
 	}
 	static normalizeMembers(e, t) {
@@ -595,7 +571,7 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 		return e < 0xe8d4a51000 ? e * 1e3 : e;
 	}
 	static serverTimeOrNow(t, n) {
-		return typeof t != "number" || !Number.isFinite(t) || t < 1e3 ? n() : t >= 0xe8d4a51000 || t >= 1e9 && t < 4e9 ? e.serverTimeToMs(t) : n();
+		return typeof t == "number" && Number.isFinite(t) && t >= 1e3 ? e.serverTimeToMs(t) : n();
 	}
 	static normalizeQueue(e) {
 		if (Array.isArray(e)) return e.filter((e) => typeof e == "object" && !!e).map((e) => ({
@@ -642,10 +618,6 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 		let t = this.group?.current_media_duration;
 		return typeof t == "number" && Number.isFinite(t) && t > 0 && e > t ? t : e;
 	}
-	static clampedPosition(t, n) {
-		let r = e.finiteOr(t, 0);
-		return r < 0 ? 0 : n !== null && n > 0 && r > n ? n : r;
-	}
 	static playbackState(e) {
 		return e === "playing" || e === "paused" || e === "buffering" || e === "stopped" ? e : "stopped";
 	}
@@ -657,32 +629,27 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 			(o = (s = this.options).onFrameDropped) == null || o.call(s, "malformed", t);
 			return;
 		}
-		if (typeof a.group_id != "string") {
-			var c, l;
-			(c = (l = this.options).onFrameDropped) == null || c.call(l, "malformed", t);
-			return;
-		}
-		let u = a.group_id, d = e.strOrNull(a.host_id);
-		this.group !== null && this.group.group_id !== u && this.cancelSeekCoalescing();
-		let f = this.group, p = e.normalizeMembers(a.members, d), m = e.finiteOrNull(a.current_media_duration);
+		let c = e.strOr(a.group_id, ""), l = e.strOrNull(a.host_id);
+		this.group !== null && this.group.group_id !== c && this.cancelSeekCoalescing();
+		let u = this.group, d = e.normalizeMembers(a.members, l);
 		if (this.group = {
-			group_id: u,
+			group_id: c,
 			group_name: e.strOr(a.group_name, ""),
-			members: p,
+			members: d,
 			member_count: e.finiteOrUndefined(a.member_count),
-			host_id: d,
+			host_id: l,
 			current_media_id: e.strOrNull(a.current_media_id),
-			current_media_duration: m,
-			playback_position: e.clampedPosition(a.playback_position, m),
+			current_media_duration: e.finiteOrNull(a.current_media_duration),
+			playback_position: e.finiteOr(a.playback_position, 0),
 			playback_state: e.playbackState(a.playback_state),
 			queue: e.normalizeQueue(a.queue),
 			created_at: e.finiteOrUndefined(a.created_at),
 			last_activity_at: e.finiteOrUndefined(a.last_activity_at)
-		}, f !== null && f.group_id === u) {
-			let e = new Set(p.map((e) => e.id));
-			for (let t of f.members) if (!e.has(t.id)) {
-				var h, g;
-				(h = (g = this.options).onMemberLeft) == null || h.call(g, {
+		}, u !== null && u.group_id === c) {
+			let e = new Set(d.map((e) => e.id));
+			for (let t of u.members) if (!e.has(t.id)) {
+				var f, p;
+				(f = (p = this.options).onMemberLeft) == null || f.call(p, {
 					id: t.id,
 					name: t.name
 				});
@@ -692,44 +659,34 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	}
 	handlePlayback(t, n) {
 		var r, i;
-		if (this.group === null) {
-			var a, o;
-			(a = (o = this.options).onFrameDropped) == null || a.call(o, "malformed", n);
-			return;
-		}
 		if ((typeof n.member_id == "string" ? n.member_id : void 0) === this.memberId) return;
-		let s = this.positionOrDrop(n.position);
-		if (s === null) {
-			var c, l;
-			(c = (l = this.options).onFrameDropped) == null || c.call(l, "malformed", n);
+		let a = this.positionOrDrop(n.position);
+		if (a === null) {
+			var o, s;
+			(o = (s = this.options).onFrameDropped) == null || o.call(s, "malformed", n);
 			return;
 		}
-		let u = e.serverTimeOrNow(n.server_time, () => this.getSynchronizedTime());
+		let c = e.serverTimeOrNow(n.server_time, () => this.getSynchronizedTime());
 		(r = (i = this.options).onPlaybackCommand) == null || r.call(i, {
 			type: t,
-			position: s,
-			serverTime: u
+			position: a,
+			serverTime: c
 		});
 	}
 	handleSeek(t) {
 		var n, r;
-		if (this.group === null) {
-			var i, a;
-			(i = (a = this.options).onFrameDropped) == null || i.call(a, "malformed", t);
-			return;
-		}
 		if ((typeof t.member_id == "string" ? t.member_id : void 0) === this.memberId) return;
-		let o = this.positionOrDrop(t.to_position);
-		if (o === null) {
-			var s, c;
-			(s = (c = this.options).onFrameDropped) == null || s.call(c, "malformed", t);
+		let i = this.positionOrDrop(t.to_position);
+		if (i === null) {
+			var a, o;
+			(a = (o = this.options).onFrameDropped) == null || a.call(o, "malformed", t);
 			return;
 		}
-		let l = e.serverTimeOrNow(t.server_time, () => this.getSynchronizedTime());
+		let s = e.serverTimeOrNow(t.server_time, () => this.getSynchronizedTime());
 		(n = (r = this.options).onPlaybackCommand) == null || n.call(r, {
 			type: "seek",
-			position: o,
-			serverTime: l
+			position: i,
+			serverTime: s
 		});
 	}
 	handleHostElect(t) {
@@ -756,7 +713,7 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	}
 	handleInfo(e) {
 		let t = e;
-		if (this.group !== null && typeof t.member_id == "string" && typeof t.member_name == "string") {
+		if (typeof t.member_id == "string" && typeof t.member_name == "string") {
 			var n, r;
 			(n = (r = this.options).onMemberJoined) == null || n.call(r, {
 				id: t.member_id,
@@ -797,17 +754,11 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	}
 	handlePlaybackQueueBroadcast(t) {
 		var n, r;
-		let i = this.group;
-		if (i === null) {
-			var a, o;
-			(a = (o = this.options).onFrameDropped) == null || a.call(o, "malformed", t);
-			return;
-		}
-		let s = t, c = e.normalizeQueue(s.queue);
-		if (c === void 0) {
-			var l, u;
-			(l = (u = this.options).onFrameDropped) == null || l.call(u, "malformed", t);
-		} else this.group = H(H({}, i), {}, { queue: c }), (n = (r = this.options).onQueueChanged) == null || n.call(r, c);
+		let i = t, a = e.normalizeQueue(i.queue);
+		if (a === void 0) {
+			var o, s;
+			(o = (s = this.options).onFrameDropped) == null || o.call(s, "malformed", t);
+		} else this.group !== null && (this.group = H(H({}, this.group), {}, { queue: a })), (n = (r = this.options).onQueueChanged) == null || n.call(r, a);
 	}
 	handleHostTransfer(t) {
 		var n, r;
@@ -819,24 +770,14 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 	}
 	handlePlaybackSync(t) {
 		var n, r;
-		if (this.group === null) {
-			var i, a;
-			(i = (a = this.options).onFrameDropped) == null || i.call(a, "malformed", t);
-			return;
-		}
-		if (typeof t.member_id != "string") {
+		let i = typeof t.member_id == "string" ? t.member_id : void 0, a = this.positionOrDrop(t.position);
+		if (a === null) {
 			var o, s;
 			(o = (s = this.options).onFrameDropped) == null || o.call(s, "malformed", t);
 			return;
 		}
-		let c = t.member_id, l = this.positionOrDrop(t.position);
-		if (l === null) {
-			var u, d;
-			(u = (d = this.options).onFrameDropped) == null || u.call(d, "malformed", t);
-			return;
-		}
-		let f = typeof t.is_playing == "boolean" && t.is_playing, p = e.serverTimeOrNow(t.server_time, () => this.getSynchronizedTime()), m = e.normalizeNudge(t.nudge);
-		(n = (r = this.options).onPlaybackSync) == null || n.call(r, c, l, f, p, m);
+		let c = typeof t.is_playing == "boolean" && t.is_playing, l = e.serverTimeOrNow(t.server_time, () => this.getSynchronizedTime()), u = e.normalizeNudge(t.nudge);
+		(n = (r = this.options).onPlaybackSync) == null || n.call(r, i ?? "", a, c, l, u);
 	}
 	handleTimeSync(e) {
 		var t, n;
@@ -862,6 +803,7 @@ var ue = .1, de = .99, fe = 1.01, pe = class {
 			(a = (o = this.options).onFrameDropped) == null || a.call(o, "malformed", t);
 			return;
 		}
+		i.some((e) => typeof e != "object" || !e);
 		let s = i.filter((e) => typeof e == "object" && !!e).map((t) => ({
 			id: typeof t.id == "string" ? t.id : "",
 			name: typeof t.name == "string" ? t.name : "",
@@ -1528,4 +1470,4 @@ var We = class extends Error {
 }), [["__scopeId", "data-v-3772af96"]]);
 export { Ge as n, Ee as r, Ct as t };
 
-//# sourceMappingURL=SyncPlayModal-eTm6_KIy.js.map
+//# sourceMappingURL=SyncPlayModal-DBvQpUt5.js.map

@@ -1340,7 +1340,7 @@ function lo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-4c1VyaCv.js")
+			component: () => import("./PlayerPage-CjKjMmhk.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1388,7 +1388,7 @@ function lo(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-BuG5S7WB.js")
+			component: () => import("./SyncPlayPage-B269IX0l.js")
 		},
 		{
 			path: `${t}/music`,

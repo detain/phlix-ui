@@ -6,6 +6,84 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## 0.99.23 — fix-forward erratum (2026-11-08)
+
+- **Syncplay pin reverted to `#v0.1.7` — the `#v0.1.8` half of the release's
+  pin rotation regresses the ui's inbound-decode contract.** The cut below
+  rotated `@phlix/syncplay` `#v0.1.7` -> `#v0.1.8` (peel `d3cbfc7a`) alongside
+  the innocent `@phlix/contracts` `#v0.5.6` -> `#v0.5.7`. The syncplay half is
+  a behavior change to the vendored client: 0.1.8's dist adds hard gates — a
+  `destroyed`-flag return at the inbound frame/dispatch and disconnect paths
+  (`dist/phlix-syncplay.js` :261, :271, :358, :374, bracketing the new
+  `destroy() { this.destroyed = !0; ... }` at :371), a `protocol_version` frame
+  guard (~:384) that drops frames as `malformed` unless the field is an integer
+  <= 1, a fail-fast `parsePasswordHash`, a seek-flush timer re-arm guard, and a
+  `syncSample` null-offset branch inversion. Three ui test files exercise the
+  post-close / legacy-contract frame paths the gates swallow, deterministically
+  red at the release tree (local serial, 3 files: 11 failed | 125 passed):
+  `src/api/syncplay.ws.test.ts` (8), `src/stores/useSyncPlayStore.actions.test.ts`
+  (2), `src/stores/useSyncPlayStore.join.test.ts` (1). CI agrees: `ui-ci`
+  42339700757 attempt 1 failed with the identical signature on both test shards
+  (167 + 168 files reconcile to the 335-file suite; `static` green — the
+  rotation-era pin guards and type gates were genuinely green). The same trio at
+  the pre-ritual tip `43b2acd6` in a control worktree measures 136/136 green.
+  Adopting 0.1.8 therefore requires a ui inbound-decode re-baseline source wave,
+  not a dependency rotation inside a release ritual; it is banked back to the
+  consumer/behavior wave.
+- **Forward-record correction.** The `## 0.99.23 - 2026-11-08` entry below
+  states "Measured suite counts at this tip: full serial battery 335 files /
+  6,931 passing | 10 skipped — identical to the pre-ritual baseline re-derived
+  at `43b2acd6` in this worktree"; the release commit's message makes the same
+  claim with "exit 0". Those are the BASELINE tree's true figures, quoted from
+  the baseline log's tail instead of the release-tree run's (a self-phantom;
+  disclosed here). The release tree actually measured 3 failed | 332 passed
+  files (335), 11 failed | 6,920 passed | 10 skipped, exit 1 — exactly the 11
+  syncplay reds above, which `ui-ci` independently attested red at the same
+  sha. "The ritual added and removed no tests" remains true, and the six
+  rotation reds the entry names were genuinely fixed — what the entry could not
+  see was the eleven unnamed behavioral reds the syncplay runtime rotation
+  caused. The historical line stands as written per the verbatim-history law;
+  this entry is the correction.
+- **The fix.** `package.json` syncplay spec back to
+  `github:detain/phlix-syncplay#v0.1.7` (peel `1a80b1d1cbb6d63aa4d3dce0001ff21ac5e85b4d`);
+  `package-lock.json` rotated back 4+/4- by an npm@11 install with an empty
+  userconfig (spec echo `#v0.1.8` -> `#v0.1.7`, node `version` 0.1.8 -> 0.1.7,
+  `resolved` -> the 0.1.7 peel, `engines.node` `>=22.12.0` -> `>=18.0.0`);
+  `node_modules` materialization re-verified byte-identical to the `v0.1.7` tag
+  (`dist/phlix-syncplay.js` md5 `c399c3b428b75e7bd16335a2db88f605`). The
+  `@phlix/contracts` `#v0.5.7` half of the rotation is KEPT — registry trio
+  byte-identical across the two tags (`error-codes.json` `5d1783a71a3c4e128b2021327cad3717`,
+  `mcp-scopes.json` `8c92c0703eae8a429c509ff16e0d185d`, `server-route-manifest.json`
+  `90b79e355055307d5ba2cc0ef98e2300`; the v0.5.7 delta is coordinate docblocks +
+  additive internal exports) — and the release commit's S447 guard/era rotations
+  (`contractsPin.test.ts` + five prose cites) are true and stay. Version number
+  and the README currency trio stay `0.99.23` — the fix ships inside the same
+  version; the pushed `v0.99.23` tag (peel `6618d436`, its `dist/` carrying the
+  0.1.8 client) is NOT moved or re-cut by this lane (law): its disposition —
+  supersede by a `v0.99.24` cut atop this tip, versus retire — is an owner call
+  recorded in the lane register, and consumers are advised to cascade to
+  whichever tag the owner blesses rather than to `#v0.99.23` as-is.
+- **Measured suite counts at this tip (settled fix tree):** full serial battery
+  `vitest --no-file-parallelism` = 335 files all passing / 6,931 passing |
+  10 skipped, exit 0 — exact parity with the pre-ritual baseline; the three
+  regressed files re-run as an isolated serial trio twice on this tree: green
+  136/136, 136/136 (the `43b2acd6` control measured the same 136/136).
+- `dist/` rebuilt IN THIS COMMIT for the reverted tree: two consecutive full
+  builds byte-identical (`diff -r` exit 0); aggregate md5
+  (`find dist -type f | sort | xargs md5sum | md5sum`) =
+  `b9b445e4e3c39f0c3a41093f08549993` (889 files). Entries: `phlix-ui.js`
+  `5d5a0aca9035074096c96749c23afc9e`, `player.js` `85645e4ba1567e2292ae969a726cd39c`,
+  UMD pair `5f010353c9612ffe30c8642237444d40` / `0a82cbe5713d799ebbe102ccaccac38b`;
+  `style.css` `1cedbc441f64daa5abeef0d8ec45c3aa` and `player.css`
+  `9e1f4f79bfd2da8b862bbc7c353eff01` held. The six Player/SyncPlay chunk
+  carriers revert byte-for-byte to their pre-rotation names
+  (`PlayerPage-CjKjMmhk.js`, `PlayerPage-DeYX0jWD.cjs`, `SyncPlayModal-DBvQpUt5.js`,
+  `SyncPlayModal-B7Pu_9-r.cjs`, `SyncPlayPage-B269IX0l.js`, `SyncPlayPage-Da5qHAWd.cjs`
+  + maps; per-file md5 equality against the `43b2acd6` dist verified) — those
+  chunks carry no contracts bytes — while the entry bundles carry the
+  `contracts` v0.5.7 rotation and the 0.99.23 stamp. `dist:check` green
+  post-commit.
+
 ## 0.99.23 - 2026-11-08
 
 ### Release — 8 commits since the `v0.99.22` cut (`a4ede939`): the review→fix campaign's ui tail — the w14 L3 focus-custody / error-recovery / form-UX / configured-router-base batch, the w12 L2 README-truth wave with its registry-shape, route-total and highlight-string tripwires, the w13 L1 export / playlist / shuffle cures and README de-ledgering, the w11 L9 auth-expiry UX listener + card-action wiring + complete-escape JSON highlight + gated D-pad hover arms + README currency gate (and its lift-coupling forward-fix), the w03 L2 loading-focus / accessible-name / copy batch, the w02 L3 `noopener` census gate and doc truths, and the w01 L7 copy case/voice + tokenStore storage guards — folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`). Dependency pins advanced at this cut — see the pins section. `dist/` rebuilt IN THIS COMMIT, bundle-substantive (the version stamp plus the rotated dependency runtimes).
