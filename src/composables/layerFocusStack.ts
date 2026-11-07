@@ -24,10 +24,19 @@ export const S534_LAYER_FOCUS_TOKEN = 'S534LAYERFOCX9P1';
  * source is a future `@phlix/ui` pin-batch discussion — documented, never
  * pre-built here. This is pure bookkeeping, not a second spatial-nav engine:
  * it decides nothing about geometry or key handling, it only remembers order.
+ *
+ * `isTop` (CU-106, review ui__webux #1) is the ONE method added ui-side beyond
+ * the four-op shared core: stacked overlays need to know whether a layer is
+ * the document's frontmost before routing Escape/Tab to it. The tizen twin
+ * (`src/remote/backPolicy.ts`, its own local interface) keeps its four-op
+ * surface until its re-pin wave adopts the fifth — the core vocabulary stays
+ * the convergence contract, and `isTop` rides no DOM knowledge.
  */
 export interface LayerFocusStack<T> {
   push(node: T): void;
   pop(): T | null;
+  /** Is `node` the most recently pushed entry (identity comparison)? */
+  isTop(node: T): boolean;
   depth(): number;
   clear(): void;
 }
@@ -39,6 +48,7 @@ export function createLayerFocusStack<T>(): LayerFocusStack<T> {
       stack.push(node);
     },
     pop: (): T | null => (stack.length > 0 ? (stack.pop() as T) : null),
+    isTop: (node: T): boolean => stack.length > 0 && stack[stack.length - 1] === node,
     depth: (): number => stack.length,
     clear: (): void => {
       stack.length = 0;

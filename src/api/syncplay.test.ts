@@ -159,6 +159,27 @@ describe('CU-095 — contracts is the SSOT, view-model carries no wire phantoms'
     expect(apiSrc).not.toMatch(/has_password\?: boolean;/);
   });
 
+  it('RawSyncPlayMember is DERIVED from the contracts member shape, never restated (CU-095 fold)', () => {
+    // The four member keys belong to `SYNC_PLAY_MEMBER_KEYS` /
+    // `WireKeysExact<SyncPlayMember>` in @phlix/contracts (v0.5.7 peel
+    // bedfe69b) — the same law the group arm already follows.
+    expect(apiSrc).toMatch(/export type RawSyncPlayMember = Partial<SyncPlayMember>/);
+    expect(apiSrc).toMatch(/import type \{[^}]*SyncPlayMember[^}]*\} from '@phlix\/contracts'/);
+    // Creep guards: a hand-declared member vocabulary must not return.
+    expect(apiSrc).not.toMatch(/is_host\?: boolean;/);
+    expect(apiSrc).not.toMatch(/joined_at\?: number;/);
+  });
+
+  it('the retired wire DTOs stay retired (fold 2 — types/ carries view-models only)', () => {
+    // The header claims the pre-S415 wire-DTO fiction is gone; these pins make
+    // the claim EXECUTED, not prose — the three zero-consumer interfaces and
+    // the `participants` field that referenced one of them.
+    expect(typesSrc).not.toContain('SyncPlayChatMessage');
+    expect(typesSrc).not.toContain('SyncPlayParticipant');
+    expect(typesSrc).not.toMatch(/interface SyncPlayMessage\b/);
+    expect(typesSrc).not.toMatch(/participants\?:/);
+  });
+
   it('groupToSession fabricates no serverId/permissions and normalizeMembers no profileId', () => {
     const session = groupToSession({ group_id: 'g1', playback_state: 'paused' });
     expect(session).not.toHaveProperty('serverId');

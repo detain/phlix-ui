@@ -62,37 +62,6 @@ export interface SyncPlayRoom {
     serverId?: string;
     hostUserId?: string;
     createdAt?: string;
-    participants?: SyncPlayParticipant[];
-}
-export interface SyncPlayChatMessage {
-    id: string;
-    roomId: string;
-    userId: string;
-    userName: string;
-    content: string;
-    timestamp: string;
-}
-/**
- * A participant in a SyncPlay room, including sync state and latency.
- */
-export interface SyncPlayParticipant {
-    userId: string;
-    username: string;
-    role: SyncPlayRole;
-    isSynced: boolean;
-    lastPosition: number;
-    latency: number;
-}
-/**
- * A SyncPlay wire protocol message for playback synchronization.
- * Carried over the signal channel (WebSocket / SSE) to synchronize
- * play / pause / seek / sync events across all participants.
- */
-export interface SyncPlayMessage {
-    type: 'play' | 'pause' | 'seek' | 'sync';
-    timestamp: string;
-    position: number;
-    roomId: string;
 }
 export interface SyncPlayStateUpdate {
     sessionId: string;

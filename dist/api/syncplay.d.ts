@@ -8,7 +8,7 @@
  * @license MIT
  */
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayStateUpdate, SyncPlayPlaybackCommand } from '../types/syncplay';
-import type { SyncPlayGroup, SyncPlayGroupListItem } from '@phlix/contracts';
+import type { SyncPlayGroup, SyncPlayGroupListItem, SyncPlayMember } from '@phlix/contracts';
 /** Input for creating a new SyncPlay group. */
 export interface CreateRoomInput {
     name: string;
@@ -76,14 +76,18 @@ export interface RawSyncPlayGroup extends Omit<Partial<SyncPlayGroup & SyncPlayG
     /** Never consumed by the UI — kept opaque so a shape change cannot be silently depended on. */
     queue?: unknown[];
 }
-/** One member inside {@link RawSyncPlayGroup.members}. */
-export interface RawSyncPlayMember {
-    id?: string;
-    name?: string;
-    is_host?: boolean;
-    /** Unix seconds. */
-    joined_at?: number;
-}
+/**
+ * One member inside {@link RawSyncPlayGroup.members}.
+ *
+ * CU-095 fold (review ui__webux #1, register 2026-11-08): the GROUP shape got
+ * the contracts-derivation treatment in w15L2, but this member shape still
+ * RESTATED the four keys `@phlix/contracts` pins (`SYNC_PLAY_MEMBER_KEYS`,
+ * tied by `WireKeysExact` — v0.5.7 peel `bedfe69b`) — exactly the law the
+ * file's own CU-095 header states. Derivation, not restatement: every field
+ * optional because the dict-vs-array arms and the `Object.entries` re-key
+ * below tolerate partial rows.
+ */
+export type RawSyncPlayMember = Partial<SyncPlayMember>;
 /** `{ group }` — returned by create / get / join. */
 export interface SyncPlayGroupResponse {
     group?: RawSyncPlayGroup;
@@ -289,6 +293,29 @@ export declare function setSyncPlayLogger(logger: SyncPlayLogger | null | undefi
 export type SyncPlayWireErrorListener = (code: string, message: string) => void;
 /** Install (or, with `null`, remove) the `syncplay_error` consumer. */
 export declare function setSyncPlayWireErrorListener(listener: SyncPlayWireErrorListener | null): void;
+/** Fires on every transition of the parked state (give-up ⇒ `true`, any
+ *  re-arm / re-join / explicit close ⇒ `false`). Injectable-slot law: same
+ *  shape as {@link setSyncPlayLogger} — this module does not know what a
+ *  toast or a store is. */
+export type SyncPlayReconnectListener = (exhausted: boolean) => void;
+/** Install (or, with `null`, remove) the exhausted-state consumer. */
+export declare function setSyncPlayReconnectListener(listener: SyncPlayReconnectListener | null): void;
+/** Is the ladder parked (give-up fired) with a room still remembered? */
+export declare function isSyncPlayReconnectExhausted(): boolean;
+/**
+ * Re-dial the remembered room after the ladder parked — the HOST-INITIATED
+ * door (a Reconnect control) and the shared target of both wake signals.
+ *
+ * Returns `false` (touches nothing) unless the state is genuinely parked:
+ * mid-ladder the timer owns the dial, and with no remembered room there is
+ * nothing to retry. On `true`, a FULL fresh budget applies — a retry is a
+ * caller-initiated intent under the S283 law. It deliberately does not route
+ * through `openSyncPlayConnection()`: that door resets the reconnect budget
+ * (right) but ALSO the session-scoped `password_hash` (M-UI-14), and a
+ * parked retry of the SAME room is precisely the case where the held digest
+ * must survive — the member must not be demoted to a locked-out stranger.
+ */
+export declare function retrySyncPlayConnection(): boolean;
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
 type SyncPlayMessageHandler = (msg: {
     type: string;

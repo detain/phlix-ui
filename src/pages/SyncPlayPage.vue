@@ -53,6 +53,17 @@ const leaveConfirmMessage = computed(() =>
 
 const effectiveApiBase = computed(() => mediaApiBase.value);
 
+/**
+ * Member-role label. The vocabulary this switch SPENDS is wider than the
+ * vocabulary the adapter can REACH: `normalizeMembers()` (src/api/syncplay.ts)
+ * emits `owner`/`contributor` only — the member wire frame carries the
+ * `is_host` boolean and nothing else — so the `editor`/`none` arms, and the
+ * two i18n keys they consume, are translation for a contract-pinned role
+ * (SSOT: `@phlix/contracts`) the server does not yet emit per member. The
+ * arms stay as the forward-adoption surface: when a real per-member role
+ * arrives on the wire, correct labels light up here with no page change
+ * (review ui__fedev #4 / CU-096).
+ */
 function getRoleLabel(role: SyncPlayRole): string {
   switch (role) {
     case 'owner':

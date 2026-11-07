@@ -19,7 +19,7 @@ import type {
   SyncPlayPlaybackCommand,
 } from '../types/syncplay';
 import { SyncPlayClient, serializeMessage } from '@phlix/syncplay';
-import type { SyncPlayGroup, SyncPlayGroupListItem } from '@phlix/contracts';
+import type { SyncPlayGroup, SyncPlayGroupListItem, SyncPlayMember } from '@phlix/contracts';
 
 /** Input for creating a new SyncPlay group. */
 export interface CreateRoomInput {
@@ -92,14 +92,18 @@ export interface RawSyncPlayGroup
   queue?: unknown[];
 }
 
-/** One member inside {@link RawSyncPlayGroup.members}. */
-export interface RawSyncPlayMember {
-  id?: string;
-  name?: string;
-  is_host?: boolean;
-  /** Unix seconds. */
-  joined_at?: number;
-}
+/**
+ * One member inside {@link RawSyncPlayGroup.members}.
+ *
+ * CU-095 fold (review ui__webux #1, register 2026-11-08): the GROUP shape got
+ * the contracts-derivation treatment in w15L2, but this member shape still
+ * RESTATED the four keys `@phlix/contracts` pins (`SYNC_PLAY_MEMBER_KEYS`,
+ * tied by `WireKeysExact` — v0.5.7 peel `bedfe69b`) — exactly the law the
+ * file's own CU-095 header states. Derivation, not restatement: every field
+ * optional because the dict-vs-array arms and the `Object.entries` re-key
+ * below tolerate partial rows.
+ */
+export type RawSyncPlayMember = Partial<SyncPlayMember>;
 
 /** `{ group }` — returned by create / get / join. */
 export interface SyncPlayGroupResponse {
@@ -501,6 +505,102 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 /** Base delay in ms for exponential backoff. */
 const RECONNECT_BASE_DELAY_MS = 1000;
 
+/* ── CU-077 (review ui__crossfe #2) — a ladder that PARKS instead of dying ───
+ *
+ * Before this, the give-up branch nulled `syncPlayRoomId` and `syncPlayClient`
+ * and stopped: a ~31 s network outage (1+2+4+8+16 s of backoff) permanently
+ * orphaned a watch-party member — the session looked alive in the UI while its
+ * realtime half was dead, and only a manual leave-and-rejoin could rebuild it.
+ * The hub's federation link solved the same shape with park-at-cap re-arm
+ * (phlix-hub `229d3d1`, RECONNECT_DELAY_CAP_SECONDS); the browser equivalent
+ * of "the timer re-arms" is "an external wake signal re-arms", because a page
+ * with no network has no timer worth spending: the platform TELLS us when the
+ * conditions change (`online`, tab becoming `visible`) and the host surface
+ * can offer a manual retry. So the room and its M-UI-14 gate digest are kept,
+ * exhaustion becomes observable (`setSyncPlayReconnectListener` /
+ * `isSyncPlayReconnectExhausted` — the store renders a Reconnect affordance),
+ * and any of the three wake paths re-dials with a FRESH full budget.
+ */
+let syncPlayReconnectExhausted = false;
+
+/** Fires on every transition of the parked state (give-up ⇒ `true`, any
+ *  re-arm / re-join / explicit close ⇒ `false`). Injectable-slot law: same
+ *  shape as {@link setSyncPlayLogger} — this module does not know what a
+ *  toast or a store is. */
+export type SyncPlayReconnectListener = (exhausted: boolean) => void;
+
+let syncPlayReconnectListener: SyncPlayReconnectListener | null = null;
+
+/** Install (or, with `null`, remove) the exhausted-state consumer. */
+export function setSyncPlayReconnectListener(listener: SyncPlayReconnectListener | null): void {
+  syncPlayReconnectListener = listener;
+}
+
+/** Is the ladder parked (give-up fired) with a room still remembered? */
+export function isSyncPlayReconnectExhausted(): boolean {
+  return syncPlayReconnectExhausted;
+}
+
+const handleOnlineWake = (): void => {
+  // Only the PARKED state retries: mid-ladder, the backoff timer already owns
+  // the next dial, and a second in-flight socket per wake event would race it.
+  if (!syncPlayReconnectExhausted) return;
+  syncPlayLogger.log('[SyncPlay] online wake — retrying the remembered room with a fresh budget');
+  retrySyncPlayConnection();
+};
+
+const handleVisibilityWake = (): void => {
+  if (typeof document === 'undefined' || document.visibilityState !== 'visible') return;
+  handleOnlineWake();
+};
+
+let wakeWatchersArmed = false;
+
+/** Arm/disarm the platform wake listeners; idempotent, SSR-safe (a host with
+ *  no `window` simply never gets an automatic retry — the explicit
+ *  {@link retrySyncPlayConnection} door and re-join stay open). */
+function setWakeWatchers(armed: boolean): void {
+  if (wakeWatchersArmed === armed) return;
+  if (typeof window !== 'undefined') {
+    if (armed) {
+      window.addEventListener('online', handleOnlineWake);
+      document.addEventListener('visibilitychange', handleVisibilityWake);
+    } else {
+      window.removeEventListener('online', handleOnlineWake);
+      document.removeEventListener('visibilitychange', handleVisibilityWake);
+    }
+  }
+  wakeWatchersArmed = armed;
+}
+
+function setReconnectExhausted(exhausted: boolean): void {
+  if (syncPlayReconnectExhausted === exhausted) return;
+  syncPlayReconnectExhausted = exhausted;
+  setWakeWatchers(exhausted);
+  syncPlayReconnectListener?.(exhausted);
+}
+
+/**
+ * Re-dial the remembered room after the ladder parked — the HOST-INITIATED
+ * door (a Reconnect control) and the shared target of both wake signals.
+ *
+ * Returns `false` (touches nothing) unless the state is genuinely parked:
+ * mid-ladder the timer owns the dial, and with no remembered room there is
+ * nothing to retry. On `true`, a FULL fresh budget applies — a retry is a
+ * caller-initiated intent under the S283 law. It deliberately does not route
+ * through `openSyncPlayConnection()`: that door resets the reconnect budget
+ * (right) but ALSO the session-scoped `password_hash` (M-UI-14), and a
+ * parked retry of the SAME room is precisely the case where the held digest
+ * must survive — the member must not be demoted to a locked-out stranger.
+ */
+export function retrySyncPlayConnection(): boolean {
+  if (!syncPlayReconnectExhausted || !syncPlayRoomId) return false;
+  setReconnectExhausted(false);
+  syncPlayReconnectAttempts = 0;
+  connectSyncPlaySocket(syncPlayRoomId);
+  return true;
+}
+
 /** @phlix/syncplay SyncPlayClient instance for protocol handling. */
 let syncPlayClient: SyncPlayClient | null = null;
 
@@ -686,6 +786,10 @@ function handleWsMessage(event: MessageEvent): void {
  */
 function handleWsClose(event?: { target?: unknown }): void {
   if (event && event.target !== syncPlayWs) return;
+  // CU-077: a parked ladder is INERT — the give-up branch already announced
+  // itself and handed over to the wake watchers. Synthetic no-event closes
+  // (tests, teardown races) must not re-warn or re-schedule from this state.
+  if (syncPlayReconnectExhausted) return;
   syncPlayWs = null;
   if (syncPlayClient) {
     syncPlayClient.onDisconnect();
@@ -704,9 +808,17 @@ function handleWsClose(event?: { target?: unknown }): void {
     }, delay);
   } else if (syncPlayReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     syncPlayLogger.warn('[SyncPlay] Max reconnect attempts reached, giving up');
-    syncPlayRoomId = null;
+    // CU-077: THE LADDER STOPS, THE ROOM DOES NOT. The old branch nulled
+    // `syncPlayRoomId` here — a ~31 s outage permanently orphaned the member,
+    // because nothing could re-dial a room the module had forgotten. The room
+    // id and the session-scoped gate digest stay held; the client is torn down
+    // (the next dial rebuilds it) and the budget resets so a stray close
+    // cannot re-warn this line. Parked state is now the single source of
+    // truth — listeners armed, consumer notified, cleared by any re-join,
+    // explicit close, or a wake-path retry.
     syncPlayReconnectAttempts = 0;
     syncPlayClient = null;
+    setReconnectExhausted(true);
   }
 }
 
@@ -741,6 +853,9 @@ export function openSyncPlayConnection(
   // connection actually came up" (`onopen`, below) and "a reconnect attempt is
   // starting" — which must NOT reset, and did (S283).
   syncPlayReconnectAttempts = 0;
+  // CU-077: a caller-initiated connect clears a parked ladder for ANY room —
+  // the user's new intent supersedes the wake-retry of the old one.
+  setReconnectExhausted(false);
   // M-UI-14: same "new intent" law for the gate credential — this assignment,
   // not a parameter, is what every `joinGroup` below reads, so a room switch
   // can never carry the previous room's digest forward.
@@ -925,6 +1040,9 @@ export function closeSyncPlayConnection(): void {
   }
   syncPlayRoomId = null;
   syncPlayReconnectAttempts = 0;
+  // CU-077: an explicit leave dissolves the park — wake signals must not
+  // re-dial a room the user deliberately left.
+  setReconnectExhausted(false);
   // M-UI-14: an explicit close ends the credential's session scope — it is
   // room-intent state, not tab identity (contrast {@link syncPlayMemberId},
   // which deliberately survives this exact line).

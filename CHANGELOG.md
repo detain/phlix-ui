@@ -6,6 +6,61 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w16L1 review-cure lane 2026-11-07 (UI fix program)
+
+- **Stacked overlays route keys to the top layer only (CU-106).** One Escape
+  with the command palette open over a modal collapsed BOTH layers, and Tab
+  double-routed: every mounted focus-trap keeps a capture-phase listener on
+  the document, and none asked whether it was frontmost. The shared
+  focus-layer stack gains an `isTop` probe (identity, no mutation; the tizen
+  twin keeps its four-op core until its own re-pin wave — documented), and
+  `useFocusTrap` gates Escape AND the Tab-wrap branch on it; each trap's stack
+  token is now its OWN handle wrapping the opener, so two layers opened from
+  the same element stay distinguishable (red-first pinned). A deliberately
+  cleared stack (orphan-recovery) falls through so a live trap is never
+  stranded without a keyboard close path. Five new routing tests pin the law
+  (mutations: strip the gate → exactly those five redden).
+- **The SyncPlay reconnect ladder parks instead of dying (CU-077).** After
+  ~31 s of outage the old give-up branch forgot the room: a watch-party
+  member sat in a live-looking session with a permanently dead realtime
+  half, recoverable only by leave-and-rejoin. The give-up now KEEPS the room
+  id and the M-UI-14 gate digest, exposes the parked state through an
+  injectable listener (mirrored store-side as `reconnectExhausted` with a
+  `retryRealtimeConnection()` door), arms `online` / wake-to-visible
+  platform listeners, and re-dials on any wake — or the host's Reconnect
+  control — with a FRESH full budget, mirroring the hub's park-at-cap
+  precedent. Six new tests; the S283 measured-ladder sequence is unchanged
+  (`1000,2000,4000,8000,16000,gave-up,idle,idle`).
+- **Per-client engine matrix in the README (CU-080).** One row for each of
+  the four git-tag consumers — server `/app`, hub `/app`, windows, tizen —
+  naming the engine each actually runs, its position relative to the pinned
+  JS floor and the `color-mix()` CSS floor, and the guarding pin test. The
+  CSS-floor pin-test half of this finding was already cured by
+  `src/components/cssFloorFallback.test.ts` (CU-076); the matrix records
+  what the prose had carried in one sentence.
+- **SyncPlay role labels state their reachable subset (CU-096).**
+  `SyncPlayPage.getRoleLabel()` spends four contract-pinned role names but
+  the adapter can emit two: the member wire frame carries `is_host` only.
+  The `editor`/`none` arms and their i18n keys stay as the forward-adoption
+  surface, now documented as such rather than drifting as dead vocabulary.
+- **Server shell `wsUrl`/`wsPath` docblock truth (LW-077-b).** The
+  `socketHint.ts` header claimed phlix-server “mirrors the contract in its
+  own shell lane”; it does not — the server's `SharedUiController` payload
+  carries no `wsUrl`/`wsPath` field. The header now names the real producers
+  (hub at `SharedUiController.php:148`, tizen and windows via their shells)
+  and records the server wiring as an open estate follow-up, not a shipped
+  mirror — a stay-true pin in `socketHint.test.ts` keeps the false claim dead.
+- **CU-095 fold 1: `RawSyncPlayMember` derives from contracts.** The member
+  arm still hand-restated the four keys `@phlix/contracts` pins
+  (`SYNC_PLAY_MEMBER_KEYS` + `WireKeysExact`, v0.5.7) after the group arm
+  got the derivation treatment; it is now `Partial<SyncPlayMember>` with
+  creep-guard pins in the CU-095 law test.
+- **CU-095 fold 2: three dead wire DTOs deleted.** `SyncPlayChatMessage`,
+  `SyncPlayParticipant` and `SyncPlayMessage` (plus the `participants` field
+  that referenced one) had zero consumers while the types header claimed
+  the pre-S415 wire fiction was retired — the claim is now executed, and a
+  stay-retired pin keeps it true.
+
 ## Unreleased — w15L2 review-cure lane 2026-11-07 (UI fix program)
 
 - **Login recovery guidance.** The sign-in footer now states the real

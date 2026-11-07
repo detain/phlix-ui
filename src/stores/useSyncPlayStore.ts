@@ -18,6 +18,8 @@ import {
   getSyncPlayApi,
   openSyncPlayConnection,
   closeSyncPlayConnection,
+  retrySyncPlayConnection,
+  setSyncPlayReconnectListener,
   sendSyncPlayCommand,
   sendSyncPlayStateUpdate,
 } from '../api/syncplay';
@@ -137,6 +139,20 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   const members = ref<SyncPlayUser[]>([]);
   const error = ref<string | null>(null);
   const isLoading = ref(false);
+  /**
+   * CU-077 (review ui__crossfe #2): the realtime ladder PARKED after its full
+   * backoff budget — the room is remembered and a wake signal (network back,
+   * tab visible) or {@link retryRealtimeConnection} re-dials it with a fresh
+   * budget. This is the store-visible flag a user surface renders a Reconnect
+   * affordance on; the `syncplay_error` rail (M-UI-12) stays the channel for
+   * server REFUSALS, which this is not. The api module is the single source of
+   * truth: it fires the transition, this ref mirrors it — including the clear
+   * on leave/re-join, which the module also announces.
+   */
+  const reconnectExhausted = ref(false);
+  setSyncPlayReconnectListener((exhausted) => {
+    reconnectExhausted.value = exhausted;
+  });
   /** Local playback position reported by the Player (seconds). Updated by
    *  Player.vue after each sync round so drift can be computed. */
   const localPlaybackPosition = ref(0);
@@ -311,7 +327,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     // could not leave the room they had just joined. The room is not invented:
     // it is `normalizeGroup()` of the same `{ group }` the join returned.
     // The server's view wins field by field — an existing object supplies only
-    // what the group state has no counterpart for (participants).
+    // what the group state has no counterpart for.
     // The other spread order would be a trap: joining room B while a stale
     // room A sat in the store would leave `currentRoom.id` pointing at A, and
     // `leaveRoom()` would then leave the wrong room.
@@ -656,6 +672,17 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   }
 
   /**
+   * CU-077: hand-initiated re-dial of a PARKED room (a Reconnect control).
+   * Returns `false` — touching nothing — when the ladder is not parked,
+   * including the case where a wake signal already beat this click. The
+   * `reconnectExhausted` ref reflects the outcome through the module's
+   * transition fire; there is no local guess.
+   */
+  function retryRealtimeConnection(): boolean {
+    return retrySyncPlayConnection();
+  }
+
+  /**
    * Update the local playback position reported by the Player.
    * Called by Player.vue after each sync round so drift can be computed.
    */
@@ -670,6 +697,8 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     members,
     error,
     isLoading,
+    // CU-077: parked-ladder visibility for a Reconnect affordance.
+    reconnectExhausted,
     // S287: exposed so the chain "player reports a position" → "that position
     // goes on the wire" is assertable at both ends rather than through a spy on
     // the setter. It is also the other input to `driftAmount`, which was already
@@ -692,6 +721,8 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     refreshState,
     refreshMembers,
     clearError,
+    // CU-077: the manual half of the park/wake pair (wake signals retry alone).
+    retryRealtimeConnection,
     updateLocalPosition,
     // S298: hub-relay pending_command consumer pair.
     applyPendingPlayMedia,

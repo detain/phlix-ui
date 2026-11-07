@@ -27,7 +27,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { openSyncPlayConnection, closeSyncPlayConnection, setSyncPlayLogger } from './syncplay';
+import {
+  openSyncPlayConnection,
+  closeSyncPlayConnection,
+  setSyncPlayLogger,
+  setSyncPlayReconnectListener,
+  isSyncPlayReconnectExhausted,
+  retrySyncPlayConnection,
+} from './syncplay';
 
 const ROOM = 'sp_backoff';
 
@@ -138,7 +145,8 @@ describe('handleWsClose — the exponential ladder, measured over 8 consecutive 
         console.info(`[S283] OBSERVED RECONNECT DELAYS (ms): ${JSON.stringify(observed)}`);
 
         // MAX_RECONNECT_ATTEMPTS is 5, so five rungs are climbed and the sixth
-        // close gives up; the room is forgotten, so closes 7 and 8 do nothing.
+        // close gives up; the ladder PARKS (CU-077: the room is remembered, but
+        // a parked ladder is inert), so closes 7 and 8 do nothing.
         expect(observed).toEqual([1000, 2000, 4000, 8000, 16_000, 'gave-up', 'idle', 'idle']);
 
         // Stated independently of the literals above, so a future change to the
@@ -195,11 +203,13 @@ describe('handleWsClose — the give-up cap, beside a reconnect that SUCCEEDS', 
     });
 
     /**
-     * The give-up branch is four statements and each one is asserted separately
-     * below, because it was DEAD at runtime before S283 — an unreachable block
-     * accumulates whatever it likes and nothing contradicts it.
+     * The give-up branch is asserted statement by statement below, because it
+     * was DEAD at runtime before S283 — an unreachable block accumulates
+     * whatever it likes and nothing contradicts it. CU-077 changed its shape:
+     * it still warns once, tears down the client and clears the budget, but it
+     * REMEMBERS the room (parked, not forgotten) so a wake signal can retry.
      */
-    it('the give-up branch warns ONCE, forgets the room, tears down the client, and clears the budget', () => {
+    it('the give-up branch warns ONCE, parks the room, tears down the client, and clears the budget', () => {
         const messages: unknown[] = [];
         openSyncPlayConnection(ROOM, (m) => messages.push(m), 'me', 'Me');
         for (let i = 0; i < 6; i++) closeAndMeasure();
@@ -217,7 +227,8 @@ describe('handleWsClose — the give-up cap, beside a reconnect that SUCCEEDS', 
         } as MessageEvent);
         expect(messages).toEqual([]);
 
-        // (2) `syncPlayRoomId = null` — nothing further is scheduled…
+        // (2) CU-077 parked state — nothing further is scheduled even though
+        // the room is remembered: a parked ladder is inert to stray closes…
         dead.onclose?.();
         vi.advanceTimersByTime(120_000);
         expect(FakeWebSocket.instances.length).toBe(after);
@@ -290,5 +301,106 @@ describe('room switch — a stale socket close is inert (audit #3)', () => {
     it('a no-arg close (synthetic teardown) still reconnects — the guard only fires with an event', () => {
         openSyncPlayConnection(ROOM);
         expect(closeAndMeasure()).toBe(1000);
+    });
+});
+
+// ── CU-077 (review ui__crossfe #2) — the park, the wake, and the retry ─────
+//
+// The old give-up branch nulled `syncPlayRoomId` and stopped: a ~31 s outage
+// permanently orphaned the member, and only a manual leave-and-rejoin could
+// rebuild the realtime half of a live-looking watch-party. The cure keeps the
+// room, makes exhaustion store-visible, and re-dials from a FRESH budget on
+// `online`, on wake-to-visible, and on the host's Reconnect door. Same
+// end-to-end measurement discipline as S283: the observable is socket
+// construction, never a spy on internal state.
+
+describe('CU-077 — the ladder parks instead of dying', () => {
+    afterEach(() => setSyncPlayReconnectListener(null));
+
+    /** Open, climb the full ladder into the parked state; records transitions. */
+    function climbToPark(): boolean[] {
+        const states: boolean[] = [];
+        setSyncPlayReconnectListener((exhausted) => states.push(exhausted));
+        openSyncPlayConnection(ROOM);
+        for (let i = 0; i < 6; i++) closeAndMeasure();
+        return states;
+    }
+
+    it('give-up parks: getter true, listener told ONCE, stray closes stay inert', () => {
+        const states = climbToPark();
+        expect(states).toEqual([true]);
+        expect(isSyncPlayReconnectExhausted()).toBe(true);
+        const before = FakeWebSocket.instances.length;
+        socket().onclose?.(); // synthetic late close from the last dead socket
+        vi.advanceTimersByTime(120_000);
+        expect(FakeWebSocket.instances.length).toBe(before); // parked ⇒ schedules nothing
+    });
+
+    it('an `online` wake re-dials the remembered room with a FRESH budget', () => {
+        climbToPark();
+        const before = FakeWebSocket.instances.length;
+        window.dispatchEvent(new Event('online'));
+        expect(FakeWebSocket.instances.length).toBe(before + 1);
+        // Fresh budget: the next drop starts again at rung one, not past the cap.
+        expect(closeAndMeasure()).toBe(1000);
+    });
+
+    it('wake fires only on VISIBLE and only when PARKED — never racing the live ladder', () => {
+        const vis = (v: string) =>
+            Object.defineProperty(document, 'visibilityState', { value: v, configurable: true });
+        try {
+            vis('visible');
+            openSyncPlayConnection(ROOM);
+            const midLadder = FakeWebSocket.instances.length;
+            document.dispatchEvent(new Event('visibilitychange')); // not parked ⇒ inert
+            expect(FakeWebSocket.instances.length).toBe(midLadder);
+            expect(closeAndMeasure()).toBe(1000);
+            for (let i = 0; i < 5; i++) closeAndMeasure(); // finish the ladder ⇒ parked
+            const parked = FakeWebSocket.instances.length;
+            vis('hidden');
+            document.dispatchEvent(new Event('visibilitychange')); // hidden ⇒ still parked
+            expect(FakeWebSocket.instances.length).toBe(parked);
+            vis('visible');
+            document.dispatchEvent(new Event('visibilitychange')); // the tab returns ⇒ re-dial
+            expect(FakeWebSocket.instances.length).toBe(parked + 1);
+        } finally {
+            vis('prerender'); // leave the jsdom default intact for later files
+        }
+    });
+
+    it('retrySyncPlayConnection is the host door: inert un-parked, re-dials parked', () => {
+        openSyncPlayConnection(ROOM);
+        expect(retrySyncPlayConnection()).toBe(false); // nothing parked — no second dial
+        expect(closeAndMeasure()).toBe(1000);
+        for (let i = 0; i < 5; i++) closeAndMeasure(); // climb to the cap ⇒ parked
+        expect(isSyncPlayReconnectExhausted()).toBe(true);
+        const before = FakeWebSocket.instances.length;
+        expect(retrySyncPlayConnection()).toBe(true);
+        expect(FakeWebSocket.instances.length).toBe(before + 1);
+        expect(isSyncPlayReconnectExhausted()).toBe(false); // park dissolved by the retry
+    });
+
+    it('the wake re-dial re-joins with the HELD gate digest (M-UI-14 continuity)', () => {
+        openSyncPlayConnection(ROOM, undefined, 'me', 'Me', 'deadbeef-hash');
+        for (let i = 0; i < 6; i++) closeAndMeasure();
+        const before = FakeWebSocket.instances.length;
+        window.dispatchEvent(new Event('online'));
+        expect(FakeWebSocket.instances.length).toBe(before + 1);
+        socket().onopen?.();
+        const join = socket()
+            .sent.map((s) => JSON.parse(s) as Record<string, unknown>)
+            .find((m) => String(m.type ?? '').includes('group_join'));
+        expect(join, 'the wake retry must still carry the GROUP_JOIN').toBeDefined();
+        expect(join!.password_hash).toBe('deadbeef-hash'); // NOT demoted to a locked-out stranger
+    });
+
+    it('an explicit close dissolves the park: listener told false, wake has nothing to retry', () => {
+        const states = climbToPark();
+        closeSyncPlayConnection();
+        expect(states).toEqual([true, false]);
+        expect(isSyncPlayReconnectExhausted()).toBe(false);
+        const before = FakeWebSocket.instances.length;
+        window.dispatchEvent(new Event('online'));
+        expect(FakeWebSocket.instances.length).toBe(before); // left room ⇒ no re-dial, ever
     });
 });

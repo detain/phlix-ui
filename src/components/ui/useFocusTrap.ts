@@ -86,6 +86,11 @@ export function useFocusTrap(
 ) {
   const lockScroll = opts.lockScroll ?? true;
   let prevFocus: HTMLElement | null = null;
+  // The stack token is a PER-TRAP handle, never the raw opener element: two
+  // layers activated while the same element (e.g. body) held focus must stay
+  // distinguishable, or `isTop` is true for both and one Escape collapses the
+  // whole stack again — the CU-106 defect through its degenerate door.
+  let myHandle: { readonly opener: HTMLElement | null } | null = null;
   let locked = false;
   let layerPushed = false;
 
@@ -94,11 +99,11 @@ export function useFocusTrap(
     layerPushed = false;
     // LIFO fast path: mine is on top. Non-LIFO (outer layer closing under a
     // still-open inner one): pop & stash until my slot is found, then re-push
-    // the inner slots untouched — the stack's four ops stay the whole vocabulary.
+    // the inner slots untouched — pop/push/depth are the whole vocabulary here.
     const held: unknown[] = [];
     while (layerStack.depth() > 0) {
       const top = layerStack.pop();
-      if (top === prevFocus) break;
+      if (top === myHandle) break;
       held.push(top);
     }
     for (let i = held.length - 1; i >= 0; i--) layerStack.push(held[i]);
@@ -114,6 +119,16 @@ export function useFocusTrap(
 
   function onKeydown(e: KeyboardEvent) {
     if (!active.value || !container.value) return;
+    // CU-106 (review ui__webux #1): a key belongs to the TOP layer of the focus
+    // stack, and to it alone. Every mounted trap keeps a capture-phase listener
+    // on document, so without this gate ONE Escape runs `onEscape` in every open
+    // layer (palette z1100 + modal z1000 collapse together), and the outer
+    // trap's Tab-wrap sees focus outside its container and yanks it into the
+    // buried layer while the inner trap yanks it back — a double focus move per
+    // Tab. A deliberately cleared stack (clearLayerFocus, orphan-recovery) means
+    // no layer accounting exists, so an empty stack falls through: a live trap
+    // keeps handling its own keys exactly as pre-CU-106.
+    if (layerStack.depth() > 0 && !(myHandle !== null && layerStack.isTop(myHandle))) return;
     if (e.key === 'Escape') {
       if (opts.onEscape?.()) e.preventDefault();
       return;
@@ -143,7 +158,8 @@ export function useFocusTrap(
   function activate() {
     if (!layerPushed) {
       prevFocus = document.activeElement as HTMLElement | null;
-      layerStack.push(prevFocus);
+      myHandle = { opener: prevFocus };
+      layerStack.push(myHandle);
       layerPushed = true;
     }
     container.value?.setAttribute('data-focus-trap', '');
@@ -170,6 +186,7 @@ export function useFocusTrap(
       locked = false;
     }
     removeMyLayer();
+    myHandle = null;
     if (prevFocus && document.contains(prevFocus)) prevFocus.focus?.();
     else if (prevFocus && layerStack.depth() === 0) resolveParkTarget()?.focus?.();
     prevFocus = null;

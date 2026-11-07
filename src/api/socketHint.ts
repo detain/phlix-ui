@@ -8,9 +8,15 @@
  * the user can never diagnose — and an operator running the socket on any other
  * host/port has no lever at all.
  *
- * The fix is host-injected, per the contract phlix-hub `6175184` shipped (and
- * phlix-server mirrors in its own shell lane): the server-rendered shell may add
- * two fields to the `window.__PHLIX__` bootstrap payload:
+ * The fix is host-injected, per the contract phlix-hub `6175184` shipped: the
+ * server-rendered shell may add two fields to the `window.__PHLIX__` bootstrap
+ * payload. Producers today: the hub (`src/Http/Controllers/SharedUiController.php`
+ * emits both keys), windows (`src/renderer/main.ts`) and tizen
+ * (`src/endpointOverrides.ts`) feed the seam from their shell boot paths.
+ * phlix-server does NOT wire the seam into its own shell — its
+ * `SharedUiController` payload carries only `app`/`apiBase`/`routerBase`/
+ * `menu`/`extraRoutes`/`features`; server-side wiring is an OPEN estate
+ * adoption gap (LW-077), not a shipped mirror:
  *
  * - `wsUrl`  — `string | null` — explicit `ws(s)://host[:port]`, NO path, query,
  *              or userinfo (env `HUB_WS_URL` on the hub).

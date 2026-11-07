@@ -48,6 +48,10 @@ vi.mock('../api/syncplay', () => ({
   closeSyncPlayConnection: () => closeConnection(),
   sendSyncPlayCommand: vi.fn(),
   sendSyncPlayStateUpdate: vi.fn(),
+  // CU-077: the store registers the parked-state listener during setup(), so
+  // this mock must carry the seam (and the host-retry door it backs).
+  setSyncPlayReconnectListener: vi.fn(),
+  retrySyncPlayConnection: vi.fn(() => false),
 }));
 
 const API_BASE = 'https://media.test';

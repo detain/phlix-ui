@@ -8,6 +8,9 @@
  * @license MIT
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseSocketHint, readSocketHint } from './socketHint';
 import { buildHubRelayUrl, HUB_SYNC_PLAY_PORT } from './hubRelay';
 import { openSyncPlayConnection, closeSyncPlayConnection } from './syncplay';
@@ -208,5 +211,26 @@ describe('buildWsUrl (:8097) — seam precedence (R12-02)', () => {
       vi.unstubAllGlobals();
     }
     expect(url).toBe('ws://localhost:8097?room=sp_5');
+  });
+});
+
+// ── docblock truth (LW-077-b) ─────────────────────────────────────────────────
+
+describe('socketHint header — producer truth', () => {
+  const header = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'socketHint.ts'),
+    'utf8',
+  );
+
+  it('names the server wiring an open gap and never claims a shipped mirror', () => {
+    // The header once claimed phlix-server “mirrors the contract in its own
+    // shell lane”. It does not: the server's SharedUiController payload carries
+    // no wsUrl/wsPath field (estate read at server 94619b49 — zero shell-bootstrap
+    // wsUrl sites in src/ or public_html/). If a future server lane wires the
+    // seam, it updates this pin and the header together.
+    expect(header).not.toMatch(/phlix-server mirrors/i);
+    expect(header).toMatch(/phlix-server does NOT wire the seam/i);
+    expect(header).toMatch(/SharedUiController\.php/);
+    expect(header).toMatch(/endpointOverrides\.ts/);
   });
 });

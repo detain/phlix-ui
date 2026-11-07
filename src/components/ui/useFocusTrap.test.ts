@@ -263,3 +263,141 @@ describe('S534 layer focus memory — stacked push/pop', () => {
     sheet.w.unmount();
   });
 });
+
+/* ---------------------------------------------------------------------------
+ * CU-106 (review ui__webux #1) — keyboard ROUTING with two live traps. The
+ * S534 pins above prove focus MEMORY across stacked layers; nothing here
+ * before this block proved which layer a key belongs to. Repro from the
+ * review: Ctrl+K palette (z1100) over the PluginsPage install modal (z1000) —
+ * one Escape collapsed the whole stack, and Tab double-routed between the
+ * two capture-phase listeners. The gate: only the top of the shared focus
+ * stack handles Escape/Tab; a deliberately cleared stack falls through.
+ * ------------------------------------------------------------------------- */
+
+describe('CU-106 stacked-layer keyboard routing', () => {
+  const escapeLog: string[] = [];
+
+  function routedLayer(cls: string) {
+    const active = ref(false);
+    const Host = defineComponent({
+      setup() {
+        const container = ref<HTMLElement | null>(null);
+        useFocusTrap(container, active, {
+          lockScroll: false,
+          onEscape: () => {
+            escapeLog.push(cls);
+            return true;
+          },
+        });
+        return () =>
+          h('div', { ref: container, class: cls }, [
+            h('button', { class: `${cls}__a` }, 'a'),
+            h('button', { class: `${cls}__b` }, 'b'),
+          ]);
+      },
+    });
+    const w = mount(Host, { attachTo: document.body });
+    return {
+      w,
+      active,
+      a: () => w.find(`.${cls}__a`).element as HTMLElement,
+      b: () => w.find(`.${cls}__b`).element as HTMLElement,
+    };
+  }
+
+  const pressKey = (init: KeyboardEventInit) =>
+    document.dispatchEvent(new KeyboardEvent('keydown', { cancelable: true, ...init }));
+
+  beforeEach(() => {
+    escapeLog.length = 0;
+    clearLayerFocus();
+  });
+  afterEach(() => {
+    focusableRegistry.clear();
+    document.body.innerHTML = '';
+    clearLayerFocus();
+  });
+
+  async function openStacked() {
+    const outer = routedLayer('outer');
+    outer.active.value = true;
+    await nextTick();
+    await nextTick(); // activate() focuses its first item on its own nextTick
+    outer.b().focus(); // palette opens over the modal's focused control
+    const inner = routedLayer('inner');
+    inner.active.value = true;
+    await nextTick();
+    await nextTick();
+    expect(layerFocusDepth()).toBe(2);
+    return { outer, inner };
+  }
+
+  it('ONE Escape reaches ONLY the top layer — the outer trap never fires', async () => {
+    const { inner } = await openStacked();
+    expect(document.activeElement).toBe(inner.a());
+    pressKey({ key: 'Escape' });
+    expect(escapeLog).toEqual(['inner']); // exactly one handler ran
+  });
+
+  it('two layers that captured the SAME opener element still route to the top only', async () => {
+    // Both traps record document.body as their restore target (the opener was
+    // unfocused when each activated). If the stack tokens are the raw elements,
+    // the two entries are indistinguishable and Escape collapses BOTH layers —
+    // the exact CU-106 defect — so each trap's layer handle must be its own.
+    (document.activeElement as HTMLElement | null)?.blur();
+    const outer = routedLayer('outer');
+    outer.active.value = true;
+    await nextTick();
+    await nextTick();
+    (document.activeElement as HTMLElement | null)?.blur();
+    const inner = routedLayer('inner');
+    inner.active.value = true;
+    await nextTick();
+    await nextTick();
+    expect(layerFocusDepth()).toBe(2);
+    pressKey({ key: 'Escape' });
+    expect(escapeLog).toEqual(['inner']);
+  });
+
+  it('with the top gone, the NEXT Escape falls through to the layer below', async () => {
+    const { inner } = await openStacked();
+    pressKey({ key: 'Escape' });
+    inner.active.value = false; // palette closes; focus memory walks back
+    await nextTick();
+    expect(layerFocusDepth()).toBe(1);
+    pressKey({ key: 'Escape' });
+    expect(escapeLog).toEqual(['inner', 'outer']);
+  });
+
+  it('Tab wrap stays INSIDE the top layer — the buried trap never steals focus', async () => {
+    const { outer, inner } = await openStacked();
+    let outerSToleFocus = 0;
+    outer.a().addEventListener('focus', () => outerSToleFocus++);
+    inner.b().focus(); // last focusable of the top layer
+    pressKey({ key: 'Tab' });
+    expect(document.activeElement).toBe(inner.a()); // one wrap, to the top's own first
+    expect(outerSToleFocus).toBe(0); // the pre-fix outer hijack would land here
+  });
+
+  it('Shift+Tab on the top layer’s FIRST control wraps back within the top layer', async () => {
+    const { outer, inner } = await openStacked();
+    let outerSToleFocus = 0;
+    outer.b().addEventListener('focus', () => outerSToleFocus++);
+    inner.a().focus();
+    pressKey({ key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(inner.b());
+    expect(outerSToleFocus).toBe(0);
+  });
+
+  it('cleared stack (orphan-recovery teardown) falls through: a live trap still handles', async () => {
+    const { inner } = await openStacked();
+    clearLayerFocus(); // host-driven full teardown: no layer accounting exists
+    expect(layerFocusDepth()).toBe(0);
+    inner.active.value = false; // inner goes away by its own normal teardown
+    await nextTick();
+    pressKey({ key: 'Escape' });
+    expect(escapeLog).toEqual(['outer']); // documented empty-stack fallback:
+    // a still-mounted trap is NOT silenced by the stack being gone — that
+    // would strand the last overlay with no keyboard close path.
+  });
+});

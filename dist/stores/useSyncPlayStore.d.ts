@@ -124,14 +124,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         serverId?: string | undefined;
         hostUserId?: string | undefined;
         createdAt?: string | undefined;
-        participants?: {
-            userId: string;
-            username: string;
-            role: import("@phlix/contracts").SyncPlayRole;
-            isSynced: boolean;
-            lastPosition: number;
-            latency: number;
-        }[] | undefined;
     } | null, SyncPlayRoom | {
         id: string;
         name: string;
@@ -161,14 +153,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         serverId?: string | undefined;
         hostUserId?: string | undefined;
         createdAt?: string | undefined;
-        participants?: {
-            userId: string;
-            username: string;
-            role: import("@phlix/contracts").SyncPlayRole;
-            isSynced: boolean;
-            lastPosition: number;
-            latency: number;
-        }[] | undefined;
     } | null>;
     currentSession: import("vue").Ref<{
         id: string;
@@ -224,6 +208,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     }[]>;
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
+    reconnectExhausted: import("vue").Ref<boolean, boolean>;
     localPlaybackPosition: import("vue").Ref<number, number>;
     pendingPlayMedia: import("vue").Ref<{
         type: "pending_command";
@@ -267,10 +252,11 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     refreshState: (apiBase: string) => Promise<void>;
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
+    retryRealtimeConnection: () => boolean;
     updateLocalPosition: (position: number) => void;
     applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
     consumePendingPlayMedia: () => void;
-}, "error" | "members" | "currentRoom" | "currentSession" | "isLoading" | "localPlaybackPosition" | "pendingPlayMedia">, Pick<{
+}, "error" | "members" | "currentRoom" | "currentSession" | "isLoading" | "reconnectExhausted" | "localPlaybackPosition" | "pendingPlayMedia">, Pick<{
     currentRoom: import("vue").Ref<{
         id: string;
         name: string;
@@ -300,14 +286,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         serverId?: string | undefined;
         hostUserId?: string | undefined;
         createdAt?: string | undefined;
-        participants?: {
-            userId: string;
-            username: string;
-            role: import("@phlix/contracts").SyncPlayRole;
-            isSynced: boolean;
-            lastPosition: number;
-            latency: number;
-        }[] | undefined;
     } | null, SyncPlayRoom | {
         id: string;
         name: string;
@@ -337,14 +315,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         serverId?: string | undefined;
         hostUserId?: string | undefined;
         createdAt?: string | undefined;
-        participants?: {
-            userId: string;
-            username: string;
-            role: import("@phlix/contracts").SyncPlayRole;
-            isSynced: boolean;
-            lastPosition: number;
-            latency: number;
-        }[] | undefined;
     } | null>;
     currentSession: import("vue").Ref<{
         id: string;
@@ -400,6 +370,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     }[]>;
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
+    reconnectExhausted: import("vue").Ref<boolean, boolean>;
     localPlaybackPosition: import("vue").Ref<number, number>;
     pendingPlayMedia: import("vue").Ref<{
         type: "pending_command";
@@ -443,6 +414,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     refreshState: (apiBase: string) => Promise<void>;
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
+    retryRealtimeConnection: () => boolean;
     updateLocalPosition: (position: number) => void;
     applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
     consumePendingPlayMedia: () => void;
@@ -476,14 +448,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         serverId?: string | undefined;
         hostUserId?: string | undefined;
         createdAt?: string | undefined;
-        participants?: {
-            userId: string;
-            username: string;
-            role: import("@phlix/contracts").SyncPlayRole;
-            isSynced: boolean;
-            lastPosition: number;
-            latency: number;
-        }[] | undefined;
     } | null, SyncPlayRoom | {
         id: string;
         name: string;
@@ -513,14 +477,6 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
         serverId?: string | undefined;
         hostUserId?: string | undefined;
         createdAt?: string | undefined;
-        participants?: {
-            userId: string;
-            username: string;
-            role: import("@phlix/contracts").SyncPlayRole;
-            isSynced: boolean;
-            lastPosition: number;
-            latency: number;
-        }[] | undefined;
     } | null>;
     currentSession: import("vue").Ref<{
         id: string;
@@ -576,6 +532,7 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     }[]>;
     error: import("vue").Ref<string | null, string | null>;
     isLoading: import("vue").Ref<boolean, boolean>;
+    reconnectExhausted: import("vue").Ref<boolean, boolean>;
     localPlaybackPosition: import("vue").Ref<number, number>;
     pendingPlayMedia: import("vue").Ref<{
         type: "pending_command";
@@ -619,7 +576,8 @@ export declare const useSyncPlayStore: import("pinia").StoreDefinition<"phlix-sy
     refreshState: (apiBase: string) => Promise<void>;
     refreshMembers: (apiBase: string) => Promise<void>;
     clearError: () => void;
+    retryRealtimeConnection: () => boolean;
     updateLocalPosition: (position: number) => void;
     applyPendingPlayMedia: (command: PendingPlayMediaCommand) => void;
     consumePendingPlayMedia: () => void;
-}, "joinRoom" | "leaveRoom" | "createAndJoinRoom" | "onRemoteStateUpdate" | "sendCommand" | "refreshState" | "refreshMembers" | "clearError" | "updateLocalPosition" | "applyPendingPlayMedia" | "consumePendingPlayMedia">>;
+}, "joinRoom" | "leaveRoom" | "createAndJoinRoom" | "onRemoteStateUpdate" | "sendCommand" | "refreshState" | "refreshMembers" | "clearError" | "retryRealtimeConnection" | "updateLocalPosition" | "applyPendingPlayMedia" | "consumePendingPlayMedia">>;

@@ -800,6 +800,18 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
   bundle-vendoring clients (windows) sit above the JS floor today; hosts that recompile from
   source choose their own targets. Raising or widening this baseline is a deliberate act, not
   a Vite bump's side effect — that silence is exactly what the pin prevents.
+- **Engine matrix** — one row per client that actually runs this package (the four git-tag
+  consumers named below; console and roku ship their own UIs and consume nothing here):
+
+  | Client | Engine | JS floor (es2021: Chrome/Edge 85+, FF 79+, Safari 14+) | CSS floor (`color-mix()` needs Chrome/Edge 111+) | Guarded by |
+  | --- | --- | --- | --- | --- |
+  | `phlix-server` `/app` SPA | the visitor's own browser | above it today (direct browser consumers) | above it today | `src/test/build-pins.test.ts` + `src/components/cssFloorFallback.test.ts` |
+  | `phlix-hub` `/app` SPA | the visitor's own browser | above it today | above it today | same pair |
+  | `phlix-windows-client` | its pinned Electron Chromium (that repo's lock) | above it today (vendored bundle) | above it today | same pair + its lockwalk/pin gates |
+  | `phlix-tizen-client` | Tizen 6.5 widget WebView, Chromium ≈79–87 | **below modern Safari/Chrome, at-or-near the floor** — never raise the target without re-checking the widget | below it: tints/glows lost via `@supports not` static fallbacks, never layout | `cssFloorFallback.test.ts` (fallback doctrine), tizen's own bundle gates |
+
+  Any change to a row must be measured against that client's engine, not assumed from the
+  browser at large — the mid-2023 `color-mix()` generation is the operative ceiling here.
 - **Dependency audit** — `npm run audit` execs `scripts/audit-gate.mjs`: the full tree at
   `--audit-level=low`, passing only on a clean audit or a subset of the script's justified
   EXACT-SET advisory allow-list (registry-drift advisories with measured no-in-range-fix proofs;

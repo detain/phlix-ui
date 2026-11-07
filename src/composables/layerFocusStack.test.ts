@@ -138,3 +138,40 @@ describe('S534 AC2 grep pins — no fork, no second engine', () => {
     }
   });
 });
+
+/* ---------------------------------------------------------------------------
+ * CU-106 (review ui__webux #1) — the fifth method: isTop, the front-of-stack
+ * probe the focus trap's keyboard gate routes on. Pure identity, zero mutation.
+ * ------------------------------------------------------------------------- */
+
+describe('CU-106 isTop — front-of-stack probe for keyboard routing', () => {
+  it('a node is top only while it is the most recent push, by identity', () => {
+    const s = createLayerFocusStack<string>();
+    expect(s.isTop('outer')).toBe(false); // empty stack: nothing is top
+    s.push('outer');
+    expect(s.isTop('outer')).toBe(true);
+    s.push('inner');
+    expect(s.isTop('outer')).toBe(false); // buried layers answer false
+    expect(s.isTop('inner')).toBe(true);
+    s.pop();
+    expect(s.isTop('outer')).toBe(true);
+    expect(s.isTop('inner')).toBe(false);
+  });
+
+  it('isTop never mutates the stack (a probe, not a lifecycle op)', () => {
+    const s = createLayerFocusStack<string>();
+    s.push('a');
+    s.push('b');
+    s.isTop('a');
+    s.isTop('absent');
+    expect(s.depth()).toBe(2);
+    expect(s.pop()).toBe('b'); // order untouched by the probes
+  });
+
+  it('the ui-side addition is documented against the tizen twin', () => {
+    const src = readFileSync(join(srcRoot, 'composables', 'layerFocusStack.ts'), 'utf8');
+    expect(src).toContain('isTop(node: T): boolean');
+    // Honesty pin: the docblock must name the twin's file and its four-op core.
+    expect(src).toMatch(/tizen twin[\s\S]*backPolicy\.ts[\s\S]*four-op/);
+  });
+});
