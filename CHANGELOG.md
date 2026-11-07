@@ -6,7 +6,25 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
-## Unreleased — w14 L3 2026-11-08 (CU-108/CU-109/CU-110/CU-111/CU-112/CU-114 + folded w12 L2 info rows)
+## 0.99.23 - 2026-11-08
+
+### Release — 8 commits since the `v0.99.22` cut (`a4ede939`): the review→fix campaign's ui tail — the w14 L3 focus-custody / error-recovery / form-UX / configured-router-base batch, the w12 L2 README-truth wave with its registry-shape, route-total and highlight-string tripwires, the w13 L1 export / playlist / shuffle cures and README de-ledgering, the w11 L9 auth-expiry UX listener + card-action wiring + complete-escape JSON highlight + gated D-pad hover arms + README currency gate (and its lift-coupling forward-fix), the w03 L2 loading-focus / accessible-name / copy batch, the w02 L3 `noopener` census gate and doc truths, and the w01 L7 copy case/voice + tokenStore storage guards — folded verbatim from the pending Unreleased lane blocks below (house TW-ui law: bodies untouched, lane headers demoted `## Unreleased` to `###`). Dependency pins advanced at this cut — see the pins section. `dist/` rebuilt IN THIS COMMIT, bundle-substantive (the version stamp plus the rotated dependency runtimes).
+
+### Dependency pins — estate rotation: `@phlix/contracts` `#v0.5.6` → `#v0.5.7` (annotated tag `eee7e776`, peel `bedfe69b`) and `@phlix/syncplay` `#v0.1.7` → `#v0.1.8` (annotated tag `b150e236`, peel `d3cbfc7a`) — both github TAG pins, both peels re-verified against `git ls-remote` at this cut
+
+- Contracts `v0.5.7` is the cite-currency release: the registry bytes this package consumes are BYTE-IDENTICAL across the two tags — `dist/error-codes.json` md5 `5d1783a71a3c4e128b2021327cad3717`, `mcp-scopes.json` `8c92c0703eae8a429c509ff16e0d185d`, `server-route-manifest.json` `90b79e355055307d5ba2cc0ef98e2300` (the vendored manifest copy under `src/api/test/` unchanged). The `ErrorCode` union and the 205-code catalog are UNMOVED, so zero message-catalog or registry pins rotate on this side; the tag delta is coordinate-re-anchored docblocks plus additive internal/route-manifest exports (additive only, no public-surface removal).
+- Syncplay `v0.1.8` is the dialect-chain client release (green upstream through the estate's syncplay waves): the `SyncPlayErrorCode` union is byte-identical and the published declaration delta is private members only, but the client RUNTIME carries the protocol-dialect cures — and the syncplay client is bundled into this package's entry/player chunks, so `v0.99.23` consumers receive those fixes through this pin. The tag also raises the package's node engines floor to `>=22.12.0`; this repo's toolchain and every CI leg already run Node 24, so the floor is documentation-truth, not a new constraint here.
+- Lock surgery was run with npm 11 under an empty userconfig; the `package-lock.json` delta measured at 9+/9−: the two own-version echoes, the two root dependency-spec echoes, the two node `version` + `resolved` pairs (resolving exactly to the verified peels above), and the syncplay `engines` line. No hoist or resolution-graph drift.
+- Era pins rotated from measured red, never preemptively blessed: the rotation reddened exactly six tests — three `@phlix/contracts` pin-guard assertions (the TAG-pin regex, the peel anchor, the lock version field) and the three README currency stamps — all rotated in this commit; five v0.5.6-era prose cites (a login-form fixture comment, the registry test title, and three route-gate harness cites) carry the current era forward with their assertions unchanged (the byte-identical registry bytes prove the titles still describe truth). The syncplay side added zero reds: it has no era cites in-repo and its type surface is unchanged.
+
+### Re-cut provenance — the vanished `v0.99.23` (honest forward-record)
+
+An earlier lane cut and pushed a `v0.99.23` release, and both its tag and commit later VANISHED from origin — the rewind class registered for this repo's refs during the campaign. The vanished objects are unresolvable from origin today, so no sha of that attempt is recited anywhere in this entry; everything written here is provable by `git ls-remote` / `git cat-file` at the time of writing. At this cut `refs/tags/v0.99.23` is ABSENT on origin (the latest published tag is `v0.99.22`, peel `a4ede939`), `origin/master` is the eight-commit lineage above that peel, and that peel is a VERIFIED ANCESTOR of `master` — the history under this cut was never rewritten. This section is therefore the honest RE-CUT of the same version number atop the current, fully-attested lineage: the earlier attempt's lineage contains nothing absent from the blocks folded below.
+
+- Measured suite counts at this tip: full serial battery 335 files / 6,931 passing | 10 skipped — identical to the pre-ritual baseline re-derived at `43b2acd6` in this worktree. The ritual added and removed no tests; the six rotation reds named above are green inside this count.
+- `dist/` rebuilt IN THIS COMMIT carrying the `0.99.23` version stamp into the shipped bundles consumers vendor, plus the rotated dependency runtimes — **bundle-substantive, not stamp-only**. Two consecutive full builds byte-identical (`diff -r` exit 0); aggregate md5 (`find dist -type f | sort | xargs md5sum | md5sum`) = `1930df1d5d40ef25af431b899863e192` (889 files). Entries: `dist/phlix-ui.js` `db2d03556330c38ad7013fae070390c3 → 9fd8feb3a95e5537a0106c75ce512e5e`, `dist/player.js` `31cfc705408539abd69a5207b6648b1e → ead34451e9bcfd312a017795eeb43c3b`, UMD pair `c1b6ac7335e60d3c40b8dcd6910a2424 → b3536cd7a6c7f427faf5ee6604202d26` / `de77dbf132245da7e7b68e57cec68bd2 → 4346baf4dff4f8e283dfdad15aac59c3`. `dist/style.css` `1cedbc441f64daa5abeef0d8ec45c3aa` and `dist/player.css` `9e1f4f79bfd2da8b862bbc7c353eff01` HELD (the ritual touched no SFC). Six chunk carriers rotated with the syncplay/Player bundle graph (each `.map` following its chunk): `PlayerPage-CjKjMmhk.js → PlayerPage-4c1VyaCv.js`, `PlayerPage-DeYX0jWD.cjs → PlayerPage-BApZhoxS.cjs`, `SyncPlayModal-DBvQpUt5.js → SyncPlayModal-eTm6_KIy.js`, `SyncPlayModal-B7Pu_9-r.cjs → SyncPlayModal-DwMq2siv.cjs`, `SyncPlayPage-B269IX0l.js → SyncPlayPage-BuG5S7WB.js`, `SyncPlayPage-Da5qHAWd.cjs → SyncPlayPage-CuBbgeXI.cjs`; every other dist file byte-identical. `dist:check` green post-commit.
+
+### w14 L3 2026-11-08 (CU-108/CU-109/CU-110/CU-111/CU-112/CU-114 + folded w12 L2 info rows)
 
 Review-cure batch (the `.reviews/2026-11-04/` ui webux register; seventh fix wave). Six
 behavior cures across focus custody, error recovery, form UX, and router-base honesty —
@@ -67,7 +85,7 @@ determinism proven ×2 (`diff -r` zero) with identities disclosed at the end.
   (+27 pins attributed above); `vue-tsc` type-clean inside both builds; `eslint` RC=0;
   `dist:check` green post-commit (a third build dirty-free).
 
-## Unreleased — w12 L2 2026-11-07 (CU-084/CU-087/CU-098/CU-100/CU-120 + banked w11 L9/w13 L1 rows)
+### w12 L2 2026-11-07 (CU-084/CU-087/CU-098/CU-100/CU-120 + banked w11 L9/w13 L1 rows)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, sixth ui wave). Documentation
 currency plus two tripwires that make the corrected claims self-enforcing; no shipped
@@ -100,7 +118,7 @@ behavior changed, so the committed bundle is byte-identical (proven ×2).
   hyphen-anchored prefixes). README version trio (Status / install pin / locale era) is
   consistent at `v0.99.22` and left untouched for the gate that enforces it.
 
-## Unreleased — w13 L1 2026-11-07 (CU-088/CU-091/CU-092/CU-122/CU-123/CU-124 + banked w11 L9 minors)
+### w13 L1 2026-11-07 (CU-088/CU-091/CU-092/CU-122/CU-123/CU-124 + banked w11 L9 minors)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, fifth ui wave). Red-first: each
 new-behavior pin measured failing at the parent; the inherited-behavior pins proven by
@@ -140,7 +158,7 @@ mutation (each mutant reddens exactly its own test).
 Zero new i18n keys (the touched toasts follow the existing raw-English menu-copy
 posture), so consumer locale equality-PINs do not rotate this wave.
 
-## Unreleased — w11 L9 2026-11-07 (CU-079/CU-081/CU-089/CU-090/CU-102/CU-107)
+### w11 L9 2026-11-07 (CU-079/CU-081/CU-089/CU-090/CU-102/CU-107)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, fourth ui wave). Red-first:
 each pin measured failing at the parent commit before its src cure.
@@ -192,7 +210,7 @@ tizen/windows consumer suites that pin their vendored catalog hashes must rotate
 the next re-vendor. `dist/` rebuilt deterministically (×2 byte-identical) and
 committed in this same commit; chunk hashes rotate through the shared-module graph.
 
-## Unreleased — w03 L2 2026-11-06 (CU-071/CU-117/CU-118/CU-119/CU-121/CU-125)
+### w03 L2 2026-11-06 (CU-071/CU-117/CU-118/CU-119/CU-121/CU-125)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, third ui wave). Red-first:
 each pin measured failing at the parent commit before its src cure.
@@ -232,7 +250,7 @@ each pin measured failing at the parent commit before its src cure.
 > (`plan_updates.md`, `updates.md`, and the per-feature `plan_updates_*_blueprint.md`). The `S`
 > numbers are estate-wide and shared with phlix-server / phlix-hub.
 
-## Unreleased — w02 L3 review-cure batch 2026-11-07 (CU-085/CU-086/CU-099/CU-101/CU-113 + folded w01 L7 residuals)
+### w02 L3 review-cure batch 2026-11-07 (CU-085/CU-086/CU-099/CU-101/CU-113 + folded w01 L7 residuals)
 
 - **CU-101 (ui__secaudit #1):** `BookDetailPage.vue`’s download `window.open` was the sole
   sink omitting the `'noopener'` windowFeatures argument — an opened external destination
@@ -292,7 +310,7 @@ each pin measured failing at the parent commit before its src cure.
   re-adopted by a fresh instance; durable erase-under-duress is host custody’s job),
   and post-latch the mirror outranks an external tab’s fresher storage writes.
 
-## Unreleased — w01 L7 review-cure batch 2026-11-06 (CU-072/CU-073/CU-074/CU-075/CU-078/CU-083)
+### w01 L7 review-cure batch 2026-11-06 (CU-072/CU-073/CU-074/CU-075/CU-078/CU-083)
 
 - **CU-072 (ui__copywriter #2):** inline button copy follows COPY LAW 1 — `New Invite` →
   `New invite` and `New Request` → `New request` in the InviteLinksPage/RequestsPage header

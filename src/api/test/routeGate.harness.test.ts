@@ -88,7 +88,7 @@ describe('route gate server — control', () => {
     });
 
     it('pins the manifest provenance — server sha + generator, never hand-edited', () => {
-        // Canonical contracts export vendored from the v0.5.6 tag tree (regen
+        // Canonical contracts export vendored from the v0.5.7 tag tree (regen
         // #36 — 415 tuples, content-derived at phlix-server 58530ec2; the
         // wave-5 re-vendor advanced this copy off the v0.5.5-era regen #35
         // bytes the v0.99.16 cut shipped; full-literal sha + md5 pins live

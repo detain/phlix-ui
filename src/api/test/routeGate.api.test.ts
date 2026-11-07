@@ -89,7 +89,7 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * map ships the JSON subpath — see {@link routeGateServer} header). These
      * pins fail if the vendored file is edited, re-derived locally, or replaced:
      * the md5 is the byte-identity proof against
-     * `phlix-contracts/dist/server-route-manifest.json` at the `v0.5.6` tag
+     * `phlix-contracts/dist/server-route-manifest.json` at the `v0.5.7` tag
      * (regen #36 — 415 tuples, CONTENT re-derivation at phlix-server
      * `58530ec2…`: three added server routes, zero removed), and the sha pin
      * is the server-currency proof. History: the v0.99.16 cut deliberately
