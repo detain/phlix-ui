@@ -1014,16 +1014,61 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     w.unmount();
   });
 
-  it('Shuffle → ApiClient.shufflePlay(itemId) + success toast', async () => {
-    const shuffle = vi.spyOn(ApiClient.prototype, 'shufflePlay').mockResolvedValue({ message: 'ok' });
-    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+  // CU-092 (ui__enduser #4): the old pair of these cases pinned the LIE — a
+  // "Shuffle play started." success toast while nothing played. The endpoint is
+  // a pure picker ({shuffled_ids, mode}, no session), so the honest law is:
+  // navigate to the player at the first shuffled id when the host mounted the
+  // route; with no route, only ever claim the order is queued.
+  it('Shuffle → shufflePlay(itemId) then opens the player at the first shuffled id (CU-092)', async () => {
+    const shuffle = vi
+      .spyOn(ApiClient.prototype, 'shufflePlay')
+      .mockResolvedValue({ shuffled_ids: ['e7', 'e3'], mode: 'shuffle' });
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/app/player/:id', name: 'player', component: { template: '<div/>' } }],
+    });
+    const push = vi.spyOn(router, 'push');
+    const w = mount(MediaCard, {
+      props: { item: media() },
+      attachTo: document.body,
+      global: { plugins: [router] },
+    });
     const success = vi.spyOn(useToastStore(), 'success');
 
     await selectMenuItem(w, MENU_LABELS.shuffle);
 
     expect(shuffle).toHaveBeenCalledTimes(1);
     expect(shuffle).toHaveBeenCalledWith('m1');
-    expect(success).toHaveBeenCalledWith('Shuffle play started.');
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'e7' } });
+    expect(success).not.toHaveBeenCalledWith('Shuffle play started.');
+    w.unmount();
+  });
+
+  it('Shuffle with no player route (standalone mount) → "Shuffle queued.", never "started" (CU-092)', async () => {
+    const shuffle = vi
+      .spyOn(ApiClient.prototype, 'shufflePlay')
+      .mockResolvedValue({ shuffled_ids: ['e7'], mode: 'single' });
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await selectMenuItem(w, MENU_LABELS.shuffle);
+
+    expect(shuffle).toHaveBeenCalledWith('m1');
+    expect(success).toHaveBeenCalledWith('Shuffle queued.');
+    expect(success).not.toHaveBeenCalledWith('Shuffle play started.');
+    w.unmount();
+  });
+
+  it('Shuffle returning no ids → "Nothing to shuffle-play." info, no success claim (CU-092)', async () => {
+    vi.spyOn(ApiClient.prototype, 'shufflePlay').mockResolvedValue({ shuffled_ids: [], mode: 'shuffle' });
+    const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
+    const info = vi.spyOn(useToastStore(), 'info');
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await selectMenuItem(w, MENU_LABELS.shuffle);
+
+    expect(info).toHaveBeenCalledWith('Nothing to shuffle-play.');
+    expect(success).not.toHaveBeenCalled();
     w.unmount();
   });
 

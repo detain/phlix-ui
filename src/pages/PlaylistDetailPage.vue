@@ -206,6 +206,20 @@ function onInfo(item: MediaItem): void {
   else toasts.info(t('common.detailsUnavailable', { name: item.name }));
 }
 
+/**
+ * CU-091 (ui__enduser #6): the header offered only "Delete playlist" — the
+ * thing users assemble for a viewing sequence could not be STARTED from its
+ * own page in one tap. "Play" begins the list at its first title through the
+ * exact same resolve path as a card Play (a series tile resolves to the
+ * next-up/resume episode, not blindly to episode 1), so the button promises
+ * nothing the per-card action does not deliver. Sequential intent = curator
+ * order; the player's own up-next chain continues from the opened title.
+ */
+function playPlaylist(): void {
+  const first = items.value[0];
+  if (first) void onPlay(first);
+}
+
 function onWatchlist(item: MediaItem): void {
   if (userItemData.isFavorite(item.id)) {
     toasts.success(t('itemActions.addedToList', { name: item.name }));
@@ -282,6 +296,7 @@ onMounted(() => void load());
           </p>
         </div>
         <div class="playlist-detail__actions">
+          <Button v-if="items.length" variant="solid" size="sm" left-icon="play" @click="playPlaylist">Play</Button>
           <Button v-if="canManage" variant="ghost" size="sm" @click="deleteOpen = true">Delete playlist</Button>
           <p v-else class="playlist-detail__readonly">Shared playlist — only its owner (or an admin) can change it.</p>
         </div>

@@ -7,7 +7,7 @@
 export { createPhlixApp } from './app/createPhlixApp';
 export { phlixUiVersion } from './version';
 export { mcpTokensMenuItem, MCP_TOKENS_ROUTE_NAME, MCP_TOKENS_ROUTE_PATH } from './app/createPhlixApp';
-export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow } from './app/types';
+export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow, ConnectCandidate } from './app/types';
 export { default as PhlixApp } from './app/PhlixApp.vue';
 export { default as AppLayout } from './app/AppLayout.vue';
 export { ApiClient, isTmdbUnconfigured, TMDB_UNCONFIGURED_CODE, setDefaultApiHeaders, getDefaultApiHeaders, setDefaultTokenStore, MUSIC_PAGE_SIZE, } from './api/client';

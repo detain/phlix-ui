@@ -1440,10 +1440,19 @@ export class ApiClient {
 
     /**
      * Shuffle-play a media item (`POST /api/v1/shuffle`, body `{ media_id: string }`).
-     * Returns a message. Non-2xx throws the shared {@link ApiError}.
+     *
+     * Wire truth (server `MediaItemController::shufflePlay`): the response is
+     * `{ shuffled_ids: string[], mode: 'single' | 'shuffle' }` — the ordered ids
+     * to play, decided server-side (a container's children shuffled; a childless
+     * playable item returns just itself; music containers resolve to track ids).
+     * The endpoint is a pure picker — it stores nothing, so whoever wants the
+     * shuffle to actually PLAY must hand the first id to a player surface.
+     * (The earlier docblock/type claimed `{ message: string }`; no such field
+     * exists on the wire — the stale claim let the caller toast a fiction.)
+     * Empty/unplayable containers answer 404; non-2xx throws the shared {@link ApiError}.
      */
-    shufflePlay(id: string): Promise<{ message: string }> {
-        return this.post<{ message: string }>('/api/v1/shuffle', { media_id: id });
+    shufflePlay(id: string): Promise<{ shuffled_ids: string[]; mode: 'single' | 'shuffle' }> {
+        return this.post<{ shuffled_ids: string[]; mode: 'single' | 'shuffle' }>('/api/v1/shuffle', { media_id: id });
     }
 
     /**

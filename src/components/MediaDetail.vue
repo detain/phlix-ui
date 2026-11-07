@@ -15,6 +15,7 @@
  * overview, cast, runtime…). Keyboard-operable, reduced-motion safe, no emoji.
  */
 import { computed, ref, onMounted, onBeforeUnmount, watch, inject, nextTick } from 'vue';
+import { routerKey } from 'vue-router';
 import type { MediaItem, MediaType } from '../types/media-item';
 import type { PhlixAppConfig } from '../app/types';
 import { mediaTypeIcon } from '../utils/mediaTypeIcon';
@@ -202,6 +203,11 @@ const menuItems = computed(() =>
   }),
 );
 
+// CU-092 parity with MediaCard: the shuffle endpoint is a pure picker — the
+// honest completion signal is opening the player at the first shuffled id when
+// the host mounted a player route; with no route, say only "queued".
+const router = inject(routerKey, null);
+
 function onMenuSelect(menuItem: { label: string }): void {
   const L = MENU_LABELS;
   const toasts = useToastStore();
@@ -260,9 +266,25 @@ function onMenuSelect(menuItem: { label: string }): void {
         });
       break;
     case L.shuffle:
+      // CU-092 (ui__enduser #4, MediaDetail twin of the MediaCard handler):
+      // "Shuffle play started." toasted while nothing ever started. The
+      // endpoint returns {shuffled_ids, mode} and stores no session — play the
+      // first shuffled id when the host has a player route; otherwise the
+      // honest local statement is that the order is queued, never started.
       mediaScopedClient()
         .shufflePlay(props.item.id)
-        .then(() => toasts.success('Shuffle play started.'))
+        .then((res) => {
+          const first = Array.isArray(res?.shuffled_ids) ? res.shuffled_ids[0] : undefined;
+          if (!first) {
+            toasts.info('Nothing to shuffle-play.');
+            return;
+          }
+          if (router?.hasRoute('player')) {
+            void router.push({ name: 'player', params: { id: first } }).catch(() => {});
+          } else {
+            toasts.success('Shuffle queued.');
+          }
+        })
         .catch((err) => {
           toasts.error('Shuffle play failed.', {
             message: err instanceof Error ? err.message : String(err),

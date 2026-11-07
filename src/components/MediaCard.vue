@@ -322,7 +322,26 @@ function onMenuSelect(menuItem: { label: string }): void {
     case L.shuffle:
       mediaScopedClient()
         .shufflePlay(props.item.id)
-        .then(() => toasts.success('Shuffle play started.'))
+        // CU-092 (ui__enduser #4): the old handler toasted "Shuffle play
+        // started." while playing NOTHING — a false-completion signal on a
+        // primary playback verb. The endpoint is a pure picker (it returns
+        // {shuffled_ids, mode} and stores no session), so keeping the promise
+        // means opening the player at the first shuffled id when the host
+        // mounted the route. Without a player route nothing can start locally —
+        // say only that the order was queued (the server's honest half-truth),
+        // never that playback started.
+        .then((res) => {
+          const first = Array.isArray(res?.shuffled_ids) ? res.shuffled_ids[0] : undefined;
+          if (!first) {
+            toasts.info('Nothing to shuffle-play.');
+            return;
+          }
+          if (router?.hasRoute('player')) {
+            void router.push({ name: 'player', params: { id: first } }).catch(() => {});
+          } else {
+            toasts.success('Shuffle queued.');
+          }
+        })
         .catch((err) => {
           toasts.error('Shuffle play failed.', {
             message: err instanceof Error ? err.message : String(err),

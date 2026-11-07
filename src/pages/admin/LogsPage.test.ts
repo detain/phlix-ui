@@ -376,4 +376,25 @@ describe('Admin LogsPage — renderer overhaul', () => {
     expect(pre.text()).toContain('{"xss":"<img src=x onerror=alert(1)>"}');
     w.unmount();
   });
+
+  // Banked w11L9 minor: the two escapeHtml legs that carry the PLAIN TEXT
+  // between (and after) the JSON matches had zero teeth — both existing pins
+  // put the payload INSIDE a matched value, so deleting either leg still
+  // passed. Payloads before AND after a real JSON pair hit both legs; mutation
+  // proof: stripping either leg's escapeHtml lands live markup in the sink.
+  it('markup payloads in the NON-JSON legs around a match stay inert text (CU-102 legs)', async () => {
+    const w = await mountAll([
+      'app-2026-07-18.log     <img src=x onerror=alert(1)> {"a": 1} <img src=y onerror=alert(2)>',
+    ]);
+    const pre = w.find('[data-testid="logs-output"]');
+    // Inter-match leg + trailing leg both escaped: no live elements from either.
+    expect(pre.element.querySelectorAll('img')).toHaveLength(0);
+    expect(pre.text()).toContain('<img src=x onerror=alert(1)>');
+    expect(pre.text()).toContain('<img src=y onerror=alert(2)>');
+    // The JSON decoration itself still rendered (this is not a "no matches"
+    // vacuous pass).
+    expect(pre.element.querySelector('.json-key')).not.toBeNull();
+    expect(pre.element.querySelector('.json-number')).not.toBeNull();
+    w.unmount();
+  });
 });

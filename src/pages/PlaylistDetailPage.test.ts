@@ -324,4 +324,78 @@ describe('PlaylistDetailPage', () => {
       toasts.toasts.some((t) => t.tone === 'success' && t.message === 'Marked “Dune” as watched.'),
     ).toBe(true);
   });
+
+  // CU-091 (ui__enduser #6): a playlist you assembled for a viewing sequence
+  // could not be STARTED from its own page. The header Play begins the list at
+  // its first title through the same resolve path as a card Play.
+  it('header Play opens the player at the first item (CU-091)', async () => {
+    const client = fakeClient();
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = await mountPage(client, router);
+    await flushPromises();
+
+    const play = w.findAll('button').find((b) => b.text() === 'Play');
+    expect(play).toBeDefined();
+    await play!.trigger('click');
+    await flushPromises();
+
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'm1' } });
+  });
+
+  it('read-only shared playlist still offers header Play — manageability gates writes, not watching (CU-091)', async () => {
+    signIn({ id: 'someone-else' });
+    const client = fakeClient({ createdBy: 'u1' });
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = await mountPage(client, router);
+    await flushPromises();
+
+    // The write affordance is gone for members…
+    expect(w.findAll('button').find((b) => b.text() === 'Delete playlist')).toBeUndefined();
+    // …but the list is still WATCHABLE — hiding Play here would gate reading
+    // behavior through a manageability control.
+    const play = w.findAll('button').find((b) => b.text() === 'Play');
+    expect(play).toBeDefined();
+    await play!.trigger('click');
+    await flushPromises();
+
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'm1' } });
+  });
+
+  // Banked w11L9 minor: BrowsePage pins the supersede law, but the SAME
+  // playController/stale machinery lives on each page — a per-page clone so a
+  // regression on THIS page reddens a test on THIS page.
+  it('a rapid second Play supersedes the first (stale series resolve is discarded)', async () => {
+    let release!: (eps: MediaItem[]) => void;
+    const gate = new Promise<MediaItem[]>((res) => {
+      release = res;
+    });
+    const client = fakeClient();
+    const get = client.get as unknown as ReturnType<typeof vi.fn>;
+    get.mockImplementation((url: string) => {
+      // The series child-fetch hangs until the test releases it; a QUERY key,
+      // not a path suffix — the enrichment URL has no query.
+      if (String(url).includes('parentId=')) {
+        return gate.then((eps) => ({ items: eps, total: eps.length }));
+      }
+      const id = String(url).split('/').pop() ?? '';
+      return Promise.resolve({ item: shaped({ id, name: id === 'm2' ? 'Arrival' : 'Dune' }) });
+    });
+    const router = makeRouter();
+    const push = vi.spyOn(router, 'push');
+    const w = await mountPage(client, router);
+    await flushPromises();
+
+    const card = w.findAllComponents(MediaCardStub)[0].vm;
+    card.$emit('play', shaped({ id: 's1', name: 'Slow Series', type: 'series' }));
+    await Promise.resolve();
+    card.$emit('play', shaped({ id: 'm1', name: 'Dune' }));
+    await flushPromises();
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'm1' } });
+
+    release([shaped({ id: 'e1', name: 'Pilot', type: 'episode', season_number: 1, episode_number: 1 })]);
+    await flushPromises();
+    expect(push).not.toHaveBeenCalledWith({ name: 'player', params: { id: 'e1' } });
+  });
 });

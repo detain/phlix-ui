@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick, computed } from 'vue';
+import { createRouter, createMemoryHistory } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -168,6 +169,60 @@ describe('MediaDetail — missing-episodes toast pluralisation (S134)', () => {
   it('keeps the zero case as its own message, not "0 episodes missing."', async () => {
     const success = await runMissingEpisodes(0);
     expect(success).toHaveBeenCalledWith('No missing episodes.');
+  });
+});
+
+describe('MediaDetail — shuffle honesty (CU-092 twin of the MediaCard law)', () => {
+  // The detail-page ⋯ menu carried the same false-completion toast as MediaCard.
+  // These pins mirror the MediaCard tests: play the first shuffled id when the
+  // host mounted a player route; with no route claim only "queued"; never
+  // claim playback on an endpoint that starts no playback.
+  it('shuffle with a player route mounted navigates to the first shuffled id (CU-092)', async () => {
+    const shuffle = vi
+      .spyOn(ApiClient.prototype, 'shufflePlay')
+      .mockResolvedValue({ shuffled_ids: ['e7', 'e3'], mode: 'shuffle' });
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/app/player/:id', name: 'player', component: { template: '<div/>' } }],
+    });
+    const push = vi.spyOn(router, 'push');
+    const w = mount(MediaDetail, {
+      props: { item: media() },
+      attachTo: document.body,
+      global: { plugins: [router] },
+    });
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await w.find('[aria-label="More actions"]').trigger('click');
+    await nextTick();
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const target = items.find((el) => el.textContent?.trim() === MENU_LABELS.shuffle);
+    expect(target, `present: ${items.map((i) => i.textContent?.trim()).join(', ')}`).toBeTruthy();
+    target!.click();
+    await flushPromises();
+
+    expect(shuffle).toHaveBeenCalledWith('m1');
+    expect(push).toHaveBeenCalledWith({ name: 'player', params: { id: 'e7' } });
+    expect(success).not.toHaveBeenCalledWith('Shuffle play started.');
+    w.unmount();
+  });
+
+  it('shuffle with no router mounted toasts "Shuffle queued." — never "started" (CU-092)', async () => {
+    vi.spyOn(ApiClient.prototype, 'shufflePlay').mockResolvedValue({ shuffled_ids: ['e7'], mode: 'single' });
+    const w = mount(MediaDetail, { props: { item: media() }, attachTo: document.body });
+    const success = vi.spyOn(useToastStore(), 'success');
+
+    await w.find('[aria-label="More actions"]').trigger('click');
+    await nextTick();
+    const items = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    const target = items.find((el) => el.textContent?.trim() === MENU_LABELS.shuffle);
+    expect(target, `present: ${items.map((i) => i.textContent?.trim()).join(', ')}`).toBeTruthy();
+    target!.click();
+    await flushPromises();
+
+    expect(success).toHaveBeenCalledWith('Shuffle queued.');
+    expect(success).not.toHaveBeenCalledWith('Shuffle play started.');
+    w.unmount();
   });
 });
 

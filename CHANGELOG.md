@@ -6,6 +6,46 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w13 L1 2026-11-07 (CU-088/CU-091/CU-092/CU-122/CU-123/CU-124 + banked w11 L9 minors)
+
+Review-cure batch (`.reviews/2026-11-04/` ui registers, fifth ui wave). Red-first: each
+new-behavior pin measured failing at the parent; the inherited-behavior pins proven by
+mutation (each mutant reddens exactly its own test).
+
+- **CU-123** README de-ledgering: eleven internal ticket coordinates (S298, R12-02 ×2,
+  S532, R-UI-10, S82 ×2, the server-W2-wave sentence, S263, S144, S324, NOTE (H0), the
+  reviewer-persona roster line) rewritten as behavior prose — public docs no longer
+  point readers at a ledger they cannot open.
+- **CU-122** errors-section wording: "bundle" carried two meanings in one paragraph —
+  the seven message locales and the seven per-locale error catalogs are now named
+  "locale tags" / "error catalogs" where the sentence means those.
+- **CU-124** Quick start deflooring: the route-enumeration/transport/browse-theory
+  paragraphs that made booting a two-screen digression moved verbatim into a new
+  "Hosting" subsection after the composite config example; Quick start is the six-line
+  boot path plus a pointer.
+- **CU-088** `src/index.ts`: `ConnectCandidate` re-exported from the package root — the
+  README's `connectScan` row documented an import type that was not importable. The row
+  now states the real surface.
+- **CU-091** `PlaylistDetailPage.vue`: header Play button starts the list at its first
+  title through the exact same resolve path as a card Play (series tiles still resolve
+  to next-up/resume). Read-only shared playlists keep Play — manageability gates
+  writes, not watching (pinned).
+- **CU-092** `MediaCard.vue` + `MediaDetail.vue`: the ⋯-menu Shuffle toasted "Shuffle
+  play started." while playing nothing — the endpoint is a pure picker returning
+  `{shuffled_ids, mode}` and starts no session. Both handlers now open the player at
+  the first shuffled id when the host mounted a player route, toast "Shuffle queued."
+  when it did not, and "Nothing to shuffle-play." on an empty pick. The
+  `ApiClient.shufflePlay` return type was fiction (`{message}`); it now matches the
+  server wire truth.
+- **Banked w11 L9 minors**: a third `LogsPage.test.ts` pin puts payloads in the two
+  inter-match `escapeHtml` legs the existing pair never exercised (mutating either leg
+  to raw-reds exactly this test); per-page supersede clones on `PlaylistDetailPage` and
+  `SearchPage` mirror BrowsePage's law so a stale-resolve regression on either page
+  reddens a test on that page (stale-leg mutation killed both).
+
+Zero new i18n keys (the touched toasts follow the existing raw-English menu-copy
+posture), so consumer locale equality-PINs do not rotate this wave.
+
 ## Unreleased — w11 L9 2026-11-07 (CU-079/CU-081/CU-089/CU-090/CU-102/CU-107)
 
 Review-cure batch (`.reviews/2026-11-04/` ui registers, fourth ui wave). Red-first:

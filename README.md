@@ -105,35 +105,12 @@ createPhlixApp({
 }).mount('#app');
 ```
 
-That single call mounts the whole experience under `/app` (Vue Router history base, configurable):
-Browse (`/app`), a per-library page (`/app/library/:id`), media detail (`/app/media/:id`) and its
-season drill-down (`/app/media/:id/season/:season`), player (`/app/player/:id`), login/signup/connect
-(`/app/login`, `/app/signup`, `/app/connect`), settings (`/app/settings`), explore similar
-(`/app/explore`), recommendations (`/app/recommendations`), watch history (`/app/history`), SyncPlay
-(`/app/syncplay`), music (`/app/music`), parental controls (`/app/parental`), profiles
-(`/app/profiles`), playlists (`/app/playlists` and `/app/playlists/:id`), and MCP tokens
-(`/app/mcp-tokens`, mounted only when `app: 'hub'`) — nineteen named routes for the hub, eighteen
-for the server, plus a 404 catch-all. The built-in route pages, the
-player surface, and the command palette are lazy chunks — they load only when first reached.
-
-**A note on transport.** The snippet above points `apiBase` at a *different* origin than the one
-serving the SPA, so the browser will only let `/api/v1` calls through when the API host's CORS
-policy allows the page's exact origin — Phlix hosts never emit `Access-Control-Allow-Origin: *`
-(the server's `CorsManager` reflects an allow-listed origin with credentials; the hub's
-`CorsPolicy` grants nothing cross-origin until configured). Auth rides the `Authorization: Bearer`
-token login mints into `localStorage` (custody is swappable via the `tokenStore` config seam).
-Serving the SPA on the *same* origin as its API — `apiBase: ''`, as the composite example below
-does — is the zero-config path: exactly how server and hub host this bundle under `/app`
-themselves; no preflight, nothing to allow-list.
-
-**Browse is organized per library.** The Browse home renders a "Continue Watching" rail, any configured
-`homeRows`, then **one rail per library** ("Movies", "TV", "Anime", …) read from `GET /api/v1/libraries`.
-Each rail's "See all" opens that library's dedicated `/app/library/:id` page (the full filterable grid).
-Set `libraryLinks: true` on a `MenuItem` to also surface one nav link per library. A library whose
-`type` is `music` never renders that generic grid: `createPhlixApp`'s router guard
-(`musicLibraryRedirect`, exported for tests) redirects `/app/library/:id` → `/app/music` inside
-`beforeEach`, and falls through to the generic grid when the type can't be resolved or the host's
-route table has no `music` route.
+That single call mounts the whole experience under `/app` (Vue Router history base,
+configurable): Browse with one rail per library, media detail, the player, auth,
+settings, playlists, SyncPlay, music and more — every built-in page, the player
+surface, and the command palette are lazy chunks that load only when first reached.
+The full route table, the same-origin-vs-cross-origin transport note, and the
+music-library redirect behavior live in [Hosting](#hosting) below.
 
 > **CSS is not auto-injected.** Of the two `import '...css'` lines above, `style.css` is
 > **required** — without it nothing is styled. `fonts.css` is **strongly recommended** — without it
@@ -159,21 +136,21 @@ almost always pass two: `app` and `apiBase`:
 | `extraRoutes?` | `RouteRecordRaw[]` | Extra routes merged after the built-ins (e.g. spread `buildAdminRoutes()` here). |
 | `features?` | `Record<string, boolean>` | Arbitrary feature-flag map. Recognized keys include `resumeSync` (cross-device continue-watching pull on login; default true on the server, false on the hub). |
 | `commands?` | `Command[]` | App-injected ⌘K command-palette entries (registered alongside the built-ins). |
-| `hubRelay?` | `HubRelayConfig` | Hub-relay pending-command consumer config (S298): the host supplies the server id + a token provider (tokens expire hourly; re-read on every reconnect). When present, the app opens the hub's SyncPlay relay socket at boot so "Alexa, play X" can reach the player. |
+| `hubRelay?` | `HubRelayConfig` | Hub-relay pending-command consumer config: the host supplies the server id + a token provider (tokens expire hourly; re-read on every reconnect). When present, the app opens the hub's SyncPlay relay socket at boot so "Alexa, play X" can reach the player. |
 | `defaultTheme?` | `ThemeName` | Initial theme for a first-time visitor. An open string alias: the three built-in ids (`nocturne`, `daylight`, `midnight`) and registered plugin themes both ride this seam (`BUILT_IN_THEME_IDS` / `isBuiltInThemeId` pin the built-in set). A stored user choice always wins. |
 | `defaultTv?` | `boolean` | Initial TV mode for a first-time visitor (10-foot sizing + visible focus rings). A stored user toggle always wins; applied pre-mount like `defaultTheme`. |
 | `branding?` | `BrandingConfig` | Per-app brand: `wordmark?`, `logoSrc?`, `logoAlt?`, `tagline?`. |
 | `homeRows?` | `HomeRow[]` | Browse home-row shelves: `{ id, title, query? }` (query is a partial `LibraryQueryParams`, incl. `libraryId`). Rendered _in addition to_ the automatic per-library rails. |
 | `messages?` | `PhlixMessagesConfig` | Deep-partial override of user-facing English strings (the config-time seam the six shipped locale bundles ride). |
 | `locale?` | `PhlixErrorLocale` | Selects which of the seven complete error-code catalogs (`src/i18n/errors.ts`) renders. Omit (or pass an unknown tag) ⇒ English. Config-time like `messages` — no runtime locale switch. |
-| `wsUrl?` | `string \| null` | R12-02 — operator-pinned WebSocket endpoint for the SPA's sockets (`ws(s)://host[:port]`, NO path/query/userinfo; hub env `HUB_WS_URL`). A valid value overrides the legacy same-origin port derivations (`:8097` SyncPlay direct, `:8804` hub relay); null/absent/invalid ⇒ legacy behavior unchanged. |
-| `wsPath?` | `string \| null` | R12-02 — path companion to `wsUrl` (a single absolute path, e.g. `/syncplay`; hub env `HUB_WS_PATH`). Only refines a present `wsUrl`; the hub relay defaults its `/syncplay` prefix when omitted. |
+| `wsUrl?` | `string \| null` | Operator-pinned WebSocket endpoint for the SPA's sockets (`ws(s)://host[:port]`, NO path/query/userinfo; hub env `HUB_WS_URL`). A valid value overrides the legacy same-origin port derivations (`:8097` SyncPlay direct, `:8804` hub relay); null/absent/invalid ⇒ legacy behavior unchanged. |
+| `wsPath?` | `string \| null` | Path companion to `wsUrl` (a single absolute path, e.g. `/syncplay`; hub env `HUB_WS_PATH`). Only refines a present `wsUrl`; the hub relay defaults its `/syncplay` prefix when omitted. |
 | `deviceHeaders?` | `Record<string, string>` | Extra headers sent on every API request — native-device identity (`X-Phlix-Device-ID` / `-Name` / `-Type`, `X-Phlix-Session-ID`). Registered once at boot via `setDefaultApiHeaders`; this is how the Windows/Tizen apps identify as devices. |
 | `requireConnection?` | `boolean` | When true, any route visited with no resolved API base redirects to the Connect screen. Native desktop/TV clients set this (they ship with no baked-in server origin); web-hosted server/hub leave it false. |
 | `onConnectionChange?` | `(url: string \| null) => void` | Called whenever the Connect screen persists (or clears, with `null`) the chosen API base — native shells mirror it into their own durable store. |
-| `connectScan?` | `() => Promise<ConnectCandidate[]>` | Host-injected LAN server scan consumed by the Connect screen's "Scan" affordance (S532). OMITTED ⇒ the affordance is hidden (a web-hosted app has nothing to scan). The element type `ConnectCandidate` lives in `src/app/types.ts`; a root-barrel re-export is owed (name the row's type via the module path until it lands). |
+| `connectScan?` | `() => Promise<ConnectCandidate[]>` | Host-injected LAN server scan consumed by the Connect screen's "Scan" affordance. OMITTED ⇒ the affordance is hidden (a web-hosted app has nothing to scan). The row type `ConnectCandidate` is exported from the package root — `import type { ConnectCandidate } from '@phlix/ui'`. |
 | `playerHlsConfig?` | `Partial<HlsConfig>` | Per-app hls.js overrides for the transcode player (e.g. a TV tuning `maxBufferLength` down to cap RAM). Merged OVER the built-in defaults; the auth `xhrSetup` is always preserved. |
-| `tokenStore?` | `TokenStore` | Token custody seam (R-UI-10): the store all session tokens flow through — `Authorization` headers, 401 refresh rotation, sign-in/out, the SyncPlay WS token, HLS segment auth. Register a host-owned store (e.g. the Windows client's DPAPI `SafeStorageTokenStore`) to keep credentials out of `localStorage`; omitted keeps the localStorage default. Registered once at boot via `setDefaultTokenStore`; resolved per request, so the boot-time `auth.init()` and the import-constructed `api` singleton both flow through it. |
+| `tokenStore?` | `TokenStore` | Token custody seam: the store all session tokens flow through — `Authorization` headers, 401 refresh rotation, sign-in/out, the SyncPlay WS token, HLS segment auth. Register a host-owned store (e.g. the Windows client's DPAPI `SafeStorageTokenStore`) to keep credentials out of `localStorage`; omitted keeps the localStorage default. Registered once at boot via `setDefaultTokenStore`; resolved per request, so the boot-time `auth.init()` and the import-constructed `api` singleton both flow through it. |
 
 ```ts
 import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';
@@ -194,6 +171,37 @@ createPhlixApp({
   menu: adminMenu('/app'),
 }).mount('#app');
 ```
+
+### Hosting
+
+**Route surface.** The built-in routes: Browse (`/app`), a per-library page
+(`/app/library/:id`), media detail (`/app/media/:id`) and its season drill-down
+(`/app/media/:id/season/:season`), player (`/app/player/:id`), login/signup/connect
+(`/app/login`, `/app/signup`, `/app/connect`), settings (`/app/settings`), explore similar
+(`/app/explore`), recommendations (`/app/recommendations`), watch history (`/app/history`), SyncPlay
+(`/app/syncplay`), music (`/app/music`), parental controls (`/app/parental`), profiles
+(`/app/profiles`), playlists (`/app/playlists` and `/app/playlists/:id`), and MCP tokens
+(`/app/mcp-tokens`, mounted only when `app: 'hub'`) — nineteen named routes for the hub, eighteen
+for the server, plus a 404 catch-all.
+
+**Transport (same-origin vs cross-origin).** The Quick-start snippet points `apiBase` at a
+*different* origin than the one serving the SPA, so the browser will only let `/api/v1` calls
+through when the API host's CORS policy allows the page's exact origin — Phlix hosts never emit
+`Access-Control-Allow-Origin: *` (the server's `CorsManager` reflects an allow-listed origin with
+credentials; the hub's `CorsPolicy` grants nothing cross-origin until configured). Auth rides the
+`Authorization: Bearer` token login mints into `localStorage` (custody is swappable via the
+`tokenStore` config seam). Serving the SPA on the *same* origin as its API — `apiBase: ''`, as the
+composite example above does — is the zero-config path: exactly how server and hub host this bundle
+under `/app` themselves; no preflight, nothing to allow-list.
+
+**Browse is organized per library.** The Browse home renders a "Continue Watching" rail, any
+configured `homeRows`, then **one rail per library** ("Movies", "TV", "Anime", …) read from
+`GET /api/v1/libraries`. Each rail's "See all" opens that library's dedicated `/app/library/:id`
+page (the full filterable grid). Set `libraryLinks: true` on a `MenuItem` to also surface one nav
+link per library. A library whose `type` is `music` never renders that generic grid:
+`createPhlixApp`'s router guard (`musicLibraryRedirect`, exported for tests) redirects
+`/app/library/:id` → `/app/music` inside `beforeEach`, and falls through to the generic grid when
+the type can't be resolved or the host's route table has no `music` route.
 
 ---
 
@@ -274,8 +282,8 @@ provides `apiBase`).
 | `useCommandStore` | ⌘K registry + palette state, persisted recents | `register` (→ disposer), `togglePalette`, `runId` |
 | `useAuthStore` | Auth state over `ApiClient` + `LocalStorageTokenStore` | `login`, `signup`, `fetchUser`, `logout` |
 | `useToastStore` | Transient notifications (rendered by `<ToastHost>`) | `success`, `error`, `warning`, `info`, `dismiss` |
-| `useUserItemDataStore` | Per-item favorite/watched/like flags, cached by media id and re-scoped per active profile (S82) | `isFavorite`, `isWatched`, `likeLevel`, `hydrate`, `toggleFavorite`, `toggleWatched`, `setLike`, `reset` |
-| `useProfileStore` | S82 self-service profiles — the single source of truth for "which profile this session acts as", with the real re-minting switch handshake | `load`, `switchTo`, `createProfile`, `rename`, `removeProfile`, `hasMultipleProfiles`, `activeProfile`, `retry` |
+| `useUserItemDataStore` | Per-item favorite/watched/like flags, cached by media id and re-scoped per active profile | `isFavorite`, `isWatched`, `likeLevel`, `hydrate`, `toggleFavorite`, `toggleWatched`, `setLike`, `reset` |
+| `useProfileStore` | self-service profiles — the single source of truth for "which profile this session acts as", with the real re-minting switch handshake | `load`, `switchTo`, `createProfile`, `rename`, `removeProfile`, `hasMultipleProfiles`, `activeProfile`, `retry` |
 | `useLibrariesStore` | Tiny shared cache of the viewer's libraries (dedupes the many components that need the list) | `load`, `byId`, `items`, `error`, `errorCode` |
 | `useServerStore` | The persisted "current server" selection (id/name/url) for hub-style multi-server clients | `setCurrent`, `clear`, `hasCurrent`, `currentServerId`, `currentServerName`, `currentServerUrl` |
 | `useConnectionStore` | The API base a native client (no baked-in origin) points at, chosen on the Connect screen, + the origin whose Bearer handoff the user confirmed | `configure`, `setApiBase`, `confirmOrigin`, `isNewOrigin`, `isConnected`, `clear` |
@@ -403,7 +411,7 @@ The wire carries stable error codes (the registry lives in `@phlix/contracts`
 — `ERROR_CODES`, 205 codes / 37 domains at the current `#v0.5.6` pin); clients localize
 code→message and the server's English `error` text is debug fallback only. This
 file is that localization layer: one flat `Record<ErrorCode, string>` per locale
-(`en` + the six bundle locales), plus `ERROR_TITLES` (the three Browse EmptyState
+(`en` + the six locale tags), plus `ERROR_TITLES` (the three Browse EmptyState
 codes that render as a headline + body) and `GENERIC_ERROR_MESSAGE` (the
 nothing-matched label).
 
@@ -411,7 +419,7 @@ It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
 532-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
 equality on every ui tag since the `v0.99.5` era (now `v0.99.22`-era) — the catalog's
-129 dotted registry strings per locale (903 across the seven bundles) would churn every equality pin
+129 dotted registry strings per locale (903 across the seven error catalogs) would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
 DERIVED from contracts (`Record<ErrorCode, string>` makes adding/removing a
 registered code a compile error), so it versions with the contracts pin, not
@@ -433,8 +441,9 @@ PhlixErrorLocale`. Wired consumers today: `LoginForm` (banner + toast resolve
 `errorCode` through the catalog with the server text as last-resort fallback),
 `browseErrors.libraryLoadErrorInfo` (code→title+catalog description), and
 `PlayerPage` via `playbackBlockingMessage` (reads `body.code ?? legacy
-error-text match` so it works before AND after the server W2 wave starts
-emitting real codes — the legacy pseudo-code strings stay until W2 lands).
+error-text match` so it works both against servers that emit structured
+error codes and older ones that do not — the legacy pseudo-code match stays
+as the fallback path).
 
 `src/i18n/errors.test.ts` mirrors the locale-bundle law suite: registry parity
 vs `ERROR_CODES` per locale, no `{token}`/no `|` (error sentences are static
@@ -534,7 +543,7 @@ internal composition of the built-in pages — deliberately **not** root exports
 ### Components (`src/components/`, `src/app/`)
 
 `ThumbRating` (like/dislike — the widget the built-in pages use) · `RatingBadge` (0–10 star display)
-· `UserRatingPicker` (star submission, posts to `POST /api/v1/media/{id}/ratings`) — the S263 rating
+· `UserRatingPicker` (star submission, posts to `POST /api/v1/media/{id}/ratings`) — the rating
 trio · `ProfileImageSettings` (avatar upload/delete) · `SourcePriorityEditor` (metadata-source
 ordering; consumed by the admin Libraries page) · `MetadataMatchModal` (the ⋯-menu "Edit metadata"
 host — a lazy `defineAsyncComponent` factory, like `SearchPage`) · `AppLayout` (`src/app/AppLayout.vue`,
@@ -572,7 +581,7 @@ takes `{ artist }`) and return the page envelopes `MusicArtistsResult` / `MusicA
 `MusicTracksResult` — the rows plus the `total` and the `limit`/`offset` the server actually *applied*,
 plus an `artist` echo of the applied filter on albums. Those three envelopes, the `MusicPageParams`
 argument type **and the row types inside them** — `MusicArtist` / `MusicAlbum` / `MusicTrack` — are all
-exported from the package root, at parity with the book and audiobook families (S144); import a row by
+exported from the package root, at parity with the book and audiobook families; import a row by
 name rather than reaching for `MusicAlbumsResult['albums'][number]`. The artist drill-down
 filters **server-side** (`?artist=`, exact/case-insensitive/trimmed); do not filter an album page in the
 browser, because `/albums` is ordered globally by artist then title, so page 1 spans only a handful of
@@ -627,11 +636,11 @@ server transcode is decided in
 `SecuritySettingsPage`, the photo family `PhotoAlbumsPage` · `PhotoAlbumPage` · `PhotoViewPage` ·
 `PhotoSlideshowPage`, the book family `BooksPage` · `BookDetailPage` · `BookReaderPage`, the audiobook
 family `AudiobooksPage` · `AudiobookDetailPage` · `AudiobookPlayerPage`, and `SearchPage` (a lazy
-`defineAsyncComponent` factory, not a static re-export — S324). The `Music*` pages are listed under
+`defineAsyncComponent` factory, not a static re-export). The `Music*` pages are listed under
 Music surfaces above.
 
 > `AuditLogsPage` is intentionally **not** re-exported: it ships as a lazy admin chunk through
-> `hubAdminPages` / `buildHubAdminRoutes()` (NOTE (H0) in `src/index.ts`) — a static root re-export
+> `hubAdminPages` / `buildHubAdminRoutes()` — a static root re-export
 > would merge it back into the main bundle (Rollup `INEFFECTIVE_DYNAMIC_IMPORT`) and defeat the
 > code-split.
 
@@ -753,7 +762,7 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
 **Releasing (checklist — every step, or the README rots):** bump `package.json`
 version, tag `vX.Y.Z`, publish — then rotate this README's **Status stamp** (top of file), the
 **install-example pin** (Quick start), and the **bundle-size figures** (`⚡` bullet + Build output
-table) to the new tag/bytes. ipd/writer/docmaint all flagged the stamp+pin trio as the README's
+table) to the new tag/bytes. Review has repeatedly flagged the stamp+pin trio as the README's
 most consequential currency defect when it silently lags (it did: `v0.99.10` sat three releases).
 
 `npm run build` emits to `dist/` (committed in this repo):

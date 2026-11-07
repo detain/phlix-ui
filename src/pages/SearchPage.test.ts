@@ -20,7 +20,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
-import { isRoute } from '../test/route-match';
+import { isRoute, hasQuery } from '../test/route-match';
 import { ERROR_MESSAGES, ERROR_TITLES } from '../i18n/errors';
 import { DEFAULT_MESSAGES } from '../i18n/messages';
 
@@ -449,6 +449,52 @@ describe('SearchPage — card actions reach the page (CU-089)', () => {
     w.findComponent(MediaGrid).vm.$emit('play', media({ id: 'm1' }));
     await flushPromises();
     expect(router.currentRoute.value.path).toBe('/app/player/m1');
+    w.unmount();
+  });
+
+  // Banked w11L9 minor: per-page clone of BrowsePage's supersede pin — the same
+  // playController/stale machinery lives HERE, so a regression on this page
+  // must redden a test on this page.
+  it('a rapid second Play supersedes the first (stale series resolve is discarded)', async () => {
+    let release!: (eps: MediaItem[]) => void;
+    const gate = new Promise<MediaItem[]>((res) => {
+      release = res;
+    });
+    const fn = vi.fn((url: unknown) => {
+      const u = typeof url === 'string' ? url : '';
+      if (isRoute(u, SEARCH_PATH)) {
+        return Promise.resolve(
+          jsonResponse({
+            items: [media({ id: 's1', name: 'Slow Series', type: 'series' })],
+            query: 'q',
+            total: 1,
+          }),
+        );
+      }
+      // The series child-fetch hangs until the test releases it. A QUERY key,
+      // not a path suffix.
+      if (hasQuery(u, 'parentId')) {
+        return gate.then((eps) => jsonResponse({ items: eps, total: eps.length }));
+      }
+      return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
+    });
+    vi.stubGlobal('fetch', fn);
+    const router = makeRouter();
+    const w = await mountAt({ query: { q: 'slow' }, router });
+    await flushPromises();
+
+    const grid = w.findComponent(MediaGrid);
+    grid.vm.$emit('play', media({ id: 's1', name: 'Slow Series', type: 'series' }));
+    await Promise.resolve();
+    // Second Play (a directly-playable movie) supersedes while the first hangs.
+    grid.vm.$emit('play', media({ id: 'm9', name: 'Quick Movie' }));
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe('/app/player/m9');
+
+    // The superseded series resolve now completes; it must NOT navigate.
+    release([media({ id: 'e1', name: 'Pilot', type: 'episode', season_number: 1, episode_number: 1 })]);
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe('/app/player/m9');
     w.unmount();
   });
 
