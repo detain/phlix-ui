@@ -27,6 +27,7 @@ export { default as Icon } from './components/Icon.vue';
 export type { IconName } from './components/Icon.vue';
 export { default as AppBackdrop } from './components/AppBackdrop.vue';
 export * from './components/ui';
+export { default as PageHint } from './components/ui/PageHint.vue';
 export { default as MediaCard } from './components/MediaCard.vue';
 export { default as ThumbRating } from './components/ThumbRating.vue';
 export { default as RatingBadge } from './components/RatingBadge.vue';

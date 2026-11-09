@@ -116,6 +116,20 @@ export { default as AppBackdrop } from './components/AppBackdrop.vue';
 
 // Primitive component layer (R0.4)
 export * from './components/ui';
+// LW-072 — `PageHint` is named EXPLICITLY here in addition to reaching this
+// barrel through the star above: the same explicit-plus-star coexistence the
+// `MenuItem` type already uses (:17 vs :118). Why it matters: the package ships
+// `files: ["dist"]` with a TRACKED pre-built dist, so consumers type-resolve
+// against `dist/index.d.ts`, where the name previously existed only
+// transitively. The hub's `HubPageHint.vue` header asserted the typed import
+// fails `vue-tsc` while the wiring-ui MN2 review measured full runtime/type
+// name parity from the tarball — two repos asserting opposite truths about one
+// seam is exactly the drift MN2 names. Naming the component at the entry
+// settles it at the source, and `src/__tests__/dist-pagehint-barrel.test.ts`
+// pins both halves (the explicit line in the SHIPPED d.ts, and this import
+// resolving under `npm run typecheck`). The hub-local duplicate's retirement is
+// the registered hub-leg follow-up (wiring-ui MN2), not part of this lane.
+export { default as PageHint } from './components/ui/PageHint.vue';
 
 export { default as MediaCard } from './components/MediaCard.vue';
 export { default as ThumbRating } from './components/ThumbRating.vue';

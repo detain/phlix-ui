@@ -6,6 +6,47 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w21L4 lane 2026-11-09 (UI fix program)
+
+- **The pinia peer admits v4 (CU-126).** `peerDependencies.pinia` widens
+  `^3.0.0` → `^3.0.0 || ^4.0.0`; `devDependencies.pinia` stays `^3.0.0` and
+  the lockfile rotation is the single root-peer echo line (no install ran,
+  the repo's own resolved tree does not move). The estate D2c chain is
+  pinned on this range: tizen's dependabot pinia-4 wave ERESOLVE-fails its
+  pipelines precisely because this package said `^3`
+  (`.reviews/2026-11-04/tizen__devops.md`, finding 7 — "merging the PR
+  as-is would break the pipeline until the ui peer range admits pinia 4").
+  Measured grounds: nothing in `src/` or `scripts/` reads
+  `peerDependencies` (zero grep hits, so no era test pins it), the pinia
+  imports in `src/__tests__/` are devDep-based `setActivePinia` /
+  `createPinia` calls unaffected by a peer widening, and the package's own
+  hard sibling peer `vue-router@5.4.0` already ships
+  `pinia: "^3.0.4 || ^4.0.2"` in the lockfile — this package was the
+  narrowest pinia voice inside its own dependency graph.
+- **`PageHint` is named at the root barrel (LW-072, wiring-ui MN2 cure).**
+  The component reached `src/index.ts` only through the
+  `export * from './components/ui'` star. The hub's `HubPageHint.vue`
+  asserts a typed entry import fails `vue-tsc` while the MN2 review
+  measured full runtime/type name parity from the tarball — two repos
+  holding opposite truths about one seam, with no gate to decide it (MN2:
+  "leave the two repos asserting opposite truths and the seam drifts").
+  `src/index.ts` now names the component explicitly — the same
+  explicit-plus-star pattern `MenuItem` already uses at the type layer —
+  and `src/__tests__/dist-pagehint-barrel.test.ts` pins BOTH halves: the
+  exact re-export line in the SHIPPED `dist/index.d.ts` (this package
+  ships `files: ["dist"]` with a tracked pre-built tree and no `prepare`
+  hook, so a source-only fix that never rebuilds is worse than no fix) and
+  a compile-time `import type { PageHint } from '../index'` whose `$props`
+  literal binds the component surface under typecheck. The rebuilt `dist/`
+  is deterministic (build ×2 byte-identical, 889 files) and its JS delta is
+  ZERO by measurement: rollup flattens star and explicit re-exports into
+  the same binding table, so `phlix-ui.js`, `player.js` and every route
+  carrier — including the `PlayerPage-Bp-fkb06.js` chunk this wave's pin
+  guards — stay byte-identical; only `dist/index.d.ts` (the new named
+  line) and the two `sourcesContent`-bearing `phlix-ui` source maps move.
+  Hub-side retirement of the duplicate wrapper is the registered hub-leg
+  follow-up, not this lane. Serial battery measured on this exact tree: 338 files / 6,971 passing | 10 skipped — +1 file / +3 tests over the pre-edit parent baseline (337 / 6,968 | 10), the delta being the new guard in full, zero drift elsewhere.
+
 ## 0.99.25 - 2026-11-09
 
 ### Release
