@@ -6,7 +6,24 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
-## Unreleased — w16L1 review-cure lane 2026-11-07 (UI fix program)
+## 0.99.25 - 2026-11-09
+
+### Release
+
+Release ritual over the w15L2 + w16L1 review-cure waves (content commits
+`c7f96bc7`, `b9adc481`): the version advances 0.99.24 → 0.99.25, the three
+README currency stamps rotate, the four stamp-bearing `dist/` entry files are
+rebuilt, and the two top-pended Unreleased sections below fold in verbatim —
+bodies untouched, lane headers demoted to subsections. No dependency moves
+ride this cut: `@phlix/contracts` stays `github:detain/phlix-contracts#v0.5.7`
+and `@phlix/syncplay` stays `github:detain/phlix-syncplay#v0.1.7` — the
+v0.99.23 incident established that pin changes belong to their own
+re-baseline wave, never to a release ritual. Serial battery measured on this
+exact content: 337 files / 6,968 passing | 10 skipped. Two consecutive builds
+produce byte-identical `dist/` (889 files; per-file identities in
+`.reviews/2026-11-09/TW-ui-25.md`), and `dist:check` is green.
+
+### w16L1 review-cure lane 2026-11-07 (UI fix program)
 
 - **Stacked overlays route keys to the top layer only (CU-106).** One Escape
   with the command palette open over a modal collapsed BOTH layers, and Tab
@@ -61,7 +78,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   the pre-S415 wire fiction was retired — the claim is now executed, and a
   stay-retired pin keeps it true.
 
-## Unreleased — w15L2 review-cure lane 2026-11-07 (UI fix program)
+### w15L2 review-cure lane 2026-11-07 (UI fix program)
 
 - **Login recovery guidance.** The sign-in footer now states the real
   password-recovery path (“Locked out? Ask your server admin to reset your
