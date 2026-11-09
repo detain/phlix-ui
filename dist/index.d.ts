@@ -10,9 +10,9 @@ export { mcpTokensMenuItem, MCP_TOKENS_ROUTE_NAME, MCP_TOKENS_ROUTE_PATH } from 
 export type { PhlixAppConfig, MenuItem, BrandingConfig, HomeRow, ConnectCandidate } from './app/types';
 export { default as PhlixApp } from './app/PhlixApp.vue';
 export { default as AppLayout } from './app/AppLayout.vue';
-export { ApiClient, isTmdbUnconfigured, TMDB_UNCONFIGURED_CODE, setDefaultApiHeaders, getDefaultApiHeaders, setDefaultTokenStore, MUSIC_PAGE_SIZE, } from './api/client';
-export { LocalStorageTokenStore } from './api/tokenStore';
-export type { TokenStore, AuthUser } from './api/client';
+export { ApiClient, isTmdbUnconfigured, TMDB_UNCONFIGURED_CODE, setDefaultApiHeaders, getDefaultApiHeaders, setDefaultTokenStore, resetCookieSessionProbe, MUSIC_PAGE_SIZE, } from './api/client';
+export { LocalStorageTokenStore, CookieTokenStore, resolveTokenStoreMode } from './api/tokenStore';
+export type { TokenStore, TokenStoreMode, AuthUser, CookieSessionVerdict } from './api/client';
 export { openHubRelayConnection, closeHubRelayConnection, getHubRelaySocket, parsePendingCommandFrame, buildHubRelayUrl, HUB_SYNC_PLAY_PORT, } from './api/hubRelay';
 export type { HubRelayConfig, PendingPlayMediaCommand, HubRelayStatus } from './api/hubRelay';
 export type { MatchType, MatchCandidate, MatchSearchResult, MatchSearchParams, MatchApplyInput, MatchApplyResult, FavoritesResult, MatchContext, SubtitleCandidate, SubtitleDownloadPayload, SubtitleDownloadResult, MusicPageParams, MusicArtistsResult, MusicAlbumsResult, MusicTracksResult, } from './api/client';

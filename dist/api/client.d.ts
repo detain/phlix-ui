@@ -11,6 +11,9 @@ import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
 export { ApiError } from './errors';
 /** Re-exported so `import type { TokenStore } from '.../api/client'` deep imports keep working. */
 export type { TokenStore } from './tokenStore';
+/** Re-exported for the same deep-import law (CP-014): cookie custody surface. */
+export { CookieTokenStore, resolveTokenStoreMode } from './tokenStore';
+export type { TokenStoreMode } from './tokenStore';
 /**
  * Register the token store every session custody flows through — the seam that
  * lets a host application (e.g. the Windows client's DPAPI vault adapter) own
@@ -286,6 +289,21 @@ export interface SubtitleDownloadPayload {
 export interface SubtitleDownloadResult {
     track: Record<string, unknown>;
 }
+/**
+ * Outcome of the cookie-boot probe (CP-014, COOKIE-DESIGN §4.3: "Bootstrap
+ * detection: GET /api/v1/auth/me (credentials:'include') 200 ⇒ cookie
+ * session; 401 ⇒ no session"). Three-valued on purpose, mirroring the
+ * auth-store `fetchUser` law (M4): `'unreachable'` is NOT a verdict — a
+ * timeout/network failure never proves the session absent, so the memo is
+ * dropped and a later boot attempt retries.
+ */
+export type CookieSessionVerdict = 'session' | 'none' | 'unreachable';
+/**
+ * Drop the cookie-boot probe memo. Login/logout transitions flip the answer
+ * server-side (the cookie is minted/revoked), so a boot after either must ask
+ * again; tests use it to restore pristine module state.
+ */
+export declare function resetCookieSessionProbe(): void;
 export declare class ApiClient {
     private baseUrl;
     /**
@@ -504,6 +522,25 @@ export declare class ApiClient {
      * Non-2xx throws the shared {@link ApiError}.
      */
     deleteAvatar(): Promise<void>;
+    /**
+     * Cookie-boot session probe (CP-014, COOKIE-DESIGN §4.3(1)). Single flight
+     * per resolved target:
+     *
+     * - Bearer custody (every pre-existing boot, localStorage default included)
+     *   short-circuits to `'none'` with ZERO network — the probe adds no
+     *   round-trip regression to legacy boots; their session truth stays in
+     *   the JS-held token exactly as before.
+     * - Cookie custody asks the server once: `GET /api/v1/auth/me` with the
+     *   credentials the {@link credentialsPolicy} dictates — `'include'` on
+     *   the same-origin base (HttpOnly cookie attaches), and the same-origin
+     *   gate double as the SSRF belt for a cookie store mis-pointed abroad.
+     *   2xx ⇒ `'session'`; 401/403 ⇒ `'none'`; anything else — other statuses,
+     *   our timeout (M7 discipline: a hung server must not park the memo), a
+     *   network reject — is `'unreachable'`, which never stands as a verdict.
+     */
+    probeCookieSession(): Promise<CookieSessionVerdict>;
+    /** One probe round-trip; answers the three-valued verdict, never rejects. */
+    private performCookieProbe;
     isLoggedIn(): boolean;
     getCurrentUser(): Promise<AuthUser>;
     /**

@@ -6,6 +6,47 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w30L3 lane 2026-11-09 (UI fix program)
+
+- **CP-014 — cookie custody: `CookieTokenStore`, credentials policy, boot
+  probe (COOKIE-DESIGN §4.3).** `src/api/tokenStore.ts` gains
+  `TokenStoreMode` ('cookie' | 'bearer', the ui-side mirror of contracts'
+  `CookieMode` — the package's `#v0.5.7` pin predates that export, so the
+  literal lives here and retires at the next contracts re-pin), an OPTIONAL
+  `readonly mode?` on the `TokenStore` interface (absent = legacy bearer, so
+  every host vault and test double stays assignable — feature-detect, not
+  replace, CD-2a), `resolveTokenStoreMode()` as the single parse point, and
+  the `CookieTokenStore` itself: reads return null, writes are no-ops, it
+  stores NOTHING — "No secret ever crosses JS again"; the three audited
+  bearer-read sites (`request` build / `postFormData` / `deleteAvatar`) are
+  all null-guarded, so the `Authorization` header simply vanishes and the
+  server (CP-003's `attachAuthCookies`) reads the HttpOnly cookie.
+  `src/api/client.ts` routes EVERY issued leg (JSON request, refresh POST,
+  multipart upload, avatar delete, probe) through one
+  `credentialsPolicy(store, url)`: cookie custody on a provably same-origin
+  target sends `'include'`; anything else keeps the pre-existing
+  `'same-origin'` literal byte-identical — the same-origin gate is the SSRF
+  law (a cookie store mis-pointed abroad never attaches the session cookie),
+  and legacy bearer boots change zero wire behavior. `probeCookieSession()`
+  implements the designed bootstrap detection (`GET /api/v1/auth/me`,
+  200 ⇒ session / 401 ⇒ none) as a per-target three-valued memo
+  (`'session' | 'none' | 'unreachable'`): bearer boots short-circuit with
+  ZERO network (no added round-trip), conclusive verdicts stand for the
+  module's life (one probe per boot, shared across the client-instance
+  burst), `'unreachable'` evicts itself (M4: never a verdict) and the probe
+  carries the M7 timeout discipline so a hung server cannot park the memo;
+  `resetCookieSessionProbe()` re-arms after login/logout transitions. Mode
+  flip is config-time through the existing `PhlixAppConfig.tokenStore`
+  seam (§4.3(6)) — `createPhlixApp` already registers it, no new config
+  field; `src/index.ts` + the `client.ts` deep-import re-exports name the
+  custody surface (`CookieTokenStore`, `resolveTokenStoreMode`,
+  `TokenStoreMode`, `resetCookieSessionProbe`, `CookieSessionVerdict`).
+  The auth-store integration (init on the probe verdict, the logout
+  `POST /auth/logout` leg, the cookie-aware 401 refresh) is CP-016; the
+  12-suite battery conviction and design quotes live in
+  `.reviews/2026-11-09/FIX-ui-w30L3.md`. Zero new i18n keys; `dist/`
+  regenerated in the same commit (repo shipping law).
+
 ## Unreleased — w21L4 lane 2026-11-09 (UI fix program)
 
 - **The pinia peer admits v4 (CU-126).** `peerDependencies.pinia` widens

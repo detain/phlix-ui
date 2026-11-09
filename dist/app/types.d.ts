@@ -183,6 +183,16 @@ export interface PhlixAppConfig {
      * client's vault adapter implements. Omitted/undefined keeps the
      * localStorage default. Must be registered at boot: clients resolve it
      * dynamically per request, so even the module-singleton `api` tracks it.
+     *
+     * CP-014 adds a third custody class through THIS same seam: a browser-
+     * cookie boot passes `new CookieTokenStore()` (reads null, writes no-op,
+     * `mode: 'cookie'`) and the client then rides HttpOnly cookies —
+     * same-origin requests attach them and the boot probe verdict comes from
+     * `api.probeCookieSession()`. No new config field exists for it on
+     * purpose: §4.3(6) "Mode flip is config-time (PhlixAppConfig) — NO new
+     * runtime locale-style switching machinery", and a mode field alongside a
+     * store that already declares its own `mode` would be a second truth to
+     * drift.
      */
     tokenStore?: import('../api/tokenStore').TokenStore;
 }

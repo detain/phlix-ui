@@ -29,12 +29,18 @@ export {
   // Windows client's DPAPI vault) so every auth flow stores/reads session
   // tokens there instead of localStorage. Mirrors setDefaultApiHeaders.
   setDefaultTokenStore,
+  // CP-014 — cookie-boot probe memo reset (post-login/logout transitions);
+  // the verdict type names the three-valued answer of ApiClient.probeCookieSession.
+  resetCookieSessionProbe,
   // The music page size this client requests and the server clamps to
   // (`PageLimit::MAX`). Exported so a consumer can size its own pager identically.
   MUSIC_PAGE_SIZE,
 } from './api/client';
-export { LocalStorageTokenStore } from './api/tokenStore';
-export type { TokenStore, AuthUser } from './api/client';
+// CP-014 (COOKIE-DESIGN §4.3): the browser-cookie custody class + the single
+// mode parse point, exported so a cookie-boot host registers CookieTokenStore
+// through the same config-time seam as the vault adapter (R-UI-10 above).
+export { LocalStorageTokenStore, CookieTokenStore, resolveTokenStoreMode } from './api/tokenStore';
+export type { TokenStore, TokenStoreMode, AuthUser, CookieSessionVerdict } from './api/client';
 // S298 — the hub-relay pending-command consumer socket. The app opens it at
 // boot via `PhlixAppConfig.hubRelay`; these exports let a host manage the
 // socket lifecycle (close on logout, re-open after hub auth) and build frames.

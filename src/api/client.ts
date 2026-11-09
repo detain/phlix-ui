@@ -7,7 +7,7 @@
 
 import { ApiError, NetworkError, TimeoutError, isOffline } from './errors';
 import { isRegisteredErrorCode, ERROR_MESSAGES } from '../i18n/errors';
-import { LocalStorageTokenStore, type TokenStore } from './tokenStore';
+import { LocalStorageTokenStore, resolveTokenStoreMode, type TokenStore } from './tokenStore';
 import type { MediaItem, PosterCandidatesResponse } from '../types/media-item';
 import type { MusicArtist, MusicAlbum, MusicTrack } from '../types/music';
 
@@ -16,6 +16,10 @@ export { ApiError } from './errors';
 
 /** Re-exported so `import type { TokenStore } from '.../api/client'` deep imports keep working. */
 export type { TokenStore } from './tokenStore';
+
+/** Re-exported for the same deep-import law (CP-014): cookie custody surface. */
+export { CookieTokenStore, resolveTokenStoreMode } from './tokenStore';
+export type { TokenStoreMode } from './tokenStore';
 
 /**
  * Boot-time token-store registry (R-UI-10). Set once by `createPhlixApp` from
@@ -68,6 +72,37 @@ export function defaultTokenStore(): TokenStore {
             : new LocalStorageTokenStore();
     }
     return fallbackTokenStore;
+}
+
+/**
+ * Is `url` (absolute, or relative-to-this-document) on the browser's own
+ * origin? Fail-closed everywhere: no `window` means no cookie jar to attach,
+ * and an unparseable URL is never trusted with credentials. Relative bases —
+ * `''` or `/api/v1/servers/{id}/proxy`, exactly the vendored `/app` builds on
+ * server and hub — resolve against the document and ARE same-origin.
+ */
+function isSameOriginTarget(url: string): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+        return new URL(url, window.location.href).origin === window.location.origin;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * The ONE credentials decision for every leg this module issues (CP-014,
+ * COOKIE-DESIGN §4.2/§4.3 — "withCredentials:true on same-origin /app builds").
+ * Cookie custody on a provably same-origin target sends the HttpOnly session
+ * cookie (`'include'`); everything else keeps the pre-existing `'same-origin'`
+ * literal byte-identical. The same-origin gate is the SSRF law: a
+ * cookie-custody client mis-pointed at a foreign base must never attach the
+ * session cookie cross-origin — `'same-origin'` there means "no cookie
+ * leaves", and the server answers its normal 401.
+ */
+function credentialsPolicy(store: TokenStore, url: string): RequestCredentials {
+    if (resolveTokenStoreMode(store) !== 'cookie') return 'same-origin';
+    return isSameOriginTarget(url) ? 'include' : 'same-origin';
 }
 
 /** Default per-request timeout (ms) before the client aborts with a `TimeoutError`. */
@@ -621,6 +656,35 @@ function localizeWireCode(code: string | null): string | null {
  */
 const sharedRefreshInFlight = new WeakMap<TokenStore, Promise<boolean>>();
 
+/**
+ * Outcome of the cookie-boot probe (CP-014, COOKIE-DESIGN §4.3: "Bootstrap
+ * detection: GET /api/v1/auth/me (credentials:'include') 200 ⇒ cookie
+ * session; 401 ⇒ no session"). Three-valued on purpose, mirroring the
+ * auth-store `fetchUser` law (M4): `'unreachable'` is NOT a verdict — a
+ * timeout/network failure never proves the session absent, so the memo is
+ * dropped and a later boot attempt retries.
+ */
+export type CookieSessionVerdict = 'session' | 'none' | 'unreachable';
+
+/**
+ * In-flight/conclusive probe memo, keyed by the fully-resolved probe URL —
+ * the sibling of {@link sharedRefreshInFlight} (keyed by store) because a boot
+ * burst hits dozens of client instances with one verdict to hand. A conclusive
+ * ('session' | 'none') memo stands for the module's life: the no-blocking-
+ * round-trip law says the designed ONE probe per boot never fans out into a
+ * probe per client. 'unreachable' memos evict themselves (M4).
+ */
+const cookieProbeByTarget = new Map<string, Promise<CookieSessionVerdict>>();
+
+/**
+ * Drop the cookie-boot probe memo. Login/logout transitions flip the answer
+ * server-side (the cookie is minted/revoked), so a boot after either must ask
+ * again; tests use it to restore pristine module state.
+ */
+export function resetCookieSessionProbe(): void {
+    cookieProbeByTarget.clear();
+}
+
 export class ApiClient {
     private baseUrl: string;
     /**
@@ -688,7 +752,7 @@ export class ApiClient {
             const init: RequestInit = {
                 method,
                 headers,
-                credentials: 'same-origin',
+                credentials: credentialsPolicy(this.tokens, url),
                 signal: effectiveSignal,
             };
             if (data !== null && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
@@ -901,11 +965,12 @@ export class ApiClient {
         }
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+        const refreshUrl = `${this.baseUrl}/api/v1/auth/refresh`;
         try {
-            const response = await this.doFetch(`${this.baseUrl}/api/v1/auth/refresh`, {
+            const response = await this.doFetch(refreshUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
+                credentials: credentialsPolicy(store, refreshUrl),
                 body: JSON.stringify({ refresh_token: refreshToken }),
                 signal: controller.signal,
             });
@@ -1176,10 +1241,11 @@ export class ApiClient {
             headers['Authorization'] = `Bearer ${token}`;
         }
         // NOTE: NOT setting Content-Type — browser must set it with boundary for multipart/form-data
-        const response = await this.doFetch(`${this.baseUrl}${endpoint}`, {
+        const uploadUrl = `${this.baseUrl}${endpoint}`;
+        const response = await this.doFetch(uploadUrl, {
             method: 'POST',
             headers,
-            credentials: 'same-origin',
+            credentials: credentialsPolicy(this.tokens, uploadUrl),
             body,
         });
         if (!response.ok) throw await this.toApiError(response);
@@ -1209,12 +1275,69 @@ export class ApiClient {
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-        const response = await this.doFetch(`${this.baseUrl}/api/v1/users/me/avatar`, {
+        const avatarUrl = `${this.baseUrl}/api/v1/users/me/avatar`;
+        const response = await this.doFetch(avatarUrl, {
             method: 'DELETE',
             headers,
-            credentials: 'same-origin',
+            credentials: credentialsPolicy(this.tokens, avatarUrl),
         });
         if (!response.ok) throw await this.toApiError(response);
+    }
+
+    /**
+     * Cookie-boot session probe (CP-014, COOKIE-DESIGN §4.3(1)). Single flight
+     * per resolved target:
+     *
+     * - Bearer custody (every pre-existing boot, localStorage default included)
+     *   short-circuits to `'none'` with ZERO network — the probe adds no
+     *   round-trip regression to legacy boots; their session truth stays in
+     *   the JS-held token exactly as before.
+     * - Cookie custody asks the server once: `GET /api/v1/auth/me` with the
+     *   credentials the {@link credentialsPolicy} dictates — `'include'` on
+     *   the same-origin base (HttpOnly cookie attaches), and the same-origin
+     *   gate double as the SSRF belt for a cookie store mis-pointed abroad.
+     *   2xx ⇒ `'session'`; 401/403 ⇒ `'none'`; anything else — other statuses,
+     *   our timeout (M7 discipline: a hung server must not park the memo), a
+     *   network reject — is `'unreachable'`, which never stands as a verdict.
+     */
+    async probeCookieSession(): Promise<CookieSessionVerdict> {
+        if (resolveTokenStoreMode(this.tokens) !== 'cookie') {
+            return 'none';
+        }
+        const target = `${this.baseUrl}/api/v1/auth/me`;
+        const existing = cookieProbeByTarget.get(target);
+        if (existing !== undefined) {
+            return existing;
+        }
+        const attempt = this.performCookieProbe(target).then((verdict) => {
+            if (verdict === 'unreachable') {
+                cookieProbeByTarget.delete(target);
+            }
+            return verdict;
+        });
+        cookieProbeByTarget.set(target, attempt);
+        return attempt;
+    }
+
+    /** One probe round-trip; answers the three-valued verdict, never rejects. */
+    private async performCookieProbe(target: string): Promise<CookieSessionVerdict> {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+        try {
+            const response = await this.doFetch(target, {
+                method: 'GET',
+                headers: { ...defaultHeaders, ...this.instanceHeaders },
+                credentials: credentialsPolicy(this.tokens, target),
+                signal: controller.signal,
+            });
+            if (response.ok) return 'session';
+            if (response.status === 401 || response.status === 403) return 'none';
+            return 'unreachable';
+        } catch {
+            return 'unreachable';
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     isLoggedIn(): boolean {
