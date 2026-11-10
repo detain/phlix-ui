@@ -2537,6 +2537,25 @@ var Kt = /* @__PURE__ */ new WeakMap(), qt = /* @__PURE__ */ new Map(), Jt = cla
 		return Kt.set(e, n), n;
 	}
 	async performRefresh(e) {
+		return xt(e) === "cookie" ? this.performCookieRefresh(e) : this.performBearerRefresh(e);
+	}
+	async performCookieRefresh(e) {
+		let t = new AbortController(), n = setTimeout(() => t.abort(), this.timeoutMs), r = `${this.baseUrl}/api/v1/auth/refresh`;
+		try {
+			return (await this.doFetch(r, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: Ot(e, r),
+				body: "{}",
+				signal: t.signal
+			})).ok ? !0 : (this.expireSession(), !1);
+		} catch {
+			return !1;
+		} finally {
+			clearTimeout(n);
+		}
+	}
+	async performBearerRefresh(e) {
 		let t = e.getRefreshToken();
 		if (!t) return this.expireSession(), !1;
 		let n = new AbortController(), r = setTimeout(() => n.abort(), this.timeoutMs), i = `${this.baseUrl}/api/v1/auth/refresh`;
@@ -2808,7 +2827,26 @@ var Kt = /* @__PURE__ */ new WeakMap(), qt = /* @__PURE__ */ new Map(), Jt = cla
 		return It((await this.get(`/api/v1/music/tracks/${encodeURIComponent(e)}`, void 0, t)).track);
 	}
 	logout(e = !0) {
-		this.tokens.clear(), e && typeof window < "u" && (window.location.href = this.loginPath);
+		return this.tokens.clear(), xt(this.tokens) === "cookie" ? this.postLogoutClear().then(() => {
+			e && typeof window < "u" && (window.location.href = this.loginPath);
+		}) : (e && typeof window < "u" && (window.location.href = this.loginPath), Promise.resolve());
+	}
+	async postLogoutClear() {
+		let e = new AbortController(), t = setTimeout(() => e.abort(), this.timeoutMs), n = `${this.baseUrl}/api/v1/auth/logout`;
+		try {
+			await this.doFetch(n, {
+				method: "POST",
+				headers: {
+					...At,
+					...this.instanceHeaders
+				},
+				credentials: Ot(this.tokens, n),
+				redirect: "manual",
+				signal: e.signal
+			});
+		} catch {} finally {
+			clearTimeout(t);
+		}
 	}
 };
 new Jt();
@@ -3838,8 +3876,8 @@ var bn = null, xn = z("auth", () => {
 			e === "unreachable" ? m = null : p.value = !0;
 		})), m;
 	}
-	function w() {
-		o.logout(!1), d.value = null, s.value = null, typeof window < "u" && (window.location.href = a.value);
+	async function w() {
+		d.value = null, s.value = null, await o.logout(!1), typeof window < "u" && (window.location.href = a.value);
 	}
 	async function T(e) {
 		c.value = !0, l.value = null, u.value = null;

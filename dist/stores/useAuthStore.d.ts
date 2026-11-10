@@ -35,7 +35,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     setTokens: (access: string, refresh: string) => void;
     fetchUser: () => Promise<"valid" | "invalid" | "unreachable">;
     init: () => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     uploadAvatar: (file: File) => Promise<void>;
     deleteAvatar: () => Promise<void>;
 }, "user" | "error" | "loading" | "errorCode" | "client">, Pick<{
@@ -67,7 +67,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     setTokens: (access: string, refresh: string) => void;
     fetchUser: () => Promise<"valid" | "invalid" | "unreachable">;
     init: () => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     uploadAvatar: (file: File) => Promise<void>;
     deleteAvatar: () => Promise<void>;
 }, "isLoggedIn" | "isAdmin">, Pick<{
@@ -99,7 +99,7 @@ export declare const useAuthStore: import("pinia").StoreDefinition<"auth", Pick<
     setTokens: (access: string, refresh: string) => void;
     fetchUser: () => Promise<"valid" | "invalid" | "unreachable">;
     init: () => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     uploadAvatar: (file: File) => Promise<void>;
     deleteAvatar: () => Promise<void>;
 }, "login" | "signup" | "setTokens" | "fetchUser" | "init" | "logout" | "uploadAvatar" | "deleteAvatar">>;

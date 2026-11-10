@@ -7,7 +7,8 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { claimServer, ClaimError } from './claimServer';
-import { ACCESS_TOKEN_KEY } from './tokenStore';
+import { ACCESS_TOKEN_KEY, CookieTokenStore } from './tokenStore';
+import { setDefaultTokenStore } from './client';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -100,5 +101,54 @@ describe('claimServer', () => {
     const err = await claimServer('', 'code').catch((e) => e);
     expect(err.kind).toBe('not_found');
     expect(err.code).toBeNull();
+  });
+
+  // CP-016 fold-in (a) [w32L2, from the CP-014 review BANK]: the claim leg was
+  // the one fetch in the package still hardcoding `credentials: 'same-origin'`
+  // outside the credentialsPolicy seam. Routing it through the policy is
+  // behavior-identical for every bearer boot (C1 — a lock, green before and
+  // after) and finally attaches the cookie on a same-origin cookie boot (C2 —
+  // convicted at 9a2fdc13, where the raw literal ignored the store).
+  describe('credentials policy routing (CP-016 fold-in (a))', () => {
+    afterEach(() => {
+      setDefaultTokenStore(null);
+    });
+
+    it('keeps the "same-origin" literal byte-identical under bearer custody (behavior-ident lock)', async () => {
+      localStorage.setItem(ACCESS_TOKEN_KEY, 'tok-9');
+      const fetchMock = vi.fn().mockResolvedValue(res(200, { server_id: 'srv-1' }));
+      vi.stubGlobal('fetch', fetchMock);
+
+      await claimServer('https://hub', 'ABC-123');
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.credentials).toBe('same-origin');
+    });
+
+    it('follows the policy under cookie custody: a same-origin claim sends the cookie', async () => {
+      setDefaultTokenStore(new CookieTokenStore());
+      const sameOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+      const fetchMock = vi.fn().mockResolvedValue(res(200, { server_id: 'srv-1' }));
+      vi.stubGlobal('fetch', fetchMock);
+
+      await claimServer(sameOrigin, 'ABC-123');
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.credentials).toBe('include');
+      // Custody law: the cookie store reads null, so no bearer is presented.
+      const headers = init.headers as Record<string, string>;
+      expect(headers['Authorization']).toBeUndefined();
+    });
+
+    it('never lets the cookie leave the origin on a foreign claim base (SSRF law rides the policy)', async () => {
+      setDefaultTokenStore(new CookieTokenStore());
+      const fetchMock = vi.fn().mockResolvedValue(res(200, { server_id: 'srv-1' }));
+      vi.stubGlobal('fetch', fetchMock);
+
+      await claimServer('https://foreign.example', 'ABC-123');
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.credentials).toBe('same-origin');
+    });
   });
 });

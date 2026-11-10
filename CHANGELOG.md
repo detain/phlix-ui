@@ -6,6 +6,49 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w32L2 lane 2026-11-09 (UI fix program)
+
+- **CP-016 — 401 single-flight cookie refresh + credentials-consistent
+  logout (COOKIE-DESIGN §4.3(2)/(5), §5.3; review-arms (a)+(b) from
+  w30L3ui).** Under cookie custody the 401 interceptor could not refresh:
+  `performRefresh` required a JS-visible refresh token and `CookieTokenStore`
+  answers null BY DESIGN, so a mid-session 401 expired the session instead of
+  riding the cookie refresh the design names. `performRefresh` now dispatches
+  on `resolveTokenStoreMode`: the bearer leg moves VERBATIM (existing suites
+  unmodified and green), and the new cookie leg POSTs `/api/v1/auth/refresh`
+  with an empty JSON body — the HttpOnly refresh cookie is the credential —
+  judged 2xx-only (§5 CD-2a: the body is never parsed for tokens), credentials
+  through `credentialsPolicy` (same-origin `'include'`, SSRF gate intact; the
+  M10 pin owed since w30L3 ships with it, both legs pinned), the module-scope
+  WeakMap single-flight lock SHARED by both modes (tab-scoped: concurrent 401s
+  queue on ONE promise), and a server predating the cookie path (400/401)
+  degrades clean: expire once, no retry storm. Second leg: `logout` was a
+  local wipe, but `phlix_session`/`phlix_refresh` are HttpOnly — only the
+  server's Set-Cookie expiry on `POST /api/v1/auth/logout` can end a cookie
+  session. `ApiClient.logout` now returns `Promise<void>`: synchronous local
+  teardown FIRST, then — cookie custody only, bearer wire stays byte-identical
+  with zero added requests — a best-effort POST carrying policy credentials
+  (own timeout, answer never parsed, every failure swallowed), and the
+  redirect lands only after the leg, because a hard navigation aborts
+  in-flight requests — the whole point of the leg. `useAuthStore.logout`
+  awaits the leg before navigating and stays the one navigation owner (CU-118)
+  while its reactive refs still clear synchronously. Fold-ins: `claimServer`'s
+  raw `credentials: 'same-origin'` routes through `credentialsPolicy`
+  (behavior-ident under bearer, locked; `'include'` on a same-origin cookie
+  boot; never abroad), and the `CookieTokenStore`/`TokenStoreMode` docblocks
+  are re-truthed. Red-first: 15 parent convictions (raws in
+  `.reviews/2026-11-09/FIX-ui-w32L2.md`); mutation matrix M1–M10 every probe
+  killed exactly. New tests: `cookieAuthFlow.test.ts` (14: R1–R8, L1–L6),
+  `claimServer.test.ts` +3 (C1–C3), `useAuthStore.cookie.test.ts` (2: S1–S2).
+  Rebuilt dist IN this commit, build ×2 byte-deterministic; aggregate md5
+  (sorted per-file list) `d57c2219d571b61fca6bfc10946d3078`; 363/889 dist
+  files moved — 86 hash-named chunk bases re-hashed through hashed-import-ref
+  cascade from the changed `client` chunk (chunk-name pins re-anchor at the
+  next consumer wave), entry identities `phlix-ui.js`
+  `f9a597509ba172b3dc73e05718035820`, `player.js`
+  `3a2e497a54b54996e33bef9be5b967a0`. Zero user-visible strings (i18n
+  catalogs untouched), zero new wire codes.
+
 ## Unreleased — w30L3 round-2 2026-11-09 (UI fix program)
 
 - **CP-014 R2 (review w30L3ui, finding M-a): per-target cookie-probe memo

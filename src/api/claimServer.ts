@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { defaultTokenStore } from './client';
+import { credentialsPolicy, defaultTokenStore } from './client';
 
 /**
  * Links ("claims") a media server to the signed-in hub user by posting the
@@ -103,18 +103,25 @@ export async function claimServer(
 
   // R-UI-10: custody goes through the boot-registered store (localStorage
   // default; SSR-safe no-op without a window), not a hardcoded instance.
-  const token = defaultTokenStore().getAccessToken();
+  const store = defaultTokenStore();
+  const token = store.getAccessToken();
+  const claimUrl = `${apiBase}/api/v1/server-claims/claim`;
 
   let res: Response;
   try {
-    res = await fetch(`${apiBase}/api/v1/server-claims/claim`, {
+    res = await fetch(claimUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept-Phlix-Protocol': 'v1',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      credentials: 'same-origin',
+      // CP-016 fold-in (a) (w30L3ui BANK): this was the package's last fetch
+      // hardcoding `'same-origin'` outside the credentialsPolicy seam.
+      // Behavior-identical on every bearer boot (pin C1); a same-origin
+      // cookie boot now rides the HttpOnly pair, and the policy's
+      // same-origin gate keeps the SSRF law for a store pointed abroad (C2/C3).
+      credentials: credentialsPolicy(store, claimUrl),
       body: JSON.stringify({ claim_code: code }),
       signal,
     });

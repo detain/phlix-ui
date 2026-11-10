@@ -41,6 +41,12 @@ export declare const USER_KEY = "user";
  * `#v0.5.7`, which PREDATES that export, so the literal lives here; the mirror
  * retires on the next contracts re-pin wave (register CP-014 residual). The
  * contracts docblock is the wire-law authority for the value strings.
+ * Re-verified at CP-016/017 (w32L2, 2026-11-09): the installed pin's
+ * `dist/auth.d.ts` carries NO `CookieMode` — contracts `f65a8f82` sits above
+ * the v0.5.7 peel and is unreleased — so the flip HOLDS (a half-retire is
+ * worse than none); the CP-017 sentinel in `cookieCustody.test.ts` reddens
+ * the moment the pin ships the export, telling the next wave to retire this
+ * mirror and import the contracts type instead.
  */
 export type TokenStoreMode = 'cookie' | 'bearer';
 export interface TokenStore {
@@ -113,9 +119,11 @@ export declare class LocalStorageTokenStore implements TokenStore {
  * runtime locale-style switching machinery"); the legacy `localStorage` path
  * stays the fallback for device/embedded boots (CD-2a). While a cookie store
  * is registered, bearer-shaped surfaces answer their nulls honestly:
- * `isLoggedIn()` is false and the 401 refresh short-circuits — the session
- * verdict comes from `ApiClient.probeCookieSession()` (added by this cure in
- * `client.ts`), and the auth-store integration of both lands with CP-016.
+ * `isLoggedIn()` is false and the session verdict comes from
+ * `ApiClient.probeCookieSession()` (CP-014). The 401 refresh no longer
+ * short-circuits: CP-016 shipped the cookie leg (§4.3(2) — a bodyless POST
+ * carried by the HttpOnly refresh credential), and `logout()` delivers the
+ * server-side Set-Cookie clear before the page navigates (§4.3(5)).
  */
 export declare class CookieTokenStore implements TokenStore {
     readonly mode: TokenStoreMode;

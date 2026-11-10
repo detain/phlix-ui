@@ -37,6 +37,22 @@ export declare function setDefaultTokenStore(store: TokenStore | null): void;
  * every client send the logged-in user's Bearer token unless one is overridden.
  */
 export declare function defaultTokenStore(): TokenStore;
+/**
+ * The ONE credentials decision for every leg the package issues (CP-014,
+ * COOKIE-DESIGN §4.2/§4.3 — "withCredentials:true on same-origin /app builds").
+ * Cookie custody on a provably same-origin target sends the HttpOnly session
+ * cookie (`'include'`); everything else keeps the pre-existing `'same-origin'`
+ * literal byte-identical. The same-origin gate is the SSRF law: a
+ * cookie-custody client mis-pointed at a foreign base must never attach the
+ * session cookie cross-origin — `'same-origin'` there means "no cookie
+ * leaves", and the server answers its normal 401.
+ *
+ * Exported since CP-016 (fold-in (a), from the CP-014 review BANK): the
+ * `claimServer` hub-protocol leg was the last fetch in the package
+ * hardcoding the literal outside this seam. Routed here, "the ONE decision"
+ * is true package-wide again.
+ */
+export declare function credentialsPolicy(store: TokenStore, url: string): RequestCredentials;
 export interface AuthUser {
     id: string;
     email?: string;
@@ -359,7 +375,62 @@ export declare class ApiClient {
      * store's tokens await ONE in-flight refresh; the memo is dropped in
      * `.finally()` so a later expiry starts a fresh one. Returns `true` on
      * success / `false` on any failure (no refresh token, non-2xx, network
-     * error, missing access_token).
+     * error, missing access_token). The single-flight is the TAB lock §4.3(2)
+     * demands: the memo is module-scoped, so cookie and bearer custodies alike
+     * never run a second refresh in the same document while one is in flight.
+     *
+     * M-UI-26 (seceng: failed refresh kept the tokens): a DETERMINED failure —
+     * no refresh token to try, a non-2xx answer, or (bearer) a payload that
+     * carries no access_token — means the persisted pair can never authenticate
+     * again, so
+     * the session expires ({@link expireSessionUnlessRotated} — clear +
+     * `phlix:auth-expired` event, which the auth store mirrors into reactive
+     * state) UNLESS a sibling caller already rotated the pair out from under
+     * this attempt. A NETWORK error is deliberately NOT determinative: the
+     * pair may still be valid server-side, so tokens survive and the next
+     * attempt retries.
+     */
+    refreshToken(): Promise<boolean>;
+    /**
+     * One refresh round-trip against a pinned store snapshot. Custody is
+     * resolved at the single parse point ({@link resolveTokenStoreMode}) and
+     * each custody owns its leg: the bearer leg is the pre-CP-016 method
+     * moved VERBATIM (pinned byte-identical by the unmodified
+     * `client.test.ts` suites), the cookie leg is the CP-016 cure
+     * (COOKIE-DESIGN §4.3(2)).
+     *
+     * M7 (fedev review): BOTH legs carry the same timeout discipline as
+     * `request()` (`this.timeoutMs`, own AbortController) — a hung server must
+     * not park the single-flighted promise, and every waiter behind it,
+     * forever. A fired timeout lands in the leg's catch below: unknown, not
+     * rejected, tokens survive.
+     */
+    private performRefresh;
+    /**
+     * Cookie-custody refresh leg (CP-016, COOKIE-DESIGN §4.3(2), §5 CD-2a).
+     *
+     * POSTs an EMPTY JSON object: the HttpOnly refresh cookie IS the
+     * credential ("No secret ever crosses JS"), so unlike the bearer leg
+     * there is nothing to read from the store, nothing to present in the
+     * body, and nothing to parse from the answer. A 2xx response IS the whole
+     * verdict (§5 CD-2a: the ui stops reading body tokens day one in cookie
+     * mode); the rotation is a `Set-Cookie` header the browser applies with
+     * page JS never involved.
+     *
+     * Feature-detect posture (the server's dual-emit is CP-003, landed and
+     * still unreleased at this commit's authoring): a server that predates
+     * the cookie path rejects the bodyless POST (400 `refresh_token is
+     * required`, or 401). That IS determinative — expire the session (the
+     * store clear is a no-op under this custody; the `phlix:auth-expired`
+     * event is the substance) and surface the caller's original 401 exactly
+     * once: no retry, no storm, no hard dependency. A network-level failure
+     * stays unknown, not rejected — the M-UI-26 asymmetry, shared verbatim
+     * with the bearer leg.
+     */
+    private performCookieRefresh;
+    /**
+     * The bearer leg — body moved verbatim from the pre-CP-016
+     * `performRefresh`; behavior is byte-identical on the wire.
      *
      * M-UI-26 (seceng: failed refresh kept the tokens): a DETERMINED failure —
      * no refresh token to try, a non-2xx answer, or a payload that carries no
@@ -371,17 +442,7 @@ export declare class ApiClient {
      * pair may still be valid server-side, so tokens survive and the next
      * attempt retries.
      */
-    refreshToken(): Promise<boolean>;
-    /**
-     * One refresh round-trip against a pinned store snapshot.
-     *
-     * M7 (fedev review): the leg now carries the SAME timeout discipline as
-     * `request()` (`this.timeoutMs`, own AbortController) — a hung server must
-     * not park the single-flighted promise, and every waiter behind it,
-     * forever. A fired timeout lands in the catch below: unknown, not
-     * rejected, tokens survive.
-     */
-    private performRefresh;
+    private performBearerRefresh;
     get<T = unknown>(endpoint: string, params?: Record<string, string>, signal?: AbortSignal): Promise<T>;
     post<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
     put<T = unknown>(endpoint: string, data?: unknown, signal?: AbortSignal): Promise<T>;
@@ -795,6 +856,34 @@ export declare class ApiClient {
      * shared {@link ApiError}.
      */
     getTrack(id: string, signal?: AbortSignal): Promise<MusicTrack>;
-    logout(redirect?: boolean): void;
+    /**
+     * End the session.
+     *
+     * Local teardown comes FIRST and never waits on the network — the
+     * pre-CP-016 law, preserved exactly for bearer boots: the store is cleared
+     * synchronously, and on a bearer store the optional redirect fires
+     * synchronously too (the existing `client.test.ts` suite pins that
+     * timing, unmodified).
+     *
+     * CP-016 (COOKIE-DESIGN §4.3(5)) adds the cookie-custody leg:
+     * `phlix_session`/`phlix_refresh` are HttpOnly — unreachable to JS — so
+     * only the SERVER's Set-Cookie expiry on `POST /api/v1/auth/logout` can
+     * actually end a cookie session. The leg fires ONLY under cookie custody
+     * (the bearer wire path gains zero requests — L4/L1-pair pin that), it
+     * travels with the credentials {@link credentialsPolicy} dictates so the
+     * pair actually rides, its 302 answer is NEVER parsed, and it is
+     * best-effort: a too-old or unreachable server must not strand the user on
+     * a page that still looks logged-in (the cookies die with their own TTL;
+     * the local teardown already happened — L2 pins).
+     *
+     * Browsers can abort in-flight requests the instant a hard navigation
+     * starts, so callers that own navigation MUST await the returned promise
+     * before redirecting — `useAuthStore.logout()` does, and remains the one
+     * navigation owner (CU-118). L3 convicts the old sync shape: at 9a2fdc13
+     * there was no leg to deliver at all.
+     */
+    logout(redirect?: boolean): Promise<void>;
+    /** The cookie-clearing POST (CP-016 §4.3(5)); swallows every failure mode. */
+    private postLogoutClear;
 }
 export declare const api: ApiClient;

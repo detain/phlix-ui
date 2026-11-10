@@ -252,13 +252,23 @@ export const useAuthStore = defineStore('auth', () => {
         return initPromise;
     }
 
-    function logout(): void {
+    async function logout(): Promise<void> {
         // Delegate to the client so the loginPath-aware redirect is exercised.
         // Pass redirect=false so we handle navigation ourselves (consistent with
         // how fetchUser clears state on failure — the store owns the reactive vars).
-        client.logout(false);
+        //
+        // CP-016 ordering law (convicted S1, useAuthStore.cookie.test.ts):
+        // reactive refs flip SYNCHRONOUSLY first — every sync-assert suite
+        // (this file's, UserMenu, useProfileStore) pins that half — then the
+        // client's logout leg is AWAITED before the hard navigation, because
+        // a browser can abort the in-flight cookie-clearing POST the instant
+        // the document unloads. Under bearer custody `client.logout(false)`
+        // resolves on the spot (zero added network — L4/S2 pin), so the only
+        // caller that ever waits is the one whose session the POST ends.
+        // The store remains the ONE navigation owner (CU-118).
         accessToken.value = null;
         user.value = null;
+        await client.logout(false);
         if (typeof window !== 'undefined') {
             window.location.href = loginPath.value;
         }
