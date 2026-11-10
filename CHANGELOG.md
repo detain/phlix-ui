@@ -48,6 +48,27 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   `f9a597509ba172b3dc73e05718035820`, `player.js`
   `3a2e497a54b54996e33bef9be5b967a0`. Zero user-visible strings (i18n
   catalogs untouched), zero new wire codes.
+- **CP-017 — cookie-mode suites + custody-pin flip (HOLD, recorded; §7).**
+  New `src/api/cookieCustody.test.ts` (12): the `resolveTokenStoreMode`
+  duck-store matrix (7 rows — the single parse point is total), a custody
+  sweep proving a complete 401 → refresh → retry → logout flow touches
+  NEITHER localStorage NOR an Authorization header (§4.3 headline law), the
+  cross-client one-store cookie single-flight lock (M5 pair, cookie
+  version), the mirror literal value set + the one-parse seam pin, and the
+  FLIP SENTINEL: it resolves the
+  INSTALLED `@phlix/contracts` package, reads its type contract from disk,
+  and fails LOUD the moment `CookieMode` appears there — "the mirror
+  retires at the next contracts re-pin" is now an executable tripwire, not
+  prose. Flip state re-verified on disk this lane: the ui pin (`#v0.5.7`,
+  peel `bedfe69`) PREDATES the contracts `CookieMode` export (`f65a8f82`,
+  unreleased on master) — the import would not resolve, so the mirror
+  STANDS (half-retire worse than none; evidence + re-enable condition in
+  `.reviews/2026-11-09/FIX-ui-w32L2.md`). Lane battery (this tree, serial
+  `--no-file-parallelism`): parent 339 files / 6,988 passed / 10 skipped
+  (measured at `9a2fdc13`) → 342 files / 7,019 passed / 10 skipped / 0
+  failed — +3 files / +31 tests = CP-016's 19 + CP-017's 12, exact.
+  Test-only commit: `dist/` NOT rebuilt (test files are outside the
+  bundle graph — verified byte-identical).
 
 ## Unreleased — w30L3 round-2 2026-11-09 (UI fix program)
 
