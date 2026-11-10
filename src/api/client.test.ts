@@ -390,16 +390,27 @@ describe('ApiClient', () => {
             const flows = Array.from({ length: N }, (_unused, i) =>
                 client.get<{ ok: boolean; sentAuth: string }>(`/api/v1/r${i}`),
             );
-            // One macrotask tick drains every initial 401 → parked waiter.
-            await new Promise((resolve) => setTimeout(resolve, 0));
+            // HOLD window — FOUR macrotask rounds while the gate stays
+            // CLOSED (round-3 forward-fix, REVIEW-w32L2ui-round2 MAJOR-1;
+            // exact twin of R6b's window deepening). The single round-2
+            // checkpoint let the review's M-C fixed-delay mutation land its
+            // retries unobserved. Every round re-asserts count, POST
+            // identity, and the credential half together — a short-circuit
+            // behind any fixed delay up to the window depth reddens at
+            // checkpoint delay+1, store still 'old'.
+            for (let checkpoint = 1; checkpoint <= 4; checkpoint += 1) {
+                // One tick drains every initial 401 → parked waiter, plus
+                // every waiter timer queued before this round's own.
+                await new Promise((resolve) => setTimeout(resolve, 0));
 
-            expect(refreshCalls).toBe(1);
-            // HOLD law: the N initial hits and NOTHING else — no waiter
-            // touched its retry while the refresh response was unsettled…
-            expect(protectedCalls()).toBe(N);
-            // …and the pair it would have presented is still un-rotated, so
-            // an early retry could only have carried the stale token.
-            expect(tokens.getAccessToken()).toBe('old');
+                expect(refreshCalls, `HOLD checkpoint ${checkpoint}: still exactly ONE refresh POST`).toBe(1);
+                // HOLD law: the N initial hits and NOTHING else — no waiter
+                // touched its retry while the refresh response was unsettled…
+                expect(protectedCalls(), `HOLD checkpoint ${checkpoint}: ZERO retries pre-settle`).toBe(N);
+                // …and the pair it would have presented is still un-rotated,
+                // so an early retry could only have carried the stale token.
+                expect(tokens.getAccessToken(), `HOLD checkpoint ${checkpoint}: credentials unmoved`).toBe('old');
+            }
 
             settleRefresh(respond(200, { access_token: 'acc-1', refresh_token: 'ref-1' }));
             const results = await Promise.all(flows);

@@ -270,15 +270,25 @@ describe('cookie custody 401 refresh (§4.3(2): one cookie-bearing POST, body ne
             calls.filter((c) => !c.url.endsWith('/api/v1/auth/refresh')).length;
 
         const flows = Array.from({ length: N }, (_unused, i) => client.get<{ ok: boolean }>(`/api/v1/r${i}`));
-        // Let the whole initial wave run to its parking point: each protected
-        // 401 is answered synchronously, so one macrotask tick drains every
-        // microtask chain up to the gated refresh.
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        // HOLD window — FOUR macrotask rounds while the gate stays CLOSED
+        // (round-3 forward-fix, REVIEW-w32L2ui-round2 MAJOR-1). The round-2
+        // pin shared ONE checkpoint, and the review's executed M-C mutation
+        // (waiter arm behind a fixed `setTimeout(() => resolve(true), 0)`)
+        // landed its retries exactly outside that single tick — 262/262
+        // green. Each round re-asserts the law, so a short-circuit hidden
+        // behind ANY fixed delay is convicted at checkpoint delay+1: eager
+        // at 1, one-timer at 2, two-timer at 3, three-timer at 4 (the
+        // round-3 register's matrix — the class, not just the case).
+        for (let checkpoint = 1; checkpoint <= 4; checkpoint += 1) {
+            // One tick drains every microtask chain up to the gated refresh
+            // — plus every waiter timer queued BEFORE this round's own.
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(refreshCalls).toHaveLength(1);
-        // HOLD law: only the N initial hits exist — not one retry fired while
-        // the single refresh response was still in flight.
-        expect(protectedCalls()).toBe(N);
+            expect(refreshCalls, `HOLD checkpoint ${checkpoint}: still exactly ONE refresh POST`).toHaveLength(1);
+            // HOLD law: only the N initial hits exist — not one retry fired
+            // while the single refresh response was still in flight.
+            expect(protectedCalls(), `HOLD checkpoint ${checkpoint}: ZERO retries pre-settle`).toBe(N);
+        }
 
         settleRefresh();
         const results = await Promise.all(flows);

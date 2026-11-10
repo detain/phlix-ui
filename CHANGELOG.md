@@ -6,6 +6,42 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w32L2 round-3 2026-11-10 (UI fix program)
+
+- **w32 round-2 review MAJOR-1 forward-fix — deepen the HOLD window to four
+  rounds (TEST-ONLY; zero `src/` change).** The round-2 pin (R6b/B3b) shared
+  ONE checkpoint tick while its test-owned refresh gate held closed, and the
+  independent review executed the blind spot: its M-C mutation — the waiter
+  arm of `refreshToken()` behind a fixed `setTimeout(() => resolve(true), 0)`
+  — landed its retries exactly outside that single window and passed the
+  whole 10-suite panel 262/262 green. The shipped code stays correct — the
+  PIN was partial: eager shapes convicted, timer-masked shapes not. This
+  closes the CLASS: both legs now sweep FOUR macrotask rounds while the gate
+  stays CLOSED, re-asserting every round that the protected path shows
+  exactly its N initial hits and ZERO retries, still ONE refresh POST, and
+  (B3b) the store is still 'old'. A short-circuit behind any fixed delay is
+  then convicted at checkpoint delay+1 — the standing matrix re-executed
+  in-lane at the reviewer's exact single-occurrence anchor (the
+  `sharedRefreshInFlight` waiter arm; the sibling `cookieProbeByTarget` arm
+  never anchored): M-A eager `Promise.resolve(true)` red at CHECKPOINT 1;
+  M-C (the review's exact 1-timer shape, verbatim from its register :11)
+  red at CHECKPOINT 2; M-D 2-timer chain red at CHECKPOINT 3; M-E 3-timer
+  chain red at CHECKPOINT 4 — each 2F/260P naming exactly the two HOLD legs
+  with zero collateral, each revert 262/262 green (vitest 4 renders the
+  custom checkpoint message, so the raws name the round that convicts).
+  Battery (serial `--no-file-parallelism`, measured): parent `9ae8628a`
+  342 files / 7,021 passed / 10 skipped / 0 failed (433.00s) → tip 342
+  files / 7,021 passed / 10 skipped / 0 failed (EXIT 0, 430.64s) — exact
+  zero-move: the edits ADD assertions inside two existing tests, so no
+  test/file/skip count can move. The CP-017 custody-flip sentinel stays
+  armed and byte-untouched: baseline 12/12 green in a byte-ident clone,
+  fresh taint probe (an added `CookieMode` export in the installed
+  contracts `dist/auth.d.ts`) reddens exactly the named flip-HOLD tripwire
+  (1F/11P, the retire-order error verbatim), byte-restore returns 12/12.
+  Test files sit outside the bundle graph, so `dist/` is UNMOVED by law:
+  the commit carries zero `dist/` paths and `npm run dist:check` passes.
+  No version bump — the chain rides the v0.99.26 TAGGATE.
+
 ## Unreleased — w32L2 round-2 2026-11-09 (UI fix program)
 
 - **w32 review MAJOR-1 forward-fix — pin the HOLD half of the single-flight
