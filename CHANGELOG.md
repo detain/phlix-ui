@@ -6,6 +6,12 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — cookie WS conviction + single-flight HOLD (UI fix program, 2026-11-10)
+
+### Added — CP-015: convict the cookie-custody WS protocols law at the MODE (lane w31L3)
+
+- `src/api/syncplay.ws.test.ts` gains the boot-store dial lock: with `CookieTokenStore` registered as the boot store and a STALE pre-flip token seeded in `localStorage`, the syncplay dial still offers **no protocols** (`socket().protocols === undefined`) and carries no token in the url — the `buildWsProtocols` → `getWsToken` → boot-store chain is convicted at the custody mode, not just at the empty-store shape. The pre-fix law held by construction only (`CookieTokenStore.getAccessToken() → null`); the existing pins covered signed-out, token-present, and throwing-store shapes, leaving a `localStorage`-direct read — the exact pre-CP-014 dial shape — undetectable through every one of them. Test-only: no `src/` runtime file moves; `dist/` unmoved (proven by `node scripts/check-dist-clean.mjs` and the commit stat), so this entry rides the next release ritual with no re-vendor obligation. Serial battery measured on this content: 342 files / 7,022 passing | 10 skipped (parent at `dc2e70fe` measured 342 / 7,021 | 10; delta exactly +1 test — this row — zero other movement). The mutation conviction and its transcript ride the lane register.
+
 ## 0.99.26 - 2026-11-10
 
 ### Release

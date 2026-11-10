@@ -33,7 +33,8 @@ import {
     setSyncPlayLogger,
     setSyncPlayWireErrorListener,
 } from './syncplay';
-import { ACCESS_TOKEN_KEY } from './tokenStore';
+import { ACCESS_TOKEN_KEY, CookieTokenStore } from './tokenStore';
+import { setDefaultTokenStore } from './client';
 import { sha256Hex } from '../utils/syncplaySha256';
 import type { SyncPlayStateUpdate } from '../types/syncplay';
 
@@ -336,6 +337,39 @@ describe('openSyncPlayConnection — the WebSocket url and bearer carrier', () =
         expect(socket().url).not.toContain('token');
         // A failed read is the signed-out case: dial anonymous, offer nothing.
         expect(socket().protocols).toBeUndefined();
+    });
+
+    it('offers NO protocols under COOKIE custody even with stale localStorage residue — the dial honors the BOOT store (CP-015, COOKIE-DESIGN §4.3)', () => {
+        // The three pins above prove the carrier law for the localStorage boot
+        // and its failure modes; none of them boots a COOKIE store, so the
+        // §4.3(6) config-time mode flip over the WS dial was held only by
+        // construction (`getWsToken()` reads `defaultTokenStore()`, and
+        // `CookieTokenStore.getAccessToken()` is a literal `return null` —
+        // tokenStore.ts `CookieTokenStore` header: "Reads return null, writes
+        // are no-ops"). w31L3 convicts the MODE: a cookie-custody boot must
+        // present no subprotocol on :8097, and legacy `localStorage` residue
+        // (the pre-flip session the transition note says stays behind until
+        // hygiene clears it) must never leak back into the offer — the dial's
+        // only credential read is the boot store, never storage directly.
+        // Regression classes this row is the sole pin of: a `getWsToken()`
+        // reverting to `localStorage.getItem(ACCESS_TOKEN_KEY)` (pre-seam
+        // shape) dials green for the signed-out row (empty storage there) and
+        // the throwing-store row (mocked `getItem` still throws) yet offers
+        // `['bearer', <stale>]` here.
+        localStorage.setItem(ACCESS_TOKEN_KEY, 'stale.pre-custody-flip.jwt');
+        setDefaultTokenStore(new CookieTokenStore());
+        try {
+            openSyncPlayConnection(ROOM);
+            expect(socket().url).not.toContain('token');
+            // WebIDL: `undefined` second argument ≡ omitted — no
+            // `Sec-WebSocket-Protocol` header reaches the hub-less :8097 dial.
+            expect(socket().protocols).toBeUndefined();
+            expect(socket().protocols).not.toEqual(['bearer', 'stale.pre-custody-flip.jwt']);
+        } finally {
+            // Boot registration is module state (client.ts header): hand the
+            // file's remaining tests back the default localStorage store.
+            setDefaultTokenStore(null);
+        }
     });
 });
 
