@@ -970,6 +970,7 @@ export class ApiClient {
             const response = await this.doFetch(refreshUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                // M10 owed-then (w30L3ui): leg is semantically-equivalent-today; pin ships with the CP-016 integration commit.
                 credentials: credentialsPolicy(store, refreshUrl),
                 body: JSON.stringify({ refresh_token: refreshToken }),
                 signal: controller.signal,

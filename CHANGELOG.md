@@ -6,6 +6,23 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w30L3 round-2 2026-11-09 (UI fix program)
+
+- **CP-014 R2 (review w30L3ui, finding M-a): per-target cookie-probe memo
+  keying pinned.** `src/api/cookieTokenStore.test.ts` gains a two-base probe
+  test — base A answers `'session'`, base B answers `'none'`, each target
+  round-trips exactly once, in both memo insertion orders — so mutation M9
+  (keying removed: first memo value answers any target) now reddens exactly
+  that test (measured: full battery with M9 applied = 1 failed / 6,987
+  passed / 10 skipped, sole red; clean battery 339 files / 6,988 passed /
+  10 skip, +1 exact). `performRefresh`'s credentials leg carries the M10
+  deferral comment the review requested (semantically-equivalent-today; the
+  distinguishing pin is owed-then to the CP-016 integration commit). The
+  comment inside `src/api/client.ts` is bundle-affecting only through
+  sourcemap `sourcesContent`: the four committed `.map` files whose sources
+  embed client.ts ride this commit (minified chunks byte-identical; build
+  ×2 deterministic), per the S176 law documented in check-dist-clean.
+
 ## Unreleased — w30L3 lane 2026-11-09 (UI fix program)
 
 - **CP-014 — cookie custody: `CookieTokenStore`, credentials policy, boot

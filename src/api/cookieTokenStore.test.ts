@@ -159,6 +159,47 @@ describe('probeCookieSession (§4.3 boot detection; no-regression + M4/M7 laws)'
         expect(calls).toHaveLength(1);
     });
 
+    it('the memo is keyed by RESOLVED TARGET — two boots on one module keep independent verdicts (M9)', async () => {
+        // CP-014 R2 pin (review w30L3ui, finding M-a): "multi-server boots each
+        // get their own probe — correct per-origin cookie semantics" rests on
+        // the Map key. Mutation M9 (lookup answered by values().next().value
+        // regardless of target) must redden exactly this test — every other
+        // probe test runs a single base, where first-value and keyed-lookup
+        // answer identically.
+        const urlA = `${SAME_ORIGIN}/api/v1/auth/me`; // base A: session minted
+        const urlB = 'https://server-b.example/api/v1/auth/me'; // base B: session-less
+        const statusByTarget: Record<string, number> = { [urlA]: 200, [urlB]: 401 };
+        const calls: string[] = [];
+        const fetchImpl = vi.fn((url: string, _init?: RequestInit) => {
+            calls.push(url);
+            const status = statusByTarget[url] ?? 500;
+            return Promise.resolve({
+                ok: status >= 200 && status < 300,
+                status,
+                headers: new Headers({ 'content-type': 'application/json' }),
+                json: () => Promise.resolve({}),
+            } as unknown as Response);
+        }) as unknown as typeof fetch;
+        const clientA = new ApiClient({ baseUrl: SAME_ORIGIN, tokenStore: new CookieTokenStore(), fetchImpl });
+        const clientB = new ApiClient({ baseUrl: 'https://server-b.example', tokenStore: new CookieTokenStore(), fetchImpl });
+        // Round 1, A memoized first: B must still probe its OWN target and
+        // answer 'none' — A's 'session' must never leak across the memo key,
+        // and each target round-trips exactly once for the whole boot burst.
+        await expect(clientA.probeCookieSession()).resolves.toBe('session');
+        await expect(clientB.probeCookieSession()).resolves.toBe('none');
+        await expect(clientA.probeCookieSession()).resolves.toBe('session');
+        await expect(clientB.probeCookieSession()).resolves.toBe('none');
+        expect(calls).toEqual([urlA, urlB]);
+        // Round 2, reversed insertion order after the reset seam: whichever
+        // target lands in the Map first, the other still answers for itself
+        // (this leg is what a first-value lookup cannot fake from either side).
+        resetCookieSessionProbe();
+        calls.length = 0;
+        await expect(clientB.probeCookieSession()).resolves.toBe('none');
+        await expect(clientA.probeCookieSession()).resolves.toBe('session');
+        expect(calls).toEqual([urlB, urlA]);
+    });
+
     it('network failure ⇒ "unreachable" is NOT cached — the next attempt retries (M4)', async () => {
         let first = true;
         const fetchImpl = vi.fn((_url: string, _init?: RequestInit) => {
