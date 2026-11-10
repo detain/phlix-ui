@@ -338,6 +338,83 @@ describe('ApiClient', () => {
             expect(tokens.getRefreshToken()).toBe('ref-1');
         });
 
+        /**
+         * w32 review MAJOR-1 (with cookieAuthFlow R6b as its cookie twin): B3
+         * pins the COLLAPSE half; this pins the HOLD/ORDER half of the same
+         * law. B3's fake yields microtasks only, so the refresh response has
+         * already rotated the pair by the time any waiter could slip through —
+         * an eager waiter short-circuit (client.ts:949 →
+         * `Promise.resolve(true)`) retries on the STALE access token and B3
+         * never notices (measured: zero convictions across the old panel).
+         * Gating the refresh RESPONSE behind a test-owned deferred makes the
+         * queue observable: while it is closed, zero protected retries may
+         * fire and the store must still hold the pre-rotation pair; after it
+         * opens, every one of the N retries presents the ROTATED bearer.
+         */
+        it('B3b waiters HOLD on the one refresh promise: zero retries before it settles, every retry after carries the rotated credentials', async () => {
+            const N = 5;
+            const tokens = new MemoryTokenStore({ access: 'old', refresh: 'ref-0' });
+            const calls: { url: string; init?: RequestInit }[] = [];
+            const seen = new Set<string>();
+            let refreshCalls = 0;
+            let settleRefresh!: (response: Response) => void;
+            const refreshGate = new Promise<Response>((resolve) => {
+                settleRefresh = resolve;
+            });
+            const respond = (status: number, body: unknown): Response =>
+                ({
+                    ok: status >= 200 && status < 300,
+                    status,
+                    headers: new Headers({ 'content-type': 'application/json' }),
+                    json: () => Promise.resolve(body),
+                    text: () => Promise.resolve(JSON.stringify(body)),
+                }) as unknown as Response;
+            const fetchImpl = ((url: string, init?: RequestInit): Promise<Response> => {
+                calls.push({ url, init });
+                if (url.endsWith('/api/v1/auth/refresh')) {
+                    refreshCalls += 1;
+                    return refreshGate;
+                }
+                const auth = ((init?.headers ?? {}) as Record<string, string>)['Authorization'];
+                if (!seen.has(url)) {
+                    seen.add(url);
+                    return Promise.resolve(respond(401, { error: 'expired' }));
+                }
+                return Promise.resolve(respond(200, { ok: true, sentAuth: auth }));
+            }) as unknown as typeof fetch;
+            const client = new ApiClient({ baseUrl: 'https://h', tokenStore: tokens, fetchImpl });
+
+            const protectedCalls = (): number =>
+                calls.filter((c) => !c.url.endsWith('/api/v1/auth/refresh')).length;
+
+            const flows = Array.from({ length: N }, (_unused, i) =>
+                client.get<{ ok: boolean; sentAuth: string }>(`/api/v1/r${i}`),
+            );
+            // One macrotask tick drains every initial 401 → parked waiter.
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(refreshCalls).toBe(1);
+            // HOLD law: the N initial hits and NOTHING else — no waiter
+            // touched its retry while the refresh response was unsettled…
+            expect(protectedCalls()).toBe(N);
+            // …and the pair it would have presented is still un-rotated, so
+            // an early retry could only have carried the stale token.
+            expect(tokens.getAccessToken()).toBe('old');
+
+            settleRefresh(respond(200, { access_token: 'acc-1', refresh_token: 'ref-1' }));
+            const results = await Promise.all(flows);
+
+            expect(refreshCalls).toBe(1);
+            // All N retries exist only after the settle: N initial + N retry.
+            expect(protectedCalls()).toBe(2 * N);
+            for (const r of results) {
+                expect(r.ok).toBe(true);
+                // Custody law: every queued request presents the ROTATED pair.
+                expect(r.sentAuth).toBe('Bearer acc-1');
+            }
+            expect(tokens.getAccessToken()).toBe('acc-1');
+        });
+
         it('clears the in-flight promise so a LATER expiry starts a fresh refresh POST', async () => {
             const tokens = new MemoryTokenStore({ access: 'old', refresh: 'ref-0' });
             const { fetch, refreshCount } = makeUrlAwareFetch();

@@ -231,6 +231,66 @@ describe('cookie custody 401 refresh (§4.3(2): one cookie-bearing POST, body ne
         }
     });
 
+    it('R6b single-flight HOLD (w32 review MAJOR-1): while the ONE refresh response is unsettled, ZERO protected retries fire — all N land after it settles', async () => {
+        // R6 pins the COLLAPSE half (N 401s → one refresh POST). It cannot see
+        // the ORDER half COOKIE-DESIGN §4.3(2) names ("concurrent 401s queue
+        // on ONE promise"): with the waiter short-circuited to an eager
+        // `Promise.resolve(true)` (client.ts:949) every non-first caller
+        // retries against pre-settle state and R6 still passes — measured by
+        // the reviewer's executed mutation (zero convictions across the old
+        // panel). This test gates the refresh RESPONSE behind a test-owned
+        // deferred so the HOLD itself is observable: while the gate is closed
+        // the protected path must show exactly its N initial 401 hits and no
+        // more. Conviction: the short-circuit mutation fires the N-1 retries
+        // inside the gated window (count > N, red).
+        const N = 4;
+        const calls: CapturedCall[] = [];
+        const refreshCalls: CapturedCall[] = [];
+        const seenTargets = new Set<string>();
+        let settleRefresh!: () => void;
+        const refreshGate = new Promise<void>((resolve) => {
+            settleRefresh = resolve;
+        });
+        const fetchImpl = ((url: string, init?: RequestInit): Promise<Response> => {
+            const call = { url, init: init ?? {} };
+            calls.push(call);
+            if (url.endsWith('/api/v1/auth/refresh')) {
+                refreshCalls.push(call);
+                return refreshGate.then(() => respond(200, { server: 'rotated the cookie pair' }));
+            }
+            if (!seenTargets.has(url)) {
+                seenTargets.add(url);
+                return Promise.resolve(respond(401, { error: 'expired' }));
+            }
+            return Promise.resolve(respond(200, { ok: true }));
+        }) as unknown as typeof fetch;
+        const client = cookieClient(fetchImpl);
+
+        const protectedCalls = (): number =>
+            calls.filter((c) => !c.url.endsWith('/api/v1/auth/refresh')).length;
+
+        const flows = Array.from({ length: N }, (_unused, i) => client.get<{ ok: boolean }>(`/api/v1/r${i}`));
+        // Let the whole initial wave run to its parking point: each protected
+        // 401 is answered synchronously, so one macrotask tick drains every
+        // microtask chain up to the gated refresh.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(refreshCalls).toHaveLength(1);
+        // HOLD law: only the N initial hits exist — not one retry fired while
+        // the single refresh response was still in flight.
+        expect(protectedCalls()).toBe(N);
+
+        settleRefresh();
+        const results = await Promise.all(flows);
+
+        for (const r of results) {
+            expect(r).toEqual({ ok: true });
+        }
+        expect(refreshCalls).toHaveLength(1);
+        // All N retries exist only AFTER the settle: N initial + N retries.
+        expect(protectedCalls()).toBe(2 * N);
+    });
+
     it('R7 M7 discipline on the cookie leg: a hung server cannot park the single-flighted waiters (client timeout aborts it)', async () => {
         const calls: CapturedCall[] = [];
         const client = cookieClient(hangingRefreshFetch(calls), { timeoutMs: 10 });

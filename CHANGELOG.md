@@ -6,6 +6,44 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
+## Unreleased — w32L2 round-2 2026-11-09 (UI fix program)
+
+- **w32 review MAJOR-1 forward-fix — pin the HOLD half of the single-flight
+  law (TEST-ONLY; zero `src/` change).** The independent review of the
+  CP-016/CP-017 chain (`9a2fdc13..1fc02f25`) verified the COLLAPSE half
+  four-fold (N concurrent 401s collapse into ONE refresh POST: B3, R6, the
+  M5 cross-client twins), but found the ORDER half — "concurrent 401s QUEUE
+  on ONE promise", named by COOKIE-DESIGN §4.3(2) and restated by the entry
+  below — unconvicted: short-circuiting the waiter to an eager
+  `Promise.resolve(true)` (`client.ts:949`) left the entire 10-suite /
+  260-test panel GREEN (executed mutation), because a waiter so short-
+  circuited retries against PRE-ROTATION state and nothing observes it.
+  The shipped code is correct — the reviewer's gated probe is green at tip —
+  so this is a pinning-discipline fix, two tests inside the shipped suites:
+  `cookieAuthFlow.test.ts` **R6b** gates the `/auth/refresh` RESPONSE behind
+  a test-owned deferred and fires N=4 concurrent cookie-custody 401s: while
+  the gate holds, exactly ONE refresh POST exists, the protected path shows
+  exactly its N initial hits and ZERO retries; after the settle all N
+  retries have landed (2N total, still one POST). `client.test.ts` **B3b**
+  is the bearer twin (N=5) plus the credential half of the law: while held
+  the store still carries the UN-rotated pair, and once the gate opens every
+  retry presents the ROTATED `Bearer acc-1`. Conviction proven in-lane with
+  the reviewer's exact mutation: applied, precisely the two new legs redden
+  (2F/260P — the HOLD count assertion convicts first: 4→7 and 5→9 early
+  retries); reverted, the panel is 262/262 and the COLLAPSE-era rows stay
+  green both directions. Battery (serial `--no-file-parallelism`, measured):
+  parent 342 files / 7,019 passed / 10 skipped / 0 failed (EXIT 0, detached
+  worktree at `1fc02f25`) → tip 342 files / 7,021 passed / 10 skipped / 0
+  failed (EXIT 0) — +2 tests (R6b, B3b), file and skip counts held.
+  The CP-017 custody-flip sentinel stays exactly as landed: condition-armed
+  — it passes while the installed contracts pin (`#v0.5.7`) lacks
+  `CookieMode` and reddens with the named retire order the moment a re-pin
+  ships it. Test files are outside the bundle graph, so `dist/` is UNMOVED
+  by law: the commit carries zero `dist/` paths, a post-commit `npm run
+  build` leaves the worktree clean, and `npm run dist:check` passes
+  (889 tracked files, 9 entry points, 5/5 checks). No version bump — the
+  chain rides the v0.99.26 TAGGATE.
+
 ## Unreleased — w32L2 lane 2026-11-09 (UI fix program)
 
 - **CP-016 — 401 single-flight cookie refresh + credentials-consistent
