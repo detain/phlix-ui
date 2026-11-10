@@ -6,7 +6,28 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
-## Unreleased — w32L2 round-3 2026-11-10 (UI fix program)
+## 0.99.26 - 2026-11-10
+
+### Release
+
+Release ritual over the cookie-custody chain — seven content commits
+(`e2c45746`, `5b8574ac`, `9a2fdc13`, `8852c14a`, `1fc02f25`, `9ae8628a`,
+`c3a5a411`): the version advances 0.99.25 → 0.99.26, the three README currency
+stamps rotate, the four stamp-bearing `dist/` entry files are rebuilt, and the
+six top-pended Unreleased sections below fold in verbatim — bodies untouched
+except one append-only forward-correction sub-line in the w32L2 round-3 entry
+(quantifying its "any fixed delay" claim to the observed window depth, per that
+round's review MINOR). No dependency moves ride this cut:
+`@phlix/contracts` stays `github:detain/phlix-contracts#v0.5.7` and
+`@phlix/syncplay` stays `github:detain/phlix-syncplay#v0.1.7` — the v0.99.23
+incident established that pin changes belong to their own re-baseline wave,
+never to a release ritual (the pinia peer widening to `^3.0.0 || ^4.0.0` rode
+payload commit `e2c45746`, not this commit). Serial battery measured on this
+exact content: 342 files / 7,021 passing | 10 skipped. Two consecutive builds
+produce byte-identical `dist/` (889 files; per-file identities in
+`.reviews/2026-11-10/TW-ui-26.md`), and `dist:check` is green.
+
+### w32L2 round-3 2026-11-10 (UI fix program)
 
 - **w32 round-2 review MAJOR-1 forward-fix — deepen the HOLD window to four
   rounds (TEST-ONLY; zero `src/` change).** The round-2 pin (R6b/B3b) shared
@@ -42,7 +63,20 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   the commit carries zero `dist/` paths and `npm run dist:check` passes.
   No version bump — the chain rides the v0.99.26 TAGGATE.
 
-## Unreleased — w32L2 round-2 2026-11-09 (UI fix program)
+- **Forward correction at fold time (v0.99.26 ritual; w32 round-3 review
+  MINOR).** The line above in this entry — "A short-circuit behind any fixed
+  delay is then convicted at checkpoint delay+1" — over-reaches the lane's own
+  measured boundary: the sweep is FOUR macrotask rounds deep, and the lane's
+  own M-F probe (a fixed delay behind a four-timer chain) stays GREEN at the
+  window depth (rc=0, 262/262, re-executed by the independent review). The
+  accurate claim is that fixed delays up to the observable window depth are
+  convicted at checkpoint delay+1 — the qualifier `client.test.ts:399` already
+  carries. The enumerated matrix (M-A cp1 / M-C cp2 / M-D cp3 / M-E cp4)
+  remains exactly true; this adds no test teeth and removes none. Original
+  wording stands untouched per the append-only verbatim-history law; the
+  correction ships as this new fold-time note.
+
+### w32L2 round-2 2026-11-09 (UI fix program)
 
 - **w32 review MAJOR-1 forward-fix — pin the HOLD half of the single-flight
   law (TEST-ONLY; zero `src/` change).** The independent review of the
@@ -80,7 +114,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   (889 tracked files, 9 entry points, 5/5 checks). No version bump — the
   chain rides the v0.99.26 TAGGATE.
 
-## Unreleased — w32L2 lane 2026-11-09 (UI fix program)
+### w32L2 lane 2026-11-09 (UI fix program)
 
 - **CP-016 — 401 single-flight cookie refresh + credentials-consistent
   logout (COOKIE-DESIGN §4.3(2)/(5), §5.3; review-arms (a)+(b) from
@@ -144,7 +178,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   Test-only commit: `dist/` NOT rebuilt (test files are outside the
   bundle graph — verified byte-identical).
 
-## Unreleased — w30L3 round-2 2026-11-09 (UI fix program)
+### w30L3 round-2 2026-11-09 (UI fix program)
 
 - **CP-014 R2 (review w30L3ui, finding M-a): per-target cookie-probe memo
   keying pinned.** `src/api/cookieTokenStore.test.ts` gains a two-base probe
@@ -161,7 +195,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   embed client.ts ride this commit (minified chunks byte-identical; build
   ×2 deterministic), per the S176 law documented in check-dist-clean.
 
-## Unreleased — w30L3 lane 2026-11-09 (UI fix program)
+### w30L3 lane 2026-11-09 (UI fix program)
 
 - **CP-014 — cookie custody: `CookieTokenStore`, credentials policy, boot
   probe (COOKIE-DESIGN §4.3).** `src/api/tokenStore.ts` gains
@@ -202,7 +236,7 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
   `.reviews/2026-11-09/FIX-ui-w30L3.md`. Zero new i18n keys; `dist/`
   regenerated in the same commit (repo shipping law).
 
-## Unreleased — w21L4 lane 2026-11-09 (UI fix program)
+### w21L4 lane 2026-11-09 (UI fix program)
 
 - **The pinia peer admits v4 (CU-126).** `peerDependencies.pinia` widens
   `^3.0.0` → `^3.0.0 || ^4.0.0`; `devDependencies.pinia` stays `^3.0.0` and
