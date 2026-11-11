@@ -4,7 +4,7 @@
  * outside it.
  *
  * This generalises the S276 harness (`./syncplayServer.ts`, five SyncPlay
- * routes) to the FULL server surface: the 415 `[method, pathTemplate]` tuples
+ * routes) to the FULL server surface: the 418 `[method, pathTemplate]` tuples
  * of `SERVER_ROUTE_MANIFEST` — the canonical phlix-contracts export
  * (`dist/server-route-manifest.json`, the union of the two phlix-server
  * ROUTE_MANIFEST constants), VENDORED VERBATIM, never transcribed by hand.
@@ -35,10 +35,13 @@
  * ⚠ VENDORED, not imported. `./server-route-manifest.json` is a byte-identical
  * copy of phlix-contracts `dist/server-route-manifest.json` (md5 pinned by
  * `routeGate.api.test.ts`). Vendoring is the sanctioned interim pattern: ui
- * pins `@phlix/contracts#v0.5.7`, and the vendored copy now IS that tag tree's
- * route-manifest bytes (regen #36 — 415 tuples, content-derived at phlix-server
- * `58530ec2…`; byte-identical to the tag payload, re-vendored by the wave-5
- * currency lane off the v0.5.5-era regen #35 bytes the v0.99.16 cut shipped),
+ * pins `@phlix/contracts#v0.5.7`, but the vendored copy rides the regen
+ * staircase AHEAD of the tag under the standing fixture-bytes-vs-npm-pin
+ * ruling (the v0.99.16-era precedent): this copy is the regen #38 bytes
+ * (418 tuples, content-derived at phlix-server `413765b6…`, vendored from
+ * contracts master at `6335d818` by the ui-session-rows wave so the
+ * `/api/v1/auth/sessions` routes — the device-session surface — are served
+ * routes, not gate-404 ghosts),
  * but the contracts `exports` map ships only `.` and `./package.json` — JSON
  * subpath imports are blocked — so the copy stays vendored. When the contracts
  * exports map exposes the manifest JSON, switch this import to the tagged

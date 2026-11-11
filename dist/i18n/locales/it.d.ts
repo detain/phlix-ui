@@ -525,6 +525,7 @@ export declare const IT_MESSAGES: {
         tabAppearance: string;
         tabPlayback: string;
         tabSecurity: string;
+        tabSessions: string;
         tabServer: string;
         unsaved: string;
         saveGroup: string;
@@ -533,6 +534,31 @@ export declare const IT_MESSAGES: {
         loadFailed: string;
         passkeyNotCreated: string;
         loadErrorTitle: string;
+    };
+    sessions: {
+        eyebrow: string;
+        title: string;
+        desc: string;
+        cardTitle: string;
+        count: string;
+        thisDevice: string;
+        unknownDevice: string;
+        created: string;
+        lastUsed: string;
+        refresh: string;
+        loading: string;
+        revoke: string;
+        revokeAll: string;
+        revokeConfirm: string;
+        revokeAllConfirm: string;
+        revokeSuccess: string;
+        revokeError: string;
+        revokeOthersSuccess: string;
+        revokeOthersError: string;
+        loadErrorTitle: string;
+        loadError: string;
+        emptyTitle: string;
+        emptyDescription: string;
     };
     explore: {
         title: string;

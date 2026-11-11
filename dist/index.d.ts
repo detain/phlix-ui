@@ -179,6 +179,7 @@ export { default as InviteLinksPage } from './pages/InviteLinksPage.vue';
 export { default as AcceptInvitePage } from './pages/AcceptInvitePage.vue';
 export declare const SearchPage: import("vue").DefineComponent<{}, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<{}> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, true, {}, any>;
 export { default as SecuritySettingsPage } from './pages/SecuritySettingsPage.vue';
+export { default as DeviceSessionsPage } from './pages/DeviceSessionsPage.vue';
 export { default as MusicAlbumPage } from './pages/MusicAlbumPage.vue';
 export { default as MusicArtistsPage } from './pages/MusicArtistsPage.vue';
 export { default as MusicArtistPage } from './pages/MusicArtistPage.vue';

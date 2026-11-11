@@ -6,9 +6,90 @@ work lands as top-pended `## Unreleased — <lane> <date> (<id>)` entries that t
 folds into a version section. Historical entries are never rewritten — corrections and
 re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own first application.)
 
-## Unreleased — cookie WS conviction + single-flight HOLD (UI fix program, 2026-11-10)
+## 0.99.27 - 2026-11-11
 
-### Added — CP-015: convict the cookie-custody WS protocols law at the MODE (lane w31L3)
+### Release
+
+Release ritual over the device-sessions feature — one commit. The lane brief
+pre-wrote the combined subject (`feat(sessions): device-sessions UI +
+v0.99.27 release [ui-session-rows wave]`) and authorized either that or the
+two-phase split; the single commit was chosen because the version stamps,
+the catalog-currency prose, and the rebuilt `dist/` identities interleave
+inside the same files (`README.md` alone carries all three classes), so a
+split would stage the same file across two commits on non-adjacent lines.
+The version advances 0.99.26 → 0.99.27, the three README currency stamps
+rotate, `package.json`/`package-lock.json` carry the version, and the full
+`dist/` is rebuilt in the same commit — the catalog move rehashes every
+chunk that imports it, so this cut rotates the bundle the way a payload
+release does (two consecutive builds byte-identical; `dist:check` green at
+the commit). The top-pended Unreleased section folds in verbatim; its
+banner's program/date attribution moves into the entry heading, body
+untouched. No dependency moves ride this cut: `@phlix/contracts` stays
+`github:detain/phlix-contracts#v0.5.7` and `@phlix/syncplay` stays
+`github:detain/phlix-syncplay#v0.1.7` — the route-manifest refresh below is
+the vendored test fixture (S280 gate input), not the npm pin. Serial
+battery measured on this exact content: 344 files / 7,045 passing
+| 10 skipped (parent at `861a715d` measured 342 / 7,022 | 10; delta exactly
++2 files / +23 tests — +22 from the two new suites, +1 from the route-gate
+drive block, zero other movement; the suite arithmetic is closed in the
+lane register).
+
+### Added — device-sessions UI: Settings › Sessions over the D-1a endpoints (lane ui-session-rows, 2026-11-11)
+
+- New `src/api/deviceSessions.ts`: `fetchDeviceSessions()` /
+  `revokeDeviceSession()` over `GET /api/v1/auth/sessions` and
+  `DELETE /api/v1/auth/sessions/{id}` (server `413765b6`, hub twin
+  `c0ed2c28`). Parse boundary drops malformed rows and coerces honest
+  nulls, preserves the server's `last_used_at` DESC order, and transport/
+  auth refusals reject untouched — the `themeSettings.ts` law that the
+  caller owns the silence.
+- **Premise correction, stated at the source:** there is no
+  `DELETE /api/v1/auth/sessions/others` endpoint on either host. The
+  shipped surface is exactly the two routes above — verified against the
+  server controller and router, the hub router, the vendored 418-tuple
+  contracts manifest, and the D-1a register (:90–:96). "Sign out other
+  devices" is therefore CLIENT-side: a sequential, stop-at-first-failure
+  fan-out of `DELETE /{id}` over the non-current rows, always followed by a
+  reload, so the list the user sees is server truth at every settle.
+- New `src/pages/DeviceSessionsPage.vue`, embedded as the fourth Settings
+  tab (no new route): each session shows a device line (raw untrusted
+  `device_name` when present, an honest "Unknown device" otherwise; the
+  `tv` icon only for the literal device type, `monitor` otherwise), a
+  Created/Last-used pair rendered as absolute local dates parsed
+  numerically from the server's wall-clock strings (the wire carries no
+  timezone marker, so none is fabricated), and — for the request's own
+  session — a "This device" badge with no revoke control at all. Loading,
+  empty, and error states carry a Retry; both revoke arms confirm through
+  the shared `ConfirmDialog`; while any revocation is in flight every
+  action control is disabled, and the hold-and-release pin proves exactly
+  one `DELETE` per button after release.
+- The page dials `useApiBase()`, not the media base: `/auth/*` is the
+  host's own auth surface (the server serves it; the hub serves its twin
+  at `Application.php:759`/:761), and the `useApiBase` docblock law forbids
+  ever proxying it to a paired server — which makes the tab correct
+  untouched on both the server SPA and the hub SPA. The Security tab's
+  `useMediaApiBase` precedent is webauthn-specific and deliberately not
+  copied.
+- i18n: new `sessions` group (23 keys) + `settings.tabSessions` — the
+  UI-chrome catalog advances 542 → 566 leaves and 27 → 28 groups; all six
+  mirror locales are translated, the German copy keeps the catalog's
+  informal-du register, and the currency prose (`src/i18n/errors.ts`,
+  `src/i18n/errors.test.ts`, README `:361`/`:423`) rotates in this commit
+  with the catalog it describes.
+- S280 route gate re-vendored to contracts regen #38 (415 → 418 tuples:
+  the two `auth/sessions` routes plus `POST /auth/logout`; nothing
+  removed), with the fixture md5 and provenance `server_sha` pins rotated
+  to `413765b6`. `routeGate.api.test.ts` now drives `deviceSessions.ts`
+  against the real manifest and `routeGate.enumeration.test.ts` carries it
+  in `GATED_API` — the module can no longer call a route the server does
+  not serve.
+- Tests: 11 API-boundary cases (true-204 no-parse leg, id URL-encoding,
+  order preservation, malformed-row drops, envelope degrade, refusal and
+  transport propagation) and 11 page cases (icons, badge, pluralized
+  count, absolute dates, bulk fan-out never touching the current session,
+  stop-at-first-failure, reentrancy) join the battery.
+
+### Added — CP-015: convict the cookie-custody WS protocols law at the MODE (lane w31L3, UI fix program, 2026-11-10)
 
 - `src/api/syncplay.ws.test.ts` gains the boot-store dial lock: with `CookieTokenStore` registered as the boot store and a STALE pre-flip token seeded in `localStorage`, the syncplay dial still offers **no protocols** (`socket().protocols === undefined`) and carries no token in the url — the `buildWsProtocols` → `getWsToken` → boot-store chain is convicted at the custody mode, not just at the empty-store shape. The pre-fix law held by construction only (`CookieTokenStore.getAccessToken() → null`); the existing pins covered signed-out, token-present, and throwing-store shapes, leaving a `localStorage`-direct read — the exact pre-CP-014 dial shape — undetectable through every one of them. Test-only: no `src/` runtime file moves; `dist/` unmoved (proven by `node scripts/check-dist-clean.mjs` and the commit stat), so this entry rides the next release ritual with no re-vendor obligation. Serial battery measured on this content: 342 files / 7,022 passing | 10 skipped (parent at `dc2e70fe` measured 342 / 7,021 | 10; delta exactly +1 test — this row — zero other movement). The mutation conviction and its transcript ride the lane register.
 

@@ -80,6 +80,7 @@ const GATED_API = [
     'photos.ts',
     'themes.ts',
     'themeSettings.ts',
+    'deviceSessions.ts',
     'recommendations.ts',
     'nextUp.ts',
     'mostWatched.ts',

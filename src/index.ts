@@ -416,6 +416,7 @@ export { default as AcceptInvitePage } from './pages/AcceptInvitePage.vue';
 // exported as a lazy factory instead of a static re-export.
 export const SearchPage = defineAsyncComponent(() => import('./pages/SearchPage.vue'));
 export { default as SecuritySettingsPage } from './pages/SecuritySettingsPage.vue';
+export { default as DeviceSessionsPage } from './pages/DeviceSessionsPage.vue';
 export { default as MusicAlbumPage } from './pages/MusicAlbumPage.vue';
 export { default as MusicArtistsPage } from './pages/MusicArtistsPage.vue';
 export { default as MusicArtistPage } from './pages/MusicArtistPage.vue';

@@ -3672,6 +3672,7 @@ var fn = {
 		tabAppearance: "Appearance",
 		tabPlayback: "Playback",
 		tabSecurity: "Security",
+		tabSessions: "Sessions",
 		tabServer: "Server",
 		unsaved: "Unsaved",
 		saveGroup: "Save {name}",
@@ -3680,6 +3681,31 @@ var fn = {
 		loadFailed: "Couldn’t load settings.",
 		loadErrorTitle: "Couldn’t load settings",
 		passkeyNotCreated: "No passkey was created. Try again."
+	},
+	sessions: {
+		eyebrow: "Your account",
+		title: "Device sessions",
+		desc: "Review the devices signed in to your account and sign out the ones you don’t recognize.",
+		cardTitle: "Active sessions",
+		count: "{count} active session | {count} active sessions",
+		thisDevice: "This device",
+		unknownDevice: "Unknown device",
+		created: "Signed in {date}",
+		lastUsed: "Last used {date}",
+		refresh: "Refresh",
+		loading: "Loading sessions…",
+		revoke: "Sign out",
+		revokeAll: "Sign out others",
+		revokeConfirm: "Sign out this session? The device will need to sign in again.",
+		revokeAllConfirm: "Sign out all other sessions? Every device except this one will need to sign in again.",
+		revokeSuccess: "Signed out of that device.",
+		revokeError: "Couldn’t sign out that session.",
+		revokeOthersSuccess: "Other sessions signed out.",
+		revokeOthersError: "Couldn’t finish signing out the other sessions.",
+		loadErrorTitle: "Couldn’t load sessions",
+		loadError: "Couldn’t load your sessions. Check your connection and try again.",
+		emptyTitle: "No active sessions",
+		emptyDescription: "No devices are signed in to this account."
 	},
 	explore: { title: "Explore similar titles" },
 	recommendations: { title: "For you" },
@@ -11998,7 +12024,7 @@ var Zm = { class: "player__stage" }, Qm = ["src", "poster"], $m = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-101a562c"]]), zh = "0.99.26", Bh = ["aria-label"], Vh = ["src", "poster"], Hh = { class: "mini__body" }, Uh = { class: "mini__title" }, Wh = { class: "mini__controls" }, Gh = ["aria-label"], Kh = ["aria-label", "aria-pressed"], qh = ["aria-label"], Jh = ["aria-label"], Yh = {
+}), [["__scopeId", "data-v-101a562c"]]), zh = "0.99.27", Bh = ["aria-label"], Vh = ["src", "poster"], Hh = { class: "mini__body" }, Uh = { class: "mini__title" }, Wh = { class: "mini__controls" }, Gh = ["aria-label"], Kh = ["aria-label", "aria-pressed"], qh = ["aria-label"], Jh = ["aria-label"], Yh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Xh = /*#__PURE__*/ X(/* @__PURE__ */ d({

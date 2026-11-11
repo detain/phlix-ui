@@ -3,7 +3,7 @@
  *
  * Every request-issuing method of every server-addressed `src/api` module is
  * driven through {@link makeRouteGateServer}, which answers a real 404 to any
- * url phlix-server does not register (415 routes — the canonical
+ * url phlix-server does not register (418 routes — the canonical
  * phlix-contracts export `dist/server-route-manifest.json`, vendored verbatim
  * here as `server-route-manifest.json`; see {@link routeGateServer}).
  *
@@ -36,6 +36,7 @@ import { SyncPlayApi } from '../syncplay';
 import { photoApi } from '../photos';
 import { fetchThemes } from '../themes';
 import { fetchThemeSetting, putThemeSetting } from '../themeSettings';
+import { fetchDeviceSessions, revokeDeviceSession } from '../deviceSessions';
 import { fetchRecommendations } from '../recommendations';
 import { fetchNextUp } from '../nextUp';
 import { fetchMostWatched } from '../mostWatched';
@@ -89,17 +90,19 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
      * map ships the JSON subpath — see {@link routeGateServer} header). These
      * pins fail if the vendored file is edited, re-derived locally, or replaced:
      * the md5 is the byte-identity proof against
-     * `phlix-contracts/dist/server-route-manifest.json` at the `v0.5.7` tag
-     * (regen #36 — 415 tuples, CONTENT re-derivation at phlix-server
-     * `58530ec2…`: three added server routes, zero removed), and the sha pin
-     * is the server-currency proof. History: the v0.99.16 cut deliberately
-     * shipped this copy on the older v0.5.5-tag bytes (regen #35) under the
-     * plan ruling decoupling fixture bytes from the npm pin; the owed
-     * re-vendor wave has now landed them — the md5 below is the proof of
-     * THAT identity.
+     * `phlix-contracts/dist/server-route-manifest.json` at contracts master
+     * `6335d818` (regen #38 — 418 tuples, CONTENT re-derivation at phlix-server
+     * `413765b6…`: the `GET /api/v1/auth/sessions` + `DELETE /api/v1/auth/
+     * sessions/{id}` device-session pair from D-1a plus the `POST /api/v1/auth/
+     * logout` carry from the regen #37 step, zero removed — advanced under the
+     * standing fixture-bytes-vs-npm-pin ruling, v0.99.16-era precedent), and
+     * the sha pin is the server-currency proof. History: the v0.99.16 cut
+     * deliberately shipped this copy on the older v0.5.5-tag bytes (regen #35)
+     * under that ruling; the wave-5 currency lane then landed the regen #36
+     * (415-tuple) tag bytes; the md5 below is the proof of THIS identity.
      */
-    const VENDORED_MANIFEST_MD5 = '90b79e355055307d5ba2cc0ef98e2300';
-    const VENDORED_MANIFEST_SERVER_SHA = '58530ec207b0d40c3386ed10215d5bda3eaf54af';
+    const VENDORED_MANIFEST_MD5 = 'c2111cd37f2d1f3148c7ff741e214570';
+    const VENDORED_MANIFEST_SERVER_SHA = '413765b6d4385a3445ac1dddbc4ced16e0e281f6';
 
     it('is the canonical artifact byte-for-byte — md5 + provenance sha + size', () => {
         // jsdom makes import.meta.url an http URL — resolve through the file
@@ -110,7 +113,7 @@ describe('route gate — vendored contracts export (S280 re-adoption)', () => {
         );
         const bytes = readFileSync(vendoredFile);
         expect(createHash('md5').update(bytes).digest('hex')).toBe(VENDORED_MANIFEST_MD5);
-        expect(SERVER_ROUTE_MANIFEST).toHaveLength(415);
+        expect(SERVER_ROUTE_MANIFEST).toHaveLength(418);
         expect(SERVER_ROUTE_MANIFEST.length).toBe(SERVER_ROUTE_MANIFEST_PROVENANCE.total);
         expect(SERVER_ROUTE_MANIFEST_PROVENANCE.serverSha).toBe(VENDORED_MANIFEST_SERVER_SHA);
     });
@@ -279,6 +282,18 @@ describe('route gate — themeSettings.ts (fetchThemeSetting / putThemeSetting)'
         expectGateClean(
             server,
             ['GET /api/v1/users/me/settings', 'PUT /api/v1/users/me/settings'],
+            2,
+        );
+    });
+});
+
+describe('route gate — deviceSessions.ts (fetchDeviceSessions / revokeDeviceSession)', () => {
+    it('issues exactly GET + DELETE /api/v1/auth/sessions[{/id}]', async () => {
+        await driveGated(server, 'fetchDeviceSessions', () => fetchDeviceSessions(BASE));
+        await driveGated(server, 'revokeDeviceSession', () => revokeDeviceSession(BASE, 'session-abc'));
+        expectGateClean(
+            server,
+            ['DELETE /api/v1/auth/sessions/{id}', 'GET /api/v1/auth/sessions'],
             2,
         );
     });

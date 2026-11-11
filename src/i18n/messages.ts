@@ -695,6 +695,7 @@ export const DEFAULT_MESSAGES = {
     tabAppearance: 'Appearance',
     tabPlayback: 'Playback',
     tabSecurity: 'Security',
+    tabSessions: 'Sessions',
     // DEPRECATED — the keys below belonged to the removed "Server" tab
     // (SettingsForm.vue). They are retained so a consumer that overrides them in
     // its own message catalogue does not break; nothing renders them any more.
@@ -714,6 +715,34 @@ export const DEFAULT_MESSAGES = {
     // server's schema `meta` block, not from this catalogue; the admin.*
     // keys above are the transcoding page's own chrome, which this catalog
     // does render (TranscodingSettingsPage.vue).
+  },
+  // DeviceSessionsPage — the auth-token family (D-1a) surface embedded as the
+  // Settings > Sessions tab. Titles bound via :title="t(...)" are kept
+  // period-less by the CU-071 chrome-title law.
+  sessions: {
+    eyebrow: 'Your account',
+    title: 'Device sessions',
+    desc: 'Review the devices signed in to your account and sign out the ones you don’t recognize.',
+    cardTitle: 'Active sessions',
+    count: '{count} active session | {count} active sessions',
+    thisDevice: 'This device',
+    unknownDevice: 'Unknown device',
+    created: 'Signed in {date}',
+    lastUsed: 'Last used {date}',
+    refresh: 'Refresh',
+    loading: 'Loading sessions…',
+    revoke: 'Sign out',
+    revokeAll: 'Sign out others',
+    revokeConfirm: 'Sign out this session? The device will need to sign in again.',
+    revokeAllConfirm: 'Sign out all other sessions? Every device except this one will need to sign in again.',
+    revokeSuccess: 'Signed out of that device.',
+    revokeError: 'Couldn’t sign out that session.',
+    revokeOthersSuccess: 'Other sessions signed out.',
+    revokeOthersError: 'Couldn’t finish signing out the other sessions.',
+    loadErrorTitle: 'Couldn’t load sessions',
+    loadError: 'Couldn’t load your sessions. Check your connection and try again.',
+    emptyTitle: 'No active sessions',
+    emptyDescription: 'No devices are signed in to this account.',
   },
   explore: {
     title: 'Explore similar titles',

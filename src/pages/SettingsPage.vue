@@ -23,6 +23,7 @@ import { ref } from 'vue';
 import Tabs, { type TabItem } from '../components/ui/Tabs.vue';
 import AppearanceSettings from '../components/AppearanceSettings.vue';
 import SecuritySettingsPage from './SecuritySettingsPage.vue';
+import DeviceSessionsPage from './DeviceSessionsPage.vue';
 import { useMessages } from '../composables/useMessages';
 
 const { t } = useMessages();
@@ -32,10 +33,15 @@ const { t } = useMessages();
 // server's `/api/v1/me/webauthn/*` endpoints directly on the server app and via
 // the relay proxy to the selected server on the hub app (where those endpoints
 // actually live) — so the tab is safe in both consumers of this shared page.
+// The Sessions tab follows the OPPOSITE base law on purpose: DeviceSessionsPage
+// uses `useApiBase()` because `/api/v1/auth/sessions` is the HOST's own login
+// surface (the server serves it; the hub serves its twin) — proxying a session
+// list to a paired server would manage the wrong account's logins.
 const TABS: TabItem[] = [
   { value: 'appearance', label: t('settings.tabAppearance'), icon: 'sun' },
   { value: 'playback', label: t('settings.tabPlayback'), icon: 'play' },
   { value: 'security', label: t('settings.tabSecurity'), icon: 'key' },
+  { value: 'sessions', label: t('settings.tabSessions'), icon: 'monitor' },
 ];
 
 const tab = ref('appearance');
@@ -57,6 +63,9 @@ const tab = ref('appearance');
       </template>
       <template #security>
         <SecuritySettingsPage />
+      </template>
+      <template #sessions>
+        <DeviceSessionsPage />
       </template>
     </Tabs>
   </div>
