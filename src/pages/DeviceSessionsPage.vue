@@ -22,10 +22,11 @@
  * WHY THE BULK ACTION IS CLIENT-SIDE: the server register ships exactly the
  * list + single-revoke pair — no "others" endpoint exists on either host or
  * in the contracts manifest — so "sign out others" is a bounded SEQUENTIAL
- * fan-out over the non-current rows. Sequential (not Promise.all) because a
- * burst of parallel DELETEs against the same refresh-reuse watermark can
- * false-trip family revocation on the server; one-at-a-time is the shape
- * the backend docs recommend for composed bulk flows. Stop-at-first-failure
+ * fan-out over the non-current rows. Sequential (not Promise.all) as
+ * dispatch pacing: one DELETE in flight at a time keeps the burst within
+ * the server's rate limits and lets stop-at-first-failure stay exact. (This
+ * is pacing, NOT a refresh-reuse-watermark guard — single revokes do not
+ * touch that watermark.) Stop-at-first-failure
  * then RELOAD: the list re-fetch is the honest reconciler — partial success
  * renders as whatever the server now agrees exists.
  *

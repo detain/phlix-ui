@@ -27,7 +27,10 @@ import { ApiClient, ApiError } from './client';
  *    must not fabricate a conversion — see the page's date formatter.
  *  - `current` is the session that authenticated THIS request. Revoking it
  *    succeeds and signs the caller out, so the UI never offers that action
- *    (it renders the row as read-only "this device" instead).
+ *    (it renders the row as read-only "this device" instead). Exact scope:
+ *    a claim-less pre-055 legacy token carries no session claim, so no row
+ *    can be marked `current` for it; the law holds for every row the wire
+ *    does flag, and that edge simply shows no "this device" row.
  *
  * There is deliberately NO "revoke all others" endpoint: the server register
  * (.reviews/2026-11-10/FIX-server-CP029-d1a.md :90-96) ships exactly two
