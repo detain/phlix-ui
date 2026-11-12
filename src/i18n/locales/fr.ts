@@ -560,6 +560,7 @@ export const FR_MESSAGES = {
     refresh: 'Actualiser',
     loading: 'Chargement des sessions…',
     revoke: 'Déconnecter',
+    revokeDevice: 'Déconnecter {device}',
     revokeAll: 'Déconnecter les autres',
     revokeConfirm: 'Déconnecter cette session ? L’appareil devra se reconnecter.',
     revokeAllConfirm: 'Déconnecter toutes les autres sessions ? Tous les appareils sauf celui-ci devront se reconnecter.',

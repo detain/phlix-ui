@@ -87,6 +87,8 @@ interface StubOpts {
   deleteFailIds?: ReadonlySet<string>;
   /** DELETE responses stay PENDING until the test calls release(). */
   holdDeletes?: boolean;
+  /** A successful DELETE removes the row from later GETs (server truth). */
+  dropOnDelete?: boolean;
 }
 
 interface StubHandle {
@@ -95,7 +97,10 @@ interface StubHandle {
 }
 
 function stubFetchImpl(opts: StubOpts): StubHandle {
-  const rows = opts.sessions ?? [];
+  let rows = opts.sessions ?? [];
+  const drop = (id: string): void => {
+    if (opts.dropOnDelete) rows = rows.filter((r) => r.id !== id);
+  };
   let releaseDeletes: () => void = () => {};
   const fn = vi.fn((url: unknown, init?: RequestInit) => {
     const u = typeof url === 'string' ? url : '';
@@ -110,10 +115,12 @@ function stubFetchImpl(opts: StubOpts): StubHandle {
           const prev = releaseDeletes;
           releaseDeletes = () => {
             prev();
+            drop(target.id);
             resolve(noContent());
           };
         });
       }
+      drop(target.id);
       return Promise.resolve(noContent());
     }
     if (method === 'GET' && isRoute(u, LIST_PATH)) {
@@ -132,8 +139,9 @@ function stubFetch(opts: StubOpts = {}): StubHandle {
   return stubFetchImpl(opts);
 }
 
-function mountPage(): VueWrapper {
+function mountPage(attach = false): VueWrapper {
   return mount(DeviceSessionsPage, {
+    ...(attach ? { attachTo: document.body } : {}),
     global: {
       plugins: [createPinia()],
       provide: { apiBase: '' },
@@ -330,17 +338,32 @@ describe('DeviceSessionsPage', () => {
     w.unmount();
   });
 
-  it('reentrancy: every control is disabled while a revoke is in flight', async () => {
+  it('reentrancy: every control is blocked while a revoke is in flight; the busy one stays focusable', async () => {
     const held = stubFetch({ sessions: trio(), holdDeletes: true });
-    const w = mountPage();
+    const w = mountPage(true);
     await flushPromises();
 
-    await w.find('[data-testid="session-revoke-sess-tv"]').trigger('click');
+    const trigger = w.find('[data-testid="session-revoke-sess-tv"]');
+    (trigger.element as HTMLButtonElement).focus();
+    await trigger.trigger('click');
     await flushPromises();
     await clickDialogButton(true);
     // DELETE is pending — no reload, no second burst possible.
     expect(deleteUrls(held.fn)).toEqual([sessionPath('sess-tv')]);
-    expect(w.find('[data-testid="session-revoke-sess-tv"]').attributes('disabled')).toBeDefined();
+    // The BUSY row rides the loading/aria-disabled arm (CU-117): never
+    // native-disabled, so a focused trigger keeps its place in the focus
+    // order instead of dumping focus to <body>.
+    const busy = w.find('[data-testid="session-revoke-sess-tv"]');
+    expect(busy.attributes('disabled')).toBeUndefined();
+    expect(busy.attributes('aria-disabled')).toBe('true');
+    expect(busy.attributes('aria-busy')).toBe('true');
+    (busy.element as HTMLButtonElement).focus();
+    expect(document.activeElement).toBe(busy.element);
+    // A click on the busy control is swallowed by the activation guard.
+    await busy.trigger('click');
+    await flushPromises();
+    expect(document.body.querySelector('.phlix-modal__footer')).toBeNull();
+    // Every OTHER control is plainly disabled.
     expect(w.find('[data-testid="session-revoke-sess-unk"]').attributes('disabled')).toBeDefined();
     expect(w.find('[data-testid="sessions-revoke-others"]').attributes('disabled')).toBeDefined();
     expect(w.find('[data-testid="sessions-refresh"]').attributes('disabled')).toBeDefined();
@@ -349,6 +372,105 @@ describe('DeviceSessionsPage', () => {
     await flushPromises();
     // Exactly ONE DELETE total — the in-flight arm cannot be re-entered.
     expect(deleteUrls(held.fn)).toEqual([sessionPath('sess-tv')]);
+    w.unmount();
+  });
+
+  it('names every revoke control after its row (UI-12): the accessible name says WHICH session ends', async () => {
+    stubFetch({ sessions: trio() });
+    const w = mountPage();
+    await flushPromises();
+    const tv = w.find('[data-testid="session-revoke-sess-tv"]');
+    expect(tv.attributes('aria-label')).toBe('Sign out Living Room TV');
+    expect(tv.attributes('title')).toBe('Sign out Living Room TV');
+    // The unknown-device fallback names the row too — never an empty label.
+    expect(w.find('[data-testid="session-revoke-sess-unk"]').attributes('aria-label')).toBe('Sign out Unknown device');
+    // Two rows, two DISTINCT names — a list of identical "Sign out" buttons
+    // is the defect this pins out.
+    const names = w.findAll('.session-item__revoke').map((b) => b.attributes('aria-label'));
+    expect(new Set(names).size).toBe(names.length);
+    w.unmount();
+  });
+
+  it('bulk revoke rides the loading arm: the focused bulk button stays focusable while in flight', async () => {
+    const held = stubFetch({ sessions: trio(), holdDeletes: true });
+    const w = mountPage(true);
+    await flushPromises();
+
+    const bulk = w.find('[data-testid="sessions-revoke-others"]');
+    (bulk.element as HTMLButtonElement).focus();
+    await bulk.trigger('click');
+    await flushPromises();
+    await clickDialogButton(true);
+
+    const inFlight = w.find('[data-testid="sessions-revoke-others"]');
+    expect(inFlight.attributes('disabled')).toBeUndefined();
+    expect(inFlight.attributes('aria-disabled')).toBe('true');
+    expect(inFlight.attributes('aria-busy')).toBe('true');
+    // Row controls are blocked for the whole fan-out.
+    expect(w.find('[data-testid="session-revoke-sess-tv"]').attributes('disabled')).toBeDefined();
+    expect(w.find('[data-testid="session-revoke-sess-unk"]').attributes('disabled')).toBeDefined();
+
+    held.release();
+    await flushPromises();
+    held.release();
+    await flushPromises();
+    expect(deleteUrls(held.fn)).toEqual([sessionPath('sess-tv'), sessionPath('sess-unk')]);
+    w.unmount();
+  });
+
+  it('parks focus on the card heading when the revoked row unmounts on refresh (UI-13)', async () => {
+    stubFetch({ sessions: trio(), dropOnDelete: true });
+    const w = mountPage(true);
+    await flushPromises();
+
+    const trigger = w.find('[data-testid="session-revoke-sess-tv"]');
+    (trigger.element as HTMLButtonElement).focus();
+    await trigger.trigger('click');
+    await flushPromises();
+    await clickDialogButton(true);
+    await flushPromises();
+
+    // The revoked row is gone (server truth on reload)…
+    expect(w.find('[data-testid="session-revoke-sess-tv"]').exists()).toBe(false);
+    expect(w.findAll('.session-item')).toHaveLength(2);
+    // …and focus never fell to <body>: it parked on the always-mounted heading.
+    const heading = w.find('[data-testid="sessions-card-title"]');
+    expect(heading.attributes('tabindex')).toBe('-1');
+    expect(document.activeElement).toBe(heading.element);
+    w.unmount();
+  });
+
+  it('parks focus when the bulk button vanishes with the last other session', async () => {
+    stubFetch({ sessions: trio(), dropOnDelete: true });
+    const w = mountPage(true);
+    await flushPromises();
+
+    const bulk = w.find('[data-testid="sessions-revoke-others"]');
+    (bulk.element as HTMLButtonElement).focus();
+    await bulk.trigger('click');
+    await flushPromises();
+    await clickDialogButton(true);
+    await flushPromises();
+
+    expect(w.find('[data-testid="sessions-revoke-others"]').exists()).toBe(false);
+    expect(document.activeElement).toBe(w.find('[data-testid="sessions-card-title"]').element);
+    w.unmount();
+  });
+
+  it('never steals focus the user moved elsewhere during the reload', async () => {
+    stubFetch({ sessions: trio(), dropOnDelete: true });
+    const outside = document.createElement('input');
+    document.body.appendChild(outside);
+    const w = mountPage(true);
+    await flushPromises();
+
+    await w.find('[data-testid="session-revoke-sess-tv"]').trigger('click');
+    await flushPromises();
+    dialogButton(true).click();
+    outside.focus();
+    await flushPromises();
+
+    expect(document.activeElement).toBe(outside);
     w.unmount();
   });
 

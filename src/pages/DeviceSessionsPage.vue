@@ -28,12 +28,23 @@
  * the backend docs recommend for composed bulk flows. Stop-at-first-failure
  * then RELOAD: the list re-fetch is the honest reconciler — partial success
  * renders as whatever the server now agrees exists.
+ *
+ * FOCUS LAW (UI-12/UI-13, CU-117 class): the control the user confirmed from
+ * goes BUSY through the loading/aria-disabled arm (never native `disabled`,
+ * which drops a focused button out of the focus order and dumps focus to
+ * <body> the moment the dialog hands it back). Each revoke button carries a
+ * row-named accessible label ("Sign out Living Room TV") — an icon-only
+ * destructive control must say WHICH session it ends. After a user-initiated
+ * reload, if the focused control unmounted with its row (or the bulk button
+ * vanished with the last other session), focus parks on the card heading
+ * instead of falling to <body>.
  */
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, nextTick, onMounted, ref } from 'vue';
 import { useApiBase } from '../composables/useApiBase';
 import EmptyState from '../components/ui/EmptyState.vue';
 import Spinner from '../components/ui/Spinner.vue';
 import Button from '../components/ui/Button.vue';
+import IconButton from '../components/ui/IconButton.vue';
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import Icon, { type IconName } from '../components/Icon.vue';
 import { useToastStore } from '../stores/useToastStore';
@@ -63,6 +74,9 @@ const otherSessions = computed(() => sessions.value.filter((s) => !s.current));
 const hasOthers = computed(() => otherSessions.value.length > 0);
 const anyBusy = computed(() => busyId.value !== null || revokingOthers.value);
 
+/** Focus park target: the always-mounted card heading (tabindex="-1"). */
+const parkEl = ref<HTMLElement | null>(null);
+
 async function loadSessions(): Promise<void> {
   loading.value = true;
   error.value = null;
@@ -77,8 +91,24 @@ async function loadSessions(): Promise<void> {
   }
 }
 
+/**
+ * Reload, then park focus if it was orphaned. The list unmounts while
+ * `loading` (and a revoked row never comes back), so a focused row control
+ * is gone by the time the reload settles; only a lost focus (<body>, or a
+ * detached node) is re-homed — focus the user moved elsewhere is left alone.
+ */
+async function reloadAndParkFocus(): Promise<void> {
+  await loadSessions();
+  await nextTick();
+  if (typeof document === 'undefined') return;
+  const active = document.activeElement;
+  if (active === null || active === document.body || !active.isConnected) {
+    parkEl.value?.focus();
+  }
+}
+
 function retry(): void {
-  void loadSessions();
+  void reloadAndParkFocus();
 }
 
 /**
@@ -155,7 +185,7 @@ async function onConfirm(): Promise<void> {
     } finally {
       busyId.value = null;
     }
-    await loadSessions();
+    await reloadAndParkFocus();
     return;
   }
 
@@ -177,7 +207,7 @@ async function onConfirm(): Promise<void> {
   } else {
     toasts.error(wireErrorLine(failure, t('sessions.revokeOthersError'), config?.locale));
   }
-  await loadSessions();
+  await reloadAndParkFocus();
 }
 
 onMounted(() => {
@@ -196,7 +226,9 @@ onMounted(() => {
     <section class="device-sessions-page__card">
       <header class="device-sessions-page__card-header">
         <div class="device-sessions-page__card-heading">
-          <h2 class="device-sessions-page__card-title">{{ t('sessions.cardTitle') }}</h2>
+          <h2 ref="parkEl" class="device-sessions-page__card-title" tabindex="-1" data-testid="sessions-card-title">
+            {{ t('sessions.cardTitle') }}
+          </h2>
           <span v-if="!loading && !error" class="device-sessions-page__count">
             {{ t('sessions.count', { count: sessions.length }) }}
           </span>
@@ -206,7 +238,8 @@ onMounted(() => {
             variant="ghost"
             size="sm"
             left-icon="refresh"
-            :disabled="loading || anyBusy"
+            :loading="loading"
+            :disabled="anyBusy"
             data-testid="sessions-refresh"
             @click="retry"
           >
@@ -216,14 +249,12 @@ onMounted(() => {
             v-if="hasOthers"
             variant="ghost"
             size="sm"
-            :disabled="anyBusy"
+            :loading="revokingOthers"
+            :disabled="anyBusy && !revokingOthers"
             data-testid="sessions-revoke-others"
             @click="handleRevokeOthers"
           >
-            <template v-if="revokingOthers">
-              <Spinner size="xs" />
-            </template>
-            <template v-else>{{ t('sessions.revokeAll') }}</template>
+            {{ t('sessions.revokeAll') }}
           </Button>
         </div>
       </header>
@@ -265,22 +296,17 @@ onMounted(() => {
               </span>
               <span v-if="metaLine(row)" class="session-item__meta">{{ metaLine(row) }}</span>
             </div>
-            <Button
+            <IconButton
               v-if="!row.current"
-              variant="ghost"
+              name="trash"
               size="sm"
               class="session-item__revoke"
-              :disabled="anyBusy"
+              :label="t('sessions.revokeDevice', { device: deviceLabel(row) })"
+              :loading="busyId === row.id"
+              :disabled="anyBusy && busyId !== row.id"
               :data-testid="`session-revoke-${row.id}`"
               @click="handleRevoke(row.id)"
-            >
-              <template v-if="busyId === row.id">
-                <Spinner size="xs" />
-              </template>
-              <template v-else>
-                <Icon name="trash" />
-              </template>
-            </Button>
+            />
           </li>
         </ul>
       </div>
@@ -360,6 +386,10 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text);
   margin: 0;
+}
+
+.device-sessions-page__card-title:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .device-sessions-page__count {
@@ -446,7 +476,7 @@ onMounted(() => {
   color: var(--text-muted);
 }
 
-.session-item__revoke:hover {
+.session-item .session-item__revoke:hover:not(:disabled):not(.is-loading) {
   color: var(--error);
 }
 </style>

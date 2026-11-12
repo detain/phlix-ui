@@ -556,6 +556,7 @@ export const IT_MESSAGES = {
     refresh: 'Aggiorna',
     loading: 'Caricamento sessioni…',
     revoke: 'Esci',
+    revokeDevice: 'Esci da {device}',
     revokeAll: 'Esci dagli altri',
     revokeConfirm: 'Uscire da questa sessione? Il dispositivo dovrà eseguire di nuovo l’accesso.',
     revokeAllConfirm: 'Uscire da tutte le altre sessioni? Tutti i dispositivi tranne questo dovranno eseguire di nuovo l’accesso.',

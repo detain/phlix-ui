@@ -556,6 +556,7 @@ export const PT_BR_MESSAGES = {
     refresh: 'Atualizar',
     loading: 'Carregando sessões…',
     revoke: 'Encerrar sessão',
+    revokeDevice: 'Encerrar sessão em {device}',
     revokeAll: 'Encerrar outras sessões',
     revokeConfirm: 'Encerrar esta sessão? O dispositivo precisará fazer login novamente.',
     revokeAllConfirm: 'Encerrar todas as outras sessões? Todos os dispositivos, exceto este, precisarão fazer login novamente.',

@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import Button from './Button.vue';
 import IconButton from './IconButton.vue';
@@ -120,11 +120,34 @@ describe('IconButton', () => {
     expect(on.find('button').classes()).toContain('is-pressed');
   });
 
-  it('shows spinner + aria-busy while loading and disables', () => {
-    const w = mount(IconButton, { props: { name: 'play', label: 'Play', loading: true } });
-    expect(w.find('button').attributes('aria-busy')).toBe('true');
-    expect(w.find('button').attributes('disabled')).toBeDefined();
+  it('shows spinner + aria-busy while loading and blocks activation WITHOUT native disabled (CU-117)', async () => {
+    const onClick = vi.fn();
+    const w = mount(IconButton, {
+      props: { name: 'play', label: 'Play', loading: true, onClick },
+      attachTo: document.body,
+    });
+    const btn = w.find('button');
+    expect(btn.attributes('aria-busy')).toBe('true');
+    expect(btn.attributes('aria-disabled')).toBe('true');
+    // Stays in the focus order: a focused control going busy keeps focus.
+    expect(btn.attributes('disabled')).toBeUndefined();
     expect(w.find('.phlix-iconbtn__spin').exists()).toBe(true);
+    (btn.element as HTMLButtonElement).focus();
+    expect(document.activeElement).toBe(btn.element);
+    await btn.trigger('click');
+    expect(onClick).not.toHaveBeenCalled();
+    // Leaving the loading arm re-enables activation.
+    await w.setProps({ loading: false });
+    expect(btn.attributes('aria-disabled')).toBeUndefined();
+    await btn.trigger('click');
+    expect(onClick).toHaveBeenCalledTimes(1);
+    w.unmount();
+  });
+
+  it('explicit disabled still maps to the native attribute', () => {
+    const w = mount(IconButton, { props: { name: 'play', label: 'Play', disabled: true } });
+    expect(w.find('button').attributes('disabled')).toBeDefined();
+    expect(w.find('button').attributes('aria-disabled')).toBeUndefined();
   });
 });
 

@@ -556,6 +556,7 @@ export const DE_MESSAGES = {
     refresh: 'Aktualisieren',
     loading: 'Sitzungen werden geladen…',
     revoke: 'Abmelden',
+    revokeDevice: '{device} abmelden',
     revokeAll: 'Andere abmelden',
     revokeConfirm: 'Diese Sitzung abmelden? Das Gerät muss sich erneut anmelden.',
     revokeAllConfirm: 'Alle anderen Sitzungen abmelden? Jedes Gerät außer diesem muss sich erneut anmelden.',

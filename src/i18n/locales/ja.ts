@@ -557,6 +557,7 @@ export const JA_MESSAGES = {
     refresh: '更新',
     loading: 'セッションを読み込んでいます…',
     revoke: 'サインアウト',
+    revokeDevice: '{device} からサインアウト',
     revokeAll: 'その他をサインアウト',
     revokeConfirm: 'このセッションをサインアウトしますか？ そのデバイスは再度サインインする必要があります。',
     revokeAllConfirm: '他のすべてのセッションをサインアウトしますか？ このデバイス以外のすべてのデバイスが再度サインインする必要があります。',

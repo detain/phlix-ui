@@ -732,6 +732,7 @@ export const DEFAULT_MESSAGES = {
     refresh: 'Refresh',
     loading: 'Loading sessions…',
     revoke: 'Sign out',
+    revokeDevice: 'Sign out {device}',
     revokeAll: 'Sign out others',
     revokeConfirm: 'Sign out this session? The device will need to sign in again.',
     revokeAllConfirm: 'Sign out all other sessions? Every device except this one will need to sign in again.',
