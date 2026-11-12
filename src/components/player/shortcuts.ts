@@ -75,6 +75,11 @@ export interface ShortcutActions {
   /** Nudge volume by a 0–1 delta. */
   volumeBy(delta: number): void;
   toggleMute(): void;
+  /**
+   * Toggle fullscreen. Hosts without the Fullscreen API (`document.fullscreenEnabled`
+   * false — TV webviews, iPhone Safari) should fall back to theater mode rather than
+   * no-op; the Player does (UI-S3). The key map stays host-agnostic: F always lands here.
+   */
   toggleFullscreen(): void;
   toggleCaptions(): void;
   toggleTheater(): void;

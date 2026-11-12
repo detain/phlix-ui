@@ -251,6 +251,13 @@ const theater = ref(false);
 const inPip = ref(false);
 /** Whether the browser supports Picture-in-Picture (the button hides if not). */
 const pipSupported = ref(false);
+/**
+ * Whether the Fullscreen API is usable here (`document.fullscreenEnabled`) — gated
+ * exactly like `pipSupported`: the control hides where it would be a dead button
+ * (TV webviews, iPhone Safari, a cross-origin iframe without `allow="fullscreen"`),
+ * and the F key falls back to theater mode there (UI-S3).
+ */
+const fullscreenSupported = ref(false);
 /** Ref to the sleep timer component (for keyboard shortcut access). */
 const sleepTimerRef = ref<InstanceType<typeof SleepTimer> | null>(null);
 /** Ref to the quality menu (for Q-key programmatic open). */
@@ -1504,7 +1511,7 @@ const shortcutActions: ShortcutActions = {
     }
   },
 };
-// Suppress player shortcuts while ANY overlay the Player mounts is open — the help
+// Suppress player shortcuts while any of these Player overlays is open — the help
 // modal, captions menu, chapter list, SyncPlay join dialog and subtitle-search modal
 // (their own Esc/close + inner field/arrow keys win; no double-fire, and no TV D-pad
 // arrow or typed letter leaking through a dialog into seek/play behind it — UI-S2).
@@ -1571,6 +1578,12 @@ watch(
 // ---- fullscreen -------------------------------------------------------------
 function toggleFullscreen(): void {
   if (typeof document === 'undefined') return;
+  // No Fullscreen API (TV webview, iPhone Safari, sandboxed iframe): the control is
+  // hidden, and the F key widens to theater mode instead of silently doing nothing.
+  if (!fullscreenSupported.value) {
+    toggleTheater();
+    return;
+  }
   const el = containerRef.value;
   if (!el) return;
   if (!document.fullscreenElement) void el.requestFullscreen?.().catch(() => {});
@@ -1698,6 +1711,7 @@ onMounted(() => {
   if (typeof document !== 'undefined') {
     document.addEventListener('fullscreenchange', onFullscreenChange);
     pipSupported.value = document.pictureInPictureEnabled === true;
+    fullscreenSupported.value = document.fullscreenEnabled === true;
   }
   // OS media keys drive the element; the store's metadata is set by setCurrent.
   mediaSessionTeardown = player.bindMediaSession({
@@ -2129,6 +2143,7 @@ onBeforeUnmount(() => {
           </button>
 
           <button
+            v-if="fullscreenSupported"
             type="button"
             class="player__iconbtn"
             :aria-label="fullscreen ? t('player.exitFullscreen') : t('player.fullscreen')"

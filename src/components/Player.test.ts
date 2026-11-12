@@ -1685,7 +1685,20 @@ describe('Player — direct-play playback-info tracks (audio menu + signed subti
   });
 });
 
+/** jsdom has no Fullscreen API (`document.fullscreenEnabled` is undefined) — opt in per test. */
+function stubFullscreenEnabled(): void {
+  Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => true });
+}
+function unstubFullscreenEnabled(): void {
+  delete (document as { fullscreenEnabled?: unknown }).fullscreenEnabled;
+}
+const fullscreenBtn = (w: ReturnType<typeof mountPlayer>['w']) =>
+  w.findAll('.player__btnrow .player__iconbtn').find((b) => (b.attributes('aria-label') ?? '').toLowerCase().includes('fullscreen'));
+
 describe('Player — fullscreen & back', () => {
+  beforeEach(stubFullscreenEnabled);
+  afterEach(unstubFullscreenEnabled);
+
   it('emits back from the back button', async () => {
     const { w } = mountPlayer();
     await w.find('.player__back').trigger('click');
@@ -1697,20 +1710,61 @@ describe('Player — fullscreen & back', () => {
     Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', { configurable: true, value: req });
     Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => null });
     const { w } = mountPlayer();
+    await nextTick(); // fullscreenSupported is set in onMounted → button renders next tick
     await w.findAll('.player__btnrow .player__iconbtn').at(-1)!.trigger('click'); // fullscreen button
     expect(req).toHaveBeenCalled();
+    expect(w.emitted('theater')).toBeUndefined();
   });
 
   it('tracks the fullscreenchange event into the button label', async () => {
     let fsEl: Element | null = null;
     Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => fsEl });
     const { w } = mountPlayer();
+    await nextTick();
     const fsBtn = () => w.findAll('.player__btnrow .player__iconbtn').at(-1)!;
     expect(fsBtn().attributes('aria-label')).toBe('Fullscreen');
     fsEl = document.body;
     document.dispatchEvent(new Event('fullscreenchange'));
     await nextTick();
     expect(fsBtn().attributes('aria-label')).toBe('Exit fullscreen');
+  });
+
+  it('the f key requests fullscreen where the API is enabled (no theater fallback)', async () => {
+    const req = vi.fn(() => Promise.resolve());
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', { configurable: true, value: req });
+    Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => null });
+    const { w } = mountPlayer();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(req).toHaveBeenCalled();
+    expect(w.emitted('theater')).toBeUndefined();
+  });
+});
+
+describe('Player — fullscreen unsupported (UI-S3)', () => {
+  it('hides the fullscreen control where document.fullscreenEnabled is not true (gated like PiP)', async () => {
+    const { w } = mountPlayer(); // jsdom: document.fullscreenEnabled is undefined
+    await nextTick();
+    expect(fullscreenBtn(w)).toBeFalsy();
+    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => false });
+    try {
+      const { w: w2 } = mountPlayer();
+      await nextTick();
+      expect(fullscreenBtn(w2)).toBeFalsy();
+    } finally {
+      unstubFullscreenEnabled();
+    }
+  });
+
+  it('the f key falls back to theater mode (TV webview) instead of a dead no-op', async () => {
+    const req = vi.fn(() => Promise.resolve());
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', { configurable: true, value: req });
+    const { w } = mountPlayer();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(req).not.toHaveBeenCalled();
+    expect(w.classes()).toContain('is-theater');
+    expect(w.emitted('theater')).toEqual([[true]]);
   });
 });
 
@@ -1771,10 +1825,16 @@ describe('Player — ambient & theater (R3.6)', () => {
     expect(amb.props('intensity')).toBeCloseTo(1.35);
   });
 
-  it('keeps the fullscreen button last in the control row (after theater)', () => {
-    const { w } = mountPlayer();
-    const last = w.findAll('.player__btnrow .player__iconbtn').at(-1)!;
-    expect(last.attributes('aria-label')).toBe('Fullscreen');
+  it('keeps the fullscreen button last in the control row (after theater)', async () => {
+    stubFullscreenEnabled();
+    try {
+      const { w } = mountPlayer();
+      await nextTick();
+      const last = w.findAll('.player__btnrow .player__iconbtn').at(-1)!;
+      expect(last.attributes('aria-label')).toBe('Fullscreen');
+    } finally {
+      unstubFullscreenEnabled();
+    }
   });
 });
 
@@ -1792,6 +1852,7 @@ describe('Player — PiP & Media Session (R3.7)', () => {
 
   it('shows the PiP button where supported and requests/exits PiP (button stays before fullscreen)', async () => {
     Object.defineProperty(document, 'pictureInPictureEnabled', { configurable: true, get: () => true });
+    stubFullscreenEnabled();
     let pipEl: Element | null = null;
     Object.defineProperty(document, 'pictureInPictureElement', { configurable: true, get: () => pipEl });
     const exit = vi.fn(() => {
@@ -1820,6 +1881,7 @@ describe('Player — PiP & Media Session (R3.7)', () => {
     await nextTick();
     expect(pipBtn(w)!.attributes('aria-label')).toBe('Picture-in-picture');
     delete (document as { pictureInPictureEnabled?: unknown }).pictureInPictureEnabled;
+    unstubFullscreenEnabled();
   });
 
   it('the p key emits pip for host hooks', async () => {
