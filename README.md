@@ -150,7 +150,7 @@ almost always pass two: `app` and `apiBase`:
 | `onConnectionChange?` | `(url: string \| null) => void` | Called whenever the Connect screen persists (or clears, with `null`) the chosen API base — native shells mirror it into their own durable store. |
 | `connectScan?` | `() => Promise<ConnectCandidate[]>` | Host-injected LAN server scan consumed by the Connect screen's "Scan" affordance. OMITTED ⇒ the affordance is hidden (a web-hosted app has nothing to scan). The row type `ConnectCandidate` is exported from the package root — `import type { ConnectCandidate } from '@phlix/ui'`. |
 | `playerHlsConfig?` | `Partial<HlsConfig>` | Per-app hls.js overrides for the transcode player (e.g. a TV tuning `maxBufferLength` down to cap RAM). Merged OVER the built-in defaults; the auth `xhrSetup` is always preserved. |
-| `tokenStore?` | `TokenStore` | Token custody seam: the store all session tokens flow through — `Authorization` headers, 401 refresh rotation, sign-in/out, the SyncPlay WS token, HLS segment auth. Register a host-owned store (e.g. the Windows client's DPAPI `SafeStorageTokenStore`) to keep credentials out of `localStorage`; omitted keeps the localStorage default. Registered once at boot via `setDefaultTokenStore`; resolved per request, so the boot-time `auth.init()` and the import-constructed `api` singleton both flow through it. |
+| `tokenStore?` | `TokenStore` | Token custody seam: the store all session tokens flow through — `Authorization` headers, 401 refresh rotation, sign-in/out, the SyncPlay WS token, HLS segment auth. Register a host-owned store (e.g. the Windows client's DPAPI `SafeStorageTokenStore`) to keep credentials out of `localStorage`; omitted keeps the localStorage default (`LocalStorageTokenStore`, bearer custody). Cookie-boot hosts register `CookieTokenStore` (HttpOnly-cookie custody: reads return null, writes are no-ops by design; exported from the package root alongside `LocalStorageTokenStore`) through the same seam. `resolveTokenStoreMode(store)` is the single parse point (`'cookie'` only when `store.mode === 'cookie'`, otherwise `'bearer'`), and `resetCookieSessionProbe()` clears the cookie-boot probe memo on post-login/logout transitions. Registered once at boot via `setDefaultTokenStore`; resolved per request, so the boot-time `auth.init()` and the import-constructed `api` singleton both flow through it. |
 
 ```ts
 import { createPhlixApp, buildAdminRoutes, adminMenu } from '@phlix/ui';
@@ -247,9 +247,10 @@ for the server, plus a named 404 catch-all (twenty and nineteen in total).
 *different* origin than the one serving the SPA, so the browser will only let `/api/v1` calls
 through when the API host's CORS policy allows the page's exact origin — Phlix hosts never emit
 `Access-Control-Allow-Origin: *` (the server's `CorsManager` reflects an allow-listed origin with
-credentials; the hub's `CorsPolicy` grants nothing cross-origin until configured). Auth rides the
-`Authorization: Bearer` token login mints into `localStorage` (custody is swappable via the
-`tokenStore` config seam). Serving the SPA on the *same* origin as its API — `apiBase: ''`, as the
+credentials; the hub's `CorsPolicy` grants nothing cross-origin until configured). With the default
+store, auth rides the `Authorization: Bearer` token login mints into `localStorage`; custody is
+swappable via the `tokenStore` config seam, and a cookie-boot host registering `CookieTokenStore`
+keeps the session in HttpOnly cookies instead (no JS-held bearer token). Serving the SPA on the *same* origin as its API — `apiBase: ''`, as the
 composite example above does — is the zero-config path: exactly how server and hub host this bundle
 under `/app` themselves; no preflight, nothing to allow-list.
 
@@ -339,7 +340,7 @@ provides `apiBase`).
 | `useMediaStore` | Library browsing — query-keyed cache (60 s TTL), dedupe, debounced search, URL sync | `fetchMedia`, `scheduleFetch`, `loadMore`, `prefetch`, `toQuery`, `applyQuery`, `setSearch`, `setGenres`, `setSort` |
 | `usePlayerStore` | Singleton playback shared across routes (so the mini-player survives navigation), resume map, queue, Media Session | `setCurrent`, `updateProgress`, `play`/`pause`, `next`, `setQueue`, `showMiniPlayer`, `resumePositionFor`, `bindMediaSession` |
 | `useCommandStore` | ⌘K registry + palette state, persisted recents | `register` (→ disposer), `togglePalette`, `runId` |
-| `useAuthStore` | Auth state over `ApiClient` + `LocalStorageTokenStore` | `login`, `signup`, `fetchUser`, `logout` |
+| `useAuthStore` | Auth state over `ApiClient` + the TokenStore seam (localStorage by default) | `login`, `signup`, `fetchUser`, `logout` |
 | `useToastStore` | Transient notifications (rendered by `<ToastHost>`) | `success`, `error`, `warning`, `info`, `dismiss` |
 | `useUserItemDataStore` | Per-item favorite/watched/like flags, cached by media id and re-scoped per active profile | `isFavorite`, `isWatched`, `likeLevel`, `hydrate`, `toggleFavorite`, `toggleWatched`, `setLike`, `reset` |
 | `useProfileStore` | self-service profiles — the single source of truth for "which profile this session acts as", with the real re-minting switch handshake | `load`, `switchTo`, `createProfile`, `rename`, `removeProfile`, `hasMultipleProfiles`, `activeProfile`, `retry` |
