@@ -477,7 +477,7 @@ downloads` form, mirrored by the inflected locales, with `ja` collapsing to one 
 ### Error catalog (`src/i18n/errors.ts`) — deliberately NOT in `DEFAULT_MESSAGES`
 
 The wire carries stable error codes (the registry lives in `@phlix/contracts`
-— `ERROR_CODES`, 205 codes at the current `#v0.5.6` pin: 129 dotted names that collapse into
+— `ERROR_CODES`, 205 codes at the current `#v0.5.7` pin: 129 dotted names that collapse into
 37 distinct domains (a code's domain is its dotted path up to the final segment), 76 flat);
 clients localize
 code→message and the server's English `error` text is debug fallback only. This

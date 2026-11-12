@@ -117,6 +117,16 @@ describe('error catalog registry parity', () => {
     }
   });
 
+  it('the README names the same contracts pin as package.json', () => {
+    const relReadme = '../../README.md';
+    const relPkg = '../../package.json';
+    const readme = readFileSync(new URL(relReadme, import.meta.url), 'utf8');
+    const pkg = JSON.parse(readFileSync(new URL(relPkg, import.meta.url), 'utf8'));
+    const pin = /#(v\d+\.\d+\.\d+)$/.exec(pkg.dependencies['@phlix/contracts'])?.[1];
+    expect(pin, 'package.json contracts pin').toBeTruthy();
+    expect(readme).toContain(`at the current \`#${pin}\` pin`);
+  });
+
   for (const locale of LOCALES) {
     it(`${locale} carries EXACTLY the registered codes (no gaps, no extras)`, () => {
       expect(Object.keys(ERROR_MESSAGES[locale] as unknown as Flat).sort()).toEqual(REGISTRY_KEYS);
