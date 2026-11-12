@@ -83,6 +83,8 @@ interface StubOpts {
   sessions?: WireRow[];
   /** GET fails with a real wire envelope. */
   listErrorBody?: { status: number; body: unknown };
+  /** GET answers 200 with this raw body instead of `{ sessions: rows }`. */
+  listRawBody?: unknown;
   /** DELETE fails (uniform 404 envelope) for exactly these ids. */
   deleteFailIds?: ReadonlySet<string>;
   /** DELETE responses stay PENDING until the test calls release(). */
@@ -126,6 +128,9 @@ function stubFetchImpl(opts: StubOpts): StubHandle {
     if (method === 'GET' && isRoute(u, LIST_PATH)) {
       if (opts.listErrorBody) {
         return Promise.resolve(jsonResponse(opts.listErrorBody.body, opts.listErrorBody.status));
+      }
+      if ('listRawBody' in opts) {
+        return Promise.resolve(jsonResponse(opts.listRawBody));
       }
       return Promise.resolve(jsonResponse({ sessions: rows }));
     }
@@ -245,6 +250,45 @@ describe('DeviceSessionsPage', () => {
     await flushPromises();
     expect(w.text()).toContain('No active sessions');
     expect(w.text()).toContain('No devices are signed in to this account.');
+    w.unmount();
+  });
+
+  it('a malformed envelope renders the load-error card, NEVER the empty state (UI-14)', async () => {
+    for (const body of [{}, { sessions: null }, { sessions: 'nope' }]) {
+      stubFetch({ listRawBody: body });
+      const w = mountPage();
+      await flushPromises();
+      expect(w.text()).toContain('Couldn’t load sessions');
+      expect(w.text()).toContain('Couldn’t load your sessions. Check your connection and try again.');
+      expect(w.text()).not.toContain('No active sessions');
+      // The parse-boundary Error's English diagnostic never reaches the page.
+      expect(w.text()).not.toContain('Malformed');
+      expect(w.find('[data-testid="sessions-retry"]').exists()).toBe(true);
+      expect(w.find('[data-testid="sessions-count"]').exists()).toBe(false);
+      w.unmount();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('discloses a full capped page as "200+" — never an exact total (UI-41)', async () => {
+    const many = (n: number): WireRow[] =>
+      Array.from({ length: n }, (_, i) => session({ id: `sess-${i}`, current: i === 0 }));
+
+    stubFetch({ sessions: many(200) });
+    let w = mountPage();
+    await flushPromises();
+    expect(w.findAll('.session-item')).toHaveLength(200);
+    expect(w.find('[data-testid="sessions-count"]').text()).toBe(
+      '200+ active sessions (showing the 200 most recently used)',
+    );
+    w.unmount();
+    vi.unstubAllGlobals();
+
+    // One under the cap is an exact, complete list — the plain count.
+    stubFetch({ sessions: many(199) });
+    w = mountPage();
+    await flushPromises();
+    expect(w.find('[data-testid="sessions-count"]').text()).toBe('199 active sessions');
     w.unmount();
   });
 
@@ -472,6 +516,7 @@ describe('DeviceSessionsPage', () => {
 
     expect(document.activeElement).toBe(outside);
     w.unmount();
+    outside.remove();
   });
 
   it('a failed single revoke toasts the error and STILL reloads', async () => {

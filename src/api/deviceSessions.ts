@@ -51,21 +51,52 @@ export interface DeviceSessionRow {
 const SESSIONS_ENDPOINT = '/api/v1/auth/sessions';
 
 /**
+ * The server's hard row cap for the list (phlix-server + phlix-hub
+ * `TokenSessionRepository::MAX_LISTED_SESSIONS = 200`, `LIMIT` on the
+ * `last_used_at DESC` query). A list this long may be truncated — the page
+ * must say so rather than present it as the complete set.
+ */
+export const DEVICE_SESSIONS_LIST_CAP = 200;
+
+/**
+ * The list response carried no `sessions` array. Deliberately message-light
+ * and English-free in the UI path: the page maps it to its own localized
+ * load-error line (a raw `Error.message` would otherwise surface through
+ * `errMessage`).
+ */
+export class MalformedSessionsEnvelopeError extends Error {
+  constructor() {
+    super('Malformed /api/v1/auth/sessions envelope: missing or non-array "sessions"');
+    this.name = 'MalformedSessionsEnvelopeError';
+  }
+}
+
+/**
  * List the account's ACTIVE sessions, server-ordered by `last_used_at DESC`.
  *
  * The server sorts; the client must not re-sort (a locale-aware re-order
  * would fight the wire contract's stated order). Malformed rows — missing/
  * non-string `id` — are dropped at this parse boundary, never rendered as
- * ghosts; a malformed envelope (proxy HTML page, future reshaping) degrades
- * to an empty list rather than throwing on `.map`.
+ * ghosts.
+ *
+ * MALFORMED ≠ EMPTY (UI-14): an envelope without a `sessions` ARRAY (proxy
+ * HTML page, captive portal, future reshaping) REJECTS with
+ * {@link MalformedSessionsEnvelopeError}. On a security screen "No active
+ * sessions" is a claim about the account; it may only render when the
+ * server actually said `{"sessions": []}`, never as the fallback for a body
+ * we could not read.
+ *
+ * At most {@link DEVICE_SESSIONS_LIST_CAP} rows ever arrive (the server's
+ * `LIMIT`); the page discloses a full page as "200+" (UI-41).
  */
 export async function fetchDeviceSessions(apiBase: string, signal?: AbortSignal): Promise<DeviceSessionRow[]> {
   const client = new ApiClient({ baseUrl: apiBase });
   const res = await client.get<{ sessions?: unknown }>(SESSIONS_ENDPOINT, undefined, signal);
 
-  const rows = Array.isArray((res as { sessions?: unknown } | null)?.sessions)
-    ? (res as { sessions: unknown[] }).sessions
-    : [];
+  const rows: unknown = (res as { sessions?: unknown } | null)?.sessions;
+  if (!Array.isArray(rows)) {
+    throw new MalformedSessionsEnvelopeError();
+  }
 
   const sessions: DeviceSessionRow[] = [];
   for (const raw of rows) {

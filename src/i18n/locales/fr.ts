@@ -553,6 +553,7 @@ export const FR_MESSAGES = {
     desc: 'Passez en revue les appareils connectés à votre compte et déconnectez ceux que vous ne reconnaissez pas.',
     cardTitle: 'Sessions actives',
     count: '{count} session active | {count} sessions actives',
+    truncated: '{count}+ sessions actives (affichage des {count} utilisées le plus récemment)',
     thisDevice: 'Cet appareil',
     unknownDevice: 'Appareil inconnu',
     created: 'Connecté le {date}',

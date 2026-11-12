@@ -6,7 +6,12 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { fetchDeviceSessions, revokeDeviceSession } from './deviceSessions';
+import {
+  DEVICE_SESSIONS_LIST_CAP,
+  MalformedSessionsEnvelopeError,
+  fetchDeviceSessions,
+  revokeDeviceSession,
+} from './deviceSessions';
 import { ApiError } from './client';
 
 /**
@@ -112,12 +117,22 @@ describe('fetchDeviceSessions', () => {
     vi.unstubAllGlobals();
   });
 
-  it('degrades a malformed envelope to [] instead of throwing', async () => {
-    for (const body of [{}, { sessions: null }, { sessions: 'nope' }, null]) {
+  it('REJECTS a malformed envelope (missing/non-array sessions) — malformed is not empty (UI-14)', async () => {
+    for (const body of [{}, { sessions: null }, { sessions: 'nope' }, { sessions: { 0: row() } }, null, '<html>proxy</html>']) {
       vi.stubGlobal('fetch', vi.fn().mockResolvedValue(res(body)));
-      await expect(fetchDeviceSessions('')).resolves.toEqual([]);
+      await expect(fetchDeviceSessions('')).rejects.toBeInstanceOf(MalformedSessionsEnvelopeError);
       vi.unstubAllGlobals();
     }
+  });
+
+  it('resolves [] ONLY for the server’s own empty array', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(res({ sessions: [] })));
+    await expect(fetchDeviceSessions('')).resolves.toEqual([]);
+    vi.unstubAllGlobals();
+  });
+
+  it('pins the list cap to the server LIMIT (MAX_LISTED_SESSIONS = 200)', () => {
+    expect(DEVICE_SESSIONS_LIST_CAP).toBe(200);
   });
 
   it('PROPAGATES a 401 wire envelope untouched (the page owns disclosure)', async () => {

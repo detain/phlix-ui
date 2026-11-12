@@ -725,6 +725,9 @@ export const DEFAULT_MESSAGES = {
     desc: 'Review the devices signed in to your account and sign out the ones you don’t recognize.',
     cardTitle: 'Active sessions',
     count: '{count} active session | {count} active sessions',
+    // UI-41: the server lists at most 200 sessions; a full page is disclosed
+    // as a lower bound, never an exact total.
+    truncated: '{count}+ active sessions (showing the {count} most recently used)',
     thisDevice: 'This device',
     unknownDevice: 'Unknown device',
     created: 'Signed in {date}',

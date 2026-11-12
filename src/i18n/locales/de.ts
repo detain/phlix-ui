@@ -549,6 +549,7 @@ export const DE_MESSAGES = {
     desc: 'Sieh dir die Geräte an, die mit deinem Konto angemeldet sind, und melde unbekannte ab.',
     cardTitle: 'Aktive Sitzungen',
     count: '{count} aktive Sitzung | {count} aktive Sitzungen',
+    truncated: '{count}+ aktive Sitzungen (die {count} zuletzt verwendeten werden angezeigt)',
     thisDevice: 'Dieses Gerät',
     unknownDevice: 'Unbekanntes Gerät',
     created: 'Angemeldet am {date}',

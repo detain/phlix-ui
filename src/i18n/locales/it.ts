@@ -549,6 +549,7 @@ export const IT_MESSAGES = {
     desc: 'Esamina i dispositivi connessi al tuo account e disconnetti quelli sconosciuti.',
     cardTitle: 'Sessioni attive',
     count: '{count} sessione attiva | {count} sessioni attive',
+    truncated: '{count}+ sessioni attive (mostrate le {count} usate più di recente)',
     thisDevice: 'Questo dispositivo',
     unknownDevice: 'Dispositivo sconosciuto',
     created: 'Accesso eseguito il {date}',

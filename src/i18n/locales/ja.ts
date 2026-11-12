@@ -550,6 +550,7 @@ export const JA_MESSAGES = {
     desc: 'アカウントにサインインしているデバイスを確認し、見覚えのないデバイスをサインアウトしてください。',
     cardTitle: 'アクティブなセッション',
     count: 'アクティブなセッション {count} 件',
+    truncated: 'アクティブなセッション {count} 件以上（最近使用した {count} 件を表示）',
     thisDevice: 'このデバイス',
     unknownDevice: '不明なデバイス',
     created: '{date} にサインイン',

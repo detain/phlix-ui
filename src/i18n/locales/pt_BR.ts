@@ -549,6 +549,7 @@ export const PT_BR_MESSAGES = {
     desc: 'Veja os dispositivos conectados à sua conta e encerre os que você não reconhecer.',
     cardTitle: 'Sessões ativas',
     count: '{count} sessão ativa | {count} sessões ativas',
+    truncated: '{count}+ sessões ativas (exibindo as {count} usadas mais recentemente)',
     thisDevice: 'Este dispositivo',
     unknownDevice: 'Dispositivo desconhecido',
     created: 'Conectado em {date}',

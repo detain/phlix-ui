@@ -551,6 +551,7 @@ export const ES_MESSAGES = {
     desc: 'Revisa los dispositivos conectados a tu cuenta y cierra los que no reconozcas.',
     cardTitle: 'Sesiones activas',
     count: '{count} sesión activa | {count} sesiones activas',
+    truncated: '{count}+ sesiones activas (se muestran las {count} usadas más recientemente)',
     thisDevice: 'Este dispositivo',
     unknownDevice: 'Dispositivo desconocido',
     created: 'Iniciado el {date}',

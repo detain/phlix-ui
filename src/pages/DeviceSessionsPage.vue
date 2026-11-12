@@ -38,6 +38,12 @@
  * reload, if the focused control unmounted with its row (or the bulk button
  * vanished with the last other session), focus parks on the card heading
  * instead of falling to <body>.
+ *
+ * LOAD-BOUNDARY HONESTY (UI-14/UI-41): a list response without a `sessions`
+ * array is a LOAD FAILURE (the error card + Retry), never "No active
+ * sessions" — the empty state is only ever the server's own `[]`. And the
+ * server caps the list at DEVICE_SESSIONS_LIST_CAP rows, so a full page
+ * renders the count as "200+" instead of claiming an exact total.
  */
 import { computed, inject, nextTick, onMounted, ref } from 'vue';
 import { useApiBase } from '../composables/useApiBase';
@@ -50,7 +56,13 @@ import Icon, { type IconName } from '../components/Icon.vue';
 import { useToastStore } from '../stores/useToastStore';
 import { useMessages } from '../composables/useMessages';
 import { wireErrorLine } from '../utils/wireErrors';
-import { fetchDeviceSessions, revokeDeviceSession, type DeviceSessionRow } from '../api/deviceSessions';
+import {
+  DEVICE_SESSIONS_LIST_CAP,
+  MalformedSessionsEnvelopeError,
+  fetchDeviceSessions,
+  revokeDeviceSession,
+  type DeviceSessionRow,
+} from '../api/deviceSessions';
 import type { PhlixAppConfig } from '../app/types';
 
 const apiBase = useApiBase();
@@ -73,6 +85,8 @@ const pending = ref<{ kind: 'one'; id: string } | { kind: 'others' } | null>(nul
 const otherSessions = computed(() => sessions.value.filter((s) => !s.current));
 const hasOthers = computed(() => otherSessions.value.length > 0);
 const anyBusy = computed(() => busyId.value !== null || revokingOthers.value);
+/** The server returned a full capped page — more sessions may exist. */
+const truncated = computed(() => sessions.value.length >= DEVICE_SESSIONS_LIST_CAP);
 
 /** Focus park target: the always-mounted card heading (tabindex="-1"). */
 const parkEl = ref<HTMLElement | null>(null);
@@ -84,8 +98,13 @@ async function loadSessions(): Promise<void> {
     sessions.value = await fetchDeviceSessions(apiBase.value);
   } catch (e) {
     // Wire-error survivor law: registered codes localize through the
-    // contracts catalog; unregistered/transport keeps the generic line.
-    error.value = wireErrorLine(e, t('sessions.loadError'), config?.locale);
+    // contracts catalog; unregistered/transport keeps the generic line. A
+    // malformed envelope is a plain Error whose English message must never
+    // render — it takes the generic localized line too.
+    error.value =
+      e instanceof MalformedSessionsEnvelopeError
+        ? t('sessions.loadError')
+        : wireErrorLine(e, t('sessions.loadError'), config?.locale);
   } finally {
     loading.value = false;
   }
@@ -229,8 +248,12 @@ onMounted(() => {
           <h2 ref="parkEl" class="device-sessions-page__card-title" tabindex="-1" data-testid="sessions-card-title">
             {{ t('sessions.cardTitle') }}
           </h2>
-          <span v-if="!loading && !error" class="device-sessions-page__count">
-            {{ t('sessions.count', { count: sessions.length }) }}
+          <span v-if="!loading && !error" class="device-sessions-page__count" data-testid="sessions-count">
+            {{
+              truncated
+                ? t('sessions.truncated', { count: DEVICE_SESSIONS_LIST_CAP })
+                : t('sessions.count', { count: sessions.length })
+            }}
           </span>
         </div>
         <div class="device-sessions-page__card-actions">
