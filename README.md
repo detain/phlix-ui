@@ -105,8 +105,8 @@ createPhlixApp({
 }).mount('#app');
 ```
 
-That single call mounts the whole experience under `/app` (Vue Router history base,
-configurable): Browse with one rail per library, media detail, the player, auth,
+That single call mounts the whole experience under `/app` (route-path prefix,
+configurable via `routerBase`): Browse with one rail per library, media detail, the player, auth,
 settings, playlists, SyncPlay, music and more — every built-in page, the player
 surface, and the command palette are lazy chunks that load only when first reached.
 The full route table, the same-origin-vs-cross-origin transport note, and the
@@ -130,7 +130,7 @@ almost always pass two: `app` and `apiBase`:
 | `app` | `'server' \| 'hub'` | Which Phlix product is mounting the package. |
 | `apiBase` | `string` | Base URL for all `/api/v1` calls (provided to the stores via `inject('apiBase')`). |
 | `imageOrigin?` | `string` | Cross-origin host serving posters/artwork (a CDN/proxy). Warmed early via `usePreconnect`; falls back to the `apiBase` host when omitted. |
-| `routerBase?` | `string` | Vue Router history base. Default `'/app'`. |
+| `routerBase?` | `string` | Route-path prefix every built-in route, nav link and the login redirect carries (the history base itself stays `/`). Default `'/app'`; an explicit `''` means "mounted at the document root" (Browse at `/`) — `??`, not `||`, so `''` survives. |
 | `home?` | `string` | Path the app treats as "home": where login/signup land, where the brand link points, and where a logged-in non-admin is bounced from an admin-only route. Defaults to `routerBase`; the hub sets it to its servers list so it never lands on the server-only Browse page. |
 | `menu?` | `MenuItem[]` | Navigation entries rendered in the app shell. |
 | `extraRoutes?` | `RouteRecordRaw[]` | Extra routes merged after the built-ins (e.g. spread `buildAdminRoutes()` here). |
@@ -170,6 +170,64 @@ createPhlixApp({
   extraRoutes: buildAdminRoutes('/app'),
   menu: adminMenu('/app'),
 }).mount('#app');
+```
+
+### Config resolution
+
+`createPhlixApp(config)` builds its effective config as a **shallow spread**:
+`{ ...readConfig(), ...config }`, so precedence is **explicit argument > `window.__PHLIX__` > built-in
+defaults**.
+
+- **`window.__PHLIX__`** — a host page may set it (typed `PhlixAppConfig`) before the bundle runs, e.g.
+  an inline `<script>window.__PHLIX__ = { app: 'hub', apiBase: '' }</script>`. Keys passed to
+  `createPhlixApp()` override the same keys from it.
+- **Defaults** apply only when `window.__PHLIX__` is absent: `app: 'server'`, `apiBase: ''`,
+  `routerBase: '/app'`, `menu: []`, `extraRoutes: []`, `features: {}`, `deviceHeaders: {}`.
+- **No deep merge, and no defaults under `__PHLIX__`.** When `window.__PHLIX__` is present it replaces
+  the default object wholesale, so a field it omits is `undefined`, not the default above (the
+  `routerBase` and `loginPath` reads still fall back to `'/app'`). Nested values such as `features` or
+  `branding` are replaced, not merged, by an explicit argument.
+
+### What `createPhlixApp` controls
+
+The factory owns, so the host does not wire them:
+
+- the **Pinia** instance and the **Vue Router** (`createWebHistory()` with base `/`; routes carry the
+  full `routerBase` prefix), plus the auth guard (unauthenticated visits go to login; admin-only
+  routes bounce a non-admin to `home`) and the music-library redirect;
+- the **provides**: `apiBase`, `mediaApiBase`, `mediaDirectBase`, `loginPath`, `phlixCommands`,
+  `phlixConfig` and `auth`;
+- the **pre-mount bootstraps**: device headers (`setDefaultApiHeaders`), token custody
+  (`setDefaultTokenStore`), theme / density / accent / TV mode (`applyStoredThemeEarly`), the
+  page-title suffix from `branding.wordmark`, and `window.__PHLIX_UI_VERSION__`;
+- the optional **hub-relay** socket (opened at boot when `hubRelay` is set);
+- the route table, its lazy chunks and the named 404 catch-all.
+
+**Native-shell mount values.** The Tizen / Windows shells serve the bundle from their own origin and
+have no baked-in server, so they typically pass `requireConnection: true` (the Connect screen
+resolves the API base at runtime; `apiBase` is only the seed), `deviceHeaders` for device identity,
+optionally `tokenStore`, `onConnectionChange` and `connectScan`, and `routerBase: ''` when the SPA
+sits at the document root rather than under `/app`. The app is still mounted with `.mount('#app')`.
+
+### Minimal host
+
+A server-rendered or static host needs only three things:
+
+1. **A mount element** — `<div id="app"></div>` in the page.
+2. **A history-fallback rewrite** — router history is HTML5 (`createWebHistory`), so the host must
+   serve the same HTML shell for `${routerBase}` and every `${routerBase}/*` deep link (default
+   `/app` and `/app/*`), never a 404 — e.g. nginx `location /app { try_files $uri /app/index.html; }`.
+   With `routerBase: ''` the fallback covers the whole site.
+3. **Asset paths** — the page loads the built JS entry plus `style.css` (required) and `fonts.css`
+   (recommended) from wherever the host serves `dist/`; keep those URLs outside the rewritten prefix
+   (or exempt them) so the fallback never answers a script/stylesheet request with HTML.
+
+```html
+<div id="app"></div>
+<script>window.__PHLIX__ = { app: 'server', apiBase: '' };</script>
+<link rel="stylesheet" href="/assets/phlix/style.css" />
+<link rel="stylesheet" href="/assets/phlix/fonts.css" />
+<script type="module" src="/assets/phlix/main.js"></script> <!-- calls createPhlixApp().mount('#app') -->
 ```
 
 ### Hosting
