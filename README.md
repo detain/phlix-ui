@@ -705,7 +705,7 @@ server transcode is decided in
 `LoginForm` · `SignupForm`, plus the directly-exported consumer pages
 `LibraryScanPage` · `MyServersPage` · `ServerDetailPage` · `FederationPage` · `FederationSharesPage` ·
 `ManageSharesPage` · `SharedWithMePage` · `RequestsPage` · `InviteLinksPage` · `AcceptInvitePage` ·
-`SecuritySettingsPage`, the photo family `PhotoAlbumsPage` · `PhotoAlbumPage` · `PhotoViewPage` ·
+`SecuritySettingsPage` · `DeviceSessionsPage`, the photo family `PhotoAlbumsPage` · `PhotoAlbumPage` · `PhotoViewPage` ·
 `PhotoSlideshowPage`, the book family `BooksPage` · `BookDetailPage` · `BookReaderPage`, the audiobook
 family `AudiobooksPage` · `AudiobookDetailPage` · `AudiobookPlayerPage`, and `SearchPage` (a lazy
 `defineAsyncComponent` factory, not a static re-export). The `Music*` pages are listed under
@@ -715,6 +715,13 @@ Music surfaces above.
 > `hubAdminPages` / `buildHubAdminRoutes()` — a static root re-export
 > would merge it back into the main bundle (Rollup `INEFFECTIVE_DYNAMIC_IMPORT`) and defeat the
 > code-split.
+
+> **`DeviceSessionsPage`** (root export, v0.99.27) lists and revokes the signed-in account's login
+> sessions. It is also mounted as the **Sessions** tab of the built-in Settings page
+> (`/app/settings`: Appearance · Playback · Security · Sessions). Unlike the Security tab (which
+> resolves its base via `useMediaApiBase()`), it uses `useApiBase()` and talks to the **host-scoped**
+> `/api/v1/auth/sessions` — the host's own login surface (the server serves it, the hub serves its
+> twin) — never proxied to a paired server, since that would manage the wrong account's logins.
 
 > The built-in **route** pages (the ones `createPhlixApp` mounts under `/app` — Browse, media detail,
 > season, library, player, login, signup, connect, settings, explore, recommendations, history,
