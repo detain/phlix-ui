@@ -1041,7 +1041,7 @@ describe('Player — keyboard shortcuts', () => {
     await nextTick();
     expect(state.currentTime).toBe(100); // the global seek did not fire
 
-    // sanity: an UN-prevented ArrowLeft from the same focused button still seeks (guard is not a blanket off)
+    // sanity: an UN-prevented arrow (ArrowRight) from the same focused button still seeks (guard is not a blanket off)
     key('ArrowRight', btn);
     expect(state.currentTime).toBe(105);
     btn.remove();
@@ -1191,6 +1191,65 @@ describe('Player — captions (R3.5)', () => {
     key('k'); // would normally toggle play
     await nextTick();
     expect(video.play).not.toHaveBeenCalled();
+  });
+
+  // UI-S2 / UI-1: the shortcut gate must cover EVERY overlay the Player mounts, not
+  // just help/captions/chapters. Otherwise a keystroke typed into (or a D-pad arrow
+  // pressed inside) the join dialog / subtitle-search modal also drives playback
+  // behind it — the Tizen D-pad leak class. One pin per overlay, each with a
+  // close-it-again CONTROL so the gate is proven to re-arm, not to stick off.
+  it('suppresses transport shortcuts while the SyncPlay join dialog is open (re-arms on close)', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline')))); // opening lists rooms; keep it off the wire
+    const { w, video, state } = mountPlayer();
+    state.paused = true;
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate')); // store.position = 100
+    await w.find('.player__syncplay').trigger('click'); // the real trigger → showSyncPlayModal = true
+    await flushPromises();
+    expect(w.findComponent(SyncPlayModal).props('modelValue')).toBe(true);
+    key('k'); // would normally toggle play
+    key('ArrowRight'); // would normally seek +5s (the D-pad leak)
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+    expect(state.currentTime).toBe(100);
+
+    // CONTROL: closing the dialog re-arms the global keymap
+    w.findComponent(SyncPlayModal).vm.$emit('update:modelValue', false);
+    await nextTick();
+    key('k');
+    key('ArrowRight');
+    await nextTick();
+    expect(video.play).toHaveBeenCalledTimes(1);
+    expect(state.currentTime).toBe(105);
+  });
+
+  it('suppresses transport shortcuts while the subtitle-search modal is open (re-arms on close)', async () => {
+    const { w, video, state } = mountPlayer();
+    state.paused = true;
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate')); // store.position = 100
+    await w.find('.capmenu__btn').trigger('click'); // open the captions menu…
+    await nextTick();
+    await w.find('.capmenu__add').trigger('click'); // …"Add subtitles" closes it and opens SubtitleSearch
+    await nextTick();
+    expect(w.find('.capmenu__panel').exists()).toBe(false); // the captions-menu leg is NOT what gates here
+    expect(w.findComponent(SubtitleSearch).props('open')).toBe(true);
+    key('k');
+    key('ArrowRight');
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+    expect(state.currentTime).toBe(100);
+
+    // CONTROL: closing the modal re-arms the global keymap
+    w.findComponent(SubtitleSearch).vm.$emit('update:open', false);
+    await nextTick();
+    key('k');
+    key('ArrowRight');
+    await nextTick();
+    expect(video.play).toHaveBeenCalledTimes(1);
+    expect(state.currentTime).toBe(105);
   });
 
   it('renders caption cues in the overlay for the active track', async () => {
