@@ -205,9 +205,17 @@ export function handleShortcut(e: KeyboardEvent, a: ShortcutActions): boolean {
  * useKeyboardShortcuts — bind the player's global key map while mounted.
  * Suppresses shortcuts while the user is typing in an input and ignores
  * modifier chords (Ctrl/Meta/Alt) so browser/OS shortcuts still work.
+ *
+ * Event arbitration: a keydown that an earlier handler already consumed
+ * (`e.defaultPrevented`) is left alone. The listener sits on `document`, so a
+ * focused control (the Scrubber/volume slider, a menu, a host widget) sees the
+ * key first; when it handles the key and calls `preventDefault()`, the global
+ * map must not act on the same keystroke again (e.g. ArrowLeft on a focused
+ * Scrubber would otherwise seek twice).
  */
 export function useKeyboardShortcuts(actions: ShortcutActions, opts: { enabled?: () => boolean } = {}): void {
   function onKeydown(e: KeyboardEvent): void {
+    if (e.defaultPrevented) return; // already consumed by a focused control / earlier handler
     if (opts.enabled && !opts.enabled()) return; // e.g. suppressed while a modal is open
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (isTypingTarget(e.target)) return;

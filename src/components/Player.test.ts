@@ -775,16 +775,19 @@ describe('Player — center transport ±10s (AD-14 / W109 S505)', () => {
   it('drives the SAME relative-skip action as the keyboard L/J chord (a shared seekBy)', async () => {
     // The center forward button and the `L` shortcut must be behaviourally identical
     // — both are the one `seekBy(+10)` action, not a re-implementation.
-    const a = mountPlayer();
-    await seed(a.video, a.state, 100, 600);
-    await a.w.findAll('.player__center-skip')[1]!.trigger('click');
-    const viaButton = a.state.currentTime;
-
+    // Keyboard leg runs while its player is the ONLY one mounted: the global keymap honours
+    // `defaultPrevented` (UI-S1), so with two players bound the first-bound one consumes the key
+    // and the second correctly ignores it — one keystroke drives one player.
     const b = mountPlayer();
     await seed(b.video, b.state, 100, 600);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'l', bubbles: true, cancelable: true }));
     await nextTick();
     const viaKeyboard = b.state.currentTime;
+
+    const a = mountPlayer();
+    await seed(a.video, a.state, 100, 600);
+    await a.w.findAll('.player__center-skip')[1]!.trigger('click');
+    const viaButton = a.state.currentTime;
 
     expect(viaButton).toBe(110);
     expect(viaKeyboard).toBe(viaButton);
@@ -1016,6 +1019,61 @@ describe('Player — keyboard shortcuts', () => {
     key('k');
     await nextTick();
     expect(video.play).toHaveBeenCalled();
+  });
+
+  // UI-S1 (UI-2): event arbitration. The global keymap listens on `document`, so a focused control sees
+  // the key first. When that control consumes it (`preventDefault()`), the player must NOT act on the same
+  // keystroke — otherwise ArrowLeft on a focused slider/button seeks twice (or seeks when it shouldn't).
+  it('ignores a keydown already preventDefaulted by a focused control (no double-consume)', async () => {
+    const { video, state } = mountPlayer();
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate')); // store.position = 100
+    await nextTick();
+
+    const btn = document.createElement('button');
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') e.preventDefault(); // the control handles its own arrow
+    });
+    document.body.appendChild(btn);
+    btn.focus();
+    key('ArrowLeft', btn);
+    await nextTick();
+    expect(state.currentTime).toBe(100); // the global seek did not fire
+
+    // sanity: an UN-prevented ArrowLeft from the same focused button still seeks (guard is not a blanket off)
+    key('ArrowRight', btn);
+    expect(state.currentTime).toBe(105);
+    btn.remove();
+  });
+
+  it('seeks exactly once when ArrowLeft lands on the focused Scrubber (slider consumes the key)', async () => {
+    const { w, video, state } = mountPlayer();
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate')); // store.position = 100
+    await nextTick();
+
+    // Count seeks applied to the element: both the Scrubber's own step and a stray global seekBy(-5) read
+    // the same (not-yet-updated) store position, so the end value alone can't tell one seek from two.
+    let seeks = 0;
+    Object.defineProperty(video, 'currentTime', {
+      configurable: true,
+      get: () => state.currentTime,
+      set: (v) => {
+        seeks++;
+        state.currentTime = v as number;
+      },
+    });
+
+    const scrub = w.findComponent(Scrubber).element as HTMLElement;
+    scrub.focus();
+    key('ArrowLeft', scrub);
+    await nextTick();
+    // Scrubber's own 5s step applied exactly once; without the defaultPrevented guard the global map
+    // would seekBy(-5) a second time for the same keystroke.
+    expect(seeks).toBe(1);
+    expect(state.currentTime).toBe(95);
   });
 
   // R6.4c GAP-2: the global keydown listener is bound on the document; it must be UNBOUND on unmount so a
