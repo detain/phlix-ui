@@ -87,6 +87,8 @@ interface StubOpts {
   listRawBody?: unknown;
   /** DELETE fails (uniform 404 envelope) for exactly these ids. */
   deleteFailIds?: ReadonlySet<string>;
+  /** HTTP status for the deleteFailIds failure (default 404). */
+  deleteFailStatus?: number;
   /** DELETE responses stay PENDING until the test calls release(). */
   holdDeletes?: boolean;
   /** A successful DELETE removes the row from later GETs (server truth). */
@@ -110,7 +112,7 @@ function stubFetchImpl(opts: StubOpts): StubHandle {
     const target = rows.find((s) => isRoute(u, sessionPath(s.id)));
     if (method === 'DELETE' && target) {
       if (opts.deleteFailIds?.has(target.id)) {
-        return Promise.resolve(jsonResponse({ error: 'Session not found' }, 404));
+        return Promise.resolve(jsonResponse({ error: 'Session not found' }, opts.deleteFailStatus ?? 404));
       }
       if (opts.holdDeletes) {
         return new Promise<Response>((resolve) => {
@@ -360,12 +362,48 @@ describe('DeviceSessionsPage', () => {
     // Both other sessions, in LIST order — and NEVER the current one.
     expect(deleteUrls(fn)).toEqual([sessionPath('sess-tv'), sessionPath('sess-unk')]);
     expect(deleteUrls(fn).some((u) => u.includes('sess-cur'))).toBe(false);
-    expect(success).toHaveBeenCalledWith('Other sessions signed out.');
+    expect(success).toHaveBeenCalledWith('2 other sessions signed out.');
+    w.unmount();
+  });
+
+  it('bulk: an already-dead (404) session counts as success and the fan-out continues (UI-32)', async () => {
+    const { fn } = stubFetch({ sessions: trio(), deleteFailIds: new Set(['sess-tv']) });
+    const w = mountPage();
+    await flushPromises();
+    const toasts = useToastStore();
+    const success = vi.spyOn(toasts, 'success');
+    const error = vi.spyOn(toasts, 'error');
+
+    await w.find('[data-testid="sessions-revoke-others"]').trigger('click');
+    await flushPromises();
+    await clickDialogButton(true);
+
+    expect(deleteUrls(fn)).toEqual([sessionPath('sess-tv'), sessionPath('sess-unk')]);
+    expect(error).not.toHaveBeenCalled();
+    expect(success).toHaveBeenCalledWith('2 other sessions signed out.');
+    w.unmount();
+  });
+
+  it('bulk surfaces the in-flight row as busy (UI-52) and uses singular copy at count 1', async () => {
+    const one = trio().filter((r) => r.id !== 'sess-unk');
+    const { release } = stubFetch({ sessions: one, holdDeletes: true });
+    const w = mountPage();
+    await flushPromises();
+    const toasts = useToastStore();
+    const success = vi.spyOn(toasts, 'success');
+
+    await w.find('[data-testid="sessions-revoke-others"]').trigger('click');
+    await flushPromises();
+    await clickDialogButton(true);
+    expect(w.find('[data-testid="session-revoke-sess-tv"]').attributes('aria-busy')).toBe('true');
+    release();
+    await flushPromises();
+    expect(success).toHaveBeenCalledWith('1 other session signed out.');
     w.unmount();
   });
 
   it('bulk stop-at-first-failure: the failing DELETE ends the fan-out and the error toast survives', async () => {
-    const { fn } = stubFetch({ sessions: trio(), deleteFailIds: new Set(['sess-tv']) });
+    const { fn } = stubFetch({ sessions: trio(), deleteFailIds: new Set(['sess-tv']), deleteFailStatus: 500 });
     const w = mountPage();
     await flushPromises();
     const toasts = useToastStore();
@@ -450,8 +488,8 @@ describe('DeviceSessionsPage', () => {
     expect(inFlight.attributes('disabled')).toBeUndefined();
     expect(inFlight.attributes('aria-disabled')).toBe('true');
     expect(inFlight.attributes('aria-busy')).toBe('true');
-    // Row controls are blocked for the whole fan-out.
-    expect(w.find('[data-testid="session-revoke-sess-tv"]').attributes('disabled')).toBeDefined();
+    // Row controls are blocked for the whole fan-out; the in-flight row shows busy (UI-52).
+    expect(w.find('[data-testid="session-revoke-sess-tv"]').attributes('aria-busy')).toBe('true');
     expect(w.find('[data-testid="session-revoke-sess-unk"]').attributes('disabled')).toBeDefined();
 
     held.release();

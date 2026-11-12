@@ -60,6 +60,7 @@ import {
   DEVICE_SESSIONS_LIST_CAP,
   MalformedSessionsEnvelopeError,
   fetchDeviceSessions,
+  isSessionGoneError,
   revokeDeviceSession,
   type DeviceSessionRow,
 } from '../api/deviceSessions';
@@ -212,17 +213,23 @@ async function onConfirm(): Promise<void> {
   revokingOthers.value = true;
   let failure: unknown = null;
   for (const id of targets) {
+    // UI-52: surface per-row progress — the row in flight shows its spinner.
+    busyId.value = id;
     try {
       await revokeDeviceSession(apiBase.value, id);
     } catch (e) {
+      // UI-32: an already-dead / unknown session is the desired end state —
+      // count it and keep going. Genuine errors still stop at first.
+      if (isSessionGoneError(e)) continue;
       failure = e;
       break;
     }
   }
+  busyId.value = null;
   revokingOthers.value = false;
 
   if (failure === null) {
-    toasts.success(t('sessions.revokeOthersSuccess'));
+    toasts.success(t('sessions.revokeOthersSuccess', { count: targets.length }));
   } else {
     toasts.error(wireErrorLine(failure, t('sessions.revokeOthersError'), config?.locale));
   }
@@ -337,7 +344,7 @@ onMounted(() => {
 
     <ConfirmDialog
       :open="pending !== null"
-      :message="pending?.kind === 'others' ? t('sessions.revokeAllConfirm') : t('sessions.revokeConfirm')"
+      :message="pending?.kind === 'others' ? t('sessions.revokeAllConfirm', { count: otherSessions.length }) : t('sessions.revokeConfirm')"
       :confirm-label="pending?.kind === 'others' ? t('sessions.revokeAll') : t('sessions.revoke')"
       danger
       @update:open="onDialogDismiss"

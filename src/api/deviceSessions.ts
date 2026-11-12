@@ -5,7 +5,7 @@
  * @license MIT
  */
 
-import { ApiClient } from './client';
+import { ApiClient, ApiError } from './client';
 
 /**
  * One active login session of the signed-in account.
@@ -124,4 +124,14 @@ export async function fetchDeviceSessions(apiBase: string, signal?: AbortSignal)
 export async function revokeDeviceSession(apiBase: string, id: string, signal?: AbortSignal): Promise<void> {
   const client = new ApiClient({ baseUrl: apiBase });
   await client.delete(`${SESSIONS_ENDPOINT}/${encodeURIComponent(id)}`, signal);
+}
+
+/**
+ * True when a revoke rejection means the session is ALREADY gone (404:
+ * unknown-or-foreign-or-expired id, uniform on the server). For a bulk
+ * sign-out that is the desired end state, so the fan-out counts it as
+ * success and continues; every other failure remains a genuine error.
+ */
+export function isSessionGoneError(e: unknown): boolean {
+  return e instanceof ApiError && e.status === 404;
 }
