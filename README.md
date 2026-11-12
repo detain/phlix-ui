@@ -26,7 +26,7 @@ into a ready-to-mount Vue app.
 - ⚡ **Code-split + lazy-routed** — the entry bundle is ~387 KiB raw (~95 KiB gzipped at gzip's default level 6 — max level 9 measures ~93 KiB; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
   player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme as verified by the
-  on-demand Playwright a11y suite (see Testing — not part of the blocking per-push
+  on-demand Playwright a11y suite (see [Development](#development) — not part of the blocking per-push
   gate), full keyboard support, honored
   reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
@@ -79,7 +79,7 @@ You must provide compatible copies of Vue, Pinia, and Vue Router:
 | Peer | Range |
 | --- | --- |
 | `vue` | `^3.5.0` |
-| `pinia` | `^3.0.0` |
+| `pinia` | `^3.0.0 \|\| ^4.0.0` |
 | `vue-router` | `^5.0.0` |
 
 Node **≥ 20.19** (or **≥ 22.12**) is required to **build from source** — the engine floor of the
@@ -523,6 +523,8 @@ advice), zero English leakage with an EMPTY bidirectional allow-list, ja CJK
 everywhere, the same aggregate diacriticals floors, and the full accessor
 degradation matrix (known/unknown/blank/non-string codes × locale/invalid-locale
 × fallback/blank-fallback).
+
+---
 
 ## Performance patterns
 
