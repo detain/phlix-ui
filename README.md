@@ -14,8 +14,8 @@ Build a feature here once and it ships to every Phlix surface.
 
 `@phlix/ui` is a self-contained kit: a 3-theme **"Nocturne" cinema-after-dark** token system, 26
 accessible primitives, a media-browsing + video-player surface, auth/settings forms, a ⌘K command
-palette, fifteen Pinia stores (thirteen exported + two internal), and a `createPhlixApp()` factory that wires it all into a ready-to-mount
-Vue app.
+palette, sixteen Pinia stores (thirteen exported + three internal), and a `createPhlixApp()` factory that wires it all
+into a ready-to-mount Vue app.
 
 - 🎨 **Three built-in themes** (`nocturne` dark · `daylight` light · `midnight` OLED) with live
   user controls for accent color, density, card size, and motion.
@@ -137,7 +137,7 @@ almost always pass two: `app` and `apiBase`:
 | `features?` | `Record<string, boolean>` | Arbitrary feature-flag map. Recognized keys include `resumeSync` (cross-device continue-watching pull on login; default true on the server, false on the hub). |
 | `commands?` | `Command[]` | App-injected ⌘K command-palette entries (registered alongside the built-ins). |
 | `hubRelay?` | `HubRelayConfig` | Hub-relay pending-command consumer config: the host supplies the server id + a token provider (tokens expire hourly; re-read on every reconnect). When present, the app opens the hub's SyncPlay relay socket at boot so "Alexa, play X" can reach the player. |
-| `defaultTheme?` | `ThemeName` | Initial theme for a first-time visitor. An open string alias: the three built-in ids (`nocturne`, `daylight`, `midnight`) and registered plugin themes both ride this seam (`BUILT_IN_THEME_IDS` / `isBuiltInThemeId` pin the built-in set). A stored user choice always wins. |
+| `defaultTheme?` | `ThemeName` | Initial theme for a first-time visitor. An open string alias: the three built-in ids (`nocturne`, `daylight`, `midnight`) and registered plugin themes both ride this seam (`BUILT_IN_THEME_IDS` / `isBuiltInThemeId` pin the built-in set). A stored user choice wins over this default; the one exception is the login-time server-wins adoption of the account's saved theme (see [Theming](#three-built-in-themes)). |
 | `defaultTv?` | `boolean` | Initial TV mode for a first-time visitor (10-foot sizing + visible focus rings). A stored user toggle always wins; applied pre-mount like `defaultTheme`. |
 | `branding?` | `BrandingConfig` | Per-app brand: `wordmark?`, `logoSrc?`, `logoAlt?`, `tagline?`. |
 | `homeRows?` | `HomeRow[]` | Browse home-row shelves: `{ id, title, query? }` (query is a partial `LibraryQueryParams`, incl. `libraryId`). Rendered _in addition to_ the automatic per-library rails. |
@@ -250,7 +250,8 @@ through when the API host's CORS policy allows the page's exact origin — Phlix
 credentials; the hub's `CorsPolicy` grants nothing cross-origin until configured). With the default
 store, auth rides the `Authorization: Bearer` token login mints into `localStorage`; custody is
 swappable via the `tokenStore` config seam, and a cookie-boot host registering `CookieTokenStore`
-keeps the session in HttpOnly cookies instead (no JS-held bearer token). Serving the SPA on the *same* origin as its API — `apiBase: ''`, as the
+keeps the session in HttpOnly cookies instead (no JS-held bearer token).
+Serving the SPA on the *same* origin as its API — `apiBase: ''`, as the
 composite example above does — is the zero-config path: exactly how server and hub host this bundle
 under `/app` themselves; no preflight, nothing to allow-list.
 
@@ -312,6 +313,13 @@ exposes most of it; where a field has a different writer — or none yet — the
 To prevent a flash of the wrong theme, `createPhlixApp` calls `applyStoredThemeEarly()` synchronously
 before mount. If you mount `PhlixApp.vue` yourself, call it first.
 
+**Which theme wins.** Before login the device's stored choice always wins over `defaultTheme` (which
+only seeds a first-time visitor). Once per login, `useThemeSyncStore` reads
+`GET /api/v1/users/me/settings`; a server theme that is known here (built-in or in the catalogue) and
+differs from the local one silently replaces it (server-wins, so a choice made on another device follows
+the account). Any failure on that path degrades to local-only, and later picks are saved back to the
+server (debounced).
+
 ```ts
 import { usePreferencesStore } from '@phlix/ui';
 
@@ -325,12 +333,13 @@ prefs.reset();            // back to DEFAULT_PREFERENCES
 
 ## Stores & composables
 
-Fifteen store modules carry app state; **thirteen are exported from the package root** (table
-below). The two exceptions are deliberate internals, absent from `src/index.ts` and `src/player.ts`
+Sixteen store modules carry app state; **thirteen are exported from the package root** (table
+below). The three exceptions are deliberate internals, absent from `src/index.ts` and `src/player.ts`
 so their shape can evolve without breaking a published export: **`useSyncPlayStore`** (the watch-party
 group state behind the `/app/syncplay` route + `<SyncPlayControls>`; consumers drive it through those
-surfaces, never directly) and **`usePlayerUiStore`** (transient player chrome state owned by the
-bundled player components).
+surfaces, never directly), **`usePlayerUiStore`** (transient player chrome state owned by the
+bundled player components) and **`useThemeSyncStore`** (keeps the account's server-side theme in step
+with the device; driven by `useTheme()`, never directly).
 Import the composables directly; they expect to run inside an app created by `createPhlixApp` (which
 provides `apiBase`).
 
