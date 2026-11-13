@@ -201,6 +201,8 @@ const injected = inject<Command[]>('phlixCommands', []);
 // app-injected `commands`. Omitting `messages` yields the English labels verbatim.
 const builtins: Command[] = [
   { id: 'nav.browse', title: t('palette.goToBrowse'), icon: 'film', group: t('palette.groupNavigation'), keywords: ['home', 'library', 'media'], priority: 0, run: () => { void router.push({ name: 'browse' }); } },
+  { id: 'nav.settings.security', title: t('palette.goToSecuritySettings'), icon: 'key', group: t('palette.groupNavigation'), keywords: ['passkey', 'webauthn', 'password'], run: () => { void router.push({ name: 'settings', query: { tab: 'security' } }); } },
+  { id: 'nav.settings.sessions', title: t('palette.goToSessionSettings'), icon: 'monitor', group: t('palette.groupNavigation'), keywords: ['devices', 'logins', 'sign out'], run: () => { void router.push({ name: 'settings', query: { tab: 'sessions' } }); } },
   { id: 'nav.settings', title: t('palette.goToSettings'), icon: 'settings', group: t('palette.groupNavigation'), keywords: ['preferences', 'config', 'options'], priority: 1, run: () => { void router.push({ name: 'settings' }); } },
   { id: 'theme.nocturne', title: t('palette.themeNocturne'), icon: 'moon', group: t('palette.groupTheme'), keywords: ['dark', 'amber', 'cinema'], run: () => { prefs.theme = 'nocturne'; } },
   { id: 'theme.daylight', title: t('palette.themeDaylight'), icon: 'sun', group: t('palette.groupTheme'), keywords: ['light', 'bright'], run: () => { prefs.theme = 'daylight'; } },

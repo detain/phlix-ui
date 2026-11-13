@@ -266,7 +266,7 @@ onMounted(() => {
   <div class="device-sessions-page">
     <header class="device-sessions-page__head">
       <p class="device-sessions-page__eyebrow">{{ t('sessions.eyebrow') }}</p>
-      <h1 class="device-sessions-page__title">{{ t('sessions.title') }}</h1>
+      <h2 class="device-sessions-page__title">{{ t('sessions.title') }}</h2>
       <p class="device-sessions-page__desc">{{ t('sessions.desc') }}</p>
     </header>
 

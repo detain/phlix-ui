@@ -105,6 +105,8 @@ export const PT_BR_MESSAGES = {
     searchLibrary: 'Pesquisar “{query}” na biblioteca',
     goToBrowse: 'Ir para Navegar',
     goToSettings: 'Ir para Configurações',
+    goToSecuritySettings: 'Ir para Configurações de segurança',
+    goToSessionSettings: 'Ir para Sessões',
     themeNocturne: 'Tema: Nocturne',
     themeDaylight: 'Tema: Daylight',
     themeMidnight: 'Tema: Midnight',

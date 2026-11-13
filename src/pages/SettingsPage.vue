@@ -19,7 +19,8 @@
  * `pages/admin/SettingsPage.vue`, which is driven entirely by the server's
  * schema `meta`.
  */
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import Tabs, { type TabItem } from '../components/ui/Tabs.vue';
 import AppearanceSettings from '../components/AppearanceSettings.vue';
 import SecuritySettingsPage from './SecuritySettingsPage.vue';
@@ -44,7 +45,23 @@ const TABS: TabItem[] = [
   { value: 'sessions', label: t('settings.tabSessions'), icon: 'monitor' },
 ];
 
-const tab = ref('appearance');
+// The active tab is deep-linkable via `?tab=<value>`. The router is optional so the
+// page still renders (falling back to the first tab) when mounted without one.
+const route = useRoute() as ReturnType<typeof useRoute> | undefined;
+const router = useRouter() as ReturnType<typeof useRouter> | undefined;
+const VALID_TABS = TABS.map((x) => x.value);
+function queryTab(): string {
+  const raw = route?.query?.tab;
+  const q = Array.isArray(raw) ? raw[0] : raw;
+  return typeof q === 'string' && VALID_TABS.includes(q) ? q : VALID_TABS[0]!;
+}
+const tab = ref<string>(queryTab());
+// URL -> tab (deep links, back/forward); tab -> URL (replace, no history spam).
+watch(() => route?.query?.tab, () => { tab.value = queryTab(); });
+watch(tab, (value) => {
+  if (!router || !route || route.query.tab === value) return;
+  void router.replace({ query: { ...route.query, tab: value } });
+});
 </script>
 
 <template>

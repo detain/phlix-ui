@@ -75,7 +75,6 @@ describe('page titles (copywriter m6 — sentence-case law, enforced)', () => {
       ['SharedWithMePage.vue', 'Shared with me'],
       ['MyServersPage.vue', 'My servers'],
       ['McpTokensPage.vue', 'MCP tokens'],
-      ['SecuritySettingsPage.vue', 'Passkey settings'],
       ['LibraryScanPage.vue', 'Library scanner'],
       ['AuditLogsPage.vue', 'Audit logs'],
       // ParentalControlsPage.vue dropped from this static list: its h1 now
@@ -87,6 +86,8 @@ describe('page titles (copywriter m6 — sentence-case law, enforced)', () => {
     for (const [f, want] of cases) {
       expect(readFileSync(join(PAGES, f), 'utf8'), f).toContain(`>${want}</h1>`);
     }
+    // UI-S9: the embedded Settings-tab panels demote their titles to h2.
+    expect(readFileSync(join(PAGES, 'SecuritySettingsPage.vue'), 'utf8')).toContain('>Passkey settings</h2>');
   });
 
   it('the recommendations h1 matches the nav rail name (copywriter m9: one surface, one name)', () => {

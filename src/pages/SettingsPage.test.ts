@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { createRouter, createMemoryHistory } from 'vue-router';
 import SettingsPage from './SettingsPage.vue';
 import AppearanceSettings from '../components/AppearanceSettings.vue';
 import { useAuthStore } from '../stores/useAuthStore';
@@ -82,5 +83,21 @@ describe('SettingsPage', () => {
     const tabs = w.findAll('[role="tab"]').map((t) => t.text());
     expect(tabs.some((l) => l.includes('Reproduccion'))).toBe(true); // overridden tab
     expect(tabs.some((l) => l.includes('Appearance'))).toBe(true); // un-overridden tab still English
+  });
+
+  it('round-trips the active tab through ?tab= (UI-S9)', async () => {
+    const auth = useAuthStore();
+    vi.spyOn(auth.client, 'get').mockResolvedValue({} as never);
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/settings', name: 'settings', component: SettingsPage }] });
+    await router.push('/settings?tab=playback');
+    const w = mount(SettingsPage, { global: { plugins: [router] } });
+    wrappers.push(w);
+    expect(w.findComponent(AppearanceSettings).props('panel')).toBe('playback');
+    await tabByLabel(w, 'Security').trigger('click');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(router.currentRoute.value.query.tab).toBe('security');
+    await router.replace({ query: { tab: 'appearance' } });
+    await w.vm.$nextTick();
+    expect(w.findComponent(AppearanceSettings).props('panel')).toBe('appearance');
   });
 });

@@ -106,6 +106,8 @@ export const JA_MESSAGES = {
     searchLibrary: '「{query}」をライブラリで検索',
     goToBrowse: 'ブラウズへ移動',
     goToSettings: '設定へ移動',
+    goToSecuritySettings: 'セキュリティ設定へ移動',
+    goToSessionSettings: 'セッションへ移動',
     themeNocturne: 'テーマ：Nocturne',
     themeDaylight: 'テーマ：Daylight',
     themeMidnight: 'テーマ：Midnight',

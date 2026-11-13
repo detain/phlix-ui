@@ -105,6 +105,8 @@ export const DE_MESSAGES = {
     searchLibrary: 'Mediathek nach „{query}“ durchsuchen',
     goToBrowse: 'Zu Stöbern gehen',
     goToSettings: 'Zu den Einstellungen gehen',
+    goToSecuritySettings: 'Zu den Sicherheitseinstellungen gehen',
+    goToSessionSettings: 'Zu den Sitzungen gehen',
     themeNocturne: 'Theme: Nocturne',
     themeDaylight: 'Theme: Daylight',
     themeMidnight: 'Theme: Midnight',

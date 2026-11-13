@@ -122,6 +122,8 @@ export const DEFAULT_MESSAGES = {
     searchLibrary: 'Search library for “{query}”',
     goToBrowse: 'Go to Browse',
     goToSettings: 'Go to Settings',
+    goToSecuritySettings: 'Go to Security settings',
+    goToSessionSettings: 'Go to Sessions',
     themeNocturne: 'Theme: Nocturne',
     themeDaylight: 'Theme: Daylight',
     themeMidnight: 'Theme: Midnight',
