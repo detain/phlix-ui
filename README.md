@@ -23,7 +23,7 @@ into a ready-to-mount Vue app.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
-- ⚡ **Code-split + lazy-routed** — the entry bundle is ~387 KiB raw (~95 KiB gzipped at gzip's default level 6 — max level 9 measures ~93 KiB; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
+- ⚡ **Code-split + lazy-routed** — the entry bundle is ~434 KiB raw (~106 KiB gzipped at gzip's default level 6 — max level 9 measures ~104 KiB; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
   player, and the palette load on demand as lazy chunks.
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme as verified by the
   on-demand Playwright a11y suite (see [Development](#development) — not part of the blocking per-push
@@ -31,7 +31,7 @@ into a ready-to-mount Vue app.
   reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v0.99.27`. Pre-1.0, so minor releases may include breaking changes. See
+> **Status:** `v0.99.28`. Pre-1.0, so minor releases may include breaking changes. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -63,7 +63,7 @@ into a ready-to-mount Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v0.99.27"
+    "@phlix/ui": "github:detain/phlix-ui#v0.99.28"
   }
 }
 ```
@@ -489,7 +489,7 @@ nothing-matched label).
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
 650-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
-equality on every ui tag since the `v0.99.5` era (now `v0.99.27`-era) — the catalog's
+equality on every ui tag since the `v0.99.5` era (now `v0.99.28`-era) — the catalog's
 205 error strings per locale (129 dotted registry entries plus 76 flat generic-message
 entries; 1,435 across the seven error catalogs) would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
@@ -683,7 +683,7 @@ deliberately keeps them out so the main bundle stays lean, and the entry's CSS p
 
 > **⚠ Dual-entry state duplication.** The player build lists `@phlix/ui` as external, but that
 > specifier never matches its own imports, so every shared module (`ApiClient`, `usePlayerStore`, …)
-> is **inlined a second time** into `dist/player.js` (≈421 KiB vs the ≈387 KiB main entry —
+> is **inlined a second time** into `dist/player.js` (≈436 KiB vs the ≈434 KiB main entry —
 > measured from the committed `dist/` at the release era; the mechanism is documented by the
 > DUAL-ENTRY caveat heading `vite.player.config.ts`). Composing pages from root building blocks while mounting
 > `Player` from `@phlix/ui/player` therefore yields **two singleton store/ApiClient instances with
@@ -853,7 +853,7 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
 
 | Output | Notes |
 | --- | --- |
-| `dist/phlix-ui.js` | ESM entry (~387 KiB raw / ~95 KiB gzipped at gzip default level 6; routes/player/palette split into lazy chunks). |
+| `dist/phlix-ui.js` | ESM entry (~434 KiB raw / ~106 KiB gzipped at gzip default level 6; routes/player/palette split into lazy chunks). |
 | `dist/phlix-ui.umd.cjs` | UMD/CJS build for `require()`. |
 | `dist/style.css` | Tokens + component styles. |
 | `dist/fonts/` | `fonts.css` + three variable `.woff2` files. |

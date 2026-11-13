@@ -509,6 +509,8 @@ export declare const DEFAULT_MESSAGES: {
         loading: string;
         removed: string;
         removeFailed: string;
+        undo: string;
+        restoreFailed: string;
         deleted: string;
         deleteFailed: string;
         pickerChoice: string;

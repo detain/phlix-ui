@@ -470,6 +470,8 @@ export declare const DE_MESSAGES: {
         loading: string;
         removed: string;
         removeFailed: string;
+        undo: string;
+        restoreFailed: string;
         deleted: string;
         deleteFailed: string;
         pickerChoice: string;

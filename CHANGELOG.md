@@ -8,6 +8,17 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## 0.99.28 - 2026-11-12
+
+### Release
+
+Release cut closing the UI-S1..S30 fix-program wave (round-2026-11-11): the version advances
+0.99.27 -> 0.99.28 in `package.json`/`package-lock.json`, the README version stamps and the three
+bundle-size sites rotate to the re-measured bytes (`dist/phlix-ui.js` 444,283 B ~ 434 KiB raw,
+~106 KiB gzip level 6 / ~104 KiB level 9; `dist/player.js` 446,880 B ~ 436 KiB), and `dist/` is
+regenerated once from the settled `src/`. No dependency moves. Consumer locale pins (tizen,
+windows) rotate in the same release wave.
+
 ## 0.99.27 - 2026-11-11
 
 ### Release

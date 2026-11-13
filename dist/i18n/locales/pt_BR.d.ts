@@ -470,6 +470,8 @@ export declare const PT_BR_MESSAGES: {
         loading: string;
         removed: string;
         removeFailed: string;
+        undo: string;
+        restoreFailed: string;
         deleted: string;
         deleteFailed: string;
         pickerChoice: string;
