@@ -6,7 +6,7 @@
  */
 
 /// <reference types="node" />
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
@@ -1520,5 +1520,36 @@ describe('MediaCard — hostile download url (M-UI-11)', () => {
     openSpy.mockRestore();
     w.unmount();
     document.body.innerHTML = '';
+  });
+});
+
+describe('MediaCard — coarsePointer follows the (hover: none) change event (UI-S28)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('reveals the action row when the media query flips to hover:none, and hides it again on flip back', async () => {
+    let listener: ((e: { matches: boolean }) => void) | null = null;
+    const mq = {
+      matches: false,
+      addEventListener: vi.fn((_t: string, fn: (e: { matches: boolean }) => void) => {
+        listener = fn;
+      }),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal('matchMedia', vi.fn(() => mq));
+    const w = mount(MediaCard, { props: { item: media() } });
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+    expect(listener).not.toBeNull();
+
+    listener!({ matches: true });
+    await nextTick();
+    expect(w.find('.media-card__actions').exists()).toBe(true);
+
+    listener!({ matches: false });
+    await nextTick();
+    expect(w.find('.media-card__actions').exists()).toBe(false);
+    w.unmount();
+    expect(mq.removeEventListener).toHaveBeenCalled();
   });
 });

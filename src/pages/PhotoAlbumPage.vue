@@ -127,7 +127,7 @@ watch([() => props.id, libraryId], () => {
 
         <!-- Loading state -->
         <div v-if="loading" class="loading-state">
-            <Spinner size="large" />
+            <Spinner size="md" />
             <p>Loading album…</p>
         </div>
 

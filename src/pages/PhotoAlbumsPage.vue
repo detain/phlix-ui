@@ -150,7 +150,7 @@ function selectLibrary(id: string): void {
 
         <!-- Loading state -->
         <div v-if="loading" class="loading-state">
-            <Spinner size="large" />
+            <Spinner size="md" />
             <p>Loading albums…</p>
         </div>
 

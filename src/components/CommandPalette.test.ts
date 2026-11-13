@@ -188,6 +188,18 @@ describe('CommandPalette — built-in commands', () => {
     expect(router.currentRoute.value.name).toBe('settings');
   });
 
+  it.each([
+    ['nav.settings.security', 'security'],
+    ['nav.settings.sessions', 'sessions'],
+  ])('%s pushes the settings route with query.tab=%s (UI-S9)', async (id, tab) => {
+    wrapper = await mountPalette();
+    const store = useCommandStore();
+    await store.runId(id);
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe('settings');
+    expect(router.currentRoute.value.query.tab).toBe(tab);
+  });
+
   it('the Playlists nav command pushes the playlists route (UI-S25)', async () => {
     router.addRoute({ name: 'playlists', path: '/playlists', component: { template: '<div />' } });
     wrapper = await mountPalette();

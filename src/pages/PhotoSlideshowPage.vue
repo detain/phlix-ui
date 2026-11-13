@@ -295,7 +295,7 @@ watch([libraryId, albumId], () => {
     <div class="photo-slideshow-page">
         <!-- Loading state -->
         <div v-if="loading" class="loading-state">
-            <Spinner size="large" />
+            <Spinner size="md" />
             <p>Loading slideshow…</p>
         </div>
 

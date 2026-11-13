@@ -331,6 +331,22 @@ describe('DeviceSessionsPage', () => {
     w.unmount();
   });
 
+  it('the revoke confirm message names the device (UI-S8: revokeConfirmDevice path)', async () => {
+    stubFetch({ sessions: trio() });
+    const w = mountPage();
+    await flushPromises();
+    await w.find('[data-testid="session-revoke-sess-tv"]').trigger('click');
+    await flushPromises();
+    const dialog = document.body.querySelector('.phlix-modal')?.textContent ?? '';
+    expect(dialog).toContain('Sign out Living Room TV? The device will need to sign in again.');
+    await clickDialogButton(false);
+    await w.find('[data-testid="session-revoke-sess-unk"]').trigger('click');
+    await flushPromises();
+    expect(document.body.querySelector('.phlix-modal')?.textContent ?? '').toContain('Sign out Unknown device?');
+    await clickDialogButton(false);
+    w.unmount();
+  });
+
   it('cancel on the confirm sends nothing and re-arms cleanly', async () => {
     const { fn } = stubFetch({ sessions: trio() });
     const w = mountPage();

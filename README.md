@@ -23,13 +23,15 @@ into a ready-to-mount Vue app.
 - 🎬 **Full HTML5 video player** — rich scrubber, keyboard map, captions, ambient glow, theater/PiP,
   mini-player, resume + up-next.
 - ⌘ **Fuzzy command palette** (⌘K / Ctrl-K), extensible by the host app.
-- ⚡ **Code-split + lazy-routed** — the entry bundle is ~434 KiB raw (~106 KiB gzipped at gzip's default level 6 — max level 9 measures ~104 KiB; bundle sizes in this README use binary KiB = 1024 bytes); routes, the
-  player, and the palette load on demand as lazy chunks.
+- ⚡ **Code-split + lazy-routed** — the entry bundle is ~434 KiB raw (~106 KiB gzipped); routes, the
+  player, and the palette load on demand as lazy chunks.[^size]
 - ♿ **WCAG 2.1 AA** — axe-clean across every surface × theme as verified by the
   on-demand Playwright a11y suite (see [Development](#development) — not part of the blocking per-push
   gate), full keyboard support, honored
   reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
+
+[^size]: Gzip sizes are at gzip's default level 6 (max level 9 measures ~104 KiB). All bundle sizes in this README use binary KiB (1024 bytes).
 
 > **Status:** `v1.0.2` — the first stable release. Semver applies: breaking changes ship only in a new major. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
@@ -216,7 +218,8 @@ A server-rendered or static host needs only three things:
 1. **A mount element** — `<div id="app"></div>` in the page.
 2. **A history-fallback rewrite** — router history is HTML5 (`createWebHistory`), so the host must
    serve the same HTML shell for `${routerBase}` and every `${routerBase}/*` deep link (default
-   `/app` and `/app/*`), never a 404 — e.g. nginx `location /app { try_files $uri /app/index.html; }`.
+   `/app` and `/app/*`), never a 404 — e.g. nginx `location /app { try_files $uri /app/index.html; }` (illustrative: it assumes your shell
+   lives at `/app/index.html` — adjust the path to wherever your host serves its HTML shell).
    With `routerBase: ''` the fallback covers the whole site.
 3. **Asset paths** — the page loads the built JS entry plus `style.css` (required) and `fonts.css`
    (recommended) from wherever the host serves `dist/`; keep those URLs outside the rewritten prefix

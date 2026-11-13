@@ -1512,7 +1512,7 @@ const shortcutActions: ShortcutActions = {
   },
 };
 // Suppress player shortcuts while any of these Player overlays is open — the help
-// modal, captions menu, chapter list, SyncPlay join dialog and subtitle-search modal
+// modal, captions menu, chapter list, SyncPlay join dialog, subtitle-search modal and similar-by-marker modal
 // (their own Esc/close + inner field/arrow keys win; no double-fire, and no TV D-pad
 // arrow or typed letter leaking through a dialog into seek/play behind it — UI-S2).
 useKeyboardShortcuts(shortcutActions, {
@@ -1521,7 +1521,8 @@ useKeyboardShortcuts(shortcutActions, {
     !captionsMenuOpen.value &&
     !chaptersListOpen.value &&
     !showSyncPlayModal.value &&
-    !showSubtitleSearch.value,
+    !showSubtitleSearch.value &&
+    !similarModalOpen.value,
 });
 
 function toggleMute(): void {

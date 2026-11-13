@@ -8,6 +8,17 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — minors 2026-11-13 (UI-S2/S8/S9/S12/S18/S27/S28/S31)
+
+### Fixed
+
+- Player: the similar-by-marker modal is now in the keyboard-shortcut gate, so `k` and the arrow keys no longer play/seek behind it (UI-S2).
+- Photo pages' loading spinners use the named `md` size instead of the invalid `size="large"` (UI-S27).
+
+### Changed
+
+- README: size footnote split out of the headline bullet; nginx `try_files` example flagged as illustrative (UI-S31, UI-S12). Tests added for UI-S8/S9/S28; CALIBER tag-convention scoped to recent tags (UI-S18).
+
 ## 1.0.2 - 2026-11-13
 
 ### Added

@@ -1252,6 +1252,39 @@ describe('Player — captions (R3.5)', () => {
     expect(state.currentTime).toBe(105);
   });
 
+  it('suppresses transport shortcuts while the similar-by-marker modal is open (re-arms on close; UI-S2)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ items: [], marker_type: 'intro', around: 30, position: 5000 }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+    const { w, video, state } = mountPlayer({ markers: [{ id: 'mk1', type: 'intro' as const, startMs: 5000, endMs: 35000, label: 'Intro' }] });
+    state.paused = true;
+    state.duration = 200;
+    state.currentTime = 100;
+    video.dispatchEvent(new Event('timeupdate'));
+    w.findComponent(MarkerTimeline).vm.$emit('similar', 'intro', 5000);
+    await nextTick();
+    key('k');
+    key('ArrowRight');
+    await nextTick();
+    expect(video.play).not.toHaveBeenCalled();
+    expect(state.currentTime).toBe(100);
+
+    // CONTROL: closing the modal re-arms the global keymap
+    await w.findAllComponents({ name: 'Modal' }).find((m) => m.props('modelValue') === true)?.vm.$emit('update:modelValue', false);
+    await nextTick();
+    key('k');
+    key('ArrowRight');
+    await nextTick();
+    expect(video.play).toHaveBeenCalledTimes(1);
+    expect(state.currentTime).toBe(105);
+  });
+
   it('renders caption cues in the overlay for the active track', async () => {
     const { w, video } = mountPlayer();
     const store = usePlayerStore();

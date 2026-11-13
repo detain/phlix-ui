@@ -240,7 +240,7 @@ watch(() => props.id, () => {
 
         <!-- Loading state -->
         <div v-if="loading" class="loading-state">
-            <Spinner size="large" />
+            <Spinner size="md" />
             <p>Loading photo…</p>
         </div>
 
