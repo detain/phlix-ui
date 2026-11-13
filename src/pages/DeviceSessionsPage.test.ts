@@ -234,7 +234,8 @@ describe('DeviceSessionsPage', () => {
     const lastUsed = new Date(2026, 10, 10).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     const meta = w.find('.session-item__meta').text();
     expect(meta).toContain(`Signed in ${created}`);
-    expect(meta).toContain(`Last used ${lastUsed}`);
+    expect(meta).toContain(`Last used ${lastUsed}, `);
+    expect(meta).toContain('(server time)');
     w.unmount();
   });
 
@@ -251,7 +252,7 @@ describe('DeviceSessionsPage', () => {
     const w = mountPage();
     await flushPromises();
     expect(w.text()).toContain('No active sessions');
-    expect(w.text()).toContain('No devices are signed in to this account.');
+    expect(w.text()).toContain('No sessions were returned.');
     w.unmount();
   });
 

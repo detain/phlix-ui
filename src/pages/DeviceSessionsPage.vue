@@ -148,6 +148,13 @@ function formatDate(value: string | null): string | null {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+/** 'HH:MM' the server wrote (no zone marker) — rendered as labeled server time. */
+function formatTime(value: string | null): string | null {
+  if (!value) return null;
+  const match = /^\d{4}-\d{2}-\d{2}[ T](\d{2}):(\d{2})/.exec(value);
+  return match ? `${match[1]}:${match[2]}` : null;
+}
+
 function deviceLabel(row: DeviceSessionRow): string {
   return row.device_name ?? t('sessions.unknownDevice');
 }
@@ -167,9 +174,22 @@ function metaLine(row: DeviceSessionRow): string {
   const lastUsed = formatDate(row.last_used_at);
   const parts: string[] = [];
   if (created) parts.push(t('sessions.created', { date: created }));
-  if (lastUsed) parts.push(t('sessions.lastUsed', { date: lastUsed }));
+  if (lastUsed) {
+    const time = formatTime(row.last_used_at);
+    parts.push(
+      time ? t('sessions.lastUsedAt', { date: lastUsed, time }) : t('sessions.lastUsed', { date: lastUsed }),
+    );
+  }
   return parts.join(' · ');
 }
+
+/** Confirm copy: the single-row arm names the device it will sign out. */
+const confirmMessage = computed(() => {
+  const p = pending.value;
+  if (p?.kind === 'others') return t('sessions.revokeAllConfirm', { count: otherSessions.value.length });
+  const row = p ? sessions.value.find((s) => s.id === p.id) : undefined;
+  return row ? t('sessions.revokeConfirmDevice', { device: deviceLabel(row) }) : t('sessions.revokeConfirm');
+});
 
 function handleRevoke(id: string): void {
   pending.value = { kind: 'one', id };
@@ -345,7 +365,7 @@ onMounted(() => {
 
     <ConfirmDialog
       :open="pending !== null"
-      :message="pending?.kind === 'others' ? t('sessions.revokeAllConfirm', { count: otherSessions.length }) : t('sessions.revokeConfirm')"
+      :message="confirmMessage"
       :confirm-label="pending?.kind === 'others' ? t('sessions.revokeAll') : t('sessions.revoke')"
       danger
       @update:open="onDialogDismiss"
