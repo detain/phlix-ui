@@ -72,6 +72,7 @@ export const IT_MESSAGES = {
     signIn: 'Accedi',
     switchProfile: 'Cambia profilo',
     manageProfiles: 'Gestisci profili',
+    playlists: 'Playlist',
   },
   profiles: {
     whoIsWatching: 'Chi sta guardando?',

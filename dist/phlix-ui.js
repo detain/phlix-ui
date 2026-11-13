@@ -1,22 +1,22 @@
-import { i as e } from "./safeRedirect-Cl7qL5fH.js";
+import { i as e } from "./safeRedirect-Bp-m2k6U.js";
 import { t } from "./IconButton-DsjtwjU1.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-DStfPnC8.js";
 import { n as c, t as l } from "./Icon-55iG1rR7.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-DrDMAwjz.js";
-import { i as h, n as g, r as _, t as v } from "./useMessages-B96K7XS0.js";
-import { t as y } from "./useAuthStore-D2w7sjNa.js";
-import { n as b, r as x, t as S } from "./useProfileStore-DZq86HNh.js";
+import { i as h, n as g, r as _, t as v } from "./useMessages-DA8YXaVD.js";
+import { t as y } from "./useAuthStore-BzhZjWgj.js";
+import { n as b, r as x, t as S } from "./useProfileStore-JiPJzhT0.js";
 import { i as C, n as w, r as T, t as E } from "./useImageSrc-CSM61b-l.js";
 import { i as D, n as O, r as ee, t as te } from "./usePlayerStore-BpohCwDP.js";
-import { n as ne, t as re } from "./ThumbRating-f22kIO8H.js";
+import { n as ne, t as re } from "./ThumbRating-COapE1hP.js";
 import { n as k, r as ie, t as ae } from "./useApiBase-DXTBY90j.js";
 import { i as oe, o as se, s as ce } from "./shortcuts-DhDck2s-.js";
-import { t as le } from "./NetworkHealthIndicator-CDwIXSLp.js";
+import { t as le } from "./NetworkHealthIndicator-D4MiHRHf.js";
 import { t as ue } from "./useToastStore-CxO_ppM8.js";
-import { C as de, E as fe, S as pe, T as me, _ as he, a as ge, b as _e, c as ve, d as ye, f as be, g as xe, h as Se, i as Ce, l as we, m as Te, n as Ee, o as De, p as Oe, r as ke, s as Ae, t as je, u as Me, v as Ne, w as Pe, x as Fe, y as Ie } from "./DeviceSessionsPage-Bihsg5Nm.js";
+import { C as de, E as fe, S as pe, T as me, _ as he, a as ge, b as _e, c as ve, d as ye, f as be, g as xe, h as Se, i as Ce, l as we, m as Te, n as Ee, o as De, p as Oe, r as ke, s as Ae, t as je, u as Me, v as Ne, w as Pe, x as Fe, y as Ie } from "./DeviceSessionsPage-xPiIOEgy.js";
 import { i as Le, n as Re, r as ze, t as Be } from "./Kbd-B47x87jw.js";
 import { a as Ve, i as He, n as Ue, o as We, r as Ge, t as Ke } from "./useLibrariesStore-C7CVlbVW.js";
-import { n as qe, t as Je } from "./HomeRow-BjjY95o4.js";
+import { n as qe, t as Je } from "./HomeRow-DTeZ8bEb.js";
 import { t as Ye } from "./safeHref-Be5nFpx7.js";
 import { t as A } from "./EmptyState-DjfWh3kt.js";
 import { t as j } from "./Button-Dfl4y6vO.js";
@@ -28,21 +28,21 @@ import { t as N } from "./Badge-D7vacFbh.js";
 import { t as It } from "./Slider-Bj5BaBUu.js";
 import { t as Lt } from "./Switch-C607L4Vu.js";
 import { t as Rt } from "./Chip-DwTdWHEP.js";
-import { t as zt } from "./Select-CtieJ2Ym.js";
-import { t as Bt } from "./Combobox-0B2bGIhW.js";
-import { t as Vt } from "./Modal-D8C63a_X.js";
-import { t as Ht } from "./ConfirmDialog-BhMeVq3o.js";
+import { t as zt } from "./Select-BGqFb9UH.js";
+import { t as Bt } from "./Combobox-CPpyfOzC.js";
+import { t as Vt } from "./Modal-W6IcTJlW.js";
+import { t as Ht } from "./ConfirmDialog-BBst5sQt.js";
 import { t as Ut } from "./Tooltip-CaS-pDMB.js";
 import { t as P } from "./Skeleton-DDhrDRE7.js";
-import { t as Wt } from "./Spinner-MDDesucs.js";
+import { t as Wt } from "./Spinner-wzYyEuC4.js";
 import { t as Gt } from "./PageHint-C2jY1TZi.js";
 import { t as Kt } from "./Tabs-DZRiZml3.js";
-import { t as qt } from "./Menu-B9cGFOym.js";
+import { t as qt } from "./Menu-BPcPxcL5.js";
 import { t as Jt } from "./HelpText-B3jlK4n_.js";
-import { o as Yt, t as Xt } from "./MediaCard-Bpg2ZfsW.js";
-import { t as Zt } from "./MediaGrid-CGJ0k3PY.js";
-import { t as Qt } from "./MediaRow-C4CW-Wid.js";
-import { n as $t, t as en } from "./metadata-sources-B7Vpbc-O.js";
+import { o as Yt, t as Xt } from "./MediaCard-DsNn6H8g.js";
+import { t as Zt } from "./MediaGrid-L_aSbYlk.js";
+import { t as Qt } from "./MediaRow-B2SKFsvq.js";
+import { n as $t, t as en } from "./metadata-sources-g1F0L_mK.js";
 import { n as tn, t as nn } from "./logs-1A_PM2An.js";
 import { t as rn } from "./dashboard-C-XveqQJ.js";
 import { a as an, c as on, i as sn, l as cn, n as ln, o as un, r as dn, s as fn, t as pn } from "./users-BOaYe835.js";
@@ -63,14 +63,14 @@ import { i as Nn, n as Pn, r as Fn, t as In } from "./plugins-C77PT0Uu.js";
 import { n as Ln, r as Rn, t as zn } from "./maintenance-cR83erwG.js";
 import { t as Bn } from "./hubDashboard-D-eKAQ_v.js";
 import { n as Vn, t as Hn } from "./media-query-D7hrCu8r.js";
-import { t as Un } from "./LoginForm-ChDeZKGz.js";
-import { t as Wn } from "./SignupForm-CGejzWmm.js";
+import { t as Un } from "./LoginForm-CPjZhB5S.js";
+import { t as Wn } from "./SignupForm-CIAKpEiw.js";
 import { r as Gn } from "./wireErrors-DDkkTtfw.js";
 import { t as F } from "./hubHelpLinks-BNMhK6oW.js";
 import { a as Kn, i as qn, n as Jn, o as Yn, r as Xn, s as Zn, t as Qn } from "./plural-B3O2rVPV.js";
 import { n as $n, t as er } from "./debounce-BnRz-bwe.js";
 import { t as tr } from "./Input-DUSkplC0.js";
-import { i as nr, n as rr, r as ir, t as ar } from "./MusicAlbumCard-BBs1YmAy.js";
+import { i as nr, n as rr, r as ir, t as ar } from "./MusicAlbumCard-DJ-_g6UA.js";
 import { t as or } from "./useMediaStore-CWsJIuak.js";
 import { Fragment as I, Teleport as sr, Transition as cr, TransitionGroup as lr, computed as L, createApp as ur, createBlock as R, createCommentVNode as z, createElementBlock as B, createElementVNode as V, createStaticVNode as dr, createTextVNode as H, createVNode as U, defineAsyncComponent as fr, defineComponent as W, getCurrentScope as pr, inject as mr, nextTick as hr, normalizeClass as G, normalizeStyle as gr, onBeforeUnmount as _r, onMounted as K, onScopeDispose as vr, onUnmounted as yr, openBlock as q, provide as br, readonly as xr, ref as J, renderList as Y, renderSlot as Sr, resolveComponent as Cr, resolveDynamicComponent as wr, toDisplayString as X, toValue as Tr, unref as Z, useId as Er, vModelSelect as Dr, vModelText as Or, vShow as kr, watch as Q, watchEffect as Ar, withCtx as $, withDirectives as jr, withModifiers as Mr } from "vue";
 import { createPinia as Nr, defineStore as Pr } from "pinia";
@@ -385,6 +385,13 @@ var ai = ["aria-label", "aria-expanded"], oi = {
 				role: "menuitem",
 				onClick: n[3] ||= (e) => b(`${o.value}/history`)
 			}, [U(l, { name: "film" }), H(" " + X(Z(c)("shell.watchHistory")), 1)]),
+			V("button", {
+				type: "button",
+				class: "usermenu__item",
+				role: "menuitem",
+				"data-testid": "usermenu-playlists",
+				onClick: n[4] ||= (e) => b(`${o.value}/playlists`)
+			}, [U(l, { name: "list" }), H(" " + X(Z(c)("shell.playlists")), 1)]),
 			s.value ? (q(), B(I, { key: 0 }, [V("button", {
 				type: "button",
 				class: "usermenu__item",
@@ -396,13 +403,13 @@ var ai = ["aria-label", "aria-expanded"], oi = {
 				class: "usermenu__item",
 				role: "menuitem",
 				"data-testid": "usermenu-manage-profiles",
-				onClick: n[4] ||= (e) => b(`${o.value}/profiles`)
+				onClick: n[5] ||= (e) => b(`${o.value}/profiles`)
 			}, [U(l, { name: "settings" }), H(" " + X(Z(c)("shell.manageProfiles")), 1)])], 64)) : z("", !0),
 			V("button", {
 				type: "button",
 				class: "usermenu__item",
 				role: "menuitem",
-				onClick: n[5] ||= (e) => b(`${o.value}/settings`)
+				onClick: n[6] ||= (e) => b(`${o.value}/settings`)
 			}, [U(l, { name: "settings" }), H(" " + X(Z(c)("shell.settings")), 1)]),
 			V("button", {
 				type: "button",
@@ -415,10 +422,10 @@ var ai = ["aria-label", "aria-expanded"], oi = {
 			type: "button",
 			class: "usermenu__item",
 			role: "menuitem",
-			onClick: n[6] ||= (e) => b(`${o.value}/login`)
+			onClick: n[7] ||= (e) => b(`${o.value}/login`)
 		}, [U(l, { name: "user" }), H(" " + X(Z(c)("shell.signIn")), 1)]))], 40, li)) : z("", !0)], 512));
 	}
-}), [["__scopeId", "data-v-45240098"]]), gi = ["aria-label"], _i = { class: "whos__inner" }, vi = { class: "whos__title" }, yi = {
+}), [["__scopeId", "data-v-635d1229"]]), gi = ["aria-label"], _i = { class: "whos__inner" }, vi = { class: "whos__title" }, yi = {
 	key: 0,
 	class: "whos__states",
 	"data-testid": "whos-loading",
@@ -962,7 +969,7 @@ var Sa = ["src", "alt"], Ca = { class: "brand-wordmark" }, wa = {
 			};
 			window.addEventListener("phlix:auth-expired", e), vr(() => window.removeEventListener("phlix:auth-expired", e));
 		}
-		let u = fr(() => import("./CommandPalette-DIq3iy9B.js")), d = J(!1);
+		let u = fr(() => import("./CommandPalette-wEmV4eic.js")), d = J(!1);
 		Q(() => n.open, (e) => {
 			e && (d.value = !0);
 		});
@@ -1074,6 +1081,13 @@ var Sa = ["src", "alt"], Ca = { class: "brand-wordmark" }, wa = {
 					_: 1
 				}, 8, ["to"]),
 				U(Z(Fr), {
+					to: `${D.value}/playlists`,
+					class: "nav-link"
+				}, {
+					default: $(() => [H(X(Z(a)("shell.playlists")), 1)]),
+					_: 1
+				}, 8, ["to"]),
+				U(Z(Fr), {
 					to: `${D.value}/settings`,
 					class: "nav-link"
 				}, {
@@ -1105,7 +1119,7 @@ var Sa = ["src", "alt"], Ca = { class: "brand-wordmark" }, wa = {
 			_: 1
 		}, 8, ["class"]));
 	}
-}), [["__scopeId", "data-v-aedcbb53"]]), Ea = { class: "phlix-not-found" }, Da = /*#__PURE__*/ c(/* @__PURE__ */ W({
+}), [["__scopeId", "data-v-a4e19421"]]), Ea = { class: "phlix-not-found" }, Da = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	__name: "NotFoundPage",
 	setup(e) {
 		let { t } = v(), n = Br();
@@ -1320,111 +1334,111 @@ function ho(e) {
 			path: t === "" ? "/" : t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-DX3zPVGh.js")
+			component: () => import("./BrowsePage-BLlc-ZE9.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-DqQQx6_g.js")
+			component: () => import("./MediaDetailPage-C7h9QQqy.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-BNi_Ke5T.js")
+			component: () => import("./SeasonPage-CP82eP6D.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CahRpH3e.js")
+			component: () => import("./LibraryPage-Baa16c-v.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CDRR9xCj.js")
+			component: () => import("./PlayerPage-c93OXjMt.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-Dw8sfAaV.js")
+			component: () => import("./LoginPage-TSKIpjxx.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CriYgfA8.js")
+			component: () => import("./SignupPage-D0E2ezHW.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-BqZMsbWe.js")
+			component: () => import("./ConnectPage-DMUg-8_5.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-CEmaz2dP.js")
+			component: () => import("./SettingsPage-DfzcXbgn.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-B83AGn4r.js")
+			component: () => import("./ExplorePage-CIPkrWap.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-D4JqXABN.js")
+			component: () => import("./RecommendationsPage-CKCwwk-Q.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-D58lL6t7.js")
+			component: () => import("./WatchHistoryPage-2hUIvzE_.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-BHy2BsWV.js")
+			component: () => import("./SyncPlayPage-Qd6vnkXx.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-CQETXZWa.js")
+			component: () => import("./MusicLibraryPage-CbjDi6MP.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-Lj7YvNbF.js")
+			component: () => import("./ParentalControlsPage-gHeUAmZ3.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-BjKFyhhe.js")
+			component: () => import("./ProfilesPage-B8TVxGEm.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-CTGN0Fbj.js")
+			component: () => import("./PlaylistsPage-Bc7IUufv.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-DiYxr4b7.js")
+			component: () => import("./PlaylistDetailPage-C1pECZ-W.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${io}`,
 		name: ro,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-BJnQ1-Zl.js")
+		component: () => import("./McpTokensPage-JL-QS5L_.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1696,25 +1710,25 @@ var _o = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-ciXnA0ZU.js")
+	component: () => import("./DashboardPage-COtuRVjd.js")
 }, jo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-Bne9yPHX.js")
+	component: () => import("./UsersPage-BUisp9Sb.js")
 }, Mo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-Oqstm4pt.js")
+	component: () => import("./LogsPage-DQ86Wnpd.js")
 }, No = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-DcufD6d6.js")
+	component: () => import("./WebhooksPage-DEFfK5W6.js")
 }, Po = {
 	name: "admin-services",
 	path: "services",
@@ -1726,13 +1740,13 @@ var _o = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-CIzrrpIH.js")
+	component: () => import("./IntegrationsPage-D3T1G1Gr.js")
 }, Io = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-B96J3bMu.js")
+	component: () => import("./BackupPage-DYn-UmO_.js")
 }, Lo = {
 	name: "admin-cast",
 	path: "cast-devices",
@@ -1750,19 +1764,19 @@ var _o = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-DiQgcd-I.js")
+	component: () => import("./RemoteAccessPage-DwN5-lrZ.js")
 }, Bo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-Dx9o4l2n.js")
+	component: () => import("./LiveTvPage-EARZcqgp.js")
 }, Vo = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-C03HXzJ3.js")
+	component: () => import("./CollectionsPage-CsHNUqh-.js")
 }, Ho = {
 	name: "admin-history",
 	path: "history",
@@ -1774,43 +1788,43 @@ var _o = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-C6slm4YX.js")
+	component: () => import("./SyncPlayPage-BM04f4hB.js")
 }, Wo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-WOaguAz8.js")
+	component: () => import("./LibrariesPage-Bf6x7yGx.js")
 }, Go = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-BEBIkru3.js")
+	component: () => import("./DuplicatesPage-DK-wsnEK.js")
 }, Ko = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-4nlnW0qB.js")
+	component: () => import("./PluginsPage-A66MLpOC.js")
 }, qo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-BZx4H3ln.js")
+	component: () => import("./TasksPage-BoIesrk0.js")
 }, Jo = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-QX5Il_dz.js")
+	component: () => import("./TranscodingSettingsPage-DIIUvJQ3.js")
 }, Yo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-BJHoLvJ6.js")
+	component: () => import("./SettingsPage-CMTi0PXF.js")
 }, Xo = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
@@ -1822,7 +1836,7 @@ var _o = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-C4u4K62f.js").then((e) => e.t)
+	component: () => import("./MetricsPage-is8V3ouo.js").then((e) => e.t)
 }, Qo = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
@@ -7353,7 +7367,8 @@ var av = {
 		signOut: "Cerrar sesión",
 		signIn: "Iniciar sesión",
 		switchProfile: "Cambiar de perfil",
-		manageProfiles: "Gestionar perfiles"
+		manageProfiles: "Gestionar perfiles",
+		playlists: "Listas"
 	},
 	profiles: {
 		whoIsWatching: "¿Quién está viendo?",
@@ -7387,6 +7402,8 @@ var av = {
 		searchLibrary: "Buscar “{query}” en la biblioteca",
 		goToBrowse: "Ir a Explorar",
 		goToSettings: "Ir a Ajustes",
+		goToSecuritySettings: "Ir a Ajustes de seguridad",
+		goToSessionSettings: "Ir a Sesiones",
 		themeNocturne: "Tema: Nocturne",
 		themeDaylight: "Tema: Daylight",
 		themeMidnight: "Tema: Midnight",
@@ -7904,12 +7921,14 @@ var av = {
 		unknownDevice: "Dispositivo desconocido",
 		created: "Sesión iniciada el {date}",
 		lastUsed: "Usado por última vez el {date}",
+		lastUsedAt: "Usado por última vez el {date}, {time} (hora del servidor)",
 		refresh: "Actualizar",
 		loading: "Cargando sesiones…",
 		revoke: "Cerrar sesión",
 		revokeDevice: "Cerrar sesión en {device}",
 		revokeAll: "Cerrar otras sesiones",
 		revokeConfirm: "¿Cerrar esta sesión? El dispositivo tendrá que iniciar sesión otra vez.",
+		revokeConfirmDevice: "¿Cerrar la sesión de {device}? El dispositivo tendrá que iniciar sesión otra vez.",
 		revokeAllConfirm: "¿Cerrar {count} otra sesión? Ese dispositivo tendrá que iniciar sesión otra vez. | ¿Cerrar las otras {count} sesiones? Todos los dispositivos excepto este tendrán que iniciar sesión otra vez.",
 		revokeSuccess: "Sesión cerrada en ese dispositivo.",
 		revokeError: "No se pudo cerrar esa sesión.",
@@ -7918,7 +7937,7 @@ var av = {
 		loadErrorTitle: "No se pudieron cargar las sesiones",
 		loadError: "No se pudieron cargar tus sesiones. Comprueba la conexión e inténtalo de nuevo.",
 		emptyTitle: "No hay sesiones activas",
-		emptyDescription: "Ningún dispositivo ha iniciado sesión en esta cuenta."
+		emptyDescription: "No se devolvió ninguna sesión. Actualiza para volver a comprobar."
 	},
 	explore: { title: "Explorar similares" },
 	recommendations: { title: "Para ti" },
@@ -8047,7 +8066,8 @@ var av = {
 		signOut: "Se déconnecter",
 		signIn: "Se connecter",
 		switchProfile: "Changer de profil",
-		manageProfiles: "Gérer les profils"
+		manageProfiles: "Gérer les profils",
+		playlists: "Playlists"
 	},
 	profiles: {
 		whoIsWatching: "Qui regarde ?",
@@ -8081,6 +8101,8 @@ var av = {
 		searchLibrary: "Rechercher « {query} » dans la médiathèque",
 		goToBrowse: "Aller à Parcourir",
 		goToSettings: "Aller aux Paramètres",
+		goToSecuritySettings: "Aller aux paramètres de sécurité",
+		goToSessionSettings: "Aller aux Sessions",
 		themeNocturne: "Thème : Nocturne",
 		themeDaylight: "Thème : Daylight",
 		themeMidnight: "Thème : Midnight",
@@ -8598,12 +8620,14 @@ var av = {
 		unknownDevice: "Appareil inconnu",
 		created: "Connecté le {date}",
 		lastUsed: "Dernière utilisation le {date}",
+		lastUsedAt: "Dernière utilisation le {date}, {time} (heure du serveur)",
 		refresh: "Actualiser",
 		loading: "Chargement des sessions…",
 		revoke: "Déconnecter",
 		revokeDevice: "Déconnecter {device}",
 		revokeAll: "Déconnecter les autres",
 		revokeConfirm: "Déconnecter cette session ? L’appareil devra se reconnecter.",
+		revokeConfirmDevice: "Déconnecter {device} ? L’appareil devra se reconnecter.",
 		revokeAllConfirm: "Déconnecter {count} autre session ? Cet appareil devra se reconnecter. | Déconnecter les {count} autres sessions ? Tous les appareils sauf celui-ci devront se reconnecter.",
 		revokeSuccess: "Appareil déconnecté.",
 		revokeError: "Impossible de déconnecter cette session.",
@@ -8612,7 +8636,7 @@ var av = {
 		loadErrorTitle: "Impossible de charger les sessions",
 		loadError: "Impossible de charger vos sessions. Vérifiez la connexion et réessayez.",
 		emptyTitle: "Aucune session active",
-		emptyDescription: "Aucun appareil n’est connecté à ce compte."
+		emptyDescription: "Aucune session n’a été renvoyée. Actualisez pour vérifier à nouveau."
 	},
 	explore: { title: "Titres similaires" },
 	recommendations: { title: "Pour vous" },
@@ -8741,7 +8765,8 @@ var av = {
 		signOut: "Abmelden",
 		signIn: "Anmelden",
 		switchProfile: "Profil wechseln",
-		manageProfiles: "Profile verwalten"
+		manageProfiles: "Profile verwalten",
+		playlists: "Playlists"
 	},
 	profiles: {
 		whoIsWatching: "Wer schaut zu?",
@@ -8775,6 +8800,8 @@ var av = {
 		searchLibrary: "Mediathek nach „{query}“ durchsuchen",
 		goToBrowse: "Zu Stöbern gehen",
 		goToSettings: "Zu den Einstellungen gehen",
+		goToSecuritySettings: "Zu den Sicherheitseinstellungen gehen",
+		goToSessionSettings: "Zu den Sitzungen gehen",
 		themeNocturne: "Theme: Nocturne",
 		themeDaylight: "Theme: Daylight",
 		themeMidnight: "Theme: Midnight",
@@ -9292,12 +9319,14 @@ var av = {
 		unknownDevice: "Unbekanntes Gerät",
 		created: "Angemeldet am {date}",
 		lastUsed: "Zuletzt verwendet am {date}",
+		lastUsedAt: "Zuletzt verwendet am {date}, {time} Uhr (Serverzeit)",
 		refresh: "Aktualisieren",
 		loading: "Sitzungen werden geladen…",
 		revoke: "Abmelden",
 		revokeDevice: "{device} beenden",
 		revokeAll: "Andere beenden",
 		revokeConfirm: "Diese Sitzung beenden? Das Gerät muss sich erneut anmelden.",
+		revokeConfirmDevice: "{device} abmelden? Das Gerät muss sich erneut anmelden.",
 		revokeAllConfirm: "{count} andere Sitzung beenden? Dieses Gerät muss sich erneut anmelden. | Alle {count} anderen Sitzungen beenden? Jedes Gerät außer diesem muss sich erneut anmelden.",
 		revokeSuccess: "Sitzung beendet.",
 		revokeError: "Die Sitzung konnte nicht beendet werden.",
@@ -9306,7 +9335,7 @@ var av = {
 		loadErrorTitle: "Sitzungen konnten nicht geladen werden",
 		loadError: "Die Sitzungen konnten nicht geladen werden. Verbindung prüfen und erneut versuchen.",
 		emptyTitle: "Keine aktiven Sitzungen",
-		emptyDescription: "In diesem Konto sind keine Geräte angemeldet."
+		emptyDescription: "Es wurden keine Sitzungen zurückgegeben. Aktualisiere, um erneut zu prüfen."
 	},
 	explore: { title: "Ähnliches entdecken" },
 	recommendations: { title: "Für dich" },
@@ -9435,7 +9464,8 @@ var av = {
 		signOut: "Esci",
 		signIn: "Accedi",
 		switchProfile: "Cambia profilo",
-		manageProfiles: "Gestisci profili"
+		manageProfiles: "Gestisci profili",
+		playlists: "Playlist"
 	},
 	profiles: {
 		whoIsWatching: "Chi sta guardando?",
@@ -9469,6 +9499,8 @@ var av = {
 		searchLibrary: "Cerca “{query}” nella libreria",
 		goToBrowse: "Vai a Sfoglia",
 		goToSettings: "Vai a Impostazioni",
+		goToSecuritySettings: "Vai a Impostazioni di sicurezza",
+		goToSessionSettings: "Vai a Sessioni",
 		themeNocturne: "Tema: Nocturne",
 		themeDaylight: "Tema: Daylight",
 		themeMidnight: "Tema: Midnight",
@@ -9986,12 +10018,14 @@ var av = {
 		unknownDevice: "Dispositivo sconosciuto",
 		created: "Accesso eseguito il {date}",
 		lastUsed: "Ultimo utilizzo il {date}",
+		lastUsedAt: "Ultimo utilizzo il {date}, {time} (ora del server)",
 		refresh: "Aggiorna",
 		loading: "Caricamento sessioni…",
 		revoke: "Esci",
 		revokeDevice: "Esci da {device}",
 		revokeAll: "Esci dalle altre",
 		revokeConfirm: "Uscire da questa sessione? Il dispositivo dovrà eseguire di nuovo l’accesso.",
+		revokeConfirmDevice: "Uscire da {device}? Il dispositivo dovrà eseguire di nuovo l’accesso.",
 		revokeAllConfirm: "Uscire da {count} altra sessione? Quel dispositivo dovrà eseguire di nuovo l’accesso. | Uscire da tutte le altre {count} sessioni? Tutti i dispositivi tranne questo dovranno eseguire di nuovo l’accesso.",
 		revokeSuccess: "Dispositivo disconnesso.",
 		revokeError: "Impossibile disconnettere la sessione.",
@@ -10000,7 +10034,7 @@ var av = {
 		loadErrorTitle: "Impossibile caricare le sessioni",
 		loadError: "Impossibile caricare le sessioni. Controlla la connessione e riprova.",
 		emptyTitle: "Nessuna sessione attiva",
-		emptyDescription: "Nessun dispositivo ha eseguito l’accesso a questo account."
+		emptyDescription: "Nessuna sessione restituita. Aggiorna per ricontrollare."
 	},
 	explore: { title: "Esplora simili" },
 	recommendations: { title: "Per te" },
@@ -10129,7 +10163,8 @@ var av = {
 		signOut: "Sair",
 		signIn: "Entrar",
 		switchProfile: "Trocar de perfil",
-		manageProfiles: "Gerenciar perfis"
+		manageProfiles: "Gerenciar perfis",
+		playlists: "Playlists"
 	},
 	profiles: {
 		whoIsWatching: "Quem está assistindo?",
@@ -10163,6 +10198,8 @@ var av = {
 		searchLibrary: "Pesquisar “{query}” na biblioteca",
 		goToBrowse: "Ir para Navegar",
 		goToSettings: "Ir para Configurações",
+		goToSecuritySettings: "Ir para Configurações de segurança",
+		goToSessionSettings: "Ir para Sessões",
 		themeNocturne: "Tema: Nocturne",
 		themeDaylight: "Tema: Daylight",
 		themeMidnight: "Tema: Midnight",
@@ -10680,12 +10717,14 @@ var av = {
 		unknownDevice: "Dispositivo desconhecido",
 		created: "Conectado em {date}",
 		lastUsed: "Usado pela última vez em {date}",
+		lastUsedAt: "Usado pela última vez em {date}, {time} (horário do servidor)",
 		refresh: "Atualizar",
 		loading: "Carregando sessões…",
 		revoke: "Encerrar sessão",
 		revokeDevice: "Encerrar sessão em {device}",
 		revokeAll: "Encerrar outras sessões",
 		revokeConfirm: "Encerrar esta sessão? O dispositivo precisará fazer login novamente.",
+		revokeConfirmDevice: "Encerrar a sessão de {device}? O dispositivo precisará fazer login novamente.",
 		revokeAllConfirm: "Encerrar {count} outra sessão? Esse dispositivo precisará fazer login novamente. | Encerrar as outras {count} sessões? Todos os dispositivos, exceto este, precisarão fazer login novamente.",
 		revokeSuccess: "Dispositivo desconectado.",
 		revokeError: "Não foi possível encerrar essa sessão.",
@@ -10694,7 +10733,7 @@ var av = {
 		loadErrorTitle: "Não foi possível carregar as sessões",
 		loadError: "Não foi possível carregar suas sessões. Verifique a conexão e tente novamente.",
 		emptyTitle: "Nenhuma sessão ativa",
-		emptyDescription: "Nenhum dispositivo está conectado a esta conta."
+		emptyDescription: "Nenhuma sessão foi retornada. Atualize para verificar de novo."
 	},
 	explore: { title: "Explorar semelhantes" },
 	recommendations: { title: "Para você" },
@@ -10823,7 +10862,8 @@ var av = {
 		signOut: "サインアウト",
 		signIn: "サインイン",
 		switchProfile: "プロフィールを切り替える",
-		manageProfiles: "プロフィールの管理"
+		manageProfiles: "プロフィールの管理",
+		playlists: "プレイリスト"
 	},
 	profiles: {
 		whoIsWatching: "だれが視聴していますか？",
@@ -10857,6 +10897,8 @@ var av = {
 		searchLibrary: "「{query}」をライブラリで検索",
 		goToBrowse: "ブラウズへ移動",
 		goToSettings: "設定へ移動",
+		goToSecuritySettings: "セキュリティ設定へ移動",
+		goToSessionSettings: "セッションへ移動",
 		themeNocturne: "テーマ：Nocturne",
 		themeDaylight: "テーマ：Daylight",
 		themeMidnight: "テーマ：Midnight",
@@ -11374,12 +11416,14 @@ var av = {
 		unknownDevice: "不明なデバイス",
 		created: "{date} にサインイン",
 		lastUsed: "最終利用 {date}",
+		lastUsedAt: "最終利用 {date} {time}（サーバー時間）",
 		refresh: "更新",
 		loading: "セッションを読み込んでいます…",
 		revoke: "サインアウト",
 		revokeDevice: "{device} からサインアウト",
 		revokeAll: "その他をサインアウト",
 		revokeConfirm: "このセッションをサインアウトしますか？ そのデバイスは再度サインインする必要があります。",
+		revokeConfirmDevice: "{device} をサインアウトしますか？ そのデバイスは再度サインインする必要があります。",
 		revokeAllConfirm: "他の {count} 件のセッションをサインアウトしますか？ このデバイス以外のすべてのデバイスが再度サインインする必要があります。",
 		revokeSuccess: "デバイスをサインアウトしました。",
 		revokeError: "セッションをサインアウトできませんでした。",
@@ -11388,7 +11432,7 @@ var av = {
 		loadErrorTitle: "セッションを読み込めません",
 		loadError: "セッションを読み込めませんでした。接続を確認してもう一度お試しください。",
 		emptyTitle: "アクティブなセッションはありません",
-		emptyDescription: "このアカウントにサインインしているデバイスはありません。"
+		emptyDescription: "セッションが返されませんでした。更新して再確認してください。"
 	},
 	explore: { title: "類似作品を探す" },
 	recommendations: { title: "あなたへのおすすめ" },
@@ -11482,7 +11526,7 @@ var av = {
 	it: cv,
 	pt_BR: lv,
 	ja: uv
-}, fv = fr(() => import("./MediaDetail-OjQPJbC1.js").then((e) => e.n)), pv = fr(() => import("./MetadataMatchModal-DTUQuLST.js").then((e) => e.n)), mv = fr(() => import("./FilterBar-Ct79dnq3.js").then((e) => e.n)), hv = fr(() => import("./SearchPage-mmhDxF-X.js"));
+}, fv = fr(() => import("./MediaDetail-BYevb06a.js").then((e) => e.n)), pv = fr(() => import("./MetadataMatchModal-BpKtQ4w6.js").then((e) => e.n)), mv = fr(() => import("./FilterBar-DQVba86k.js").then((e) => e.n)), hv = fr(() => import("./SearchPage-BuXtXDTM.js"));
 export { S as ACTIVE_PROFILE_KEY, nn as ALL_LOGS, Ad as AcceptInvitePage, yn as AdminBackupApi, bn as AdminCastApi, wn as AdminCollectionsApi, rn as AdminDashboardApi, xn as AdminDlnaServerApi, Tn as AdminHistoryApi, Bn as AdminHubDashboardApi, vn as AdminIntegrationsApi, kn as AdminLibrariesApi, Cn as AdminLiveTvApi, tn as AdminLogsApi, zn as AdminMaintenanceApi, en as AdminMetadataSourcesApi, In as AdminPluginsApi, Sn as AdminRemoteAccessApi, _n as AdminServicesApi, An as AdminSettingsApi, En as AdminSyncPlayApi, pn as AdminUsersApi, gn as AdminWebhooksApi, ht as ApiClient, $e as ApiError, e as AppBackdrop, ni as AppLayout, Gh as AudiobookDetailPage, Tg as AudiobookPlayerPage, hh as AudiobooksPage, De as BUILT_IN_THEME_IDS, N as Badge, Im as BookDetailPage, eh as BookReaderPage, hm as BooksPage, j as Button, kt as CONNECTION_API_BASE_KEY, Tt as CONNECTION_CONFIRMED_ORIGIN_KEY, ka as CURRENT_SERVER_ID_KEY, Aa as CURRENT_SERVER_NAME_KEY, Rt as Chip, Bt as Combobox, Ht as ConfirmDialog, ft as CookieTokenStore, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, ln as DEFAULT_THROTTLE_BPS, sv as DE_MESSAGES, je as DeviceSessionsPage, ot as ERROR_MESSAGES, et as ERROR_TITLES, av as ES_MESSAGES, A as EmptyState, Ae as FOCUS_RING_MIN_CONTRAST, ov as FR_MESSAGES, xl as FederationPage, Wl as FederationSharesPage, mv as FilterBar, _t as GENERIC_ERROR_MESSAGE, Fa as HUB_SYNC_PLAY_PORT, wo as HelpPopover, Jt as HelpText, cv as IT_MESSAGES, l as Icon, t as IconButton, xd as InviteLinksPage, uv as JA_MESSAGES, Be as Kbd, Dn as LIBRARY_TYPES, dv as LOCALE_MESSAGES, Fs as LibraryScanPage, lt as LocalStorageTokenStore, Un as LoginForm, Ln as MAINTENANCE_ENDPOINTS, Rn as MAINTENANCE_TASK_NAMES, ve as MAX_EXTENDS_DEPTH, ro as MCP_TOKENS_ROUTE_NAME, io as MCP_TOKENS_ROUTE_PATH, ut as MUSIC_PAGE_SIZE, eu as ManageSharesPage, Xt as MediaCard, fv as MediaDetail, Zt as MediaGrid, Je as MediaHomeRow, Qt as MediaRow, qt as Menu, pv as MetadataMatchModal, Vt as Modal, Zd as MusicAlbumPage, zf as MusicArtistPage, _f as MusicArtistsPage, tm as MusicPlayerPage, wp as MusicTracksPage, tc as MyServersPage, Xe as NetworkError, Pn as PLUGIN_SECRET_MASK, Qn as PLURAL_CATEGORIES, dn as PROFILE_LAST_ERROR_CODE, sn as PROFILE_LAST_ERROR_TEXT, lv as PT_BR_MESSAGES, Gt as PageHint, vo as PageTransition, Ta as PhlixApp, s_ as PhotoAlbumPage, Kg as PhotoAlbumsPage, G_ as PhotoSlideshowPage, A_ as PhotoViewPage, Cs as ProfileImageSettings, an as RATING_LABELS, un as RATING_MAX, fn as RATING_OPTIONS, er as REQUEST_SEARCH_DEBOUNCE_MS, te as RESUME_MAX_RATIO, O as RESUME_MIN_SECONDS, we as RING_GROUND_KEYS, Do as RatingBadge, Uu as RequestsPage, _o as Reveal, On as SCAN_JOB_TYPES, jn as SETTINGS_SECRET_MASK, He as SORT_TITLE_ARTICLES, mn as SUBSCRIBABLE_EVENTS, hv as SearchPage, Ee as SecuritySettingsPage, zt as Select, cl as ServerDetailPage, mu as SharedWithMePage, Kr as Sheet, Wn as SignupForm, P as Skeleton, It as Slider, $t as SourcePriorityEditor, Wt as Spinner, Lt as Switch, Me as THEME_CACHE_KEY, ye as THEME_TOKEN_ALLOWLIST, on as THROTTLE_BPS_LEVELS, cn as THROTTLE_BPS_OPTIONS, pt as TMDB_UNCONFIGURED_CODE, Kt as Tabs, re as ThumbRating, vt as TimeoutError, Xi as ToastHost, Ut as Tooltip, ko as UserRatingPicker, hn as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, be as activeThemeStyle, ds as adminMenu, sa as applyStoredThemeEarly, Oe as applyThemeTokens, Q_ as bestCandidate, K_ as bindMediaStoreToRouter, cs as buildAdminRoutes, us as buildHubAdminRoutes, Ba as buildHubRelayUrl, Hn as buildMediaQuery, Vn as buildMediaUrl, ls as buildServerAdminRoutes, Te as clearThemeTokens, Ya as closeHubRelayConnection, rs as commonAdminPages, Ve as compareByStrippedTitle, Se as compositedContrastOver, go as createPhlixApp, _ as createTranslator, $n as debounce, ia as deriveAccentVars, M as errMessage, bt as errorCodeMessage, nt as errorCodeTitle, Ue as fetchLibraries, ge as fetchThemes, xe as focusRingLawViolation, o as focusable, r as focusableRegistry, Ft as formatPageTitle, Re as fuzzyScore, mt as getDefaultApiHeaders, Xa as getHubRelaySocket, p as hasStoredPreferences, as as hubAdminPages, n as installFocusable, Dt as isAllowedBase, he as isAllowedThemeToken, Ne as isBuiltInThemeId, Qe as isOffline, Ct as isPlaintextPublic, Jn as isPluralTemplate, xt as isPrivateHost, yt as isRegisteredErrorCode, w as isRewritableImagePath, Ie as isSafeThemeTokenValue, rt as isTmdbUnconfigured, ze as matchCommand, ao as mcpTokensMenuItem, h as mergeMessages, Et as normalizeBase, _e as normalizeServerTheme, Ka as openHubRelayConnection, Ot as originOf, Ra as parsePendingCommandFrame, Fe as parseThemeColor, Oa as phlixUiVersion, Fn as pluginErrorCode, Nn as pluginValidationErrors, Xn as plural, qn as pluralCategory, Kn as pluralCount, Yn as pluralize, St as probeServer, pe as readCachedTheme, d as readStoredPreferences, q_ as rectCenter, gt as resetCookieSessionProbe, T as resolveImageSrc, C as resolveImageSrcset, de as resolveThemeBase, Pe as resolveThemeTokens, st as resolveTokenStoreMode, Ye as safeHref, me as sanitizeThemeTokens, Zn as selectPluralTemplate, is as serverAdminPages, Nt as setAppName, it as setDefaultApiHeaders, at as setDefaultTokenStore, Pt as setPageTitle, Ge as sortLibraries, We as stripLeadingArticle, ae as useApiBase, y as useAuthStore, la as useCommandPaletteHotkey, Le as useCommandStore, wt as useConnectionStore, i as useFocusTrap, E as useImageSrc, Ke as useLibrariesStore, k as useMediaApiBase, or as useMediaStore, v as useMessages, iv as useOnline, Mt as usePageTitle, D as usePlayerStore, ma as usePreconnect, u as usePreferencesStore, Yt as usePrefetch, x as useProfileStore, va as useResumeReporter, qe as useResumeSync, Pa as useServerStore, Mn as useSettingsPrefsStore, rv as useSpatialNav, ca as useTheme, Ce as useThemesStore, ue as useToastStore, ne as useUserItemDataStore, At as withScheme, fe as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

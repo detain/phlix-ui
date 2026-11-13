@@ -88,6 +88,7 @@ export const DEFAULT_MESSAGES = {
     signIn: 'Sign in',
     switchProfile: 'Switch profile',
     manageProfiles: 'Manage profiles',
+    playlists: 'Playlists',
   },
   // S82 — the Who's-watching gate + the self-service profiles surface.
   profiles: {

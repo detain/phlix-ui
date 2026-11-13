@@ -72,8 +72,8 @@ describe('UserMenu — signed in', () => {
     expect(panel.text()).toContain('Ada');
     expect(panel.text()).toContain('Settings');
     expect(panel.text()).toContain('Sign out');
-    // Menu order (S82): History, Switch profile, Manage profiles, Settings, Sign out.
-    await panel.findAll('.usermenu__item')[3].trigger('click');
+    // Menu order (S82 + UI-S25): History, Playlists, Switch profile, Manage profiles, Settings, Sign out.
+    await panel.findAll('.usermenu__item')[4].trigger('click');
     expect(push).toHaveBeenCalledWith('/app/settings');
   });
 
@@ -182,6 +182,13 @@ describe('UserMenu — profile entries (S82)', () => {
     expect(push).toHaveBeenCalledWith('/app/profiles');
   });
 
+  it('Playlists entry routes to the playlists page under the router base (UI-S25)', async () => {
+    const { w, push } = mountMenu(true);
+    await w.get('.usermenu__trigger').trigger('click');
+    await w.get('[data-testid="usermenu-playlists"]').trigger('click');
+    expect(push).toHaveBeenCalledWith('/app/playlists');
+  });
+
   it('does not render the profile entries when signed out', async () => {
     const { w } = mountMenu(false);
     await w.get('.usermenu__trigger').trigger('click');
@@ -227,8 +234,8 @@ describe('UserMenu — profile arms respect the feature flag (S462)', () => {
     expect(panel.text()).not.toContain('Manage profiles');
     // Collateral check: the rest of the menu is the plain signed-in list.
     const items = panel.findAll('.usermenu__item');
-    expect(items).toHaveLength(3);
-    expect(items.map((i) => i.text())).toEqual(['Watch history', 'Settings', 'Sign out']);
+    expect(items).toHaveLength(4);
+    expect(items.map((i) => i.text())).toEqual(['Watch history', 'Playlists', 'Settings', 'Sign out']);
   });
 
   it('hides both arms on the hub (app: hub, no explicit features flag)', async () => {

@@ -83,6 +83,7 @@ export declare const DEFAULT_MESSAGES: {
         signIn: string;
         switchProfile: string;
         manageProfiles: string;
+        playlists: string;
     };
     profiles: {
         whoIsWatching: string;
@@ -116,6 +117,8 @@ export declare const DEFAULT_MESSAGES: {
         searchLibrary: string;
         goToBrowse: string;
         goToSettings: string;
+        goToSecuritySettings: string;
+        goToSessionSettings: string;
         themeNocturne: string;
         themeDaylight: string;
         themeMidnight: string;
@@ -697,12 +700,14 @@ export declare const DEFAULT_MESSAGES: {
         unknownDevice: string;
         created: string;
         lastUsed: string;
+        lastUsedAt: string;
         refresh: string;
         loading: string;
         revoke: string;
         revokeDevice: string;
         revokeAll: string;
         revokeConfirm: string;
+        revokeConfirmDevice: string;
         revokeAllConfirm: string;
         revokeSuccess: string;
         revokeError: string;

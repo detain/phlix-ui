@@ -3217,7 +3217,8 @@ var pn = {
 		signOut: "Sign out",
 		signIn: "Sign in",
 		switchProfile: "Switch profile",
-		manageProfiles: "Manage profiles"
+		manageProfiles: "Manage profiles",
+		playlists: "Playlists"
 	},
 	profiles: {
 		whoIsWatching: "Who’s watching?",
@@ -3251,6 +3252,8 @@ var pn = {
 		searchLibrary: "Search library for “{query}”",
 		goToBrowse: "Go to Browse",
 		goToSettings: "Go to Settings",
+		goToSecuritySettings: "Go to Security settings",
+		goToSessionSettings: "Go to Sessions",
 		themeNocturne: "Theme: Nocturne",
 		themeDaylight: "Theme: Daylight",
 		themeMidnight: "Theme: Midnight",
@@ -3712,7 +3715,7 @@ var pn = {
 	},
 	settings: {
 		theme: "Theme",
-		themeCatalogueUnavailable: "Theme catalogue unavailable — showing the built-in themes.",
+		themeCatalogueUnavailable: "Theme catalog unavailable — showing the built-in themes.",
 		themeSavedLocally: "Saved on this device only — the server could not store it.",
 		accent: "Accent",
 		accentColor: "Accent color",
@@ -3768,12 +3771,14 @@ var pn = {
 		unknownDevice: "Unknown device",
 		created: "Signed in {date}",
 		lastUsed: "Last used {date}",
+		lastUsedAt: "Last used {date}, {time} (server time)",
 		refresh: "Refresh",
 		loading: "Loading sessions…",
 		revoke: "Sign out",
 		revokeDevice: "Sign out {device}",
 		revokeAll: "Sign out others",
 		revokeConfirm: "Sign out this session? The device will need to sign in again.",
+		revokeConfirmDevice: "Sign out {device}? The device will need to sign in again.",
 		revokeAllConfirm: "Sign out {count} other session? That device will need to sign in again. | Sign out all {count} other sessions? Every device except this one will need to sign in again.",
 		revokeSuccess: "Signed out of that device.",
 		revokeError: "Couldn’t sign out that session.",
@@ -3782,7 +3787,7 @@ var pn = {
 		loadErrorTitle: "Couldn’t load sessions",
 		loadError: "Couldn’t load your sessions. Check your connection and try again.",
 		emptyTitle: "No active sessions",
-		emptyDescription: "No devices are signed in to this account."
+		emptyDescription: "No sessions were returned. Refresh to check again."
 	},
 	explore: { title: "Explore similar titles" },
 	recommendations: { title: "For you" },

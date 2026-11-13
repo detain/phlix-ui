@@ -142,6 +142,12 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
     }
   });
 
+  it('registers the playlists routes at the nav/menu/palette target paths (UI-S25)', () => {
+    const routes = buildRoutes({ app: 'server', apiBase: '', routerBase: '/app' });
+    const list = routes.find((r) => r.name === 'playlists');
+    expect(list?.path).toBe('/app/playlists');
+  });
+
   it('each built-in lazy loader resolves to a real SFC module (default export)', async () => {
     // Mock all the page components to avoid actual file system imports in jsdom.
     // Each vi.mock() is hoisted to the top of the file, so we define inline factories.

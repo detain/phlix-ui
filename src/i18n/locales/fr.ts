@@ -76,6 +76,7 @@ export const FR_MESSAGES = {
     signIn: 'Se connecter',
     switchProfile: 'Changer de profil',
     manageProfiles: 'Gérer les profils',
+    playlists: 'Playlists',
   },
   profiles: {
     whoIsWatching: 'Qui regarde ?',

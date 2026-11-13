@@ -174,7 +174,7 @@ describe('PhlixApp — menu from config', () => {
     wrapper = await mountApp({ app: 'server', apiBase: '', routerBase: '/app' });
     const labels = wrapper.findAll('.nav-link').map((l) => l.text());
     // Default menu includes Browse, For you, Explore, SyncPlay, Music, Settings
-    expect(labels).toEqual(['Browse', 'For you', 'Explore', 'SyncPlay', 'Music', 'Settings']);
+    expect(labels).toEqual(['Browse', 'For you', 'Explore', 'SyncPlay', 'Music', 'Playlists', 'Settings']);
   });
 
   it('marks the active nav link with aria-current="page" (R6.5a — exact-active only)', async () => {
@@ -192,7 +192,7 @@ describe('PhlixApp — menu from config', () => {
   it('tolerates a missing config injection', async () => {
     wrapper = await mountApp(null);
     expect(wrapper.find('.brand-wordmark').text()).toContain('Phlix');
-    expect(wrapper.findAll('.nav-link').map((l) => l.text())).toEqual(['Browse', 'For you', 'Explore', 'SyncPlay', 'Music', 'Settings']);
+    expect(wrapper.findAll('.nav-link').map((l) => l.text())).toEqual(['Browse', 'For you', 'Explore', 'SyncPlay', 'Music', 'Playlists', 'Settings']);
   });
 });
 

@@ -188,6 +188,16 @@ describe('CommandPalette — built-in commands', () => {
     expect(router.currentRoute.value.name).toBe('settings');
   });
 
+  it('the Playlists nav command pushes the playlists route (UI-S25)', async () => {
+    router.addRoute({ name: 'playlists', path: '/playlists', component: { template: '<div />' } });
+    wrapper = await mountPalette();
+    const store = useCommandStore();
+    expect(store.all.map((c) => c.id)).toContain('nav.playlists');
+    await store.runId('nav.playlists');
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe('playlists');
+  });
+
   it('unregisters its commands on unmount', async () => {
     wrapper = await mountPalette();
     const store = useCommandStore();

@@ -73,6 +73,7 @@ export const JA_MESSAGES = {
     signIn: 'サインイン',
     switchProfile: 'プロフィールを切り替える',
     manageProfiles: 'プロフィールの管理',
+    playlists: 'プレイリスト',
   },
   profiles: {
     whoIsWatching: 'だれが視聴していますか？',

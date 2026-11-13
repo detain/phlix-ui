@@ -72,6 +72,7 @@ export const PT_BR_MESSAGES = {
     signIn: 'Entrar',
     switchProfile: 'Trocar de perfil',
     manageProfiles: 'Gerenciar perfis',
+    playlists: 'Playlists',
   },
   profiles: {
     whoIsWatching: 'Quem está assistindo?',

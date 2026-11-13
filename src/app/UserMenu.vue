@@ -189,6 +189,10 @@ onBeforeUnmount(() => {
         <button type="button" class="usermenu__item" role="menuitem" @click="go(`${homePath}/history`)">
           <Icon name="film" /> {{ t('shell.watchHistory') }}
         </button>
+        <button type="button" class="usermenu__item" role="menuitem" data-testid="usermenu-playlists"
+          @click="go(`${homePath}/playlists`)">
+          <Icon name="list" /> {{ t('shell.playlists') }}
+        </button>
         <!-- S82 profile entries, S462-gated on the profiles feature flag. "Switch
              Profile" re-arms the Who's-watching gate (its own >1-profile condition
              decides whether it actually shows); "Manage Profiles" routes to the
