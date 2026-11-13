@@ -2872,7 +2872,7 @@ var Ui = { class: "player__stage" }, Wi = ["src", "poster"], Gi = [
 					duration: 3e3
 				});
 			}
-		}, { enabled: () => !ie.value && !Wt.value && !$t.value && !ge.value && !nn.value });
+		}, { enabled: () => !ie.value && !Wt.value && !$t.value && !ge.value && !nn.value && !$e.value });
 		function Zn() {
 			c.toggleMute();
 		}
@@ -3379,7 +3379,7 @@ var Ui = { class: "player__stage" }, Wi = ["src", "poster"], Gi = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-eed49437"]]), ja = "blur(3px) saturate(1.35)";
+}), [["__scopeId", "data-v-97422d11"]]), ja = "blur(3px) saturate(1.35)";
 async function Ma(e, t = document, n = 16 / 9) {
 	try {
 		let r = new Image();
@@ -3677,4 +3677,4 @@ var Na = { class: "player-page__stage" }, Pa = {
 }), [["__scopeId", "data-v-794d4505"]]);
 export { Ia as default };
 
-//# sourceMappingURL=PlayerPage-Ba8zltA4.js.map
+//# sourceMappingURL=PlayerPage-Nszxc7Yg.js.map

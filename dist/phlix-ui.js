@@ -1355,7 +1355,7 @@ function ho(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-Ba8zltA4.js")
+			component: () => import("./PlayerPage-Nszxc7Yg.js")
 		},
 		{
 			path: `${t}/login`,
@@ -6528,7 +6528,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 		return (e, t) => (q(), B("div", jg, [V("header", Mg, [V("div", Ng, [V("h1", Pg, [U(l, {
 			name: "image",
 			class: "title-icon"
-		}), t[0] ||= H(" Photo Albums ", -1)]), s.value ? (q(), B("p", Fg, X(s.value.name), 1)) : z("", !0)])]), u.value ? (q(), B("div", Ig, [U(Wt, { size: "large" }), t[1] ||= V("p", null, "Loading albums…", -1)])) : d.value ? (q(), R(A, {
+		}), t[0] ||= H(" Photo Albums ", -1)]), s.value ? (q(), B("p", Fg, X(s.value.name), 1)) : z("", !0)])]), u.value ? (q(), B("div", Ig, [U(Wt, { size: "md" }), t[1] ||= V("p", null, "Loading albums…", -1)])) : d.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: "Couldn’t load albums",
@@ -6584,7 +6584,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 			loading: "lazy"
 		}, null, 8, Ug)) : (q(), B("div", Wg, [U(l, { name: "image" })]))]), V("div", Gg, [V("h3", Kg, X(Z(kg)(e)), 1), V("p", qg, X(h(e.photo_count)), 1)])], 8, Vg))), 128))])]))), 128))]))]));
 	}
-}), [["__scopeId", "data-v-41871dd1"]]), Yg = { class: "photo-album-page" }, Xg = { class: "page-header" }, Zg = { class: "header-content" }, Qg = { class: "title-section" }, $g = { class: "page-title" }, e_ = {
+}), [["__scopeId", "data-v-f4af894c"]]), Yg = { class: "photo-album-page" }, Xg = { class: "page-header" }, Zg = { class: "header-content" }, Qg = { class: "title-section" }, $g = { class: "page-title" }, e_ = {
 	key: 0,
 	class: "photo-count"
 }, t_ = {
@@ -6670,7 +6670,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 				default: $(() => [U(l, { name: "play" }), t[1] ||= H(" Slideshow ", -1)]),
 				_: 1
 			})) : z("", !0)
-		])]), c.value ? (q(), B("div", t_, [U(Wt, { size: "large" }), t[2] ||= V("p", null, "Loading album…", -1)])) : u.value ? (q(), R(A, {
+		])]), c.value ? (q(), B("div", t_, [U(Wt, { size: "md" }), t[2] ||= V("p", null, "Loading album…", -1)])) : u.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: u.value
@@ -6731,7 +6731,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-3153f042"]]), u_ = { class: "photo-view-page" }, d_ = { class: "page-header" }, f_ = { class: "header-content" }, p_ = {
+}), [["__scopeId", "data-v-d5a9c6c8"]]), u_ = { class: "photo-view-page" }, d_ = { class: "page-header" }, f_ = { class: "header-content" }, p_ = {
 	key: 0,
 	class: "photo-name"
 }, m_ = { class: "header-actions" }, h_ = ["href"], g_ = {
@@ -6847,7 +6847,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 				default: $(() => [U(l, { name: "arrow-down" })]),
 				_: 1
 			})], 8, h_)) : z("", !0)])
-		])]), f.value ? (q(), B("div", g_, [U(Wt, { size: "large" }), t[1] ||= V("p", null, "Loading photo…", -1)])) : p.value ? (q(), R(A, {
+		])]), f.value ? (q(), B("div", g_, [U(Wt, { size: "md" }), t[1] ||= V("p", null, "Loading photo…", -1)])) : p.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: "Couldn’t load photo",
@@ -6918,7 +6918,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-300abdd1"]]), N_ = { class: "photo-slideshow-page" }, P_ = {
+}), [["__scopeId", "data-v-6360471e"]]), N_ = { class: "photo-slideshow-page" }, P_ = {
 	key: 0,
 	class: "loading-state"
 }, F_ = {
@@ -7052,7 +7052,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 			O(), window.removeEventListener("keydown", le);
 		}), Q([a, o], () => {
 			w();
-		}), (e, t) => (q(), B("div", N_, [d.value ? (q(), B("div", P_, [U(Wt, { size: "large" }), t[0] ||= V("p", null, "Loading slideshow…", -1)])) : f.value ? (q(), R(A, {
+		}), (e, t) => (q(), B("div", N_, [d.value ? (q(), B("div", P_, [U(Wt, { size: "md" }), t[0] ||= V("p", null, "Loading slideshow…", -1)])) : f.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: "Couldn’t load slideshow",
@@ -7165,7 +7165,7 @@ var jg = { class: "photo-albums-page" }, Mg = { class: "page-header" }, Ng = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-b353bafc"]]);
+}), [["__scopeId", "data-v-40a7b328"]]);
 // src/composables/useMediaUrlSync.ts
 function J_(e, t) {
 	let n = or(), r = !1;
