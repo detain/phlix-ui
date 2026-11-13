@@ -20,7 +20,7 @@
  * app-specific adornment. Keyboard-activatable (Enter on the link) and
  * reduced-motion safe.
  */
-import { computed, ref, onMounted, inject } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, inject } from 'vue';
 import { RouterLink, routerKey } from 'vue-router';
 import Icon from './Icon.vue';
 import ThumbRating from './ThumbRating.vue';
@@ -440,12 +440,25 @@ function prefetchTarget(): void {
  */
 const hovered = ref(false);
 const focused = ref(false);
-const coarsePointer =
-  typeof window !== 'undefined' &&
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(hover: none)').matches;
+const hoverNoneMq =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(hover: none)')
+    : null;
+// Reactive: hybrid (touch-mode toggling) devices flip without a remount.
+const coarsePointer = ref(hoverNoneMq?.matches ?? false);
+function onHoverMqChange(e: MediaQueryListEvent): void {
+  coarsePointer.value = e.matches;
+}
+onMounted(() => {
+  if (!hoverNoneMq) return;
+  coarsePointer.value = hoverNoneMq.matches;
+  hoverNoneMq.addEventListener?.('change', onHoverMqChange);
+});
+onBeforeUnmount(() => {
+  hoverNoneMq?.removeEventListener?.('change', onHoverMqChange);
+});
 const actionsVisible = computed(
-  () => !props.hideActions && (hovered.value || focused.value || coarsePointer),
+  () => !props.hideActions && (hovered.value || focused.value || coarsePointer.value),
 );
 
 function onPointerEnter(): void {
