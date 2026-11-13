@@ -375,7 +375,7 @@ const ES: PhlixErrorCatalog = {
   // ── proxy / quota / stream / gateway ──
   'proxy.scope_denied': 'Tu token de acceso no tiene el ámbito necesario para esta petición.',
   'quota.exceeded': 'Has alcanzado el límite de cuota de esta cuenta o servidor.',
-  'stream.limit': 'Has alcanzado el número máximo de transmisiones simultáneas.',
+  'stream.limit': 'Has alcanzado el número máximo de reproducciones simultáneas.',
   'stream.limit_exceeded':
     'Has alcanzado el límite de reproducciones simultáneas de este servidor. Detén una e inténtalo de nuevo.',
   'access.scheduled':
@@ -878,7 +878,7 @@ const DE: PhlixErrorCatalog = {
   'quota.exceeded': 'Du hast das Kontingentlimit dieses Kontos oder Servers erreicht.',
   'stream.limit': 'Du hast die höchste zulässige Anzahl gleichzeitiger Wiedergaben erreicht.',
   'stream.limit_exceeded':
-    'Du hast das Limit gleichzeitiger Streams auf diesem Server erreicht. Beende einen und versuche es erneut.',
+    'Du hast das Limit gleichzeitiger Wiedergaben auf diesem Server erreicht. Beende einen und versuche es erneut.',
   'access.scheduled':
     'Dieses Profil ist nur innerhalb seines geplanten Zeitfensters verfügbar. Versuche es später erneut.',
   'gateway.timeout': 'Das Hub-Gateway hat beim Warten auf deinen Server eine Zeitüberschreitung erreicht. Versuche es erneut.',
@@ -1111,7 +1111,7 @@ const IT: PhlixErrorCatalog = {
     'La chiave di firma del server non ha superato la verifica durante l’attivazione. Riprova.',
   'proxy.scope_denied': 'Il tuo token di accesso non ha l’ambito necessario per questa richiesta.',
   'quota.exceeded': 'Hai raggiunto il limite di quota per questo account o server.',
-  'stream.limit': 'Hai raggiunto il numero massimo di streaming simultanei.',
+  'stream.limit': 'Hai raggiunto il numero massimo di riproduzioni simultanee.',
   'stream.limit_exceeded':
     'Hai raggiunto il limite di riproduzioni simultanee su questo server. Fermane una e riprova.',
   'access.scheduled':
