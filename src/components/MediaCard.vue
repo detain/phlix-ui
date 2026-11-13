@@ -36,7 +36,7 @@ import { useToastStore } from '../stores/useToastStore';
 import { usePrefetch } from '../composables/usePrefetch';
 import { resolvePosterSources } from './media-poster';
 import { mediaTypeIcon } from '../utils/mediaTypeIcon';
-import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
+import { buildMediaItemMenu, MENU_KEYS } from './mediaItemMenu';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
 import { ApiClient } from '../api/client';
 import { pluralCount } from '../utils/plural';
@@ -253,13 +253,13 @@ const menuItems = computed(() => {
     isWatched: isWatched.value,
     isSeriesOrSeason: isSeriesOrSeason.value,
     canChoosePoster: isAdmin.value,
-  });
+  }, t);
 });
 
-function onMenuSelect(menuItem: { label: string }): void {
-  const L = MENU_LABELS;
+function onMenuSelect(menuItem: { key?: string; label: string }): void {
+  const L = MENU_KEYS;
   const toasts = useToastStore();
-  switch (menuItem.label) {
+  switch (menuItem.key) {
     case L.markWatched:
     case L.markUnwatched:
       onWatched();

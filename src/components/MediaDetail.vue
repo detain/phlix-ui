@@ -32,7 +32,7 @@ import Menu from './ui/Menu.vue';
 import Modal from './ui/Modal.vue';
 import Chip from './ui/Chip.vue';
 import MediaRow from './MediaRow.vue';
-import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
+import { buildMediaItemMenu, MENU_KEYS } from './mediaItemMenu';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
 import { ApiClient } from '../api/client';
 import { pluralCount } from '../utils/plural';
@@ -200,7 +200,7 @@ const menuItems = computed(() =>
     isWatched: isWatched.value,
     isSeriesOrSeason: isSeriesOrSeason.value,
     canChoosePoster: isAdmin.value,
-  }),
+  }, t),
 );
 
 // CU-092 parity with MediaCard: the shuffle endpoint is a pure picker — the
@@ -208,10 +208,10 @@ const menuItems = computed(() =>
 // the host mounted a player route; with no route, say only "queued".
 const router = inject(routerKey, null);
 
-function onMenuSelect(menuItem: { label: string }): void {
-  const L = MENU_LABELS;
+function onMenuSelect(menuItem: { key?: string; label: string }): void {
+  const L = MENU_KEYS;
   const toasts = useToastStore();
-  switch (menuItem.label) {
+  switch (menuItem.key) {
     case L.markWatched:
     case L.markUnwatched:
       onWatched();

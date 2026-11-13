@@ -16,7 +16,8 @@
  * `created_by = NULL` rows, so this list is exactly "mine + shared heritage".
  *
  * Copy is inline English, matching the member-flow precedent (the playlist
- * toasts/menu labels this page complements were never cataloged).
+ * toasts this page complements were never cataloged; the ⋯ menu labels now are —
+ * see itemActions.* / mediaItemMenu.ts).
  */
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';

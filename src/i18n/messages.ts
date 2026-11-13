@@ -405,6 +405,15 @@ export const DEFAULT_MESSAGES = {
     moreInfo: 'More info',
     moreActions: 'More actions',
     matchMetadata: 'Match metadata',
+    addToPlaylist: 'Add to playlist',
+    markUnwatched: 'Mark unwatched',
+    download: 'Download',
+    missingEpisodes: 'View missing episodes',
+    editMetadata: 'Edit metadata',
+    editImages: 'Edit images',
+    exploreData: 'Explore item data',
+    remove: 'Remove',
+    dangerSuffix: '{label} (danger)',
     // UI-m49 (review ui__webux): the optimistic write-failure toasts of
     // useUserItemDataStore — previously raw English literals shipped to all six
     // locales. 'Couldn’t …' voice per the m24 deprecation law, 'my list' word

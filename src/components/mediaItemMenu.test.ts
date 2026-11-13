@@ -6,8 +6,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildMediaItemMenu, MENU_LABELS } from './mediaItemMenu';
+import { buildMediaItemMenu as build, MENU_KEYS, MENU_LABELS } from './mediaItemMenu';
+import { createTranslator } from '../i18n/messages';
 import type { MediaItem } from '../types/media-item';
+
+const tEn = createTranslator();
+const buildMediaItemMenu = (item: MediaItem, c: Parameters<typeof build>[1]) => build(item, c, tEn);
 
 const makeItem = (overrides: Partial<MediaItem> = {}): MediaItem =>
   ({
@@ -27,7 +31,7 @@ const makeItem = (overrides: Partial<MediaItem> = {}): MediaItem =>
     ...overrides,
   } as MediaItem);
 
-const ctx = (over: Partial<Parameters<typeof buildMediaItemMenu>[1]> = {}) => ({
+const ctx = (over: Partial<Parameters<typeof build>[1]> = {}) => ({
   isAdmin: false,
   isWatched: false,
   isSeriesOrSeason: false,
@@ -124,5 +128,33 @@ describe('buildMediaItemMenu', () => {
     expect(buildMediaItemMenu(item, ctx({ isAdmin: false })).map((m) => m.label)).not.toContain(
       MENU_LABELS.remove,
     );
+  });
+});
+
+describe('buildMediaItemMenu — dispatch by key (UI-S10)', () => {
+  it('every item carries a stable key independent of its label', () => {
+    const items = buildMediaItemMenu(
+      makeItem({ canDelete: true } as Partial<MediaItem>),
+      ctx({ isAdmin: true, canChoosePoster: true, isSeriesOrSeason: true }),
+    );
+    expect(items.map((m) => m.key)).toEqual([
+      MENU_KEYS.addToPlaylist,
+      MENU_KEYS.markWatched,
+      MENU_KEYS.download,
+      MENU_KEYS.missingEpisodes,
+      MENU_KEYS.shuffle,
+      MENU_KEYS.matchMetadata,
+      MENU_KEYS.editMetadata,
+      MENU_KEYS.editImages,
+      MENU_KEYS.exploreData,
+      MENU_KEYS.remove,
+    ]);
+  });
+
+  it('labels come from the supplied translator while keys stay fixed', () => {
+    const tx = ((k: string) => `«${k}»`) as Parameters<typeof build>[2];
+    const items = build(makeItem(), ctx(), tx);
+    expect(items[0]).toMatchObject({ key: 'addToPlaylist', label: '«itemActions.addToPlaylist»' });
+    expect(items.find((m) => m.key === 'shuffle')?.label).toBe('«player.shuffle»');
   });
 });

@@ -22,6 +22,9 @@
  * Reduced-motion aware.
  */
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 function nextMenuIndex(items: readonly { disabled?: boolean }[], from: number, dir: 1 | -1): number {
   const n = items.length;
@@ -40,6 +43,8 @@ function edgeMenuIndex(items: readonly { disabled?: boolean }[], edge: 'first' |
 }
 
 export interface MenuItem {
+  /** Stable dispatch id — consumers switch on this, never on the (translated) label. */
+  key?: string;
   label: string;
   disabled?: boolean;
   danger?: boolean;
@@ -257,7 +262,7 @@ onBeforeUnmount(() => {
             role="menuitem"
             :tabindex="i === activeIndex ? 0 : -1"
             :aria-disabled="item.disabled || undefined"
-            :aria-label="item.danger ? item.label + ' (danger)' : item.label"
+            :aria-label="item.danger ? t('itemActions.dangerSuffix', { label: item.label }) : item.label"
             @click="selectItem(i)"
             @pointermove="!item.disabled && (activeIndex = i)"
           >

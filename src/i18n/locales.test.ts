@@ -122,6 +122,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
   fr: [
     'auth.emailPlaceholder',
     'common.notifications',
+    'itemActions.dangerSuffix',
     'music.album',
     'music.albumCount',
     'music.albums',
