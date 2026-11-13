@@ -480,6 +480,8 @@ export const ES_MESSAGES = {
     loading: 'Cargando lista…',
     removed: '“{name}” se quitó de la lista.',
     removeFailed: 'No se pudo quitar de la lista.',
+    undo: 'Deshacer',
+    restoreFailed: 'No se pudo restaurar en la lista.',
     deleted: 'Se eliminó la lista “{name}”.',
     deleteFailed: 'No se pudo eliminar la lista.',
     pickerChoice: 'Elección de lista',

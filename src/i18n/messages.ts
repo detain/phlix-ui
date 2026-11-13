@@ -581,6 +581,8 @@ export const DEFAULT_MESSAGES = {
     loading: 'Loading playlist…',
     removed: 'Removed “{name}” from the playlist.',
     removeFailed: 'Couldn’t remove from the playlist.',
+    undo: 'Undo',
+    restoreFailed: 'Couldn’t restore to the playlist.',
     deleted: 'Deleted playlist “{name}”.',
     deleteFailed: 'Couldn’t delete the playlist.',
     pickerChoice: 'Playlist choice',

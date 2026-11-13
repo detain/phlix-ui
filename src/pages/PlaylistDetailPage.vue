@@ -240,14 +240,32 @@ async function removeItem(item: MediaItem): Promise<void> {
   removingIds.value = new Set(removingIds.value).add(item.id);
   try {
     await getClient().removeFromPlaylist(playlist.id, item.id);
+    const index = items.value.findIndex((i) => i.id === item.id);
     items.value = items.value.filter((i) => i.id !== item.id);
-    toasts.success(t('playlist.removed', { name: item.name }));
+    // UI-56: single-item removal is one tap with no confirm dialog; the toast
+    // carries an Undo that re-adds through the same add path (addToPlaylist)
+    // and puts the tile back at its old position.
+    toasts.success(t('playlist.removed', { name: item.name }), {
+      action: { label: t('playlist.undo'), onClick: () => void undoRemove(playlist.id, item, index) },
+    });
   } catch (e) {
     toasts.error(t('playlist.removeFailed'), { message: errMessage(e) });
   } finally {
     const next = new Set(removingIds.value);
     next.delete(item.id);
     removingIds.value = next;
+  }
+}
+
+async function undoRemove(playlistId: string, item: MediaItem, index: number): Promise<void> {
+  try {
+    await getClient().addToPlaylist(playlistId, item.id);
+    if (collection.value?.id !== playlistId || items.value.some((i) => i.id === item.id)) return;
+    const next = items.value.slice();
+    next.splice(Math.min(Math.max(index, 0), next.length), 0, item);
+    items.value = next;
+  } catch (e) {
+    toasts.error(t('playlist.restoreFailed'), { message: errMessage(e) });
   }
 }
 

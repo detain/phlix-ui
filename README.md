@@ -488,7 +488,7 @@ nothing-matched label).
 
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
-648-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
+650-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
 equality on every ui tag since the `v0.99.5` era (now `v0.99.27`-era) — the catalog's
 205 error strings per locale (129 dotted registry entries plus 76 flat generic-message
 entries; 1,435 across the seven error catalogs) would churn every equality pin

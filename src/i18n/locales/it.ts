@@ -478,6 +478,8 @@ export const IT_MESSAGES = {
     loading: 'Caricamento della playlist…',
     removed: '“{name}” rimosso dalla playlist.',
     removeFailed: 'Impossibile rimuovere dalla playlist.',
+    undo: 'Annulla',
+    restoreFailed: 'Impossibile ripristinare nella playlist.',
     deleted: 'Playlist “{name}” eliminata.',
     deleteFailed: 'Impossibile eliminare la playlist.',
     pickerChoice: 'Scelta della playlist',

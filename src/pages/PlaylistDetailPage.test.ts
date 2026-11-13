@@ -82,6 +82,7 @@ function fakeClient(
     }),
     removeFromPlaylist: vi.fn().mockResolvedValue({ message: 'Item removed from collection' }),
     deletePlaylist: vi.fn().mockResolvedValue({ message: 'ok' }),
+    addToPlaylist: vi.fn().mockResolvedValue({ message: 'ok' }),
   } as unknown as ApiClient;
 }
 
@@ -172,6 +173,25 @@ describe('PlaylistDetailPage', () => {
 
     expect(client.removeFromPlaylist).toHaveBeenCalledWith('pl1', 'm1');
     expect(w.findAll('.media-card-stub').length).toBe(1);
+  });
+
+  it('remove toast carries Undo that re-adds via addToPlaylist and restores the tile in place (UI-56)', async () => {
+    const client = fakeClient();
+    const w = await mountPage(client, makeRouter());
+    await flushPromises();
+    const toasts = useToastStore();
+
+    await w.findAll('.playlist-detail__remove')[0].trigger('click');
+    await flushPromises();
+    expect(w.findAll('.media-card-stub').length).toBe(1);
+    const toast = toasts.toasts.find((x) => x.tone === 'success' && x.action !== undefined);
+    expect(toast?.action?.label).toBe('Undo');
+
+    toast?.action?.onClick();
+    await flushPromises();
+    expect(client.addToPlaylist).toHaveBeenCalledWith('pl1', 'm1');
+    expect(w.findAll('.media-card-stub').length).toBe(2);
+    expect(w.findAllComponents(MediaCardStub)[0].props('item').id).toBe('m1');
   });
 
   it('delete playlist → confirm modal names the playlist; confirm hits DELETE and routes back to the list', async () => {

@@ -478,6 +478,8 @@ export const DE_MESSAGES = {
     loading: 'Playlist wird geladen…',
     removed: '„{name}“ wurde aus der Playlist entfernt.',
     removeFailed: 'Entfernen aus der Playlist fehlgeschlagen.',
+    undo: 'Rückgängig',
+    restoreFailed: 'Wiederherstellen in der Playlist fehlgeschlagen.',
     deleted: 'Playlist „{name}“ wurde gelöscht.',
     deleteFailed: 'Die Playlist konnte nicht gelöscht werden.',
     pickerChoice: 'Playlist-Auswahl',

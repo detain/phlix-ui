@@ -479,6 +479,8 @@ export const JA_MESSAGES = {
     loading: 'プレイリストを読み込み中…',
     removed: '「{name}」をプレイリストから削除しました。',
     removeFailed: 'プレイリストから削除できませんでした。',
+    undo: '元に戻す',
+    restoreFailed: 'プレイリストに戻せませんでした。',
     deleted: 'プレイリスト「{name}」を削除しました。',
     deleteFailed: 'プレイリストを削除できませんでした。',
     pickerChoice: 'プレイリストの選択',

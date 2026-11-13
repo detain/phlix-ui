@@ -482,6 +482,8 @@ export const FR_MESSAGES = {
     loading: 'Chargement de la playlist…',
     removed: '« {name} » a été retiré de la playlist.',
     removeFailed: 'Impossible de retirer de la playlist.',
+    undo: 'Annuler',
+    restoreFailed: 'Impossible de rétablir dans la playlist.',
     deleted: 'La playlist « {name} » a été supprimée.',
     deleteFailed: 'Impossible de supprimer la playlist.',
     pickerChoice: 'Choix de playlist',
