@@ -542,8 +542,8 @@ onMounted(() => {
     <PageHint :links="adminPageHelp.livetv.links" :details="adminPageHelp.livetv.details">
       Set up over-the-air or IPTV channels and record them. In <strong>Tuners</strong>,
       <strong>Scan for Tuners</strong> finds devices on your network, which you can then enable or
-      remove. The <strong>Guide</strong> shows what's on — pick a day and
-      <strong>Refresh Guide</strong> to update listings. <strong>Recordings</strong> lists what's
+      remove. The <strong>Guide</strong> shows what’s on — pick a day and
+      <strong>Refresh Guide</strong> to update listings. <strong>Recordings</strong> lists what’s
       scheduled or captured (<strong>Schedule recording</strong> adds one manually), and
       <strong>Series Rules</strong> stores a per-show rule — see below before relying on it.
     </PageHint>

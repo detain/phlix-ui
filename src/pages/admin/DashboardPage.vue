@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
     </header>
 
     <PageHint :links="adminPageHelp.dashboard.links" :details="adminPageHelp.dashboard.details">
-      A live overview of your server. The cards show <strong>who's watching right now</strong>,
+      A live overview of your server. The cards show <strong>who’s watching right now</strong>,
       your <strong>top users</strong> and <strong>most-watched titles</strong>, current
       <strong>storage use</strong>, and a feed of <strong>recent activity</strong>. Use the
       <strong>Date range</strong> menu to switch the top-users and top-media stats between the

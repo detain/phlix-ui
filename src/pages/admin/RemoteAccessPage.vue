@@ -577,7 +577,7 @@ onMounted(() => {
       server to a Phlix hub — <strong>Initiate Pairing</strong> starts it, then
       <strong>Send Heartbeat</strong> keeps it alive and <strong>Unenroll</strong> disconnects.
       <strong>Subdomain</strong> claims a friendly public address, the
-      <strong>Relay Tunnel</strong> forwards traffic when you can't open ports (with a
+      <strong>Relay Tunnel</strong> forwards traffic when you can’t open ports (with a
       <strong>Ping</strong> to check latency), and <strong>Port Forward</strong> tries to open a
       port on your router automatically. Each section expands to show its status and controls.
     </PageHint>

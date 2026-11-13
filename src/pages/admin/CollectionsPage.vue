@@ -267,7 +267,7 @@ onMounted(loadCollections);
     </header>
 
     <PageHint :links="adminPageHelp.collections.links" :details="adminPageHelp.collections.details">
-      Group titles into curated sets (like "Marvel" or "Christmas movies") that appear on the
+      Group titles into curated sets (like “Marvel” or “Christmas movies”) that appear on the
       browse screen. <strong>New collection</strong> creates one; on each row,
       <strong>Items</strong> opens its contents where you can add titles by query (e.g.
       <em>genre:action</em>) or <strong>Remove</strong> them, <strong>Refresh</strong>

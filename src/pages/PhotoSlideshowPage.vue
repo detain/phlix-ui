@@ -296,7 +296,7 @@ watch([libraryId, albumId], () => {
         <!-- Loading state -->
         <div v-if="loading" class="loading-state">
             <Spinner size="large" />
-            <p>Loading slideshow...</p>
+            <p>Loading slideshow…</p>
         </div>
 
         <!-- Error state -->
