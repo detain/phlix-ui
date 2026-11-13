@@ -42,7 +42,15 @@ import {
 } from './player/captions';
 import type { CaptionSize, CaptionBackground, CaptionEdge } from '../stores/usePreferencesStore';
 
-withDefaults(defineProps<{ panel?: 'appearance' | 'playback' }>(), { panel: 'appearance' });
+const props = withDefaults(
+  defineProps<{
+    panel?: 'appearance' | 'playback';
+    /** Subtitle languages discovered from the library/account (BCP-47 codes or
+     *  `{ language, label }`). When absent/empty the static fallback list is used. */
+    subtitleLanguages?: ReadonlyArray<string | { language: string; label?: string }>;
+  }>(),
+  { panel: 'appearance', subtitleLanguages: () => [] },
+);
 
 const prefs = usePreferencesStore();
 const themesStore = useThemesStore();
@@ -133,7 +141,17 @@ const QUALITY_OPTIONS = [
   { value: '360p', label: '360p' },
   { value: '240p', label: '240p' },
 ];
-const SUBTITLE_OPTIONS = [
+/** Best-effort language name for a discovered code, guarded for envs without Intl.DisplayNames. */
+function languageName(code: string): string {
+  try {
+    const DN = (Intl as { DisplayNames?: typeof Intl.DisplayNames }).DisplayNames;
+    if (DN) return new DN(['en'], { type: 'language' }).of(code) ?? code;
+  } catch {
+    /* unsupported code / no ICU */
+  }
+  return code;
+}
+const SUBTITLE_FALLBACK_OPTIONS = [
   { value: '', label: 'Off' },
   { value: 'en', label: 'English' },
   { value: 'es', label: 'Spanish' },
@@ -141,6 +159,23 @@ const SUBTITLE_OPTIONS = [
   { value: 'de', label: 'German' },
   { value: 'ja', label: 'Japanese' },
 ];
+/** Discovered languages when provided, else the static fallback; the persisted
+ *  preference is always kept selectable even if discovery no longer lists it. */
+const SUBTITLE_OPTIONS = computed(() => {
+  const seen = new Set<string>(['']);
+  const found: { value: string; label: string }[] = [];
+  for (const entry of props.subtitleLanguages) {
+    const code = typeof entry === 'string' ? entry : entry.language;
+    if (!code || seen.has(code)) continue;
+    seen.add(code);
+    const label = typeof entry === 'string' ? '' : (entry.label ?? '');
+    found.push({ value: code, label: label || languageName(code) });
+  }
+  const base = found.length > 0 ? [{ value: '', label: 'Off' }, ...found] : [...SUBTITLE_FALLBACK_OPTIONS];
+  const cur = prefs.defaultSubtitleLang;
+  if (cur && !base.some((o) => o.value === cur)) base.push({ value: cur, label: languageName(cur) });
+  return base;
+});
 const AUDIO_QUALITY_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },

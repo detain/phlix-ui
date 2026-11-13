@@ -209,6 +209,17 @@ describe('AppearanceSettings — playback panel', () => {
     expect(prefs.defaultQuality).toBe('1080p');
   });
 
+  it('sources subtitle options from discovered languages and keeps the saved pref selectable', async () => {
+    const prefs = usePreferencesStore();
+    prefs.defaultSubtitleLang = 'pt';
+    const w = mount(AppearanceSettings, { props: { panel: 'playback', subtitleLanguages: ['it', { language: 'ko', label: 'Hangul' }] } });
+    await nextTick();
+    const opts = selectByLabel(w, 'Default subtitle language').props('options') as { value: string; label: string }[];
+    expect(opts.map((o) => o.label)).toContain('Hangul');
+    expect(opts.map((o) => o.label)).not.toContain('French');
+    expect(opts.map((o) => o.value)).toEqual(['', 'it', 'ko', 'pt']);
+  });
+
   it('maps the subtitle select Off (empty) <-> null and a language code', async () => {
     const w = mountPanel('playback');
     const prefs = usePreferencesStore();
