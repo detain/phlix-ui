@@ -1142,7 +1142,7 @@ var Sa = ["src", "alt"], Ca = { class: "brand-wordmark" }, wa = {
 			_: 1
 		}, 8, ["title", "description"])]));
 	}
-}), [["__scopeId", "data-v-c6233715"]]), Oa = "0.99.28", ka = "phlix.currentServerId", Aa = "phlix.currentServerName", ja = "phlix.currentServerUrl";
+}), [["__scopeId", "data-v-c6233715"]]), Oa = "1.0.0", ka = "phlix.currentServerId", Aa = "phlix.currentServerName", ja = "phlix.currentServerUrl";
 function Ma(e) {
 	if (typeof window > "u") return null;
 	try {

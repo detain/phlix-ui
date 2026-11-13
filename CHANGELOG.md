@@ -8,6 +8,24 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## 1.0.0 - 2026-11-13
+
+### Release
+
+First stable release. The version advances 0.99.28 -> 1.0.0 in `package.json`/`package-lock.json`,
+the README version stamps rotate (status line now states the stable-semver posture; the pre-1.0
+"minors may break" caveat is retired), and `dist/` is regenerated from the settled `src/`. The
+re-measured bundle sizes (`dist/phlix-ui.js` 444,281 B ~ 434 KiB raw, ~106 KiB gzip level 6 /
+~104 KiB level 9; `dist/player.js` 446,878 B ~ 436 KiB; each 2 B under 0.99.28 from the shorter
+version literal) leave the three README size sites' figures unchanged. Consumer locale pins (tizen, windows) rotate in the same release wave.
+
+### Dependency
+
+`@phlix/contracts` pin moved `#v0.5.7` -> `#v0.5.8` (tag peel `e5a33809`) in the preceding commit.
+v0.5.8 exports `CookieMode`, so the CP-017 sentinel fired as designed and the flip was executed:
+`TokenStoreMode` in `src/api/tokenStore.ts` is now an alias of the contracts union (no value change:
+`'cookie' | 'bearer'`).
+
 ## 0.99.28 - 2026-11-12
 
 ### Release
