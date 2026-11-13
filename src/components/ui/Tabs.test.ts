@@ -233,6 +233,9 @@ describe('Skeleton / Spinner / EmptyState / Kbd', () => {
   it('Spinner sizes: number→px, string verbatim, none→no inline size', () => {
     expect(mount(Spinner, { props: { size: 24 } }).find('[role="status"]').attributes('style')).toContain('font-size: 24px');
     expect(mount(Spinner, { props: { size: '2rem' } }).find('[role="status"]').attributes('style')).toContain('font-size: 2rem');
+    expect(mount(Spinner, { props: { size: 'xs' } }).find('[role="status"]').attributes('style')).toContain('font-size: 0.75rem');
+    expect(mount(Spinner, { props: { size: 'sm' } }).find('[role="status"]').attributes('style')).toContain('font-size: 1rem');
+    expect(mount(Spinner, { props: { size: 'md' } }).find('[role="status"]').attributes('style')).toContain('font-size: 1.5rem');
     const none = mount(Spinner).find('[role="status"]').attributes('style');
     expect(none === undefined || !none.includes('font-size')).toBe(true);
   });

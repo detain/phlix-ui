@@ -12,10 +12,18 @@ import { computed } from 'vue';
 import Icon from '../Icon.vue';
 import { useMessages } from '../../composables/useMessages';
 
-const props = defineProps<{ size?: number | string; label?: string }>();
+/** Named sizes (UI-27). Numbers are px; other strings pass through as a CSS length. */
+export type SpinnerSize = 'xs' | 'sm' | 'md';
+const SIZE_MAP: Record<SpinnerSize, string> = { xs: '0.75rem', sm: '1rem', md: '1.5rem' };
+
+const props = defineProps<{ size?: SpinnerSize | number | (string & {}); label?: string }>();
 const { t } = useMessages();
 const sizeValue = computed(() =>
-  props.size === undefined ? undefined : typeof props.size === 'number' ? `${props.size}px` : props.size,
+  props.size === undefined
+    ? undefined
+    : typeof props.size === 'number'
+      ? `${props.size}px`
+      : (SIZE_MAP as Record<string, string>)[props.size] ?? props.size,
 );
 </script>
 
