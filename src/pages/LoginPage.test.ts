@@ -68,4 +68,25 @@ describe('LoginPage', () => {
     const w = mountPage({ oauth: '<button class="sso">SSO</button>' });
     expect(w.find('.login__oauth .sso').exists()).toBe(true);
   });
+
+  it('renders the redirect envelope: machine code localized, human text as fallback', async () => {
+    const router = makeRouter();
+    await router.push('/login?error=Bad%20thing&code=auth.invalid_credentials');
+    await router.isReady();
+    const w = mount(LoginPage, { global: { plugins: [router], provide: { phlixConfig: null } } });
+    wrappers.push(w);
+    const n = w.find('.auth-redirect');
+    expect(n.exists()).toBe(true);
+    expect(n.attributes('role')).toBe('alert');
+    expect(n.text()).toBe('The credentials you entered are not correct.');
+    await router.push('/login?notice=Pending%20approval');
+    await flushPromises();
+    expect(w.find('.auth-redirect').text()).toBe('Pending approval');
+    expect(w.find('.auth-redirect').attributes('role')).toBe('status');
+  });
+
+  it('renders no notice without an envelope', () => {
+    const w = mountPage();
+    expect(w.find('.auth-redirect').exists()).toBe(false);
+  });
 });

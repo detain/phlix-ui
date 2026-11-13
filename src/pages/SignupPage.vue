@@ -10,6 +10,7 @@
  * `#oauth` slot forwarded to the form.
  */
 import SignupForm from '../components/SignupForm.vue';
+import AuthRedirectNotice from '../components/auth/AuthRedirectNotice.vue';
 import AppBackdrop from '../components/AppBackdrop.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
 
@@ -21,9 +22,12 @@ const prefs = usePreferencesStore();
     <AppBackdrop :enabled="prefs.atmosphere" :grain="true" :vignette="true" />
     <div v-if="prefs.atmosphere" class="auth-page__glow" aria-hidden="true" />
     <div class="auth-page__center">
+      <div class="auth-page__stack">
+      <AuthRedirectNotice />
       <SignupForm>
         <template v-if="$slots.oauth" #oauth><slot name="oauth" /></template>
       </SignupForm>
+      </div>
     </div>
   </div>
 </template>
@@ -41,6 +45,10 @@ const prefs = usePreferencesStore();
   background:
     radial-gradient(60% 50% at 50% -8%, rgba(245, 165, 36, 0.2), transparent 62%),
     radial-gradient(40% 36% at 84% 110%, rgba(245, 165, 36, 0.1), transparent 70%);
+}
+.auth-page__stack {
+  display: grid;
+  justify-items: center;
 }
 .auth-page__center {
   position: relative;

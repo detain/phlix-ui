@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## 1.0.1 - 2026-11-13
+
+### Added
+
+- `LoginPage` / `SignupPage` render the server's redirect-carried auth envelope (`?error=`/`?notice=`, optional `&code=`, OAuth bare `?error=<code>`) via the new `AuthRedirectNotice` component and `resolveRedirectEnvelope()` util: machine code localizes through the error catalog, the server's human text is the fallback (SRV-15 / SRV-S12).
+
 ## 1.0.0 - 2026-11-13
 
 ### Release
