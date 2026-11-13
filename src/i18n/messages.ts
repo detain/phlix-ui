@@ -276,6 +276,9 @@ export const DEFAULT_MESSAGES = {
     qualityAutoActive: 'Auto ({label})',
     qualityOriginal: 'Original ({height}p)',
     directStream: 'Direct',
+    // Copy Law 3 decision: ONE string serves both surfaces (the toolbar badge `title` tooltip and
+    // the direct-stream toast); the em-dash form reads acceptably in both, so no split variant. If
+    // the toast ever needs different punctuation, add a dedicated key rather than editing this one.
     qualityDirectStream: 'Direct stream — quality is determined by the source file',
     // Captions menu
     captionsOn: 'Captions (on)',
@@ -731,7 +734,7 @@ export const DEFAULT_MESSAGES = {
     // Appearance section titles + radiogroup labels
     theme: 'Theme',
     // TW-theme-persist disclosures — quiet inline hints, never toasts.
-    themeCatalogueUnavailable: 'Theme catalogue unavailable — showing the built-in themes.',
+    themeCatalogueUnavailable: 'Theme catalog unavailable — showing the built-in themes.',
     themeSavedLocally: 'Saved on this device only — the server could not store it.',
     accent: 'Accent',
     accentColor: 'Accent color',

@@ -229,7 +229,7 @@ describe('AC: the picker syncs the selection to the server', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     const w = await mountPicker();
     expect(w.findAll('.aps__theme')).toHaveLength(3);
-    expect(w.text()).toContain('Theme catalogue unavailable');
+    expect(w.text()).toContain('Theme catalog unavailable');
   });
 
   it('PUTs the selection once the debounce settles', async () => {
