@@ -544,7 +544,7 @@ export const IT_MESSAGES = {
     loadErrorTitle: 'Impossibile caricare le impostazioni',
   },
   sessions: {
-    eyebrow: 'Account',
+    eyebrow: 'Il tuo account',
     title: 'Sessioni dei dispositivi',
     desc: 'Esamina i dispositivi connessi al tuo account e disconnetti quelli sconosciuti.',
     cardTitle: 'Sessioni attive',
@@ -558,7 +558,7 @@ export const IT_MESSAGES = {
     loading: 'Caricamento sessioni…',
     revoke: 'Esci',
     revokeDevice: 'Esci da {device}',
-    revokeAll: 'Esci dagli altri',
+    revokeAll: 'Esci dalle altre',
     revokeConfirm: 'Uscire da questa sessione? Il dispositivo dovrà eseguire di nuovo l’accesso.',
     revokeAllConfirm: 'Uscire da {count} altra sessione? Quel dispositivo dovrà eseguire di nuovo l’accesso. | Uscire da tutte le altre {count} sessioni? Tutti i dispositivi tranne questo dovranno eseguire di nuovo l’accesso.',
     revokeSuccess: 'Dispositivo disconnesso.',

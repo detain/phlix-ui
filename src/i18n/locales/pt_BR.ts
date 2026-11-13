@@ -553,7 +553,7 @@ export const PT_BR_MESSAGES = {
     thisDevice: 'Este dispositivo',
     unknownDevice: 'Dispositivo desconhecido',
     created: 'Conectado em {date}',
-    lastUsed: 'Usado por último em {date}',
+    lastUsed: 'Usado pela última vez em {date}',
     refresh: 'Atualizar',
     loading: 'Carregando sessões…',
     revoke: 'Encerrar sessão',

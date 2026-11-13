@@ -554,7 +554,7 @@ export const ES_MESSAGES = {
     truncated: '{count}+ sesiones activas (se muestran las {count} usadas más recientemente)',
     thisDevice: 'Este dispositivo',
     unknownDevice: 'Dispositivo desconocido',
-    created: 'Iniciado el {date}',
+    created: 'Sesión iniciada el {date}',
     lastUsed: 'Usado por última vez el {date}',
     refresh: 'Actualizar',
     loading: 'Cargando sesiones…',
