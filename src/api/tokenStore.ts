@@ -28,6 +28,8 @@
  * @license MIT
  */
 
+import type { CookieMode } from '@phlix/contracts';
+
 export const ACCESS_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refresh_token';
 export const USER_KEY = 'user';
@@ -38,19 +40,13 @@ export const USER_KEY = 'user';
  * reads return null and writes are no-ops BY DESIGN), `'bearer'` covers every
  * JS-held credential — localStorage, host vaults, test doubles.
  *
- * This is the ui-side mirror of `@phlix/contracts`' `CookieMode` union
- * (`src/auth.ts`, landed CP-001). The package currently pins contracts
- * `#v0.5.7`, which PREDATES that export, so the literal lives here; the mirror
- * retires on the next contracts re-pin wave (register CP-014 residual). The
- * contracts docblock is the wire-law authority for the value strings.
- * Re-verified at CP-016/017 (w32L2, 2026-11-09): the installed pin's
- * `dist/auth.d.ts` carries NO `CookieMode` — contracts `f65a8f82` sits above
- * the v0.5.7 peel and is unreleased — so the flip HOLDS (a half-retire is
- * worse than none); the CP-017 sentinel in `cookieCustody.test.ts` reddens
- * the moment the pin ships the export, telling the next wave to retire this
- * mirror and import the contracts type instead.
+ * This is the ui-side alias of `@phlix/contracts`' `CookieMode` union (`src/auth.ts`,
+ * landed CP-001; shipped in the `#v0.5.8` pin). The former local literal mirror
+ * retired at the v0.5.8 re-pin (CP-014/CP-017 residual, flip executed) — the
+ * contracts docblock is the wire-law authority for the value strings, and the
+ * sentinel in `cookieCustody.test.ts` now pins the alias to the contracts values.
  */
-export type TokenStoreMode = 'cookie' | 'bearer';
+export type TokenStoreMode = CookieMode;
 
 export interface TokenStore {
     /**

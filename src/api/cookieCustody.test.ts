@@ -19,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ApiClient, resetCookieSessionProbe } from './client';
 import {
     CookieTokenStore,
@@ -162,27 +163,21 @@ describe('TokenStoreMode mirror — the contracts custody-flip sentinel (CP-017 
         expect(mirror).toEqual(['cookie', 'bearer']);
     });
 
-    it('the INSTALLED contracts pin still lacks CookieMode — the local mirror stands (flip HOLD)', () => {
-        // CP-017 verified at w32L2 (2026-11-09): ui pins
-        // `github:detain/phlix-contracts#v0.5.7` (peel bedfe69); the
-        // `CookieMode` export landed ABOVE the tag at contracts f65a8f82 and is
-        // unreleased. Retiring the mirror to a `import type { CookieMode }`
-        // would fail typecheck against this pin — a half-retire is worse than
-        // none, so the flip HOLDS. THIS TEST IS THE TRIPWIRE: it reddens the
-        // moment the pin ships the export, telling the next wave to execute the
-        // documented flip (tokenStore.ts mirror docblock): replace
-        // `export type TokenStoreMode = ...` with a re-export of the contracts
-        // union and delete this sentinel's HOLD half.
-        // A moved/renamed dist file fails loudly here too (readFileSync throws).
+    it('the INSTALLED contracts pin ships CookieMode — TokenStoreMode aliases it (flip executed at v0.5.8)', () => {
+        // CP-017 sentinel fired at the `#v0.5.8` re-pin: `CookieMode` is now
+        // exported by contracts `dist/auth.d.ts`, so tokenStore.ts re-exports the
+        // contracts union instead of mirroring the literals. A moved/renamed dist
+        // file fails loudly here too (readFileSync throws).
         const require = createRequire(import.meta.url);
         const pkgJson = require.resolve('@phlix/contracts/package.json');
         const authDts = readFileSync(join(dirname(pkgJson), 'dist', 'auth.d.ts'), 'utf8');
-        if (authDts.includes('CookieMode')) {
-            throw new Error(
-                'contracts pin now exports CookieMode: retire the local TokenStoreMode mirror in src/api/tokenStore.ts (import the contracts union instead) and convert this sentinel to assert equality. See COOKIE-DESIGN §7 / w32L2 register.',
-            );
-        }
-        expect(authDts).not.toContain('CookieMode');
+        expect(authDts).toContain('CookieMode');
+        const src = readFileSync(
+            join(dirname(fileURLToPath(import.meta.url)), 'tokenStore.ts'),
+            'utf8',
+        );
+        expect(src).toContain("import type { CookieMode } from '@phlix/contracts'");
+        expect(src).toContain('export type TokenStoreMode = CookieMode;');
     });
 
     it('the shipped LocalStorage default and the cookie store resolve apart through the same seam', () => {
