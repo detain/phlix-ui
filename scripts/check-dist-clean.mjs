@@ -114,7 +114,7 @@ if (trackedDist === 0) {
 ran('dist-tracked');
 
 // ── 3. dist/ must not be gitignored (catches uncommenting `# dist/`) ─────────
-let distIgnored = false;
+let distIgnored;
 try {
     // `--no-index` is MANDATORY here, not a stylistic flag. By default
     // `git check-ignore` refuses to report a TRACKED path as ignored, and every

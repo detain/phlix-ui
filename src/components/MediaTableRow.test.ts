@@ -319,9 +319,10 @@ describe('MediaTableRow — fixed geometry (virtualization contract, S70)', () =
     expect(style).toContain('height: 180px');
     // ...and the tracks must be the SAME string LibraryPage's header writes, or the
     // two separate grids shear against each other.
-    expect(style).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
+    // jsdom 31 serializes a bare `0` track as `0px`; normalise to the constant's spelling.
+    expect(style.replaceAll('minmax(0px,', 'minmax(0,')).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
     expect(style).toContain(`${TABLE_ROW_POSTER_WIDTH}px`);
-    expect(style).toContain('120px minmax(0, 3fr) 80px 88px 88px minmax(0, 2fr)');
+    expect(style).toContain('120px minmax(0px, 3fr) 80px 88px 88px minmax(0px, 2fr)');
   });
 
   it('keeps that height for an absurdly long title and for an empty row', () => {

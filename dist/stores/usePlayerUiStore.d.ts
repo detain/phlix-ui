@@ -20,16 +20,8 @@
  * reset to false when the player page unmounts (leaving the route) so a later
  * non-theater visit can never inherit a stale `true` and flush the shell.
  */
-export declare const usePlayerUiStore: import("pinia").StoreDefinition<"phlix-player-ui", Pick<{
+export declare const usePlayerUiStore: import("pinia").SetupStoreDefinition<"phlix-player-ui", {
     theaterActive: import("vue").Ref<boolean, boolean>;
     setTheaterActive: (active: boolean) => void;
     reset: () => void;
-}, "theaterActive">, Pick<{
-    theaterActive: import("vue").Ref<boolean, boolean>;
-    setTheaterActive: (active: boolean) => void;
-    reset: () => void;
-}, never>, Pick<{
-    theaterActive: import("vue").Ref<boolean, boolean>;
-    setTheaterActive: (active: boolean) => void;
-    reset: () => void;
-}, "reset" | "setTheaterActive">>;
+}>;

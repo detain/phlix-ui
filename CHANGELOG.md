@@ -8,6 +8,15 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — deps 2026-11-13
+
+### Dependency
+
+- Full toolchain upgrade to the newest mutually-compatible set: vitest + @vitest/coverage-v8 5.1, eslint + @eslint/js 10.14, jsdom 31, pinia 4.1, globals 17, @types/node 26, @vue/test-utils 2.5, vue 3.5.45, vue-router 5.5, vite 8.3.8, vue-tsc 3.3.14, typescript-eslint 8.72.2, unplugin-icons 24, hls.js 1.7, Playwright 1.65 (and the `overrides` pins re-based). `dist/` rebuilt with the new hls.js.
+- Held back on purpose: **typescript stays 6.0.3** (7.x is rejected by typescript-eslint 8.72, peer `<6.1.0`); **apexcharts stays ^5.16** (8.x grows the single browser chunk to ~775 KB against the ~458 KB v5 chunk that every vendoring consumer inherits, tripping the UI-3.4 `dist-apex-dedupe` size guard — the guard is unchanged).
+- GitHub Actions: `actions/checkout` and `actions/setup-node` v6 to v7.
+- Lint: fixed the new eslint 10 `no-useless-assignment` / `preserve-caught-error` findings at the source (no rule disabled); tests adjusted for jsdom 31 serializing `minmax(0, ...)` as `minmax(0px, ...)`; `createPhlixApp.test.ts` hoists its `vi.mock` calls to module top level as vitest 5 requires. The audit allow-list (same two advisory ids) justifications were re-measured against the new lock.
+
 ## Unreleased — minors 2026-11-13 (UI-S2/S8/S9/S12/S18/S27/S28/S31)
 
 ### Fixed

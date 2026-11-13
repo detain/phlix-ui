@@ -211,7 +211,7 @@ function focusTabAt(index: number): void {
 function onTabKeydown(e: KeyboardEvent): void {
   const opts = TABS.map((t) => ({ value: t.id, label: t.label }));
   const current = TABS.findIndex((t) => t.id === activeTab.value);
-  let to = -1;
+  let to: number;
   switch (e.key) {
     case 'ArrowRight':
     case 'ArrowDown':

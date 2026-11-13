@@ -803,7 +803,7 @@ describe('LibraryPage — backdrop hero view (S69)', () => {
     // same `columns` value it windows on (never a CSS override).
     const { w } = await mountWithMode('backdrop');
     const style = w.find('.media-grid').attributes('style') ?? '';
-    expect(style).toContain('grid-template-columns: repeat(1, minmax(0, 1fr))');
+    expect(style).toContain('grid-template-columns: repeat(1, minmax(0px, 1fr))');
     expect(style).toContain(`grid-auto-rows: ${BACKDROP_ROW_HEIGHT}px`);
   });
 
@@ -961,7 +961,7 @@ describe('LibraryPage — table view (S70)', () => {
   it('virtualization stays intact: the grid pins the table row TRACK and one column', async () => {
     const { w } = await mountWithMode('table');
     const style = w.find('.media-grid').attributes('style') ?? '';
-    expect(style).toContain('grid-template-columns: repeat(1, minmax(0, 1fr))');
+    expect(style).toContain('grid-template-columns: repeat(1, minmax(0px, 1fr))');
     expect(style).toContain(`grid-auto-rows: ${TABLE_ROW_HEIGHT}px`);
   });
 
@@ -1028,8 +1028,9 @@ describe('LibraryPage — table view (S70)', () => {
       'Genres',
     ]);
     // The one thing that keeps the two separate grids aligned.
-    expect(head.attributes('style')).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
-    expect(w.find('.media-table-row').attributes('style')).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
+    // jsdom 31 serializes a bare `0` track as `0px`; normalise to the constant's spelling.
+    expect((head.attributes('style') ?? '').replaceAll('minmax(0px,', 'minmax(0,')).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
+    expect((w.find('.media-table-row').attributes('style') ?? '').replaceAll('minmax(0px,', 'minmax(0,')).toContain(TABLE_ROW_TEMPLATE_COLUMNS);
   });
 
   it('the ARIA table OWNS its rows: table → rowgroup → row, with no generic box between', async () => {

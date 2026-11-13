@@ -336,7 +336,7 @@ describe('MediaGrid — forced columns / rowHeight (S68 alternate views)', () =>
   it('honors a forced column count even before the container is measured', () => {
     const w = mount(MediaGrid, { props: { items: makeItems(6), columns: 1 } });
     const style = w.find('.media-grid').attributes('style') ?? '';
-    expect(style).toContain('repeat(1, minmax(0, 1fr))');
+    expect(style).toContain('repeat(1, minmax(0px, 1fr))');
     expect(style).not.toContain('auto-fill');
   });
 
@@ -474,7 +474,7 @@ describe('MediaGrid — forced columns / rowHeight (S68 alternate views)', () =>
       props: { items: [], loading: true, skeletonCount: 4, columns: 1, rowHeight: 204 },
     });
     const skel = w.find('.media-grid--skeleton');
-    expect(skel.attributes('style')).toContain('repeat(1, minmax(0, 1fr))');
+    expect(skel.attributes('style')).toContain('repeat(1, minmax(0px, 1fr))');
     // ...including the pinned row track, so the initial load reserves exactly the
     // rows the windowing math will use once items arrive.
     expect(skel.attributes('style')).toContain('grid-auto-rows: 180px');

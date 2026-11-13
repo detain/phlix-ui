@@ -265,7 +265,7 @@ function focusRecTabAt(index: number): void {
 function onRecTabKeydown(e: KeyboardEvent): void {
   const opts = RECORDING_TABS.map((t) => ({ value: t.value, label: t.label }));
   const current = RECORDING_TABS.findIndex((t) => t.value === recordingTab.value);
-  let to = -1;
+  let to: number;
   switch (e.key) {
     case 'ArrowRight':
     case 'ArrowDown':

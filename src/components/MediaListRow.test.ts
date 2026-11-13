@@ -243,7 +243,7 @@ describe('MediaListRow — fixed geometry (virtualization contract, S68)', () =>
     // the rendered row MUST be exactly LIST_ROW_HEIGHT tall or padTop/totalHeight
     // drift from the layout (blank bands, wrong need-range pages).
     expect(style).toContain(`height: ${LIST_ROW_HEIGHT}px`);
-    expect(style).toContain(`${LIST_ROW_POSTER_WIDTH}px minmax(0, 1fr)`);
+    expect(style).toContain(`${LIST_ROW_POSTER_WIDTH}px minmax(0px, 1fr)`);
   });
 
   it('keeps that height for a long overview and for no overview at all', () => {

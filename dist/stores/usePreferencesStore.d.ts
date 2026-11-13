@@ -127,7 +127,7 @@ export declare function hasStoredPreferences(): boolean;
  * to localStorage ('phlix.prefs'). The useTheme() composable reflects these onto
  * <html> live. `effectiveReducedMotion` resolves the 'auto' setting against the OS.
  */
-export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix-prefs", Pick<{
+export declare const usePreferencesStore: import("pinia").SetupStoreDefinition<"phlix-prefs", {
     theme: import("vue").Ref<string, string>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<Density, Density>;
@@ -175,100 +175,4 @@ export declare const usePreferencesStore: import("pinia").StoreDefinition<"phlix
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "viewMode" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
-    theme: import("vue").Ref<string, string>;
-    accent: import("vue").Ref<string | null, string | null>;
-    density: import("vue").Ref<Density, Density>;
-    cardSize: import("vue").Ref<number, number>;
-    gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
-    viewMode: import("vue").Ref<ViewMode, ViewMode>;
-    reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
-    autoplay: import("vue").Ref<boolean, boolean>;
-    defaultVolume: import("vue").Ref<number, number>;
-    defaultQuality: import("vue").Ref<string, string>;
-    defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
-    defaultAudioLang: import("vue").Ref<string | null, string | null>;
-    subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
-    captionStyle: import("vue").Ref<{
-        size: CaptionSize;
-        textColor: string;
-        background: CaptionBackground;
-        edge: CaptionEdge;
-    }, CaptionStyle | {
-        size: CaptionSize;
-        textColor: string;
-        background: CaptionBackground;
-        edge: CaptionEdge;
-    }>;
-    atmosphere: import("vue").Ref<boolean, boolean>;
-    tv: import("vue").Ref<boolean, boolean>;
-    filterPresets: import("vue").Ref<{
-        id: string;
-        name: string;
-        query: Record<string, string | string[]>;
-    }[], FilterPreset[] | {
-        id: string;
-        name: string;
-        query: Record<string, string | string[]>;
-    }[]>;
-    showMarkerTimeline: import("vue").Ref<boolean, boolean>;
-    crossfadeDuration: import("vue").Ref<number, number>;
-    crossfadeFadeIn: import("vue").Ref<number, number>;
-    crossfadeFadeOut: import("vue").Ref<number, number>;
-    gaplessEnabled: import("vue").Ref<boolean, boolean>;
-    preferredAudioQuality: import("vue").Ref<"medium" | "low" | "high" | "lossless", "medium" | "low" | "high" | "lossless">;
-    systemReduced: import("vue").Ref<boolean, boolean>;
-    effectiveReducedMotion: import("vue").ComputedRef<boolean>;
-    snapshot: () => Preferences;
-    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
-    removeFilterPreset: (id: string) => void;
-    reset: () => void;
-}, "effectiveReducedMotion">, Pick<{
-    theme: import("vue").Ref<string, string>;
-    accent: import("vue").Ref<string | null, string | null>;
-    density: import("vue").Ref<Density, Density>;
-    cardSize: import("vue").Ref<number, number>;
-    gridDensity: import("vue").Ref<"cozy" | "comfy" | "dense", "cozy" | "comfy" | "dense">;
-    viewMode: import("vue").Ref<ViewMode, ViewMode>;
-    reducedMotion: import("vue").Ref<MotionPref, MotionPref>;
-    autoplay: import("vue").Ref<boolean, boolean>;
-    defaultVolume: import("vue").Ref<number, number>;
-    defaultQuality: import("vue").Ref<string, string>;
-    defaultSubtitleLang: import("vue").Ref<string | null, string | null>;
-    defaultAudioLang: import("vue").Ref<string | null, string | null>;
-    subtitlePreferenceSet: import("vue").Ref<boolean, boolean>;
-    captionStyle: import("vue").Ref<{
-        size: CaptionSize;
-        textColor: string;
-        background: CaptionBackground;
-        edge: CaptionEdge;
-    }, CaptionStyle | {
-        size: CaptionSize;
-        textColor: string;
-        background: CaptionBackground;
-        edge: CaptionEdge;
-    }>;
-    atmosphere: import("vue").Ref<boolean, boolean>;
-    tv: import("vue").Ref<boolean, boolean>;
-    filterPresets: import("vue").Ref<{
-        id: string;
-        name: string;
-        query: Record<string, string | string[]>;
-    }[], FilterPreset[] | {
-        id: string;
-        name: string;
-        query: Record<string, string | string[]>;
-    }[]>;
-    showMarkerTimeline: import("vue").Ref<boolean, boolean>;
-    crossfadeDuration: import("vue").Ref<number, number>;
-    crossfadeFadeIn: import("vue").Ref<number, number>;
-    crossfadeFadeOut: import("vue").Ref<number, number>;
-    gaplessEnabled: import("vue").Ref<boolean, boolean>;
-    preferredAudioQuality: import("vue").Ref<"medium" | "low" | "high" | "lossless", "medium" | "low" | "high" | "lossless">;
-    systemReduced: import("vue").Ref<boolean, boolean>;
-    effectiveReducedMotion: import("vue").ComputedRef<boolean>;
-    snapshot: () => Preferences;
-    saveFilterPreset: (name: string, query: Record<string, string | string[]>) => FilterPreset;
-    removeFilterPreset: (id: string) => void;
-    reset: () => void;
-}, "reset" | "snapshot" | "saveFilterPreset" | "removeFilterPreset">>;
+}>;

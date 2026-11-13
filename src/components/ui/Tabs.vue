@@ -64,7 +64,7 @@ function focusTabAt(index: number) {
 }
 
 function onKeydown(e: KeyboardEvent) {
-  let to = -1;
+  let to: number;
   switch (e.key) {
     case 'ArrowRight': case 'ArrowDown': to = nextEnabledIndex(asOpts.value, activeIndex.value, 1); break;
     case 'ArrowLeft': case 'ArrowUp': to = nextEnabledIndex(asOpts.value, activeIndex.value, -1); break;

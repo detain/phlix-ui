@@ -71,23 +71,18 @@ export const ALLOWED_ADVISORIES = new Map([
       package: 'glob',
       firstPatchedBelow: '14.0.2',
       justification:
-        'dev-chain-only: the single vulnerable install at pin is glob@10.5.0, pulled by ' +
-        '@vue/test-utils@2.4.11 -> js-beautify@1.15.4 -> glob ^10.4.2 — and 10.5.0 is the ' +
-        'newest 10.x EVER published (registry version list verified 2026-10-31). The flaw is ' +
-        'an AbortSignal cancellation bypass letting a timed-out glob walk keep touching the ' +
-        'filesystem; every walk here traverses this repo\'s own checked-out tree with this ' +
-        'repo\'s own patterns (test-utils warnings), never hostile input, and glob is not ' +
-        'imported by any bundle entry (dist stays byte-ident). NO in-range fix exists: the ' +
-        'advisory band is >=9.0.0 <=14.0.1 with first_patched_version 14.0.2 and no backports ' +
-        '(gh api /advisories/GHSA-3g3m-2fjr-6pw4 verified 2026-10-31), so EVERY version any ' +
-        'parent can declare is flagged — even raising @vue/test-utils to its newest 2.5.1 ' +
-        '(in-range of the declared ^2.4.10) lands js-beautify ^2.0.0 -> glob ^13.0.6, whose ' +
-        '13.0.6 is the top of the 13.x line and still inside the band; this was measured, not ' +
-        'inferred (npm@11 update probe + re-audit at pin: same 16 keys / same 2 ids). A ' +
-        'cross-major override to 14.0.2+ is rejected: S430 estate discipline (never force a ' +
-        'major across an unaudited API boundary) and this repo\'s own doctrine — the ' +
-        'toolchain that builds the estate-vendored dist is upgraded as a reviewed act. ' +
-        'UPSTREAM WATCH (the removal plan): the moment a 10.x/13.x backport ships, or ' +
+        'dev-chain-only: the single vulnerable install at pin is glob@13.0.7, pulled by ' +
+        '@vue/test-utils@2.5.1 -> js-beautify@2.0.3 -> glob ^13 — and 13.0.7 is the top of ' +
+        'the 13.x line (re-measured 2026-11-13 after the full-estate dependency upgrade). The ' +
+        'flaw is an AbortSignal cancellation bypass letting a timed-out glob walk keep ' +
+        'touching the filesystem; every walk here traverses this repo\'s own checked-out tree ' +
+        'with this repo\'s own patterns (test-utils warnings), never hostile input, and glob ' +
+        'is not imported by any bundle entry. NO in-range fix exists: the advisory band is ' +
+        '>=9.0.0 <=14.0.1 with first_patched_version 14.0.2 and no backports (gh api ' +
+        '/advisories/GHSA-3g3m-2fjr-6pw4 verified 2026-10-31 and re-verified 2026-11-13; ' +
+        'registry version list verified 2026-10-31 and 2026-11-13), so EVERY version any parent can declare is flagged. A cross-major override to 14.0.2+ is ' +
+        'rejected: S430 estate discipline (never force a major across an unaudited API ' +
+        'boundary). UPSTREAM WATCH (the removal plan): the moment a 13.x backport ships, or ' +
         'js-beautify majors to a glob declaration that exits the band, `npm update` clears it ' +
         'lockfile-only — then REMOVE this entry, its justification, the 3g3m fixtures in ' +
         'src/test/ci-audit-gate.test.ts and its ALLOWED_ADVISORIES row. Re-verify advisory ' +
@@ -100,28 +95,23 @@ export const ALLOWED_ADVISORIES = new Map([
       package: 'minimatch',
       firstPatchedBelow: '11.0.1',
       justification:
-        'dev-chain-only: three vulnerable resolutions at pin — minimatch@3.1.5 hoisted under ' +
-        'eslint@9.39.5, @eslint/config-array@0.21.2 and @eslint/eslintrc@3.3.6 (all declare ' +
-        '^3.1.5); 9.0.9 twice nested (editorconfig@1.0.7 declares ^9.0.1; glob@10.5.0 declares ' +
-        '^9.0.4); 10.2.6 under @typescript-eslint/typescript-estree@8.65.0 (declares ^10.2.2). ' +
-        'The DoS is pattern amplification at optimizationLevel>=2 driven by a HOSTILE glob ' +
-        'pattern; every pattern in these chains comes from this repo\'s own eslint config and ' +
-        'package declarations, never untrusted input, and none of it reaches the bundles ' +
-        '(dist byte-ident). NO in-range fix exists on ANY axis: the advisory range is <11.0.1 ' +
-        'with first_patched_version 11.0.1 only and no backports (gh api ' +
-        '/advisories/GHSA-g3hv-75wg-m249 verified 2026-10-31), while 3.1.5, 9.0.9 and 10.2.6 ' +
-        'are each the newest of their 3.x, 9.x and 10.x lines EVER published (registry version ' +
-        'lists verified 2026-10-31) — every installable version under the parents\' ranges stays ' +
-        'flagged, so `npm update` cannot clear it; measured at pin (npm@11 update to the newest ' +
-        'reachable graph — typescript-eslint 8.72.1 — re-audits the same 16 keys / same 2 ids). ' +
-        'Even the eslint-major cascade this repo deliberately does not ride is no escape: ' +
-        'eslint 10.14.0, the newest eslint (verified 2026-10-31), STILL declares minimatch ' +
-        '^10.2.6. A global cross-major override to 11.0.1+ is rejected under S430 discipline ' +
-        '(never force majors under eslint/glob/ts-estree, which declare ^3/^9/^10). ' +
-        'UPSTREAM WATCH (the removal plan): if 3.1.6/9.0.10/10.2.7 backports ship, `npm update ' +
-        'minimatch` clears them inside the existing declarations; when eslint/config-array ship ' +
-        'majors declaring minimatch ^11, a reviewed eslint-major cascade closes this one too — ' +
-        'either way REMOVE this entry, its justification, the g3hv fixtures in ' +
+        'dev-chain-only: ONE vulnerable resolution at pin — minimatch@10.2.6 (the newest 10.x ' +
+        'ever published), deduped under eslint@10.14.0, @eslint/config-array@0.23.5, ' +
+        '@typescript-eslint/typescript-estree@8.72.2, editorconfig@3.0.2 and glob@13.0.7 ' +
+        '(re-measured 2026-11-13 after the full-estate dependency upgrade; every parent ' +
+        'declares ^10). The DoS is pattern amplification at optimizationLevel>=2 driven by a ' +
+        'HOSTILE glob pattern; every pattern in these chains comes from this repo\'s own eslint ' +
+        'config and package declarations, never untrusted input, and none of it reaches the ' +
+        'bundles. NO in-range fix exists: the advisory range is <11.0.1 with ' +
+        'first_patched_version 11.0.1 only and no backports (gh api ' +
+        '/advisories/GHSA-g3hv-75wg-m249 verified 2026-10-31 and re-verified 2026-11-13; ' +
+        'registry version lists verified 2026-10-31 and 2026-11-13), and eslint 10.14.0, the newest ' +
+        'eslint, still declares minimatch ^10 — so `npm update` cannot clear it. A global ' +
+        'cross-major override to 11.0.1+ is rejected under S430 discipline (never force majors ' +
+        'under eslint/glob/ts-estree). UPSTREAM WATCH (the removal plan): if a 10.2.7 backport ' +
+        'ships, `npm update minimatch` clears it inside the existing declarations; when ' +
+        'eslint/config-array/ts-estree ship releases declaring minimatch ^11 the upgrade closes ' +
+        'this one too — either way REMOVE this entry, its justification, the g3hv fixtures in ' +
         'src/test/ci-audit-gate.test.ts and its ALLOWED_ADVISORIES row. Re-verify advisory ' +
         'status by 2027-01-03: https://github.com/advisories/GHSA-g3hv-75wg-m249',
     },

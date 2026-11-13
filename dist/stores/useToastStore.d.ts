@@ -49,7 +49,7 @@ export type ToastHoldSource = 'pointer' | 'focus';
  * two channels against each other; and a toast carrying an action REFUSES
  * auto-dismiss entirely — its button must never evaporate mid-interaction.
  */
-export declare const useToastStore: import("pinia").StoreDefinition<"phlix-toast", Pick<{
+export declare const useToastStore: import("pinia").SetupStoreDefinition<"phlix-toast", {
     toasts: import("vue").Ref<{
         id: number;
         tone: ToastTone;
@@ -82,70 +82,4 @@ export declare const useToastStore: import("pinia").StoreDefinition<"phlix-toast
     error: (message: string, opts?: Partial<ToastInput>) => number;
     warning: (message: string, opts?: Partial<ToastInput>) => number;
     info: (message: string, opts?: Partial<ToastInput>) => number;
-}, "toasts">, Pick<{
-    toasts: import("vue").Ref<{
-        id: number;
-        tone: ToastTone;
-        duration: number;
-        message: string;
-        title?: string | undefined;
-        icon?: IconName | undefined;
-        action?: {
-            label: string;
-            onClick: () => void;
-        } | undefined;
-    }[], Toast[] | {
-        id: number;
-        tone: ToastTone;
-        duration: number;
-        message: string;
-        title?: string | undefined;
-        icon?: IconName | undefined;
-        action?: {
-            label: string;
-            onClick: () => void;
-        } | undefined;
-    }[]>;
-    show: (input: ToastInput) => number;
-    dismiss: (id: number) => void;
-    clear: () => void;
-    hold: (id: number, source: ToastHoldSource) => void;
-    release: (id: number, source: ToastHoldSource) => void;
-    success: (message: string, opts?: Partial<ToastInput>) => number;
-    error: (message: string, opts?: Partial<ToastInput>) => number;
-    warning: (message: string, opts?: Partial<ToastInput>) => number;
-    info: (message: string, opts?: Partial<ToastInput>) => number;
-}, never>, Pick<{
-    toasts: import("vue").Ref<{
-        id: number;
-        tone: ToastTone;
-        duration: number;
-        message: string;
-        title?: string | undefined;
-        icon?: IconName | undefined;
-        action?: {
-            label: string;
-            onClick: () => void;
-        } | undefined;
-    }[], Toast[] | {
-        id: number;
-        tone: ToastTone;
-        duration: number;
-        message: string;
-        title?: string | undefined;
-        icon?: IconName | undefined;
-        action?: {
-            label: string;
-            onClick: () => void;
-        } | undefined;
-    }[]>;
-    show: (input: ToastInput) => number;
-    dismiss: (id: number) => void;
-    clear: () => void;
-    hold: (id: number, source: ToastHoldSource) => void;
-    release: (id: number, source: ToastHoldSource) => void;
-    success: (message: string, opts?: Partial<ToastInput>) => number;
-    error: (message: string, opts?: Partial<ToastInput>) => number;
-    warning: (message: string, opts?: Partial<ToastInput>) => number;
-    info: (message: string, opts?: Partial<ToastInput>) => number;
-}, "info" | "success" | "error" | "clear" | "dismiss" | "warning" | "show" | "hold" | "release">>;
+}>;

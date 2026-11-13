@@ -48,7 +48,7 @@ export declare function matchCommand(query: string, cmd: Command): number;
  * overlay UI) lives in `CommandPalette.vue`. `results` is the fuzzy-ranked,
  * recents-first view the palette renders.
  */
-export declare const useCommandStore: import("pinia").StoreDefinition<"phlix-commands", Pick<{
+export declare const useCommandStore: import("pinia").SetupStoreDefinition<"phlix-commands", {
     registry: import("vue").Ref<Map<string, {
         id: string;
         title: string;
@@ -85,78 +85,4 @@ export declare const useCommandStore: import("pinia").StoreDefinition<"phlix-com
     closePalette: () => void;
     togglePalette: () => void;
     runId: (id: string) => Promise<void>;
-}, "query" | "registry" | "open" | "recentIds">, Pick<{
-    registry: import("vue").Ref<Map<string, {
-        id: string;
-        title: string;
-        subtitle?: string | undefined;
-        icon?: IconName | undefined;
-        group?: string | undefined;
-        keywords?: string[] | undefined;
-        shortcut?: string[] | undefined;
-        priority?: number | undefined;
-        run: () => void | Promise<void>;
-    }> & Omit<Map<string, Command>, keyof Map<any, any>>, Map<string, Command> | (Map<string, {
-        id: string;
-        title: string;
-        subtitle?: string | undefined;
-        icon?: IconName | undefined;
-        group?: string | undefined;
-        keywords?: string[] | undefined;
-        shortcut?: string[] | undefined;
-        priority?: number | undefined;
-        run: () => void | Promise<void>;
-    }> & Omit<Map<string, Command>, keyof Map<any, any>>)>;
-    open: import("vue").Ref<boolean, boolean>;
-    query: import("vue").Ref<string, string>;
-    recentIds: import("vue").Ref<string[], string[]>;
-    all: import("vue").ComputedRef<Command[]>;
-    results: import("vue").ComputedRef<Command[]>;
-    register: (cmd: Command | Command[]) => () => void;
-    unregister: (id: string | string[]) => void;
-    isRecent: (id: string) => boolean;
-    pushRecent: (id: string) => void;
-    clearRecents: () => void;
-    setQuery: (v: string) => void;
-    openPalette: () => void;
-    closePalette: () => void;
-    togglePalette: () => void;
-    runId: (id: string) => Promise<void>;
-}, "all" | "results">, Pick<{
-    registry: import("vue").Ref<Map<string, {
-        id: string;
-        title: string;
-        subtitle?: string | undefined;
-        icon?: IconName | undefined;
-        group?: string | undefined;
-        keywords?: string[] | undefined;
-        shortcut?: string[] | undefined;
-        priority?: number | undefined;
-        run: () => void | Promise<void>;
-    }> & Omit<Map<string, Command>, keyof Map<any, any>>, Map<string, Command> | (Map<string, {
-        id: string;
-        title: string;
-        subtitle?: string | undefined;
-        icon?: IconName | undefined;
-        group?: string | undefined;
-        keywords?: string[] | undefined;
-        shortcut?: string[] | undefined;
-        priority?: number | undefined;
-        run: () => void | Promise<void>;
-    }> & Omit<Map<string, Command>, keyof Map<any, any>>)>;
-    open: import("vue").Ref<boolean, boolean>;
-    query: import("vue").Ref<string, string>;
-    recentIds: import("vue").Ref<string[], string[]>;
-    all: import("vue").ComputedRef<Command[]>;
-    results: import("vue").ComputedRef<Command[]>;
-    register: (cmd: Command | Command[]) => () => void;
-    unregister: (id: string | string[]) => void;
-    isRecent: (id: string) => boolean;
-    pushRecent: (id: string) => void;
-    clearRecents: () => void;
-    setQuery: (v: string) => void;
-    openPalette: () => void;
-    closePalette: () => void;
-    togglePalette: () => void;
-    runId: (id: string) => Promise<void>;
-}, "register" | "unregister" | "isRecent" | "pushRecent" | "clearRecents" | "setQuery" | "openPalette" | "closePalette" | "togglePalette" | "runId">>;
+}>;

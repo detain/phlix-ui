@@ -242,9 +242,8 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const preferredAudioQuality = ref<Preferences['preferredAudioQuality']>(initial.preferredAudioQuality);
 
   const systemReduced = ref(systemPrefersReduced());
-  let mq: MediaQueryList | null = null;
   if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-    mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     mq.addEventListener?.('change', (e) => (systemReduced.value = e.matches));
   }
 

@@ -488,7 +488,7 @@ async function load(): Promise<void> {
 
   // Loading clears after the item resolves so the player mounts as soon as possible,
   // without waiting for playback-info (which may be slow/missing).
-  let mediaItem: MediaItem | null = null;
+  let mediaItem: MediaItem | null;
   try {
     const itemResponse = await client.get<{ item: MediaItem }>(
       `/api/v1/media/${encodeURIComponent(id)}`,

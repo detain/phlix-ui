@@ -33,22 +33,10 @@
  * can never bless a value the server rejected, and a stale in-flight write
  * (user moved on while it was sent) does not move the guard either.
  */
-export declare const useThemeSyncStore: import("pinia").StoreDefinition<"themeSync", Pick<{
+export declare const useThemeSyncStore: import("pinia").SetupStoreDefinition<"themeSync", {
     serverTheme: import("vue").Ref<string | null, string | null>;
     putFailed: import("vue").Ref<boolean, boolean>;
     syncFromServer: (apiBase: string | null) => Promise<void>;
     queuePut: (apiBase: string, theme: string) => void;
     endSession: () => void;
-}, "serverTheme" | "putFailed">, Pick<{
-    serverTheme: import("vue").Ref<string | null, string | null>;
-    putFailed: import("vue").Ref<boolean, boolean>;
-    syncFromServer: (apiBase: string | null) => Promise<void>;
-    queuePut: (apiBase: string, theme: string) => void;
-    endSession: () => void;
-}, never>, Pick<{
-    serverTheme: import("vue").Ref<string | null, string | null>;
-    putFailed: import("vue").Ref<boolean, boolean>;
-    syncFromServer: (apiBase: string | null) => Promise<void>;
-    queuePut: (apiBase: string, theme: string) => void;
-    endSession: () => void;
-}, "syncFromServer" | "queuePut" | "endSession">>;
+}>;

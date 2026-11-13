@@ -86,7 +86,7 @@ export declare function probeServer(base: string, fetchImpl?: typeof fetch, time
  * durable store (e.g. the Electron client writes it back via `setServerUrl` so
  * `resolveAppConfig` re-seeds it next launch).
  */
-export declare const useConnectionStore: import("pinia").StoreDefinition<"connection", Pick<{
+export declare const useConnectionStore: import("pinia").SetupStoreDefinition<"connection", {
     apiBase: import("vue").Ref<string | null, string | null>;
     confirmedOrigin: import("vue").Ref<string | null, string | null>;
     isConnected: import("vue").ComputedRef<boolean>;
@@ -95,22 +95,4 @@ export declare const useConnectionStore: import("pinia").StoreDefinition<"connec
     confirmOrigin: (url: string) => void;
     setApiBase: (url: string) => void;
     clear: () => void;
-}, "apiBase" | "confirmedOrigin">, Pick<{
-    apiBase: import("vue").Ref<string | null, string | null>;
-    confirmedOrigin: import("vue").Ref<string | null, string | null>;
-    isConnected: import("vue").ComputedRef<boolean>;
-    configure: (handler: ((url: string | null) => void) | null) => void;
-    isNewOrigin: (url: string) => boolean;
-    confirmOrigin: (url: string) => void;
-    setApiBase: (url: string) => void;
-    clear: () => void;
-}, "isConnected">, Pick<{
-    apiBase: import("vue").Ref<string | null, string | null>;
-    confirmedOrigin: import("vue").Ref<string | null, string | null>;
-    isConnected: import("vue").ComputedRef<boolean>;
-    configure: (handler: ((url: string | null) => void) | null) => void;
-    isNewOrigin: (url: string) => boolean;
-    confirmOrigin: (url: string) => void;
-    setApiBase: (url: string) => void;
-    clear: () => void;
-}, "clear" | "configure" | "isNewOrigin" | "confirmOrigin" | "setApiBase">>;
+}>;

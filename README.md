@@ -85,7 +85,7 @@ You must provide compatible copies of Vue, Pinia, and Vue Router:
 | `vue-router` | `^5.0.0` |
 
 Node **≥ 20.19** (or **≥ 22.12**) is required to **build from source** — the engine floor of the
-Vite 8 toolchain named below. `package.json` keeps `engines.node: ">=18"` on purpose: it declares the
+Vite 8 toolchain named below (running the test suite needs Node **^22.12 \|\| ^24 \|\| ≥26**, the Vitest 5 floor). `package.json` keeps `engines.node: ">=18"` on purpose: it declares the
 supported **consumer** runtime (consumers take the prebuilt `dist/`), not the build floor. Don't
 "fix" one to match the other without changing what each is about.
 
@@ -840,7 +840,7 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
   with ≥2 real hls.js levels, which the offline `Player` harness's direct-play sample can never
   produce, so this is the only way to capture (and axe-scan) its expanded state.
 - **Root docs.** `CALIBER_LEARNINGS.md` and `performance_worklog_ui.md` are session artifacts (accumulated agent learnings / a performance work log), not contract docs — this README, `CHANGELOG.md` and the code are authoritative.
-- Toolchain: **Vite 8 · Vitest 4 · TypeScript 6 · vue-tsc 3 · Vue 3.5 · Pinia 3 · Vue Router 5.**
+- Toolchain: **Vite 8 · Vitest 5 · TypeScript 6 · vue-tsc 3 · Vue 3.5 · Pinia 4 · Vue Router 5.**
 
 ---
 

@@ -147,7 +147,7 @@ function onPointerLeave(): void {
 function onKeydown(e: KeyboardEvent): void {
   const dur = props.duration;
   if (dur <= 0) return;
-  let next: number | null = null;
+  let next: number | null;
   switch (e.key) {
     case 'ArrowLeft':
       next = Math.max(0, props.position - props.step);

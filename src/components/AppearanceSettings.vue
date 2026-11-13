@@ -205,7 +205,7 @@ const accentRovingIndex = computed(() => Math.max(0, ACCENTS.findIndex((a) => a.
 
 function moveRadio(e: KeyboardEvent, count: number, current: number): number | null {
   if (count === 0) return null;
-  let next = current;
+  let next: number;
   switch (e.key) {
     case 'ArrowDown':
     case 'ArrowRight': next = (current + 1) % count; break;

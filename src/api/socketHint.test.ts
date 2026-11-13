@@ -202,7 +202,7 @@ describe('buildWsUrl (:8097) — seam precedence (R12-02)', () => {
     // threw instead of taking the 'localhost' fallback the author intended.
     // One window check now feeds BOTH reads.
     vi.stubGlobal('window', undefined);
-    let url = '';
+    let url: string;
     try {
       url = dial('sp_5');
     } finally {

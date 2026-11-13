@@ -18,7 +18,7 @@ import { type ActiveThemeStyle, type ServerTheme } from '../composables/themeTok
  * The store holds only the catalogue. Nothing here touches the DOM; applying a
  * theme is `useTheme`'s job, which reads `styleFor()`.
  */
-export declare const useThemesStore: import("pinia").StoreDefinition<"themes", Pick<{
+export declare const useThemesStore: import("pinia").SetupStoreDefinition<"themes", {
     items: import("vue").Ref<{
         id: string;
         name: string;
@@ -51,70 +51,4 @@ export declare const useThemesStore: import("pinia").StoreDefinition<"themes", P
     load: (apiBase: string | null, force?: boolean) => Promise<void>;
     byId: (id: string) => ServerTheme | undefined;
     styleFor: (id: string) => ActiveThemeStyle | null;
-}, "error" | "loading" | "items" | "loaded">, Pick<{
-    items: import("vue").Ref<{
-        id: string;
-        name: string;
-        dark: boolean;
-        extends: string | null;
-        tokens: Record<string, string>;
-        source: string | null;
-        builtIn: boolean;
-    }[], ServerTheme[] | {
-        id: string;
-        name: string;
-        dark: boolean;
-        extends: string | null;
-        tokens: Record<string, string>;
-        source: string | null;
-        builtIn: boolean;
-    }[]>;
-    loading: import("vue").Ref<boolean, boolean>;
-    loaded: import("vue").Ref<boolean, boolean>;
-    error: import("vue").Ref<string | null, string | null>;
-    pluginThemes: import("vue").ComputedRef<{
-        id: string;
-        name: string;
-        dark: boolean;
-        extends: string | null;
-        tokens: Record<string, string>;
-        source: string | null;
-        builtIn: boolean;
-    }[]>;
-    load: (apiBase: string | null, force?: boolean) => Promise<void>;
-    byId: (id: string) => ServerTheme | undefined;
-    styleFor: (id: string) => ActiveThemeStyle | null;
-}, "pluginThemes">, Pick<{
-    items: import("vue").Ref<{
-        id: string;
-        name: string;
-        dark: boolean;
-        extends: string | null;
-        tokens: Record<string, string>;
-        source: string | null;
-        builtIn: boolean;
-    }[], ServerTheme[] | {
-        id: string;
-        name: string;
-        dark: boolean;
-        extends: string | null;
-        tokens: Record<string, string>;
-        source: string | null;
-        builtIn: boolean;
-    }[]>;
-    loading: import("vue").Ref<boolean, boolean>;
-    loaded: import("vue").Ref<boolean, boolean>;
-    error: import("vue").Ref<string | null, string | null>;
-    pluginThemes: import("vue").ComputedRef<{
-        id: string;
-        name: string;
-        dark: boolean;
-        extends: string | null;
-        tokens: Record<string, string>;
-        source: string | null;
-        builtIn: boolean;
-    }[]>;
-    load: (apiBase: string | null, force?: boolean) => Promise<void>;
-    byId: (id: string) => ServerTheme | undefined;
-    styleFor: (id: string) => ActiveThemeStyle | null;
-}, "load" | "byId" | "styleFor">>;
+}>;

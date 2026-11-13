@@ -31,25 +31,11 @@ export declare const CURRENT_SERVER_URL_KEY = "phlix.currentServerUrl";
  * which routes it (anchored), carries `Range` and returns the `206` +
  * `Content-Range` intact. See {@link mediaDirectBaseFor}.
  */
-export declare const useServerStore: import("pinia").StoreDefinition<"server", Pick<{
+export declare const useServerStore: import("pinia").SetupStoreDefinition<"server", {
     currentServerId: import("vue").Ref<string | null, string | null>;
     currentServerName: import("vue").Ref<string | null, string | null>;
     currentServerUrl: import("vue").Ref<string | null, string | null>;
     hasCurrent: import("vue").ComputedRef<boolean>;
     setCurrent: (id: string, name?: string, url?: string) => void;
     clear: () => void;
-}, "currentServerId" | "currentServerName" | "currentServerUrl">, Pick<{
-    currentServerId: import("vue").Ref<string | null, string | null>;
-    currentServerName: import("vue").Ref<string | null, string | null>;
-    currentServerUrl: import("vue").Ref<string | null, string | null>;
-    hasCurrent: import("vue").ComputedRef<boolean>;
-    setCurrent: (id: string, name?: string, url?: string) => void;
-    clear: () => void;
-}, "hasCurrent">, Pick<{
-    currentServerId: import("vue").Ref<string | null, string | null>;
-    currentServerName: import("vue").Ref<string | null, string | null>;
-    currentServerUrl: import("vue").Ref<string | null, string | null>;
-    hasCurrent: import("vue").ComputedRef<boolean>;
-    setCurrent: (id: string, name?: string, url?: string) => void;
-    clear: () => void;
-}, "clear" | "setCurrent">>;
+}>;

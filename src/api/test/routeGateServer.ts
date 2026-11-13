@@ -239,7 +239,7 @@ export async function driveGated(
             const observed = server.requests.slice(before);
             const last = observed.length > 0 ? observed[observed.length - 1]! : null;
             const at = last ? `${last.method} ${last.path}` : 'unknown url';
-            throw new Error(`route gate — ${label}: request to an unregistered url (${at}) → ${e.status}`);
+            throw new Error(`route gate — ${label}: request to an unregistered url (${at}) → ${e.status}`, { cause: e });
         }
         // A request WAS recorded, so the throw is a response-SHAPE artifact of
         // the gate server's `{}` bodies — not a route defect; the recorded
@@ -251,6 +251,7 @@ export async function driveGated(
                 `route gate — ${label}: drive threw before issuing any request: ${
                     e instanceof Error ? e.message : String(e)
                 }`,
+                { cause: e },
             );
         }
     }

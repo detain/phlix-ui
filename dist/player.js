@@ -56,10 +56,10 @@ var te = z("phlix-prefs", () => {
 	let e = W(), t = S(e.theme), n = S(e.accent), i = S(e.density), a = S(e.cardSize), o = S(e.gridDensity), s = S(e.viewMode), c = S(e.reducedMotion), l = S(e.autoplay), u = S(e.defaultVolume), d = S(e.defaultQuality), f = S(e.defaultSubtitleLang), p = S(e.defaultAudioLang), m = S(e.subtitlePreferenceSet), h = S({
 		...B,
 		...e.captionStyle
-	}), g = S(e.atmosphere), _ = S(e.tv), v = S(e.filterPresets ? [...e.filterPresets] : []), y = S(e.showMarkerTimeline), x = S(e.crossfadeDuration), C = S(e.crossfadeFadeIn), w = S(e.crossfadeFadeOut), T = S(e.gaplessEnabled), E = S(e.preferredAudioQuality), D = S(ee()), O = null;
-	typeof window < "u" && typeof window.matchMedia == "function" && (O = window.matchMedia("(prefers-reduced-motion: reduce)"), O.addEventListener?.("change", (e) => D.value = e.matches));
-	let k = r(() => c.value === "on" || c.value !== "off" && D.value);
-	function A() {
+	}), g = S(e.atmosphere), _ = S(e.tv), v = S(e.filterPresets ? [...e.filterPresets] : []), y = S(e.showMarkerTimeline), x = S(e.crossfadeDuration), C = S(e.crossfadeFadeIn), w = S(e.crossfadeFadeOut), T = S(e.gaplessEnabled), E = S(e.preferredAudioQuality), D = S(ee());
+	typeof window < "u" && typeof window.matchMedia == "function" && window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", (e) => D.value = e.matches);
+	let O = r(() => c.value === "on" || c.value !== "off" && D.value);
+	function k() {
 		return {
 			theme: t.value,
 			accent: n.value,
@@ -86,7 +86,7 @@ var te = z("phlix-prefs", () => {
 			preferredAudioQuality: E.value
 		};
 	}
-	function j(e, t) {
+	function A(e, t) {
 		let n = {
 			id: H(e),
 			name: e.trim(),
@@ -94,28 +94,28 @@ var te = z("phlix-prefs", () => {
 		}, r = v.value.findIndex((e) => e.id === n.id);
 		return r >= 0 ? v.value.splice(r, 1, n) : v.value.push(n), n;
 	}
-	function M(e) {
+	function j(e) {
 		v.value = v.value.filter((t) => t.id !== e);
 	}
-	let N = null;
-	function F() {
-		N !== null && (clearTimeout(N), N = null);
-		let e = A();
+	let M = null;
+	function N() {
+		M !== null && (clearTimeout(M), M = null);
+		let e = k();
 		if (typeof localStorage < "u") try {
 			localStorage.setItem(U, JSON.stringify(e));
 		} catch {}
 	}
-	P(A, (e) => {
-		N !== null && clearTimeout(N), N = setTimeout(() => {
-			N = null;
+	P(k, (e) => {
+		M !== null && clearTimeout(M), M = setTimeout(() => {
+			M = null;
 			try {
 				localStorage.setItem(U, JSON.stringify(e));
 			} catch {}
 		}, 250);
-	}, { deep: !0 }), typeof window < "u" && window.addEventListener("pagehide", F), b(() => {
-		N !== null && (clearTimeout(N), N = null), typeof window < "u" && window.removeEventListener("pagehide", F);
+	}, { deep: !0 }), typeof window < "u" && window.addEventListener("pagehide", N), b(() => {
+		M !== null && (clearTimeout(M), M = null), typeof window < "u" && window.removeEventListener("pagehide", N);
 	});
-	function I() {
+	function F() {
 		let e = V;
 		t.value = e.theme, n.value = e.accent, i.value = e.density, a.value = e.cardSize, o.value = e.gridDensity, s.value = e.viewMode, c.value = e.reducedMotion, l.value = e.autoplay, u.value = e.defaultVolume, d.value = e.defaultQuality, f.value = e.defaultSubtitleLang, p.value = e.defaultAudioLang, m.value = e.subtitlePreferenceSet, h.value = { ...B }, g.value = e.atmosphere, _.value = e.tv, v.value = [...e.filterPresets], y.value = e.showMarkerTimeline, x.value = e.crossfadeDuration, C.value = e.crossfadeFadeIn, w.value = e.crossfadeFadeOut, T.value = e.gaplessEnabled, E.value = e.preferredAudioQuality;
 	}
@@ -144,11 +144,11 @@ var te = z("phlix-prefs", () => {
 		gaplessEnabled: T,
 		preferredAudioQuality: E,
 		systemReduced: D,
-		effectiveReducedMotion: k,
-		snapshot: A,
-		saveFilterPreset: j,
-		removeFilterPreset: M,
-		reset: I
+		effectiveReducedMotion: O,
+		snapshot: k,
+		saveFilterPreset: A,
+		removeFilterPreset: j,
+		reset: F
 	};
 }), ne = 30, re = .95, ie = 5e3, ae = "phlix.resume", oe = "phlix.resume.touched";
 function se() {
@@ -6141,7 +6141,7 @@ var os = [
 		function z(e) {
 			let t = l.duration;
 			if (t <= 0) return;
-			let n = null;
+			let n;
 			switch (e.key) {
 				case "ArrowLeft":
 					n = Math.max(0, l.position - l.step);
@@ -6211,7 +6211,7 @@ var os = [
 			style: _({ backgroundImage: A.value })
 		}, null, 4)) : a("", !0), s("span", ls, E(O(as)(D.value)), 1)], 4)) : a("", !0)], 40, os));
 	}
-}), [["__scopeId", "data-v-3d610715"]]), ds = "phlix-bandwidth-estimate";
+}), [["__scopeId", "data-v-868e2818"]]), ds = "phlix-bandwidth-estimate";
 function fs(e) {
 	return Math.min(1e8, Math.max(1e5, e));
 }
@@ -7895,7 +7895,7 @@ var vl = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 		}
 		function F(e, t, n) {
 			if (t === 0) return null;
-			let r = n;
+			let r;
 			switch (e.key) {
 				case "ArrowDown":
 				case "ArrowRight":
@@ -8079,7 +8079,7 @@ var vl = /*#__PURE__*/ Y(/* @__PURE__ */ d({
 			])
 		], 8, bl)) : a("", !0)], 512));
 	}
-}), [["__scopeId", "data-v-62fcc11d"]]), Jl = ["aria-labelledby"], Yl = {
+}), [["__scopeId", "data-v-12f05479"]]), Jl = ["aria-labelledby"], Yl = {
 	key: 0,
 	class: "phlix-modal__header"
 }, Xl = ["id"], Zl = { class: "phlix-modal__body" }, Ql = {

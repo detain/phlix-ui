@@ -48,6 +48,24 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+// Mock all the page components to avoid actual file system imports in jsdom.
+// vi.mock() is hoisted to the top of the file, so it lives at module top level.
+vi.mock('../pages/BrowsePage.vue', () => ({ default: { name: 'BrowsePage' } }));
+vi.mock('../pages/MediaDetailPage.vue', () => ({ default: { name: 'MediaDetailPage' } }));
+vi.mock('../pages/SeasonPage.vue', () => ({ default: { name: 'SeasonPage' } }));
+vi.mock('../pages/LibraryPage.vue', () => ({ default: { name: 'LibraryPage' } }));
+vi.mock('../pages/PlayerPage.vue', () => ({ default: { name: 'PlayerPage' } }));
+vi.mock('../pages/LoginPage.vue', () => ({ default: { name: 'LoginPage' } }));
+vi.mock('../pages/SignupPage.vue', () => ({ default: { name: 'SignupPage' } }));
+vi.mock('../pages/ConnectPage.vue', () => ({ default: { name: 'ConnectPage' } }));
+vi.mock('../pages/SettingsPage.vue', () => ({ default: { name: 'SettingsPage' } }));
+vi.mock('../pages/ExplorePage.vue', () => ({ default: { name: 'ExplorePage' } }));
+vi.mock('../pages/RecommendationsPage.vue', () => ({ default: { name: 'RecommendationsPage' } }));
+vi.mock('../pages/WatchHistoryPage.vue', () => ({ default: { name: 'WatchHistoryPage' } }));
+vi.mock('../pages/SyncPlayPage.vue', () => ({ default: { name: 'SyncPlayPage' } }));
+vi.mock('../pages/MusicLibraryPage.vue', () => ({ default: { name: 'MusicLibraryPage' } }));
+vi.mock('../pages/ParentalControlsPage.vue', () => ({ default: { name: 'ParentalControlsPage' } }));
+
 describe('createPhlixApp', () => {
   it('returns a mountable Vue app', () => {
     const app = createPhlixApp({ app: 'server', apiBase: '', routerBase: '/app' });
@@ -149,23 +167,7 @@ describe('buildRoutes — R6.1a lazy route chunks', () => {
   });
 
   it('each built-in lazy loader resolves to a real SFC module (default export)', async () => {
-    // Mock all the page components to avoid actual file system imports in jsdom.
-    // Each vi.mock() is hoisted to the top of the file, so we define inline factories.
-    vi.mock('../pages/BrowsePage.vue', () => ({ default: { name: 'BrowsePage' } }));
-    vi.mock('../pages/MediaDetailPage.vue', () => ({ default: { name: 'MediaDetailPage' } }));
-    vi.mock('../pages/SeasonPage.vue', () => ({ default: { name: 'SeasonPage' } }));
-    vi.mock('../pages/LibraryPage.vue', () => ({ default: { name: 'LibraryPage' } }));
-    vi.mock('../pages/PlayerPage.vue', () => ({ default: { name: 'PlayerPage' } }));
-    vi.mock('../pages/LoginPage.vue', () => ({ default: { name: 'LoginPage' } }));
-    vi.mock('../pages/SignupPage.vue', () => ({ default: { name: 'SignupPage' } }));
-    vi.mock('../pages/ConnectPage.vue', () => ({ default: { name: 'ConnectPage' } }));
-    vi.mock('../pages/SettingsPage.vue', () => ({ default: { name: 'SettingsPage' } }));
-    vi.mock('../pages/ExplorePage.vue', () => ({ default: { name: 'ExplorePage' } }));
-    vi.mock('../pages/RecommendationsPage.vue', () => ({ default: { name: 'RecommendationsPage' } }));
-    vi.mock('../pages/WatchHistoryPage.vue', () => ({ default: { name: 'WatchHistoryPage' } }));
-    vi.mock('../pages/SyncPlayPage.vue', () => ({ default: { name: 'SyncPlayPage' } }));
-    vi.mock('../pages/MusicLibraryPage.vue', () => ({ default: { name: 'MusicLibraryPage' } }));
-    vi.mock('../pages/ParentalControlsPage.vue', () => ({ default: { name: 'ParentalControlsPage' } }));
+    // The page components are mocked at module top level (see the vi.mock block above).
 
     const routes = buildRoutes({ app: 'server', apiBase: '', routerBase: '/app' });
     for (const name of BUILTIN_PAGES) {

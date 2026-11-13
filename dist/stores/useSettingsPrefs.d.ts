@@ -10,16 +10,8 @@ export interface SettingsPrefsState {
 /**
  * useSettingsPrefs — tiny store for persisting the user's Advanced mode preference.
  */
-export declare const useSettingsPrefsStore: import("pinia").StoreDefinition<"phlix-settings-prefs", Pick<{
+export declare const useSettingsPrefsStore: import("pinia").SetupStoreDefinition<"phlix-settings-prefs", {
     advancedMode: import("vue").Ref<boolean, boolean>;
     setAdvancedMode: (value: boolean) => void;
     toggleAdvancedMode: () => void;
-}, "advancedMode">, Pick<{
-    advancedMode: import("vue").Ref<boolean, boolean>;
-    setAdvancedMode: (value: boolean) => void;
-    toggleAdvancedMode: () => void;
-}, never>, Pick<{
-    advancedMode: import("vue").Ref<boolean, boolean>;
-    setAdvancedMode: (value: boolean) => void;
-    toggleAdvancedMode: () => void;
-}, "setAdvancedMode" | "toggleAdvancedMode">>;
+}>;

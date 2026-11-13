@@ -110,7 +110,7 @@ function addSubtitles(): void {
  *  returns the new index, or null when the key isn't a navigation key. */
 function moveRadio(e: KeyboardEvent, count: number, current: number): number | null {
   if (count === 0) return null;
-  let next = current;
+  let next: number;
   switch (e.key) {
     case 'ArrowDown':
     case 'ArrowRight':
