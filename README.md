@@ -836,6 +836,7 @@ npm run test:a11y    # Playwright + axe — 0 WCAG 2.0/2.1 A+AA violations acros
   chrome) with a deterministic offline ladder and the listbox forced open — the control only renders
   with ≥2 real hls.js levels, which the offline `Player` harness's direct-play sample can never
   produce, so this is the only way to capture (and axe-scan) its expanded state.
+- **Root docs.** `CALIBER_LEARNINGS.md` and `performance_worklog_ui.md` are session artifacts (accumulated agent learnings / a performance work log), not contract docs — this README, `CHANGELOG.md` and the code are authoritative.
 - Toolchain: **Vite 8 · Vitest 4 · TypeScript 6 · vue-tsc 3 · Vue 3.5 · Pinia 3 · Vue Router 5.**
 
 ---

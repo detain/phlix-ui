@@ -5,8 +5,8 @@ import { defineConfig } from '@playwright/test';
  *
  * This is an ON-DEMAND suite (`npm run test:visual`), deliberately NOT part of the
  * blocking `build` / `vitest` / `vue-tsc` gate:
- *   - there is no CI runner wired to this repo yet (the `.github/workflows/ui-ci.yml`
- *     artifact is ready-to-enable but dormant), and
+ *   - the `.github/workflows/ui-ci.yml` `visual` job is manual-only (`workflow_dispatch`) until `-linux` baselines are
+ *     regenerated on the runner; the `static`/`test` jobs are live, and
  *   - PNG baselines are environment-fragile (font hinting / GPU rasterization), so a
  *     visual diff must never be able to go flaky-red inside the deterministic gate.
  *
