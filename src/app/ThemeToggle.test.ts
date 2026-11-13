@@ -58,4 +58,30 @@ describe('ThemeToggle', () => {
     const w = mountToggle();
     expect(/[🌙☀️🖥️🙈👁]/u.test(w.html())).toBe(false);
   });
+
+  describe('plugin-aware arming', () => {
+    it('renders when the theme is a built-in', () => {
+      const w = mountToggle();
+      expect(w.find('button').exists()).toBe(true);
+    });
+
+    it('hides when the active theme is a plugin/gallery theme', async () => {
+      const w = mountToggle();
+      const prefs = usePreferencesStore();
+      (prefs as unknown as { theme: string }).theme = 'obsidian-flame';
+      await w.vm.$nextTick();
+      expect(w.find('button').exists()).toBe(false);
+      expect(prefs.theme).toBe('obsidian-flame');
+    });
+
+    it('re-arms once a built-in theme is restored', async () => {
+      const w = mountToggle();
+      const prefs = usePreferencesStore();
+      (prefs as unknown as { theme: string }).theme = 'obsidian-flame';
+      await w.vm.$nextTick();
+      prefs.theme = 'midnight';
+      await w.vm.$nextTick();
+      expect(w.find('button').exists()).toBe(true);
+    });
+  });
 });

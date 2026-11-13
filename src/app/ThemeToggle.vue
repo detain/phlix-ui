@@ -23,6 +23,10 @@ const ORDER: ThemeName[] = ['nocturne', 'daylight', 'midnight'];
 const ICONS: Record<ThemeName, IconName> = { nocturne: 'moon', daylight: 'sun', midnight: 'monitor' };
 const LABELS: Record<ThemeName, string> = { nocturne: 'Nocturne', daylight: 'Daylight', midnight: 'Midnight' };
 
+// A plugin/gallery theme (not in ORDER) must never be clobbered by a one-tap cycle:
+// the toggle disarms (hides) until a built-in theme is active again.
+const armed = computed(() => ORDER.includes(prefs.theme));
+
 const next = computed<ThemeName>(() => {
   const i = ORDER.indexOf(prefs.theme);
   return ORDER[(i + 1) % ORDER.length];
@@ -33,10 +37,11 @@ const label = computed(() =>
 );
 
 function cycle(): void {
+  if (!armed.value) return;
   prefs.theme = next.value;
 }
 </script>
 
 <template>
-  <IconButton :name="icon" :label="label" variant="ghost" @click="cycle" />
+  <IconButton v-if="armed" :name="icon" :label="label" variant="ghost" @click="cycle" />
 </template>
