@@ -462,7 +462,7 @@ function _e(e, t = "Something went wrong.") {
 function ve() {
 	return typeof navigator < "u" && navigator.onLine === !1;
 }
-// ../../phlix-ui/node_modules/@phlix/contracts/dist/phlix-contracts.js
+// node_modules/@phlix/contracts/dist/phlix-contracts.js
 var ye = {
 	SERVERS_READ: "mcp:servers:read",
 	LIBRARY_READ: "mcp:library:read",
@@ -6266,7 +6266,7 @@ async function bs(e, t, n = {}) {
 			hasAudio: () => !1
 		};
 	}
-	let { default: r } = await import("./hls-BHXgcykG.js");
+	let { default: r } = await import("./hls-fNqmoNsg.js");
 	if (r.isSupported()) {
 		let i = ps(), a = new r({
 			enableWorker: !0,
@@ -9630,7 +9630,7 @@ function Bf(e) {
 function Vf() {
 	return typeof window > "u" ? Lf : Bf(window.__PHLIX__);
 }
-// ../../phlix-ui/node_modules/@phlix/syncplay/dist/phlix-syncplay.js
+// node_modules/@phlix/syncplay/dist/phlix-syncplay.js
 var X = {
 	GROUP_CREATE: "syncplay_group_create",
 	GROUP_JOIN: "syncplay_group_join",
@@ -12137,7 +12137,7 @@ var Zm = { class: "player__stage" }, Qm = ["src", "poster"], $m = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-eed49437"]]), zh = "1.0.1", Bh = ["aria-label"], Vh = ["src", "poster"], Hh = { class: "mini__body" }, Uh = { class: "mini__title" }, Wh = { class: "mini__controls" }, Gh = ["aria-label"], Kh = ["aria-label", "aria-pressed"], qh = ["aria-label"], Jh = ["aria-label"], Yh = {
+}), [["__scopeId", "data-v-eed49437"]]), zh = "1.0.2", Bh = ["aria-label"], Vh = ["src", "poster"], Hh = { class: "mini__body" }, Uh = { class: "mini__title" }, Wh = { class: "mini__controls" }, Gh = ["aria-label"], Kh = ["aria-label", "aria-pressed"], qh = ["aria-label"], Jh = ["aria-label"], Yh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Xh = /*#__PURE__*/ Y(/* @__PURE__ */ d({

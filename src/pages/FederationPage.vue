@@ -23,7 +23,6 @@
 import { ref, onMounted, inject } from 'vue';
 import { api, ApiClient } from '../api/client';
 import { useToastStore } from '../stores/useToastStore';
-import { errMessage } from '../api/errors';
 import { wireErrorLine } from '../utils/wireErrors';
 import type { PhlixAppConfig } from '../app/types';
 import Badge from '../components/ui/Badge.vue';
@@ -116,7 +115,7 @@ async function connectPeer(): Promise<void> {
     peerPublicKey.value = '';
     await loadPeers();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to add peer.'));
+    toasts.error(wireErrorLine(e, 'Failed to add peer.', config?.locale));
   } finally {
     connecting.value = false;
   }
@@ -146,7 +145,7 @@ async function confirmRemovePeer(): Promise<void> {
     toasts.success('Peer removed.');
     await loadPeers();
   } catch (e) {
-    toasts.error(errMessage(e, 'Failed to remove peer.'));
+    toasts.error(wireErrorLine(e, 'Failed to remove peer.', config?.locale));
   }
 }
 
@@ -198,7 +197,17 @@ onMounted(() => loadPeers(true));
 <template>
   <section class="federation" aria-labelledby="federation-heading">
     <header class="federation__head">
-      <h1 id="federation-heading" class="federation__title">Federation</h1>
+      <div class="federation__head-row">
+        <h1 id="federation-heading" class="federation__title">Federation</h1>
+        <Button
+          variant="ghost"
+          size="sm"
+          left-icon="rewind"
+          :disabled="loading"
+          data-testid="federation-refresh"
+          @click="loadPeers(true)"
+        >Refresh</Button>
+      </div>
       <p class="federation__subtitle">Connect with other Phlix servers to share libraries.</p>
     </header>
 
@@ -335,6 +344,12 @@ onMounted(() => loadPeers(true));
 }
 .federation__head {
   margin-bottom: var(--space-6);
+}
+.federation__head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 .federation__title {
   font-family: var(--font-display);

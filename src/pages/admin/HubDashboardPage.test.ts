@@ -184,3 +184,16 @@ describe('HubDashboardPage', () => {
     w.unmount();
   });
 });
+
+describe('HubDashboardPage — Refresh affordance (HUB-50)', () => {
+  it('Refresh re-fetches summary and activity', async () => {
+    const { client, get } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(2);
+    await w.find('[data-testid="hub-dash-refresh"]').trigger('click');
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(4);
+    w.unmount();
+  });
+});

@@ -372,3 +372,47 @@ describe('FederationPage — wire-error survivor law', () => {
     w.unmount();
   });
 });
+
+describe('FederationPage — add/remove toasts + Refresh (HUB-14/HUB-50)', () => {
+  const RAW = 'SQLSTATE[HY000] [2002] Connection refused';
+
+  it('localizes a coded add-peer failure toast and drops raw text', async () => {
+    const { client, post } = makeClient();
+    post.mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }));
+    const w = mountPage(client);
+    await flushPromises();
+    await fillAddPeer(w);
+    await w.find('.federation__form').trigger('submit');
+    await flushPromises();
+    const msgs = useToastStore().toasts.map((t) => t.message);
+    expect(msgs).toContain(ERROR_MESSAGES.en['server.offline']);
+    expect(msgs.some((m) => m.includes('SQLSTATE'))).toBe(false);
+    w.unmount();
+  });
+
+  it('localizes a coded remove-peer failure toast', async () => {
+    const { client, del } = makeClient();
+    del.mockRejectedValue(new ApiError(RAW, 503, { error: RAW, code: 'server.offline' }));
+    const w = mountPage(client);
+    await flushPromises();
+    await findBtn(w, 'Remove Friend Server')?.trigger('click');
+    await flushPromises();
+    affirmConfirmDialog();
+    await flushPromises();
+    const msgs = useToastStore().toasts.map((t) => t.message);
+    expect(msgs).toContain(ERROR_MESSAGES.en['server.offline']);
+    expect(msgs.some((m) => m.includes('SQLSTATE'))).toBe(false);
+    w.unmount();
+  });
+
+  it('Refresh re-fetches the peer list', async () => {
+    const { client, get } = makeClient();
+    const w = mountPage(client);
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(1);
+    await w.find('[data-testid="federation-refresh"]').trigger('click');
+    await flushPromises();
+    expect(get).toHaveBeenCalledTimes(2);
+    w.unmount();
+  });
+});

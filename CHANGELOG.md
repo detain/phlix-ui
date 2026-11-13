@@ -8,6 +8,16 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## 1.0.2 - 2026-11-13
+
+### Added
+
+- `FederationPage` and `HubDashboardPage` gain a Refresh button in the page header (re-fetches the peer list / the summary + activity sections; HUB-50).
+
+### Fixed
+
+- `FederationPage` add-peer and remove-peer failure toasts now run through `wireErrorLine` like the load path, so registered codes localize through the contracts catalog and raw server text never renders (HUB-14).
+
 ## 1.0.1 - 2026-11-13
 
 ### Added

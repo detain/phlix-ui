@@ -119,6 +119,12 @@ async function fetchActivity(): Promise<void> {
   }
 }
 
+/** Manual refresh: re-fetch both sections (there is no auto-refresh timer). */
+function refreshAll(): void {
+  void fetchSummary();
+  void fetchActivity();
+}
+
 onMounted(() => {
   void fetchSummary();
   void fetchActivity();
@@ -129,6 +135,14 @@ onMounted(() => {
   <section class="hub-dash" aria-labelledby="hub-dash-heading">
     <header class="hub-dash__head">
       <h1 id="hub-dash-heading" class="hub-dash__title">Dashboard</h1>
+      <Button
+        variant="ghost"
+        size="sm"
+        left-icon="rewind"
+        :disabled="loadingSummary || loadingActivity"
+        data-testid="hub-dash-refresh"
+        @click="refreshAll"
+      >Refresh</Button>
     </header>
 
     <PageHint :links="adminPageHelp['hub-dashboard'].links" :details="adminPageHelp['hub-dashboard'].details">
@@ -199,6 +213,10 @@ onMounted(() => {
 }
 .hub-dash__head {
   margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 .hub-dash__title {
   font-family: var(--font-display);

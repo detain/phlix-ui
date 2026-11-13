@@ -31,7 +31,7 @@ into a ready-to-mount Vue app.
   reduced-motion; ships six complete locale bundles (config-time, compiler-checked).
 - 🔤 **Self-hosted variable fonts**, no CDN — Fraunces / Hanken Grotesk / JetBrains Mono.
 
-> **Status:** `v1.0.1` — the first stable release. Semver applies: breaking changes ship only in a new major. See
+> **Status:** `v1.0.2` — the first stable release. Semver applies: breaking changes ship only in a new major. See
 > [`CHANGELOG.md`](./CHANGELOG.md) for the full history.
 
 ---
@@ -63,7 +63,7 @@ into a ready-to-mount Vue app.
 // package.json
 {
   "dependencies": {
-    "@phlix/ui": "github:detain/phlix-ui#v1.0.1"
+    "@phlix/ui": "github:detain/phlix-ui#v1.0.2"
   }
 }
 ```
@@ -489,7 +489,7 @@ nothing-matched label).
 It is a **separate map**, not `errors.*` keys folded into `DEFAULT_MESSAGES`,
 for two reasons: (1) every locale bundle is `satisfies PhlixMessages` with exact
 650-key identity and downstream clients (tizen, windows) have pinned bundle↔installed
-equality on every ui tag since the `v0.99.5` era (now `v1.0.1`-era) — the catalog's
+equality on every ui tag since the `v0.99.5` era (now `v1.0.2`-era) — the catalog's
 205 error strings per locale (129 dotted registry entries plus 76 flat generic-message
 entries; 1,435 across the seven error catalogs) would churn every equality pin
 for data that is registry-adjacent, not UI chrome; (2) the catalog's key set is
