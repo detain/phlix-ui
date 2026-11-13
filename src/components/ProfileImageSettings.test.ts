@@ -189,7 +189,7 @@ describe('ProfileImageSettings — file selection and validation', () => {
     await selectFile(w, file('huge.png', 'image/png', 5 * 1024 * 1024 + 1));
 
     expect(useToastStore().toasts.map((t) => t.message)).toEqual([
-      'File is too large. Maximum size is 5 MB.',
+      'That file is too large. The maximum size is 5 MB.',
     ]);
     expect(w.find('.pis__pending').exists()).toBe(false);
   });
@@ -265,7 +265,7 @@ describe('ProfileImageSettings — the primary button', () => {
 
     expect(upload).toHaveBeenCalledWith(f);
     expect(useToastStore().toasts.map((t) => [t.tone, t.message])).toEqual([
-      ['success', 'Avatar updated successfully.'],
+      ['success', 'Avatar updated.'],
     ]);
     // selectedFile is cleared, so the label reverts…
     expect(primary(w).text()).toBe('Choose Image');
@@ -297,7 +297,7 @@ describe('ProfileImageSettings — the primary button', () => {
     await primary(w).trigger('click');
     await flushPromises();
 
-    expect(useToastStore().toasts.map((t) => t.message)).toEqual(['Avatar upload failed.']);
+    expect(useToastStore().toasts.map((t) => t.message)).toEqual(['Couldn’t upload the avatar.']);
   });
 });
 
@@ -351,7 +351,7 @@ describe('ProfileImageSettings — the secondary button', () => {
     b.remove.mockRejectedValue({ code: 'ENOTANERROR' });
     await secondary(b.w).trigger('click');
     await flushPromises();
-    expect(useToastStore().toasts.map((t) => t.message)).toEqual(['Avatar removal failed.']);
+    expect(useToastStore().toasts.map((t) => t.message)).toEqual(['Couldn’t remove the avatar.']);
   });
 });
 
@@ -523,7 +523,7 @@ describe('ProfileImageSettings — wire-error survivor law', () => {
     await primary(w).trigger('click');
     await flushPromises();
     const messages = useToastStore().toasts.map((t) => t.message);
-    expect(messages).toEqual(['Avatar upload failed.']);
+    expect(messages).toEqual(['Couldn’t upload the avatar.']);
     expect(messages.some((m) => m.includes('SQLSTATE'))).toBe(false);
     w.unmount();
   });

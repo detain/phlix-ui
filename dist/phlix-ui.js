@@ -1,26 +1,26 @@
-import { i as e } from "./safeRedirect-CmV1QCBp.js";
-import { t } from "./IconButton-oCt4k5-3.js";
+import { i as e } from "./safeRedirect-Cl7qL5fH.js";
+import { t } from "./IconButton-DsjtwjU1.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-DStfPnC8.js";
 import { n as c, t as l } from "./Icon-55iG1rR7.js";
 import { a as u, i as d, n as f, r as p, t as m } from "./usePreferencesStore-DrDMAwjz.js";
-import { i as h, n as g, r as _, t as v } from "./useMessages-BoZa6NgT.js";
-import { t as y } from "./useAuthStore-CgPY1Paj.js";
-import { n as b, r as x, t as S } from "./useProfileStore-CvE7x9jJ.js";
+import { i as h, n as g, r as _, t as v } from "./useMessages-B96K7XS0.js";
+import { t as y } from "./useAuthStore-D2w7sjNa.js";
+import { n as b, r as x, t as S } from "./useProfileStore-DZq86HNh.js";
 import { i as C, n as w, r as T, t as E } from "./useImageSrc-CSM61b-l.js";
 import { i as D, n as O, r as ee, t as te } from "./usePlayerStore-BpohCwDP.js";
-import { n as ne, t as re } from "./ThumbRating-DBdwnIMK.js";
+import { n as ne, t as re } from "./ThumbRating-f22kIO8H.js";
 import { n as k, r as ie, t as ae } from "./useApiBase-DXTBY90j.js";
-import { i as oe, o as se, s as ce } from "./shortcuts-BqUhFpRJ.js";
-import { t as le } from "./NetworkHealthIndicator-CeMb3u23.js";
+import { i as oe, o as se, s as ce } from "./shortcuts-DhDck2s-.js";
+import { t as le } from "./NetworkHealthIndicator-CDwIXSLp.js";
 import { t as ue } from "./useToastStore-CxO_ppM8.js";
-import { C as de, E as fe, S as pe, T as me, _ as he, a as ge, b as _e, c as ve, d as ye, f as be, g as xe, h as Se, i as Ce, l as we, m as Te, n as Ee, o as De, p as Oe, r as ke, s as Ae, t as je, u as Me, v as Ne, w as Pe, x as Fe, y as Ie } from "./DeviceSessionsPage-B3vdS4ne.js";
+import { C as de, E as fe, S as pe, T as me, _ as he, a as ge, b as _e, c as ve, d as ye, f as be, g as xe, h as Se, i as Ce, l as we, m as Te, n as Ee, o as De, p as Oe, r as ke, s as Ae, t as je, u as Me, v as Ne, w as Pe, x as Fe, y as Ie } from "./DeviceSessionsPage-Bihsg5Nm.js";
 import { i as Le, n as Re, r as ze, t as Be } from "./Kbd-B47x87jw.js";
-import { a as Ve, i as He, n as Ue, o as We, r as Ge, t as Ke } from "./useLibrariesStore-D6Ddzzac.js";
-import { n as qe, t as Je } from "./HomeRow-CxJnLRiO.js";
+import { a as Ve, i as He, n as Ue, o as We, r as Ge, t as Ke } from "./useLibrariesStore-C7CVlbVW.js";
+import { n as qe, t as Je } from "./HomeRow-BjjY95o4.js";
 import { t as Ye } from "./safeHref-Be5nFpx7.js";
 import { t as A } from "./EmptyState-DjfWh3kt.js";
 import { t as j } from "./Button-Dfl4y6vO.js";
-import { C as Xe, D as Ze, E as Qe, S as $e, T as M, _ as et, a as tt, b as nt, c as rt, d as it, f as at, g as ot, h as st, i as ct, m as lt, n as ut, o as dt, p as ft, r as pt, s as mt, t as ht, u as gt, v as _t, w as vt, x as yt, y as bt } from "./client-CdNyEcUJ.js";
+import { C as Xe, D as Ze, E as Qe, S as $e, T as M, _ as et, a as tt, b as nt, c as rt, d as it, f as at, g as ot, h as st, i as ct, m as lt, n as ut, o as dt, p as ft, r as pt, s as mt, t as ht, u as gt, v as _t, w as vt, x as yt, y as bt } from "./client-Bmlfq3Uy.js";
 import { a as xt, c as St, i as Ct, l as wt, n as Tt, o as Et, r as Dt, s as Ot, t as kt, u as At } from "./useConnectionStore-AmsgQivX.js";
 import { t as jt } from "./socketHint-C0yqQROO.js";
 import { i as Mt, n as Nt, r as Pt, t as Ft } from "./usePageTitle-j6j9gAmo.js";
@@ -28,50 +28,50 @@ import { t as N } from "./Badge-D7vacFbh.js";
 import { t as It } from "./Slider-Bj5BaBUu.js";
 import { t as Lt } from "./Switch-C607L4Vu.js";
 import { t as Rt } from "./Chip-DwTdWHEP.js";
-import { t as zt } from "./Select-B-9JazsT.js";
-import { t as Bt } from "./Combobox-BWz4do2Y.js";
-import { t as Vt } from "./Modal-X8h807BE.js";
-import { t as Ht } from "./ConfirmDialog-DR-coNRV.js";
+import { t as zt } from "./Select-CtieJ2Ym.js";
+import { t as Bt } from "./Combobox-0B2bGIhW.js";
+import { t as Vt } from "./Modal-D8C63a_X.js";
+import { t as Ht } from "./ConfirmDialog-BhMeVq3o.js";
 import { t as Ut } from "./Tooltip-CaS-pDMB.js";
 import { t as P } from "./Skeleton-DDhrDRE7.js";
-import { t as Wt } from "./Spinner-G4M9vj6W.js";
+import { t as Wt } from "./Spinner-MDDesucs.js";
 import { t as Gt } from "./PageHint-C2jY1TZi.js";
 import { t as Kt } from "./Tabs-DZRiZml3.js";
-import { t as qt } from "./Menu-D1MRZDZu.js";
+import { t as qt } from "./Menu-B9cGFOym.js";
 import { t as Jt } from "./HelpText-B3jlK4n_.js";
-import { o as Yt, t as Xt } from "./MediaCard-4HCdVT4f.js";
-import { t as Zt } from "./MediaGrid-Cq8N8A7B.js";
-import { t as Qt } from "./MediaRow-MZCZpL41.js";
-import { n as $t, t as en } from "./metadata-sources-ZY0-MUUA.js";
-import { n as tn, t as nn } from "./logs-DCmyR7pY.js";
-import { t as rn } from "./dashboard-Bn2QDKV8.js";
-import { a as an, c as on, i as sn, l as cn, n as ln, o as un, r as dn, s as fn, t as pn } from "./users-DbSwDGCx.js";
-import { n as mn, r as hn, t as gn } from "./webhooks-DvEYOMvB.js";
-import { t as _n } from "./services-CE7GUy3k.js";
-import { t as vn } from "./integrations-BpUr-cSC.js";
-import { t as yn } from "./backup-DpDG58wH.js";
-import { t as bn } from "./cast-aI6QYR49.js";
-import { t as xn } from "./dlnaServer-GdpLtLf5.js";
-import { t as Sn } from "./remoteAccess-BXBO405y.js";
-import { t as Cn } from "./liveTv-CYFXcKXP.js";
-import { t as wn } from "./collections-COpa1SoS.js";
-import { t as Tn } from "./history-DglqfhTf.js";
-import { t as En } from "./syncPlay-D7-6lXtr.js";
-import { n as Dn, r as On, t as kn } from "./libraries-7ba94Q3b.js";
-import { n as An, r as jn, t as Mn } from "./useSettingsPrefs-CDjwM6Ud.js";
-import { i as Nn, n as Pn, r as Fn, t as In } from "./plugins-BK_Wx7kh.js";
-import { n as Ln, r as Rn, t as zn } from "./maintenance-D-zl7Krp.js";
-import { t as Bn } from "./hubDashboard-DFogHjlY.js";
+import { o as Yt, t as Xt } from "./MediaCard-Bpg2ZfsW.js";
+import { t as Zt } from "./MediaGrid-CGJ0k3PY.js";
+import { t as Qt } from "./MediaRow-C4CW-Wid.js";
+import { n as $t, t as en } from "./metadata-sources-B7Vpbc-O.js";
+import { n as tn, t as nn } from "./logs-1A_PM2An.js";
+import { t as rn } from "./dashboard-C-XveqQJ.js";
+import { a as an, c as on, i as sn, l as cn, n as ln, o as un, r as dn, s as fn, t as pn } from "./users-BOaYe835.js";
+import { n as mn, r as hn, t as gn } from "./webhooks-CMt82O9_.js";
+import { t as _n } from "./services-Bl4bEGby.js";
+import { t as vn } from "./integrations-Bb1TTBNR.js";
+import { t as yn } from "./backup-VmTwqXAr.js";
+import { t as bn } from "./cast-BfX5MbOw.js";
+import { t as xn } from "./dlnaServer-52jpi9GW.js";
+import { t as Sn } from "./remoteAccess-D5F-EeOT.js";
+import { t as Cn } from "./liveTv-thQJ-Gkg.js";
+import { t as wn } from "./collections-DHlYDnLn.js";
+import { t as Tn } from "./history-B9AN1c5p.js";
+import { t as En } from "./syncPlay-GsVavXYM.js";
+import { n as Dn, r as On, t as kn } from "./libraries-DdXqnW_m.js";
+import { n as An, r as jn, t as Mn } from "./useSettingsPrefs-BxsDEroA.js";
+import { i as Nn, n as Pn, r as Fn, t as In } from "./plugins-C77PT0Uu.js";
+import { n as Ln, r as Rn, t as zn } from "./maintenance-cR83erwG.js";
+import { t as Bn } from "./hubDashboard-D-eKAQ_v.js";
 import { n as Vn, t as Hn } from "./media-query-D7hrCu8r.js";
-import { t as Un } from "./LoginForm-B_1gA5iz.js";
-import { t as Wn } from "./SignupForm-CHKzz20A.js";
-import { r as Gn } from "./wireErrors-vFjB6F7m.js";
+import { t as Un } from "./LoginForm-ChDeZKGz.js";
+import { t as Wn } from "./SignupForm-CGejzWmm.js";
+import { r as Gn } from "./wireErrors-DDkkTtfw.js";
 import { t as F } from "./hubHelpLinks-BNMhK6oW.js";
 import { a as Kn, i as qn, n as Jn, o as Yn, r as Xn, s as Zn, t as Qn } from "./plural-B3O2rVPV.js";
 import { n as $n, t as er } from "./debounce-BnRz-bwe.js";
 import { t as tr } from "./Input-DUSkplC0.js";
-import { i as nr, n as rr, r as ir, t as ar } from "./MusicAlbumCard-D5Sictor.js";
-import { t as or } from "./useMediaStore-DsI5amBx.js";
+import { i as nr, n as rr, r as ir, t as ar } from "./MusicAlbumCard-BBs1YmAy.js";
+import { t as or } from "./useMediaStore-CWsJIuak.js";
 import { Fragment as I, Teleport as sr, Transition as cr, TransitionGroup as lr, computed as L, createApp as ur, createBlock as R, createCommentVNode as z, createElementBlock as B, createElementVNode as V, createStaticVNode as dr, createTextVNode as H, createVNode as U, defineAsyncComponent as fr, defineComponent as W, getCurrentScope as pr, inject as mr, nextTick as hr, normalizeClass as G, normalizeStyle as gr, onBeforeUnmount as _r, onMounted as K, onScopeDispose as vr, onUnmounted as yr, openBlock as q, provide as br, readonly as xr, ref as J, renderList as Y, renderSlot as Sr, resolveComponent as Cr, resolveDynamicComponent as wr, toDisplayString as X, toValue as Tr, unref as Z, useId as Er, vModelSelect as Dr, vModelText as Or, vShow as kr, watch as Q, watchEffect as Ar, withCtx as $, withDirectives as jr, withModifiers as Mr } from "vue";
 import { createPinia as Nr, defineStore as Pr } from "pinia";
 import { RouterLink as Fr, RouterView as Ir, createRouter as Lr, createWebHistory as Rr, useRoute as zr, useRouter as Br } from "vue-router";
@@ -253,22 +253,23 @@ var Jr = { class: "shell" }, Yr = {
 			nocturne: "Nocturne",
 			daylight: "Daylight",
 			midnight: "Midnight"
-		}, s = L(() => {
+		}, s = L(() => i.includes(n.theme)), c = L(() => {
 			let e = i.indexOf(n.theme);
 			return i[(e + 1) % i.length];
-		}), c = L(() => a[n.theme] ?? "moon"), l = L(() => r("shell.themeToggleLabel", {
+		}), l = L(() => a[n.theme] ?? "moon"), d = L(() => r("shell.themeToggleLabel", {
 			current: o[n.theme] ?? n.theme,
-			next: o[s.value]
+			next: o[c.value]
 		}));
-		function d() {
-			n.theme = s.value;
+		function f() {
+			s.value && (n.theme = c.value);
 		}
-		return (e, n) => (q(), R(t, {
-			name: c.value,
-			label: l.value,
+		return (e, n) => s.value ? (q(), R(t, {
+			key: 0,
+			name: l.value,
+			label: d.value,
 			variant: "ghost",
-			onClick: d
-		}, null, 8, ["name", "label"]));
+			onClick: f
+		}, null, 8, ["name", "label"])) : z("", !0);
 	}
 });
 function ii(e) {
@@ -961,7 +962,7 @@ var Sa = ["src", "alt"], Ca = { class: "brand-wordmark" }, wa = {
 			};
 			window.addEventListener("phlix:auth-expired", e), vr(() => window.removeEventListener("phlix:auth-expired", e));
 		}
-		let u = fr(() => import("./CommandPalette-ZG4Gfybd.js")), d = J(!1);
+		let u = fr(() => import("./CommandPalette-DIq3iy9B.js")), d = J(!1);
 		Q(() => n.open, (e) => {
 			e && (d.value = !0);
 		});
@@ -1319,111 +1320,111 @@ function ho(e) {
 			path: t === "" ? "/" : t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-Cn5Dunpq.js")
+			component: () => import("./BrowsePage-DX3zPVGh.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-BvKAAxgp.js")
+			component: () => import("./MediaDetailPage-DqQQx6_g.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-BESJed28.js")
+			component: () => import("./SeasonPage-BNi_Ke5T.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CH9VOXtT.js")
+			component: () => import("./LibraryPage-CahRpH3e.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CHLjXsKa.js")
+			component: () => import("./PlayerPage-CDRR9xCj.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-DTMciZFY.js")
+			component: () => import("./LoginPage-Dw8sfAaV.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-DWGu_lpD.js")
+			component: () => import("./SignupPage-CriYgfA8.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-UUNzn7s_.js")
+			component: () => import("./ConnectPage-BqZMsbWe.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-D54KbsJZ.js")
+			component: () => import("./SettingsPage-CEmaz2dP.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-B7sow1pp.js")
+			component: () => import("./ExplorePage-B83AGn4r.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-rVCExdmO.js")
+			component: () => import("./RecommendationsPage-D4JqXABN.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-DA4G_vBi.js")
+			component: () => import("./WatchHistoryPage-D58lL6t7.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-oORKKMPM.js")
+			component: () => import("./SyncPlayPage-BHy2BsWV.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-nFxBYf88.js")
+			component: () => import("./MusicLibraryPage-CQETXZWa.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-KQtJ9_Q8.js")
+			component: () => import("./ParentalControlsPage-Lj7YvNbF.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-CLOmt3MW.js")
+			component: () => import("./ProfilesPage-BjKFyhhe.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-CeVcD6nn.js")
+			component: () => import("./PlaylistsPage-CTGN0Fbj.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-BcfKbx8f.js")
+			component: () => import("./PlaylistDetailPage-DiYxr4b7.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${io}`,
 		name: ro,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-cosIBf9C.js")
+		component: () => import("./McpTokensPage-BJnQ1-Zl.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1695,145 +1696,145 @@ var _o = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-DTS4g6k3.js")
+	component: () => import("./DashboardPage-ciXnA0ZU.js")
 }, jo = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-E9qin3a8.js")
+	component: () => import("./UsersPage-Bne9yPHX.js")
 }, Mo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-BJ9V57mG.js")
+	component: () => import("./LogsPage-Oqstm4pt.js")
 }, No = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-DCif-xSp.js")
+	component: () => import("./WebhooksPage-DcufD6d6.js")
 }, Po = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-Cbaqyihd.js")
+	component: () => import("./ServicesPage-BteH9FF0.js")
 }, Fo = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-SMD9fyhL.js")
+	component: () => import("./IntegrationsPage-CIzrrpIH.js")
 }, Io = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-DxpZxdis.js")
+	component: () => import("./BackupPage-B96J3bMu.js")
 }, Lo = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-BNjQr1i0.js")
+	component: () => import("./CastDevicesPage-D-wWuasS.js")
 }, Ro = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-NpIzJPoj.js")
+	component: () => import("./DlnaServerPage-4iAbYYEk.js")
 }, zo = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-CtYrMflg.js")
+	component: () => import("./RemoteAccessPage-DiQgcd-I.js")
 }, Bo = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-DvC5zZMl.js")
+	component: () => import("./LiveTvPage-Dx9o4l2n.js")
 }, Vo = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-Y437JH5P.js")
+	component: () => import("./CollectionsPage-C03HXzJ3.js")
 }, Ho = {
 	name: "admin-history",
 	path: "history",
 	label: "Watch history",
 	icon: "film",
-	component: () => import("./HistoryPage-m-gh4uRz.js")
+	component: () => import("./HistoryPage-JFAw9GYv.js")
 }, Uo = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-BqDgcp5N.js")
+	component: () => import("./SyncPlayPage-C6slm4YX.js")
 }, Wo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-B_e0Kvep.js")
+	component: () => import("./LibrariesPage-WOaguAz8.js")
 }, Go = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-DFme5796.js")
+	component: () => import("./DuplicatesPage-BEBIkru3.js")
 }, Ko = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-C7q1HuR1.js")
+	component: () => import("./PluginsPage-4nlnW0qB.js")
 }, qo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-CrqU23m2.js")
+	component: () => import("./TasksPage-BZx4H3ln.js")
 }, Jo = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-CCt2dXXB.js")
+	component: () => import("./TranscodingSettingsPage-QX5Il_dz.js")
 }, Yo = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-sWn4p2zX.js")
+	component: () => import("./SettingsPage-BJHoLvJ6.js")
 }, Xo = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-h2E3jpwJ.js")
+	component: () => import("./HubDashboardPage-CHWR686W.js")
 }, Zo = {
 	name: "admin-metrics",
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-CUKhzaK9.js").then((e) => e.t)
+	component: () => import("./MetricsPage-C4u4K62f.js").then((e) => e.t)
 }, Qo = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
 	label: "Audit Logs",
 	icon: "eye",
-	component: () => import("./AuditLogsPage-Bck6p8Gy.js")
+	component: () => import("./AuditLogsPage-Bs8FYaQv.js")
 }, $o = {
 	name: "admin-requests",
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-BHAt-Zm2.js")
+	component: () => import("./RequestsPage-05tnDLWo.js")
 }, es = [
 	Ao,
 	Zo,
@@ -1933,7 +1934,7 @@ function cs(e = "/app", t = os) {
 	}), [{
 		path: n,
 		meta: { requiresAdmin: !0 },
-		component: () => import("./AdminLayout-DeZOGC0-.js"),
+		component: () => import("./AdminLayout-BDYOS158.js"),
 		props: {
 			base: e,
 			pages: t
@@ -1976,77 +1977,77 @@ var fs = { class: "pis" }, ps = { class: "pis__group" }, ms = { class: "pis__ava
 			"image/png",
 			"image/jpeg",
 			"image/webp"
-		], r = y(), i = ue(), a = mr("phlixConfig", null), o = J(null), s = J(null), c = J(null), l = J(!1), u = J(!1);
-		function d() {
-			c.value &&= (URL.revokeObjectURL(c.value), null);
-		}
-		_r(d);
+		], r = y(), i = ue(), a = mr("phlixConfig", null), { t: o } = v(), s = J(null), c = J(null), l = J(null), u = J(!1), d = J(!1);
 		function f() {
-			o.value?.click();
+			l.value &&= (URL.revokeObjectURL(l.value), null);
 		}
-		function p(e) {
+		_r(f);
+		function p() {
+			s.value?.click();
+		}
+		function m(e) {
 			let t = e.currentTarget.files?.[0] ?? null;
-			t && (n.includes(t.type) ? t.size > Ss ? (i.error("File is too large. Maximum size is 5 MB."), m()) : (d(), s.value = t, c.value = URL.createObjectURL(t)) : (i.error("Select a PNG, JPEG, or WEBP image."), m()));
-		}
-		function m() {
-			o.value && (o.value.value = ""), s.value = null;
+			t && (n.includes(t.type) ? t.size > Ss ? (i.error(o("profiles.avatarTooLarge")), h()) : (f(), c.value = t, l.value = URL.createObjectURL(t)) : (i.error(o("profiles.avatarInvalidType")), h()));
 		}
 		function h() {
-			d(), s.value = null, m();
+			s.value && (s.value.value = ""), c.value = null;
 		}
-		let g = L(() => c.value ? c.value : r.user?.avatar_url ? r.user.avatar_url : null), _ = L(() => {
+		function g() {
+			f(), c.value = null, h();
+		}
+		let _ = L(() => l.value ? l.value : r.user?.avatar_url ? r.user.avatar_url : null), b = L(() => {
 			let e = (r.user?.name ?? r.user?.username ?? "").trim().split(/\s+/).filter(Boolean);
 			return e.length === 0 ? "?" : e.length === 1 ? e[0].slice(0, 2).toUpperCase() : (e[0][0] + e[e.length - 1][0]).toUpperCase();
-		}), v = L(() => r.user?.avatar_url != null);
-		async function b() {
-			if (s.value && !l.value) {
-				l.value = !0;
-				try {
-					await r.uploadAvatar(s.value), i.success("Avatar updated successfully."), s.value = null;
-				} catch (e) {
-					i.error(Gn(e, "Avatar upload failed.", a?.locale));
-				} finally {
-					l.value = !1;
-				}
-			}
-		}
-		async function x() {
-			if (!u.value) {
+		}), x = L(() => r.user?.avatar_url != null);
+		async function S() {
+			if (c.value && !u.value) {
 				u.value = !0;
 				try {
-					await r.deleteAvatar(), i.success("Avatar removed."), h();
+					await r.uploadAvatar(c.value), i.success(o("profiles.avatarUpdated")), c.value = null;
 				} catch (e) {
-					i.error(Gn(e, "Avatar removal failed.", a?.locale));
+					i.error(Gn(e, o("profiles.avatarUploadFailed"), a?.locale));
 				} finally {
 					u.value = !1;
 				}
 			}
 		}
-		let S = L(() => l.value || u.value);
+		async function C() {
+			if (!d.value) {
+				d.value = !0;
+				try {
+					await r.deleteAvatar(), i.success(o("profiles.avatarRemoved")), g();
+				} catch (e) {
+					i.error(Gn(e, o("profiles.avatarRemoveFailed"), a?.locale));
+				} finally {
+					d.value = !1;
+				}
+			}
+		}
+		let w = L(() => u.value || d.value);
 		return (e, n) => (q(), B("div", fs, [V("section", ps, [
 			n[2] ||= V("h3", { class: "pis__title" }, "Profile Image", -1),
-			V("div", ms, [V("div", hs, [g.value ? (q(), B("img", {
+			V("div", ms, [V("div", hs, [_.value ? (q(), B("img", {
 				key: 0,
-				src: Z(t)(g.value),
+				src: Z(t)(_.value),
 				alt: "Your profile image",
 				class: "pis__avatar-img"
-			}, null, 8, gs)) : (q(), B("span", _s, X(_.value), 1))]), s.value ? (q(), B("div", vs, [V("p", ys, X(s.value.name), 1), V("p", bs, X((s.value.size / 1024).toFixed(1)) + " KB", 1)])) : z("", !0)]),
+			}, null, 8, gs)) : (q(), B("span", _s, X(b.value), 1))]), c.value ? (q(), B("div", vs, [V("p", ys, X(c.value.name), 1), V("p", bs, X((c.value.size / 1024).toFixed(1)) + " KB", 1)])) : z("", !0)]),
 			V("input", {
 				ref_key: "fileInput",
-				ref: o,
+				ref: s,
 				type: "file",
 				accept: "image/png,image/jpeg,image/webp",
 				class: "pis__file-input",
-				onChange: p
+				onChange: m
 			}, null, 544),
 			V("div", xs, [U(j, {
 				variant: "solid",
-				"left-icon": s.value ? "arrow-up" : "image",
-				loading: l.value,
-				disabled: S.value,
-				onClick: n[0] ||= (e) => s.value ? b() : f()
+				"left-icon": c.value ? "arrow-up" : "image",
+				loading: u.value,
+				disabled: w.value,
+				onClick: n[0] ||= (e) => c.value ? S() : p()
 			}, {
-				default: $(() => [H(X(s.value ? "Upload" : "Choose Image"), 1)]),
+				default: $(() => [H(X(c.value ? "Upload" : "Choose Image"), 1)]),
 				_: 1
 			}, 8, [
 				"left-icon",
@@ -2054,12 +2055,12 @@ var fs = { class: "pis" }, ps = { class: "pis__group" }, ms = { class: "pis__ava
 				"disabled"
 			]), U(j, {
 				variant: "ghost",
-				"left-icon": (s.value, "x"),
-				loading: u.value,
-				disabled: S.value || !s.value && !v.value,
-				onClick: n[1] ||= (e) => s.value ? h() : x()
+				"left-icon": (c.value, "x"),
+				loading: d.value,
+				disabled: w.value || !c.value && !x.value,
+				onClick: n[1] ||= (e) => c.value ? g() : C()
 			}, {
-				default: $(() => [H(X(s.value ? "Cancel" : "Remove"), 1)]),
+				default: $(() => [H(X(c.value ? "Cancel" : "Remove"), 1)]),
 				_: 1
 			}, 8, [
 				"left-icon",
@@ -2069,7 +2070,7 @@ var fs = { class: "pis" }, ps = { class: "pis__group" }, ms = { class: "pis__ava
 			n[3] ||= V("p", { class: "pis__hint" }, "PNG, JPEG, or WEBP — max 5 MB.", -1)
 		])]));
 	}
-}), [["__scopeId", "data-v-b52f31e2"]]), ws = {
+}), [["__scopeId", "data-v-6f599274"]]), ws = {
 	class: "library-scan",
 	"aria-labelledby": "library-scan-heading"
 }, Ts = {
@@ -4180,9 +4181,9 @@ var Hs = {
 			if (e.url !== null) {
 				D.value = e.id;
 				try {
-					await navigator.clipboard.writeText(e.url), c.success("Link copied to clipboard.");
+					await navigator.clipboard.writeText(e.url), c.success(p("invite.linkCopied"));
 				} catch {
-					c.error("Failed to copy link.");
+					c.error(p("invite.linkCopyFailed"));
 				} finally {
 					D.value = null;
 				}
@@ -4192,9 +4193,9 @@ var Hs = {
 			if (_.value) {
 				y.value = "url";
 				try {
-					await navigator.clipboard.writeText(_.value.url), c.success("Invite URL copied to clipboard.");
+					await navigator.clipboard.writeText(_.value.url), c.success(p("invite.urlCopied"));
 				} catch {
-					c.error("Failed to copy URL.");
+					c.error(p("invite.urlCopyFailed"));
 				} finally {
 					y.value = null;
 				}
@@ -4205,9 +4206,9 @@ var Hs = {
 			if (e) {
 				y.value = "token";
 				try {
-					await navigator.clipboard.writeText(e), c.success("Invite token copied to clipboard.");
+					await navigator.clipboard.writeText(e), c.success(p("invite.tokenCopied"));
 				} catch {
-					c.error("Failed to copy token.");
+					c.error(p("invite.tokenCopyFailed"));
 				} finally {
 					y.value = null;
 				}
@@ -4499,7 +4500,7 @@ var Hs = {
 			])
 		]));
 	}
-}), [["__scopeId", "data-v-e1abba69"]]), Sd = {
+}), [["__scopeId", "data-v-85f1ad34"]]), Sd = {
 	class: "accept-invite",
 	"aria-labelledby": "accept-invite-heading"
 }, Cd = { class: "accept-invite__card" }, wd = {
@@ -6503,7 +6504,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 		return (e, t) => (q(), B("div", kg, [V("header", Ag, [V("div", jg, [V("h1", Mg, [U(l, {
 			name: "image",
 			class: "title-icon"
-		}), t[0] ||= H(" Photo Albums ", -1)]), s.value ? (q(), B("p", Ng, X(s.value.name), 1)) : z("", !0)])]), u.value ? (q(), B("div", Pg, [U(Wt, { size: "large" }), t[1] ||= V("p", null, "Loading albums...", -1)])) : d.value ? (q(), R(A, {
+		}), t[0] ||= H(" Photo Albums ", -1)]), s.value ? (q(), B("p", Ng, X(s.value.name), 1)) : z("", !0)])]), u.value ? (q(), B("div", Pg, [U(Wt, { size: "large" }), t[1] ||= V("p", null, "Loading albums…", -1)])) : d.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: "Couldn’t load albums",
@@ -6559,7 +6560,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 			loading: "lazy"
 		}, null, 8, Vg)) : (q(), B("div", Hg, [U(l, { name: "image" })]))]), V("div", Ug, [V("h3", Wg, X(Z(Dg)(e)), 1), V("p", Gg, X(h(e.photo_count)), 1)])], 8, zg))), 128))])]))), 128))]))]));
 	}
-}), [["__scopeId", "data-v-27960967"]]), qg = { class: "photo-album-page" }, Jg = { class: "page-header" }, Yg = { class: "header-content" }, Xg = { class: "title-section" }, Zg = { class: "page-title" }, Qg = {
+}), [["__scopeId", "data-v-41871dd1"]]), qg = { class: "photo-album-page" }, Jg = { class: "page-header" }, Yg = { class: "header-content" }, Xg = { class: "title-section" }, Zg = { class: "page-title" }, Qg = {
 	key: 0,
 	class: "photo-count"
 }, $g = {
@@ -6645,7 +6646,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 				default: $(() => [U(l, { name: "play" }), t[1] ||= H(" Slideshow ", -1)]),
 				_: 1
 			})) : z("", !0)
-		])]), c.value ? (q(), B("div", $g, [U(Wt, { size: "large" }), t[2] ||= V("p", null, "Loading album...", -1)])) : u.value ? (q(), R(A, {
+		])]), c.value ? (q(), B("div", $g, [U(Wt, { size: "large" }), t[2] ||= V("p", null, "Loading album…", -1)])) : u.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: u.value
@@ -6706,7 +6707,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-06b09a97"]]), c_ = { class: "photo-view-page" }, l_ = { class: "page-header" }, u_ = { class: "header-content" }, d_ = {
+}), [["__scopeId", "data-v-3153f042"]]), c_ = { class: "photo-view-page" }, l_ = { class: "page-header" }, u_ = { class: "header-content" }, d_ = {
 	key: 0,
 	class: "photo-name"
 }, f_ = { class: "header-actions" }, p_ = ["href"], m_ = {
@@ -6822,7 +6823,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 				default: $(() => [U(l, { name: "arrow-down" })]),
 				_: 1
 			})], 8, p_)) : z("", !0)])
-		])]), f.value ? (q(), B("div", m_, [U(Wt, { size: "large" }), t[1] ||= V("p", null, "Loading photo...", -1)])) : p.value ? (q(), R(A, {
+		])]), f.value ? (q(), B("div", m_, [U(Wt, { size: "large" }), t[1] ||= V("p", null, "Loading photo…", -1)])) : p.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: "Couldn’t load photo",
@@ -6893,7 +6894,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-a12d038c"]]), j_ = { class: "photo-slideshow-page" }, M_ = {
+}), [["__scopeId", "data-v-300abdd1"]]), j_ = { class: "photo-slideshow-page" }, M_ = {
 	key: 0,
 	class: "loading-state"
 }, N_ = {
@@ -7027,7 +7028,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 			O(), window.removeEventListener("keydown", le);
 		}), Q([a, o], () => {
 			w();
-		}), (e, t) => (q(), B("div", j_, [d.value ? (q(), B("div", M_, [U(Wt, { size: "large" }), t[0] ||= V("p", null, "Loading slideshow...", -1)])) : f.value ? (q(), R(A, {
+		}), (e, t) => (q(), B("div", j_, [d.value ? (q(), B("div", M_, [U(Wt, { size: "large" }), t[0] ||= V("p", null, "Loading slideshow…", -1)])) : f.value ? (q(), R(A, {
 			key: 1,
 			icon: "alert-circle",
 			title: "Couldn’t load slideshow",
@@ -7140,7 +7141,7 @@ var kg = { class: "photo-albums-page" }, Ag = { class: "page-header" }, jg = { c
 			_: 1
 		}))]));
 	}
-}), [["__scopeId", "data-v-c13f4c93"]]);
+}), [["__scopeId", "data-v-b353bafc"]]);
 // src/composables/useMediaUrlSync.ts
 function K_(e, t) {
 	let n = or(), r = !1;
@@ -7369,7 +7370,13 @@ var av = {
 		save: "Guardar",
 		cancel: "Cancelar",
 		deleteBlocked: "El último perfil de una cuenta no se puede eliminar.",
-		empty: "Esta cuenta todavía no tiene perfiles."
+		empty: "Esta cuenta todavía no tiene perfiles.",
+		avatarInvalidType: "Selecciona una imagen PNG, JPEG o WEBP.",
+		avatarTooLarge: "El archivo es demasiado grande. El tamaño máximo es de 5 MB.",
+		avatarUpdated: "Avatar actualizado.",
+		avatarUploadFailed: "No se pudo subir el avatar.",
+		avatarRemoved: "Avatar eliminado.",
+		avatarRemoveFailed: "No se pudo eliminar el avatar."
 	},
 	palette: {
 		title: "Paleta de comandos",
@@ -7585,7 +7592,13 @@ var av = {
 		revokeConfirm: "Este enlace de invitación dejará de funcionar de inmediato. No se puede restaurar.",
 		revokeLabel: "Revocar enlace",
 		revoked: "Enlace de invitación revocado.",
-		revokeFailed: "No se pudo revocar el enlace de invitación."
+		revokeFailed: "No se pudo revocar el enlace de invitación.",
+		linkCopied: "Enlace copiado al portapapeles.",
+		linkCopyFailed: "No se pudo copiar el enlace.",
+		urlCopied: "URL de invitación copiada al portapapeles.",
+		urlCopyFailed: "No se pudo copiar la URL.",
+		tokenCopied: "Token de invitación copiado al portapapeles.",
+		tokenCopyFailed: "No se pudo copiar el token."
 	},
 	shares: {
 		revokeConfirm: "Esta persona perderá el acceso de inmediato. Se necesita un recurso nuevo para volver a concederlo.",
@@ -7608,11 +7621,31 @@ var av = {
 		moreInfo: "Más información",
 		moreActions: "Más acciones",
 		matchMetadata: "Emparejar metadatos",
+		addToPlaylist: "Añadir a la lista de reproducción",
+		markUnwatched: "Marcar como no visto",
+		download: "Descargar",
+		missingEpisodes: "Ver episodios que faltan",
+		editMetadata: "Editar metadatos",
+		editImages: "Editar imágenes",
+		exploreData: "Explorar datos del elemento",
+		remove: "Quitar",
+		dangerSuffix: "{label} (peligro)",
 		favoriteAddError: "No se pudo añadir a mi lista.",
 		favoriteRemoveError: "No se pudo quitar de mi lista.",
 		markWatchedError: "No se pudo marcar como visto.",
 		markUnwatchedError: "No se pudo marcar como no visto.",
-		ratingSaveError: "No se pudo guardar la valoración."
+		ratingSaveError: "No se pudo guardar la valoración.",
+		downloadPreparing: "Preparando la descarga…",
+		downloadUnsafe: "No se pudo iniciar la descarga porque el enlace no es seguro.",
+		downloadStarted: "Descarga iniciada.",
+		downloadFailed: "No se pudo iniciar la descarga.",
+		missingLoading: "Buscando episodios que faltan…",
+		noMissingEpisodes: "No faltan episodios.",
+		missingEpisodesCount: "Falta {count} episodio. | Faltan {count} episodios.",
+		missingEpisodesFailed: "No se pudieron cargar los episodios que faltan.",
+		shuffleNothing: "Aún no hay nada que reproducir al azar.",
+		shuffleQueued: "Reproducción aleatoria en cola.",
+		shuffleFailed: "No se pudo iniciar la reproducción aleatoria."
 	},
 	reader: {
 		decreaseFont: "Reducir el tamaño de la fuente",
@@ -7640,7 +7673,6 @@ var av = {
 		reSyncing: "Resincronizando…",
 		roomName: "Nombre de la sala",
 		roomId: "ID de la sala",
-		privateRoom: "Sala privada",
 		create: "Crear",
 		join: "Unirse",
 		cancel: "Cancelar",
@@ -7686,7 +7718,8 @@ var av = {
 		unknownError: "Algo salió mal.",
 		loadTitlesError: "No se pudieron cargar los títulos",
 		noMediaTitle: "No se encontró ningún contenido",
-		noMediaHint: "Prueba a ajustar tus filtros."
+		noMediaHint: "Prueba a ajustar tus filtros.",
+		metadataUpdated: "Metadatos de “{name}” actualizados."
 	},
 	browse: {
 		continueWatching: "Seguir viendo",
@@ -7694,11 +7727,54 @@ var av = {
 		recommended: "Recomendado",
 		mostWatched: "Más vistos",
 		noLibrariesTitle: "Todavía no hay bibliotecas",
-		noLibrariesDescription: "Cuando añadas una biblioteca, aparecerá aquí como una sección propia."
+		noLibrariesDescription: "Cuando añadas una biblioteca, aparecerá aquí como una sección propia.",
+		loadNextUpError: "No se pudo cargar “Siguiente”.",
+		loadFavoritesError: "No se pudo cargar tu lista.",
+		loadRecommendationsError: "No se pudieron cargar las recomendaciones.",
+		loadMostWatchedError: "No se pudo cargar “Lo más visto”.",
+		loadingLibraries: "Cargando bibliotecas",
+		removeConfirm: "¿Quitar “{name}” de la biblioteca? Esta acción no se puede deshacer."
 	},
 	playlist: {
 		loadError: "No se pudo cargar esta lista de reproducción.",
-		loadErrorTitle: "No se pudo cargar esta lista de reproducción"
+		loadErrorTitle: "No se pudo cargar esta lista de reproducción",
+		itemsCount: "{count} elemento | {count} elementos",
+		play: "Reproducir",
+		delete: "Eliminar lista",
+		deleteConfirm: "¿Eliminar la lista {name} ({items})? Esta acción no se puede deshacer.",
+		readOnly: "Lista compartida. Solo su propietario (o un administrador) puede modificarla.",
+		emptyTitle: "Esta lista está vacía",
+		emptyHintManage: "Añade títulos desde el menú ⋯ de cualquier tarjeta con “Añadir a la lista”.",
+		emptyHintReadOnly: "Solo el propietario de la lista puede añadir títulos.",
+		removeAria: "Quitar {name} de la lista",
+		loading: "Cargando lista…",
+		removed: "“{name}” se quitó de la lista.",
+		removeFailed: "No se pudo quitar de la lista.",
+		deleted: "Se eliminó la lista “{name}”.",
+		deleteFailed: "No se pudo eliminar la lista.",
+		pickerChoice: "Elección de lista",
+		existingTab: "Lista existente",
+		newTab: "Lista nueva",
+		loadingPlaylists: "Cargando listas…",
+		noPlaylistsTitle: "Aún no hay listas",
+		noPlaylistsHint: "Cambia a “Lista nueva” para crear la primera.",
+		selectLabel: "Lista",
+		selectPlaceholder: "Selecciona una lista…",
+		noLibraryId: "No se puede crear una lista nueva para este elemento porque no tiene biblioteca propietaria.",
+		nameLabel: "Nombre de la lista",
+		namePlaceholder: "Mi lista",
+		manage: "Administrar listas →",
+		sharedReadOnly: "{name} (compartida, solo lectura)",
+		add: "Añadir",
+		loadListFailed: "No se pudieron cargar las listas.",
+		addedTo: "Añadido a la lista “{name}”.",
+		addFailed: "No se pudo añadir a la lista.",
+		createFailed: "No se pudo crear la lista.",
+		createdAddFailed: "Se creó la lista, pero no se pudo añadir el elemento.",
+		deleteEmpty: "Eliminar lista vacía",
+		emptyDeleted: "Se eliminó la lista vacía.",
+		emptyDeleteFailed: "No se pudo eliminar la lista vacía.",
+		confirmDelete: "Eliminar"
 	},
 	music: {
 		title: "Biblioteca de música",
@@ -7823,19 +7899,21 @@ var av = {
 		desc: "Revisa los dispositivos conectados a tu cuenta y cierra los que no reconozcas.",
 		cardTitle: "Sesiones activas",
 		count: "{count} sesión activa | {count} sesiones activas",
+		truncated: "{count}+ sesiones activas (se muestran las {count} usadas más recientemente)",
 		thisDevice: "Este dispositivo",
 		unknownDevice: "Dispositivo desconocido",
-		created: "Iniciado el {date}",
+		created: "Sesión iniciada el {date}",
 		lastUsed: "Usado por última vez el {date}",
 		refresh: "Actualizar",
 		loading: "Cargando sesiones…",
 		revoke: "Cerrar sesión",
+		revokeDevice: "Cerrar sesión en {device}",
 		revokeAll: "Cerrar otras sesiones",
 		revokeConfirm: "¿Cerrar esta sesión? El dispositivo tendrá que iniciar sesión otra vez.",
-		revokeAllConfirm: "¿Cerrar todas las demás sesiones? Todos los dispositivos excepto este tendrán que iniciar sesión otra vez.",
+		revokeAllConfirm: "¿Cerrar {count} otra sesión? Ese dispositivo tendrá que iniciar sesión otra vez. | ¿Cerrar las otras {count} sesiones? Todos los dispositivos excepto este tendrán que iniciar sesión otra vez.",
 		revokeSuccess: "Sesión cerrada en ese dispositivo.",
 		revokeError: "No se pudo cerrar esa sesión.",
-		revokeOthersSuccess: "Las demás sesiones se cerraron.",
+		revokeOthersSuccess: "{count} otra sesión cerrada. | {count} otras sesiones cerradas.",
 		revokeOthersError: "El cierre de las demás sesiones no se completó.",
 		loadErrorTitle: "No se pudieron cargar las sesiones",
 		loadError: "No se pudieron cargar tus sesiones. Comprueba la conexión e inténtalo de nuevo.",
@@ -7986,7 +8064,13 @@ var av = {
 		save: "Enregistrer",
 		cancel: "Annuler",
 		deleteBlocked: "Le dernier profil d’un compte ne peut pas être supprimé.",
-		empty: "Aucun profil sur ce compte pour le moment."
+		empty: "Aucun profil sur ce compte pour le moment.",
+		avatarInvalidType: "Sélectionnez une image PNG, JPEG ou WEBP.",
+		avatarTooLarge: "Ce fichier est trop volumineux. La taille maximale est de 5 Mo.",
+		avatarUpdated: "Avatar mis à jour.",
+		avatarUploadFailed: "Impossible d’envoyer l’avatar.",
+		avatarRemoved: "Avatar supprimé.",
+		avatarRemoveFailed: "Impossible de supprimer l’avatar."
 	},
 	palette: {
 		title: "Palette de commandes",
@@ -8202,7 +8286,13 @@ var av = {
 		revokeConfirm: "Ce lien d’invitation cessera immédiatement de fonctionner. Il ne peut pas être restauré.",
 		revokeLabel: "Révoquer le lien",
 		revoked: "Lien d’invitation révoqué.",
-		revokeFailed: "Échec de la révocation du lien d’invitation."
+		revokeFailed: "Échec de la révocation du lien d’invitation.",
+		linkCopied: "Lien copié dans le presse-papiers.",
+		linkCopyFailed: "Impossible de copier le lien.",
+		urlCopied: "URL d’invitation copiée dans le presse-papiers.",
+		urlCopyFailed: "Impossible de copier l’URL.",
+		tokenCopied: "Jeton d’invitation copié dans le presse-papiers.",
+		tokenCopyFailed: "Impossible de copier le jeton."
 	},
 	shares: {
 		revokeConfirm: "Cette personne perdra immédiatement l’accès. Un nouveau partage est nécessaire pour le redonner.",
@@ -8225,11 +8315,31 @@ var av = {
 		moreInfo: "Plus d’informations",
 		moreActions: "Plus d’actions",
 		matchMetadata: "Associer les métadonnées",
+		addToPlaylist: "Ajouter à la playlist",
+		markUnwatched: "Marquer comme non vu",
+		download: "Télécharger",
+		missingEpisodes: "Voir les épisodes manquants",
+		editMetadata: "Modifier les métadonnées",
+		editImages: "Modifier les images",
+		exploreData: "Explorer les données de l’élément",
+		remove: "Retirer",
+		dangerSuffix: "{label} (danger)",
 		favoriteAddError: "Impossible d’ajouter à ma liste.",
 		favoriteRemoveError: "Impossible de retirer de ma liste.",
 		markWatchedError: "Impossible de marquer comme vu.",
 		markUnwatchedError: "Impossible de marquer comme non vu.",
-		ratingSaveError: "Impossible d’enregistrer la note."
+		ratingSaveError: "Impossible d’enregistrer la note.",
+		downloadPreparing: "Préparation du téléchargement…",
+		downloadUnsafe: "Impossible de lancer le téléchargement : le lien n’est pas sûr.",
+		downloadStarted: "Téléchargement lancé.",
+		downloadFailed: "Impossible de lancer le téléchargement.",
+		missingLoading: "Recherche des épisodes manquants…",
+		noMissingEpisodes: "Aucun épisode manquant.",
+		missingEpisodesCount: "{count} épisode manquant. | {count} épisodes manquants.",
+		missingEpisodesFailed: "Impossible de charger les épisodes manquants.",
+		shuffleNothing: "Rien à lire en aléatoire pour l’instant.",
+		shuffleQueued: "Lecture aléatoire mise en file d’attente.",
+		shuffleFailed: "Impossible de lancer la lecture aléatoire."
 	},
 	reader: {
 		decreaseFont: "Réduire la taille du texte",
@@ -8257,7 +8367,6 @@ var av = {
 		reSyncing: "Resynchronisation…",
 		roomName: "Nom du salon",
 		roomId: "ID du salon",
-		privateRoom: "Salon privé",
 		create: "Créer",
 		join: "Rejoindre",
 		cancel: "Annuler",
@@ -8303,7 +8412,8 @@ var av = {
 		unknownError: "Une erreur est survenue.",
 		loadTitlesError: "Impossible de charger les titres",
 		noMediaTitle: "Aucun contenu trouvé",
-		noMediaHint: "Essayez de modifier vos filtres."
+		noMediaHint: "Essayez de modifier vos filtres.",
+		metadataUpdated: "Métadonnées de « {name} » mises à jour."
 	},
 	browse: {
 		continueWatching: "Reprendre la lecture",
@@ -8311,11 +8421,54 @@ var av = {
 		recommended: "Recommandé",
 		mostWatched: "Les plus regardés",
 		noLibrariesTitle: "Aucune bibliothèque pour le moment",
-		noLibrariesDescription: "Une bibliothèque ajoutée apparaîtra ici comme une section à part entière."
+		noLibrariesDescription: "Une bibliothèque ajoutée apparaîtra ici comme une section à part entière.",
+		loadNextUpError: "Impossible de charger « À suivre ».",
+		loadFavoritesError: "Impossible de charger ta liste.",
+		loadRecommendationsError: "Impossible de charger les recommandations.",
+		loadMostWatchedError: "Impossible de charger « Les plus regardés ».",
+		loadingLibraries: "Chargement des bibliothèques",
+		removeConfirm: "Retirer « {name} » de la bibliothèque ? Cette action est irréversible."
 	},
 	playlist: {
 		loadError: "Impossible de charger cette playlist.",
-		loadErrorTitle: "Impossible de charger cette playlist"
+		loadErrorTitle: "Impossible de charger cette playlist",
+		itemsCount: "{count} élément | {count} éléments",
+		play: "Lire",
+		delete: "Supprimer la playlist",
+		deleteConfirm: "Supprimer la playlist {name} ({items}) ? Cette action est irréversible.",
+		readOnly: "Playlist partagée. Seul son propriétaire (ou un administrateur) peut la modifier.",
+		emptyTitle: "Cette playlist est vide",
+		emptyHintManage: "Ajoutez des titres depuis le menu ⋯ d’une carte avec « Ajouter à la playlist ».",
+		emptyHintReadOnly: "Seul le propriétaire de la playlist peut ajouter des titres.",
+		removeAria: "Retirer {name} de la playlist",
+		loading: "Chargement de la playlist…",
+		removed: "« {name} » a été retiré de la playlist.",
+		removeFailed: "Impossible de retirer de la playlist.",
+		deleted: "La playlist « {name} » a été supprimée.",
+		deleteFailed: "Impossible de supprimer la playlist.",
+		pickerChoice: "Choix de playlist",
+		existingTab: "Playlist existante",
+		newTab: "Nouvelle playlist",
+		loadingPlaylists: "Chargement des playlists…",
+		noPlaylistsTitle: "Aucune playlist pour l’instant",
+		noPlaylistsHint: "Passez à « Nouvelle playlist » pour créer la première.",
+		selectLabel: "Playlist",
+		selectPlaceholder: "Sélectionnez une playlist…",
+		noLibraryId: "Impossible de créer une playlist pour cet élément, car il n’a pas de bibliothèque propriétaire.",
+		nameLabel: "Nom de la playlist",
+		namePlaceholder: "Ma playlist",
+		manage: "Gérer les playlists →",
+		sharedReadOnly: "{name} (partagée, lecture seule)",
+		add: "Ajouter",
+		loadListFailed: "Impossible de charger les playlists.",
+		addedTo: "Ajouté à la playlist « {name} ».",
+		addFailed: "Impossible d’ajouter à la playlist.",
+		createFailed: "Impossible de créer la playlist.",
+		createdAddFailed: "La playlist a été créée, mais l’élément n’a pas pu être ajouté.",
+		deleteEmpty: "Supprimer la playlist vide",
+		emptyDeleted: "La playlist vide a été supprimée.",
+		emptyDeleteFailed: "Impossible de supprimer la playlist vide.",
+		confirmDelete: "Supprimer"
 	},
 	music: {
 		title: "Bibliothèque musicale",
@@ -8440,6 +8593,7 @@ var av = {
 		desc: "Passez en revue les appareils connectés à votre compte et déconnectez ceux que vous ne reconnaissez pas.",
 		cardTitle: "Sessions actives",
 		count: "{count} session active | {count} sessions actives",
+		truncated: "{count}+ sessions actives (affichage des {count} utilisées le plus récemment)",
 		thisDevice: "Cet appareil",
 		unknownDevice: "Appareil inconnu",
 		created: "Connecté le {date}",
@@ -8447,12 +8601,13 @@ var av = {
 		refresh: "Actualiser",
 		loading: "Chargement des sessions…",
 		revoke: "Déconnecter",
+		revokeDevice: "Déconnecter {device}",
 		revokeAll: "Déconnecter les autres",
 		revokeConfirm: "Déconnecter cette session ? L’appareil devra se reconnecter.",
-		revokeAllConfirm: "Déconnecter toutes les autres sessions ? Tous les appareils sauf celui-ci devront se reconnecter.",
+		revokeAllConfirm: "Déconnecter {count} autre session ? Cet appareil devra se reconnecter. | Déconnecter les {count} autres sessions ? Tous les appareils sauf celui-ci devront se reconnecter.",
 		revokeSuccess: "Appareil déconnecté.",
 		revokeError: "Impossible de déconnecter cette session.",
-		revokeOthersSuccess: "Les autres sessions ont été déconnectées.",
+		revokeOthersSuccess: "{count} autre session déconnectée. | {count} autres sessions déconnectées.",
 		revokeOthersError: "La déconnexion des autres sessions n’a pas abouti.",
 		loadErrorTitle: "Impossible de charger les sessions",
 		loadError: "Impossible de charger vos sessions. Vérifiez la connexion et réessayez.",
@@ -8603,7 +8758,13 @@ var av = {
 		save: "Speichern",
 		cancel: "Abbrechen",
 		deleteBlocked: "Das letzte Profil eines Kontos kann nicht gelöscht werden.",
-		empty: "Dieses Konto hat noch keine Profile."
+		empty: "Dieses Konto hat noch keine Profile.",
+		avatarInvalidType: "Wähle ein PNG-, JPEG- oder WEBP-Bild aus.",
+		avatarTooLarge: "Die Datei ist zu groß. Die maximale Größe beträgt 5 MB.",
+		avatarUpdated: "Avatar aktualisiert.",
+		avatarUploadFailed: "Der Avatar konnte nicht hochgeladen werden.",
+		avatarRemoved: "Avatar entfernt.",
+		avatarRemoveFailed: "Der Avatar konnte nicht entfernt werden."
 	},
 	palette: {
 		title: "Befehlspalette",
@@ -8819,7 +8980,13 @@ var av = {
 		revokeConfirm: "Dieser Einladungslink funktioniert sofort nicht mehr. Er kann nicht wiederhergestellt werden.",
 		revokeLabel: "Link widerrufen",
 		revoked: "Einladungslink widerrufen.",
-		revokeFailed: "Widerrufen des Einladungslinks fehlgeschlagen."
+		revokeFailed: "Widerrufen des Einladungslinks fehlgeschlagen.",
+		linkCopied: "Link in die Zwischenablage kopiert.",
+		linkCopyFailed: "Der Link konnte nicht kopiert werden.",
+		urlCopied: "Einladungs-URL in die Zwischenablage kopiert.",
+		urlCopyFailed: "Die URL konnte nicht kopiert werden.",
+		tokenCopied: "Einladungs-Token in die Zwischenablage kopiert.",
+		tokenCopyFailed: "Das Token konnte nicht kopiert werden."
 	},
 	shares: {
 		revokeConfirm: "Diese Person verliert sofort den Zugriff. Für erneuten Zugriff ist eine neue Freigabe nötig.",
@@ -8842,11 +9009,31 @@ var av = {
 		moreInfo: "Mehr Informationen",
 		moreActions: "Weitere Aktionen",
 		matchMetadata: "Metadaten abgleichen",
+		addToPlaylist: "Zur Playlist hinzufügen",
+		markUnwatched: "Als ungesehen markieren",
+		download: "Herunterladen",
+		missingEpisodes: "Fehlende Episoden anzeigen",
+		editMetadata: "Metadaten bearbeiten",
+		editImages: "Bilder bearbeiten",
+		exploreData: "Elementdaten erkunden",
+		remove: "Entfernen",
+		dangerSuffix: "{label} (Gefahr)",
 		favoriteAddError: "Hinzufügen zu meiner Liste fehlgeschlagen.",
 		favoriteRemoveError: "Entfernen aus meiner Liste fehlgeschlagen.",
 		markWatchedError: "Als gesehen markieren fehlgeschlagen.",
 		markUnwatchedError: "Als ungesehen markieren fehlgeschlagen.",
-		ratingSaveError: "Speichern der Bewertung fehlgeschlagen."
+		ratingSaveError: "Speichern der Bewertung fehlgeschlagen.",
+		downloadPreparing: "Download wird vorbereitet…",
+		downloadUnsafe: "Der Download wurde blockiert, weil der Link unsicher ist.",
+		downloadStarted: "Download gestartet.",
+		downloadFailed: "Der Download konnte nicht gestartet werden.",
+		missingLoading: "Fehlende Folgen werden gesucht…",
+		noMissingEpisodes: "Keine fehlenden Folgen.",
+		missingEpisodesCount: "{count} Folge fehlt. | {count} Folgen fehlen.",
+		missingEpisodesFailed: "Fehlende Folgen konnten nicht geladen werden.",
+		shuffleNothing: "Noch nichts zum Mischen vorhanden.",
+		shuffleQueued: "Zufallswiedergabe vorgemerkt.",
+		shuffleFailed: "Die Zufallswiedergabe konnte nicht gestartet werden."
 	},
 	reader: {
 		decreaseFont: "Schriftgröße verringern",
@@ -8857,7 +9044,7 @@ var av = {
 	},
 	mcpTokens: {
 		title: "MCP-Tokens",
-		revokeSuccess: "«{name}» wurde widerrufen.",
+		revokeSuccess: "„{name}“ wurde widerrufen.",
 		revokeFailed: "Token konnte nicht widerrufen werden."
 	},
 	syncplay: {
@@ -8874,7 +9061,6 @@ var av = {
 		reSyncing: "Erneut wird synchronisiert…",
 		roomName: "Raumname",
 		roomId: "Raum-ID",
-		privateRoom: "Privater Raum",
 		create: "Erstellen",
 		join: "Beitreten",
 		cancel: "Abbrechen",
@@ -8911,16 +9097,17 @@ var av = {
 	},
 	library: {
 		titlesCount: "{total} Titel | {total} Titel",
-		posterUpdated: "Poster für «{name}» aktualisiert.",
+		posterUpdated: "Poster für „{name}“ aktualisiert.",
 		nothingToPlay: "Noch nichts zum Abspielen.",
-		markedWatched: "«{name}» als gesehen markiert.",
-		markedUnwatched: "«{name}» als ungesehen markiert.",
-		itemRemoved: "«{name}» wurde entfernt.",
-		itemRemoveFailed: "«{name}» konnte nicht entfernt werden.",
+		markedWatched: "„{name}“ als gesehen markiert.",
+		markedUnwatched: "„{name}“ als ungesehen markiert.",
+		itemRemoved: "„{name}“ wurde entfernt.",
+		itemRemoveFailed: "„{name}“ konnte nicht entfernt werden.",
 		unknownError: "Etwas ist schiefgelaufen.",
 		loadTitlesError: "Titel konnten nicht geladen werden",
 		noMediaTitle: "Keine Medien gefunden",
-		noMediaHint: "Versuche, deine Filter anzupassen."
+		noMediaHint: "Versuche, deine Filter anzupassen.",
+		metadataUpdated: "Metadaten für „{name}“ aktualisiert."
 	},
 	browse: {
 		continueWatching: "Weitersehen",
@@ -8928,11 +9115,54 @@ var av = {
 		recommended: "Empfohlen",
 		mostWatched: "Am häufigsten gesehen",
 		noLibrariesTitle: "Noch keine Mediatheken",
-		noLibrariesDescription: "Sobald eine Mediathek hinzugefügt wurde, erscheint sie hier als eigener Bereich."
+		noLibrariesDescription: "Sobald eine Mediathek hinzugefügt wurde, erscheint sie hier als eigener Bereich.",
+		loadNextUpError: "„Als Nächstes“ konnte nicht geladen werden.",
+		loadFavoritesError: "Deine Liste konnte nicht geladen werden.",
+		loadRecommendationsError: "Empfehlungen konnten nicht geladen werden.",
+		loadMostWatchedError: "„Am meisten gesehen“ konnte nicht geladen werden.",
+		loadingLibraries: "Bibliotheken werden geladen",
+		removeConfirm: "„{name}“ aus der Bibliothek entfernen? Das lässt sich nicht rückgängig machen."
 	},
 	playlist: {
 		loadError: "Die Playlist konnte nicht geladen werden.",
-		loadErrorTitle: "Die Playlist konnte nicht geladen werden"
+		loadErrorTitle: "Die Playlist konnte nicht geladen werden",
+		itemsCount: "{count} Eintrag | {count} Einträge",
+		play: "Wiedergeben",
+		delete: "Playlist löschen",
+		deleteConfirm: "Playlist {name} ({items}) löschen? Das lässt sich nicht rückgängig machen.",
+		readOnly: "Geteilte Playlist. Nur der Besitzer (oder ein Admin) kann sie ändern.",
+		emptyTitle: "Diese Playlist ist leer",
+		emptyHintManage: "Füge Titel über das ⋯-Menü einer Karte mit „Zur Playlist hinzufügen“ hinzu.",
+		emptyHintReadOnly: "Nur der Besitzer der Playlist kann Titel hinzufügen.",
+		removeAria: "{name} aus der Playlist entfernen",
+		loading: "Playlist wird geladen…",
+		removed: "„{name}“ wurde aus der Playlist entfernt.",
+		removeFailed: "Entfernen aus der Playlist fehlgeschlagen.",
+		deleted: "Playlist „{name}“ wurde gelöscht.",
+		deleteFailed: "Die Playlist konnte nicht gelöscht werden.",
+		pickerChoice: "Playlist-Auswahl",
+		existingTab: "Vorhandene Playlist",
+		newTab: "Neue Playlist",
+		loadingPlaylists: "Playlists werden geladen…",
+		noPlaylistsTitle: "Noch keine Playlists",
+		noPlaylistsHint: "Wechsle zu „Neue Playlist“, um deine erste zu erstellen.",
+		selectLabel: "Playlist",
+		selectPlaceholder: "Playlist auswählen…",
+		noLibraryId: "Für diesen Eintrag lässt sich keine neue Playlist erstellen, da er keiner Bibliothek zugeordnet ist.",
+		nameLabel: "Playlist-Name",
+		namePlaceholder: "Meine Playlist",
+		manage: "Playlists verwalten →",
+		sharedReadOnly: "{name} (geteilt, schreibgeschützt)",
+		add: "Hinzufügen",
+		loadListFailed: "Die Playlists konnten nicht geladen werden.",
+		addedTo: "Zur Playlist „{name}“ hinzugefügt.",
+		addFailed: "Das Hinzufügen zur Playlist ist fehlgeschlagen.",
+		createFailed: "Die Playlist konnte nicht erstellt werden.",
+		createdAddFailed: "Die Playlist wurde erstellt, der Eintrag konnte aber nicht hinzugefügt werden.",
+		deleteEmpty: "Leere Playlist löschen",
+		emptyDeleted: "Die leere Playlist wurde gelöscht.",
+		emptyDeleteFailed: "Die leere Playlist konnte nicht gelöscht werden.",
+		confirmDelete: "Löschen"
 	},
 	music: {
 		title: "Musikbibliothek",
@@ -8985,7 +9215,7 @@ var av = {
 		nextPage: "Nächste Seite",
 		lastPage: "Letzte Seite",
 		jumpToPage: "Zu Seite springen",
-		pageLoadFailed: "Diese Seite konnte nicht geladen werden. Deine Position ist unverändert — erneut versuchen.",
+		pageLoadFailed: "Diese Seite konnte nicht geladen werden. Deine Position ist unverändert. Versuche es erneut.",
 		pagination: "Seitennummerierung",
 		paginationOf: "{label}-Seitennummerierung",
 		shuffle: "Zufallswiedergabe",
@@ -9006,8 +9236,8 @@ var av = {
 	},
 	settings: {
 		theme: "Theme",
-		themeCatalogueUnavailable: "Theme-Katalog nicht verfügbar – es werden die eingebauten Themes angezeigt.",
-		themeSavedLocally: "Nur auf diesem Gerät gespeichert – der Server konnte den Theme nicht speichern.",
+		themeCatalogueUnavailable: "Theme-Katalog nicht verfügbar — es werden die eingebauten Themes angezeigt.",
+		themeSavedLocally: "Nur auf diesem Gerät gespeichert — der Server konnte den Theme nicht speichern.",
 		accent: "Akzent",
 		accentColor: "Akzentfarbe",
 		display: "Anzeige",
@@ -9057,6 +9287,7 @@ var av = {
 		desc: "Sieh dir die Geräte an, die mit deinem Konto angemeldet sind, und melde unbekannte ab.",
 		cardTitle: "Aktive Sitzungen",
 		count: "{count} aktive Sitzung | {count} aktive Sitzungen",
+		truncated: "{count}+ aktive Sitzungen (die {count} zuletzt verwendeten werden angezeigt)",
 		thisDevice: "Dieses Gerät",
 		unknownDevice: "Unbekanntes Gerät",
 		created: "Angemeldet am {date}",
@@ -9064,13 +9295,14 @@ var av = {
 		refresh: "Aktualisieren",
 		loading: "Sitzungen werden geladen…",
 		revoke: "Abmelden",
-		revokeAll: "Andere abmelden",
-		revokeConfirm: "Diese Sitzung abmelden? Das Gerät muss sich erneut anmelden.",
-		revokeAllConfirm: "Alle anderen Sitzungen abmelden? Jedes Gerät außer diesem muss sich erneut anmelden.",
-		revokeSuccess: "Abgemeldet.",
-		revokeError: "Die Sitzung konnte nicht abgemeldet werden.",
-		revokeOthersSuccess: "Andere Sitzungen abgemeldet.",
-		revokeOthersError: "Das Abmelden der anderen Sitzungen wurde nicht abgeschlossen.",
+		revokeDevice: "{device} beenden",
+		revokeAll: "Andere beenden",
+		revokeConfirm: "Diese Sitzung beenden? Das Gerät muss sich erneut anmelden.",
+		revokeAllConfirm: "{count} andere Sitzung beenden? Dieses Gerät muss sich erneut anmelden. | Alle {count} anderen Sitzungen beenden? Jedes Gerät außer diesem muss sich erneut anmelden.",
+		revokeSuccess: "Sitzung beendet.",
+		revokeError: "Die Sitzung konnte nicht beendet werden.",
+		revokeOthersSuccess: "{count} andere Sitzung beendet. | {count} andere Sitzungen beendet.",
+		revokeOthersError: "Das Beenden der anderen Sitzungen wurde nicht abgeschlossen.",
 		loadErrorTitle: "Sitzungen konnten nicht geladen werden",
 		loadError: "Die Sitzungen konnten nicht geladen werden. Verbindung prüfen und erneut versuchen.",
 		emptyTitle: "Keine aktiven Sitzungen",
@@ -9155,7 +9387,7 @@ var av = {
 		"transcoding.preferredAccelerator": "Bevorzugter Beschleuniger",
 		"transcoding.hdrOutput": "HDR-Ausgabe",
 		"transcoding.toneMapMode": "Ton-Mapping-Modus",
-		settingsRejected: "Der Server hat diese Einstellungen abgelehnt – nichts wurde gespeichert.",
+		settingsRejected: "Der Server hat diese Einstellungen abgelehnt — nichts wurde gespeichert.",
 		settingsRejectAllMethods: "Mindestens eine Anmelde-Methode muss aktiv bleiben. Lass mindestens eine aktiviert und speichere erneut.",
 		settingsRejectAdminLockout: "Diese Änderung würde einen aktiven Administrator ohne nutzbare Anmelde-Methode aussperren. Aktiviere zuerst für ihn eine weitere Anmelde-Methode und speichere erneut.",
 		settingsForbidden: "Du hast keine Berechtigung mehr, Server-Einstellungen zu ändern. Melde dich erneut als Administrator an und versuche es erneut.",
@@ -9220,7 +9452,13 @@ var av = {
 		save: "Salva",
 		cancel: "Annulla",
 		deleteBlocked: "L’ultimo profilo di un account non può essere eliminato.",
-		empty: "Questo account non ha ancora profili."
+		empty: "Questo account non ha ancora profili.",
+		avatarInvalidType: "Seleziona un’immagine PNG, JPEG o WEBP.",
+		avatarTooLarge: "Il file è troppo grande. La dimensione massima è 5 MB.",
+		avatarUpdated: "Avatar aggiornato.",
+		avatarUploadFailed: "Impossibile caricare l’avatar.",
+		avatarRemoved: "Avatar rimosso.",
+		avatarRemoveFailed: "Impossibile rimuovere l’avatar."
 	},
 	palette: {
 		title: "Riquadro comandi",
@@ -9436,7 +9674,13 @@ var av = {
 		revokeConfirm: "Questo link di invio smetterà di funzionare immediatamente. Non può essere ripristinato.",
 		revokeLabel: "Revoca link",
 		revoked: "Link di invio revocato.",
-		revokeFailed: "Revoca del link di invio non riuscita."
+		revokeFailed: "Revoca del link di invio non riuscita.",
+		linkCopied: "Link copiato negli appunti.",
+		linkCopyFailed: "Impossibile copiare il link.",
+		urlCopied: "URL dell’invito copiato negli appunti.",
+		urlCopyFailed: "Impossibile copiare l’URL.",
+		tokenCopied: "Token dell’invito copiato negli appunti.",
+		tokenCopyFailed: "Impossibile copiare il token."
 	},
 	shares: {
 		revokeConfirm: "Questa persona perderà immediatamente l’accesso. Per riottenerlo serve una nuova condivisione.",
@@ -9459,11 +9703,31 @@ var av = {
 		moreInfo: "Più informazioni",
 		moreActions: "Altre azioni",
 		matchMetadata: "Abbina metadati",
+		addToPlaylist: "Aggiungi alla playlist",
+		markUnwatched: "Segna come non visto",
+		download: "Scarica",
+		missingEpisodes: "Mostra episodi mancanti",
+		editMetadata: "Modifica metadati",
+		editImages: "Modifica immagini",
+		exploreData: "Esplora dati dell’elemento",
+		remove: "Rimuovi",
+		dangerSuffix: "{label} (pericolo)",
 		favoriteAddError: "Aggiunta alla mia lista non riuscita.",
 		favoriteRemoveError: "Rimozione dalla mia lista non riuscita.",
 		markWatchedError: "Contrassegnare come visto non riuscito.",
 		markUnwatchedError: "Contrassegnare come non visto non riuscito.",
-		ratingSaveError: "Salvataggio della valutazione non riuscito."
+		ratingSaveError: "Salvataggio della valutazione non riuscito.",
+		downloadPreparing: "Preparazione del download…",
+		downloadUnsafe: "Impossibile avviare il download perché il link non è sicuro.",
+		downloadStarted: "Download avviato.",
+		downloadFailed: "Impossibile avviare il download.",
+		missingLoading: "Ricerca degli episodi mancanti…",
+		noMissingEpisodes: "Nessun episodio mancante.",
+		missingEpisodesCount: "Manca {count} episodio. | Mancano {count} episodi.",
+		missingEpisodesFailed: "Impossibile caricare gli episodi mancanti.",
+		shuffleNothing: "Ancora nulla da riprodurre in ordine casuale.",
+		shuffleQueued: "Riproduzione casuale in coda.",
+		shuffleFailed: "Impossibile avviare la riproduzione casuale."
 	},
 	reader: {
 		decreaseFont: "Riduci dimensione del testo",
@@ -9491,7 +9755,6 @@ var av = {
 		reSyncing: "Risincronizzazione…",
 		roomName: "Nome della sala",
 		roomId: "ID sala",
-		privateRoom: "Sala privata",
 		create: "Crea",
 		join: "Unisciti",
 		cancel: "Annulla",
@@ -9537,7 +9800,8 @@ var av = {
 		unknownError: "Qualcosa è andato storto.",
 		loadTitlesError: "Impossibile caricare i titoli",
 		noMediaTitle: "Nessun contenuto trovato",
-		noMediaHint: "Prova a modificare i filtri."
+		noMediaHint: "Prova a modificare i filtri.",
+		metadataUpdated: "Metadati di “{name}” aggiornati."
 	},
 	browse: {
 		continueWatching: "Riprendi la visione",
@@ -9545,11 +9809,54 @@ var av = {
 		recommended: "Consigliati",
 		mostWatched: "I più visti",
 		noLibrariesTitle: "Ancora nessuna libreria",
-		noLibrariesDescription: "Quando aggiungi una libreria, appare qui come sezione autonoma."
+		noLibrariesDescription: "Quando aggiungi una libreria, appare qui come sezione autonoma.",
+		loadNextUpError: "Impossibile caricare “Prossimi”.",
+		loadFavoritesError: "Impossibile caricare la tua lista.",
+		loadRecommendationsError: "Impossibile caricare i consigli.",
+		loadMostWatchedError: "Impossibile caricare “Più guardati”.",
+		loadingLibraries: "Caricamento delle librerie",
+		removeConfirm: "Rimuovere “{name}” dalla libreria? Questa azione non può essere annullata."
 	},
 	playlist: {
 		loadError: "Impossibile caricare questa playlist.",
-		loadErrorTitle: "Impossibile caricare questa playlist"
+		loadErrorTitle: "Impossibile caricare questa playlist",
+		itemsCount: "{count} elemento | {count} elementi",
+		play: "Riproduci",
+		delete: "Elimina playlist",
+		deleteConfirm: "Eliminare la playlist {name} ({items})? Questa azione non può essere annullata.",
+		readOnly: "Playlist condivisa. Solo il proprietario (o un amministratore) può modificarla.",
+		emptyTitle: "Questa playlist è vuota",
+		emptyHintManage: "Aggiungi titoli dal menu ⋯ di una scheda con “Aggiungi alla playlist”.",
+		emptyHintReadOnly: "Solo il proprietario della playlist può aggiungere titoli.",
+		removeAria: "Rimuovi {name} dalla playlist",
+		loading: "Caricamento della playlist…",
+		removed: "“{name}” rimosso dalla playlist.",
+		removeFailed: "Impossibile rimuovere dalla playlist.",
+		deleted: "Playlist “{name}” eliminata.",
+		deleteFailed: "Impossibile eliminare la playlist.",
+		pickerChoice: "Scelta della playlist",
+		existingTab: "Playlist esistente",
+		newTab: "Nuova playlist",
+		loadingPlaylists: "Caricamento delle playlist…",
+		noPlaylistsTitle: "Ancora nessuna playlist",
+		noPlaylistsHint: "Passa a “Nuova playlist” per crearne una.",
+		selectLabel: "Playlist",
+		selectPlaceholder: "Seleziona una playlist…",
+		noLibraryId: "Non è possibile creare una nuova playlist per questo elemento perché non ha una libreria di appartenenza.",
+		nameLabel: "Nome della playlist",
+		namePlaceholder: "La mia playlist",
+		manage: "Gestisci playlist →",
+		sharedReadOnly: "{name} (condivisa, sola lettura)",
+		add: "Aggiungi",
+		loadListFailed: "Impossibile caricare le playlist.",
+		addedTo: "Aggiunto alla playlist “{name}”.",
+		addFailed: "Impossibile aggiungere alla playlist.",
+		createFailed: "Impossibile creare la playlist.",
+		createdAddFailed: "Playlist creata, ma non è stato possibile aggiungere l’elemento.",
+		deleteEmpty: "Elimina playlist vuota",
+		emptyDeleted: "Playlist vuota eliminata.",
+		emptyDeleteFailed: "Impossibile eliminare la playlist vuota.",
+		confirmDelete: "Elimina"
 	},
 	music: {
 		title: "Libreria musicale",
@@ -9669,11 +9976,12 @@ var av = {
 		loadErrorTitle: "Impossibile caricare le impostazioni"
 	},
 	sessions: {
-		eyebrow: "Account",
+		eyebrow: "Il tuo account",
 		title: "Sessioni dei dispositivi",
 		desc: "Esamina i dispositivi connessi al tuo account e disconnetti quelli sconosciuti.",
 		cardTitle: "Sessioni attive",
 		count: "{count} sessione attiva | {count} sessioni attive",
+		truncated: "{count}+ sessioni attive (mostrate le {count} usate più di recente)",
 		thisDevice: "Questo dispositivo",
 		unknownDevice: "Dispositivo sconosciuto",
 		created: "Accesso eseguito il {date}",
@@ -9681,12 +9989,13 @@ var av = {
 		refresh: "Aggiorna",
 		loading: "Caricamento sessioni…",
 		revoke: "Esci",
-		revokeAll: "Esci dagli altri",
+		revokeDevice: "Esci da {device}",
+		revokeAll: "Esci dalle altre",
 		revokeConfirm: "Uscire da questa sessione? Il dispositivo dovrà eseguire di nuovo l’accesso.",
-		revokeAllConfirm: "Uscire da tutte le altre sessioni? Tutti i dispositivi tranne questo dovranno eseguire di nuovo l’accesso.",
+		revokeAllConfirm: "Uscire da {count} altra sessione? Quel dispositivo dovrà eseguire di nuovo l’accesso. | Uscire da tutte le altre {count} sessioni? Tutti i dispositivi tranne questo dovranno eseguire di nuovo l’accesso.",
 		revokeSuccess: "Dispositivo disconnesso.",
 		revokeError: "Impossibile disconnettere la sessione.",
-		revokeOthersSuccess: "Le altre sessioni sono state disconnesse.",
+		revokeOthersSuccess: "{count} altra sessione disconnessa. | {count} altre sessioni disconnesse.",
 		revokeOthersError: "La disconnessione delle altre sessioni non è completata.",
 		loadErrorTitle: "Impossibile caricare le sessioni",
 		loadError: "Impossibile caricare le sessioni. Controlla la connessione e riprova.",
@@ -9837,7 +10146,13 @@ var av = {
 		save: "Salvar",
 		cancel: "Cancelar",
 		deleteBlocked: "O último perfil de uma conta não pode ser excluído.",
-		empty: "Esta conta ainda não tem perfis."
+		empty: "Esta conta ainda não tem perfis.",
+		avatarInvalidType: "Selecione uma imagem PNG, JPEG ou WEBP.",
+		avatarTooLarge: "O arquivo é grande demais. O tamanho máximo é 5 MB.",
+		avatarUpdated: "Avatar atualizado.",
+		avatarUploadFailed: "Não foi possível enviar o avatar.",
+		avatarRemoved: "Avatar removido.",
+		avatarRemoveFailed: "Não foi possível remover o avatar."
 	},
 	palette: {
 		title: "Paleta de comandos",
@@ -10053,7 +10368,13 @@ var av = {
 		revokeConfirm: "Este link de convite deixará de funcionar imediatamente. Ele não pode ser restaurado.",
 		revokeLabel: "Revogar link",
 		revoked: "Link de convite revogado.",
-		revokeFailed: "Falha ao revogar o link de convite."
+		revokeFailed: "Falha ao revogar o link de convite.",
+		linkCopied: "Link copiado para a área de transferência.",
+		linkCopyFailed: "Não foi possível copiar o link.",
+		urlCopied: "URL do convite copiado para a área de transferência.",
+		urlCopyFailed: "Não foi possível copiar a URL.",
+		tokenCopied: "Token do convite copiado para a área de transferência.",
+		tokenCopyFailed: "Não foi possível copiar o token."
 	},
 	shares: {
 		revokeConfirm: "Essa pessoa perde o acesso imediatamente. É necessário um novo compartilhamento para concedê-lo de novo.",
@@ -10076,11 +10397,31 @@ var av = {
 		moreInfo: "Mais informações",
 		moreActions: "Mais ações",
 		matchMetadata: "Corresponder metadados",
+		addToPlaylist: "Adicionar à playlist",
+		markUnwatched: "Marcar como não assistido",
+		download: "Baixar",
+		missingEpisodes: "Ver episódios ausentes",
+		editMetadata: "Editar metadados",
+		editImages: "Editar imagens",
+		exploreData: "Explorar dados do item",
+		remove: "Remover",
+		dangerSuffix: "{label} (perigo)",
 		favoriteAddError: "Não foi possível adicionar à minha lista.",
 		favoriteRemoveError: "Não foi possível remover da minha lista.",
 		markWatchedError: "Não foi possível marcar como assistido.",
 		markUnwatchedError: "Não foi possível marcar como não assistido.",
-		ratingSaveError: "Não foi possível salvar a avaliação."
+		ratingSaveError: "Não foi possível salvar a avaliação.",
+		downloadPreparing: "Preparando o download…",
+		downloadUnsafe: "Não foi possível iniciar o download porque o link não é seguro.",
+		downloadStarted: "Download iniciado.",
+		downloadFailed: "Não foi possível iniciar o download.",
+		missingLoading: "Verificando episódios ausentes…",
+		noMissingEpisodes: "Nenhum episódio ausente.",
+		missingEpisodesCount: "Falta {count} episódio. | Faltam {count} episódios.",
+		missingEpisodesFailed: "Não foi possível carregar os episódios ausentes.",
+		shuffleNothing: "Ainda não há nada para reproduzir aleatoriamente.",
+		shuffleQueued: "Reprodução aleatória na fila.",
+		shuffleFailed: "Não foi possível iniciar a reprodução aleatória."
 	},
 	reader: {
 		decreaseFont: "Diminuir tamanho da fonte",
@@ -10108,7 +10449,6 @@ var av = {
 		reSyncing: "Ressincronizando…",
 		roomName: "Nome da sala",
 		roomId: "ID da sala",
-		privateRoom: "Sala privada",
 		create: "Criar",
 		join: "Entrar",
 		cancel: "Cancelar",
@@ -10154,7 +10494,8 @@ var av = {
 		unknownError: "Algo deu errado.",
 		loadTitlesError: "Não foi possível carregar os títulos",
 		noMediaTitle: "Nenhuma mídia encontrada",
-		noMediaHint: "Tente ajustar seus filtros."
+		noMediaHint: "Tente ajustar seus filtros.",
+		metadataUpdated: "Metadados de “{name}” atualizados."
 	},
 	browse: {
 		continueWatching: "Continuar assistindo",
@@ -10162,11 +10503,54 @@ var av = {
 		recommended: "Recomendados",
 		mostWatched: "Mais assistidos",
 		noLibrariesTitle: "Nenhuma biblioteca ainda",
-		noLibrariesDescription: "Quando uma biblioteca for adicionada, ela aparece aqui como uma seção própria."
+		noLibrariesDescription: "Quando uma biblioteca for adicionada, ela aparece aqui como uma seção própria.",
+		loadNextUpError: "Não foi possível carregar “A seguir”.",
+		loadFavoritesError: "Não foi possível carregar sua lista.",
+		loadRecommendationsError: "Não foi possível carregar as recomendações.",
+		loadMostWatchedError: "Não foi possível carregar “Mais assistidos”.",
+		loadingLibraries: "Carregando bibliotecas",
+		removeConfirm: "Remover “{name}” da biblioteca? Esta ação não pode ser desfeita."
 	},
 	playlist: {
 		loadError: "Não foi possível carregar esta playlist.",
-		loadErrorTitle: "Não foi possível carregar esta playlist"
+		loadErrorTitle: "Não foi possível carregar esta playlist",
+		itemsCount: "{count} item | {count} itens",
+		play: "Reproduzir",
+		delete: "Excluir playlist",
+		deleteConfirm: "Excluir a playlist {name} ({items})? Esta ação não pode ser desfeita.",
+		readOnly: "Playlist compartilhada. Somente o proprietário (ou um administrador) pode alterá-la.",
+		emptyTitle: "Esta playlist está vazia",
+		emptyHintManage: "Adicione títulos pelo menu ⋯ de qualquer cartão com “Adicionar à playlist”.",
+		emptyHintReadOnly: "Somente o proprietário da playlist pode adicionar títulos.",
+		removeAria: "Remover {name} da playlist",
+		loading: "Carregando playlist…",
+		removed: "“{name}” removido da playlist.",
+		removeFailed: "Não foi possível remover da playlist.",
+		deleted: "Playlist “{name}” excluída.",
+		deleteFailed: "Não foi possível excluir a playlist.",
+		pickerChoice: "Escolha de playlist",
+		existingTab: "Playlist existente",
+		newTab: "Nova playlist",
+		loadingPlaylists: "Carregando playlists…",
+		noPlaylistsTitle: "Ainda não há playlists",
+		noPlaylistsHint: "Mude para “Nova playlist” para criar a primeira.",
+		selectLabel: "Playlist",
+		selectPlaceholder: "Selecione uma playlist…",
+		noLibraryId: "Não é possível criar uma playlist para este item porque ele não tem biblioteca proprietária.",
+		nameLabel: "Nome da playlist",
+		namePlaceholder: "Minha playlist",
+		manage: "Gerenciar playlists →",
+		sharedReadOnly: "{name} (compartilhada, somente leitura)",
+		add: "Adicionar",
+		loadListFailed: "Não foi possível carregar as playlists.",
+		addedTo: "Adicionado à playlist “{name}”.",
+		addFailed: "Não foi possível adicionar à playlist.",
+		createFailed: "Não foi possível criar a playlist.",
+		createdAddFailed: "A playlist foi criada, mas não foi possível adicionar o item.",
+		deleteEmpty: "Excluir playlist vazia",
+		emptyDeleted: "Playlist vazia excluída.",
+		emptyDeleteFailed: "Não foi possível excluir a playlist vazia.",
+		confirmDelete: "Excluir"
 	},
 	music: {
 		title: "Biblioteca de música",
@@ -10291,19 +10675,21 @@ var av = {
 		desc: "Veja os dispositivos conectados à sua conta e encerre os que você não reconhecer.",
 		cardTitle: "Sessões ativas",
 		count: "{count} sessão ativa | {count} sessões ativas",
+		truncated: "{count}+ sessões ativas (exibindo as {count} usadas mais recentemente)",
 		thisDevice: "Este dispositivo",
 		unknownDevice: "Dispositivo desconhecido",
 		created: "Conectado em {date}",
-		lastUsed: "Usado por último em {date}",
+		lastUsed: "Usado pela última vez em {date}",
 		refresh: "Atualizar",
 		loading: "Carregando sessões…",
 		revoke: "Encerrar sessão",
+		revokeDevice: "Encerrar sessão em {device}",
 		revokeAll: "Encerrar outras sessões",
 		revokeConfirm: "Encerrar esta sessão? O dispositivo precisará fazer login novamente.",
-		revokeAllConfirm: "Encerrar todas as outras sessões? Todos os dispositivos, exceto este, precisarão fazer login novamente.",
+		revokeAllConfirm: "Encerrar {count} outra sessão? Esse dispositivo precisará fazer login novamente. | Encerrar as outras {count} sessões? Todos os dispositivos, exceto este, precisarão fazer login novamente.",
 		revokeSuccess: "Dispositivo desconectado.",
 		revokeError: "Não foi possível encerrar essa sessão.",
-		revokeOthersSuccess: "As outras sessões foram encerradas.",
+		revokeOthersSuccess: "{count} outra sessão encerrada. | {count} outras sessões encerradas.",
 		revokeOthersError: "O encerramento das outras sessões não foi concluído.",
 		loadErrorTitle: "Não foi possível carregar as sessões",
 		loadError: "Não foi possível carregar suas sessões. Verifique a conexão e tente novamente.",
@@ -10454,7 +10840,13 @@ var av = {
 		save: "保存",
 		cancel: "キャンセル",
 		deleteBlocked: "アカウントで最後のプロフィールは削除できません。",
-		empty: "このアカウントにはまだプロフィールがありません。"
+		empty: "このアカウントにはまだプロフィールがありません。",
+		avatarInvalidType: "PNG、JPEG、WEBP のいずれかの画像を選択してください。",
+		avatarTooLarge: "ファイルが大きすぎます。最大サイズは 5 MB です。",
+		avatarUpdated: "アバターを更新しました。",
+		avatarUploadFailed: "アバターをアップロードできませんでした。",
+		avatarRemoved: "アバターを削除しました。",
+		avatarRemoveFailed: "アバターを削除できませんでした。"
 	},
 	palette: {
 		title: "コマンドパレット",
@@ -10670,7 +11062,13 @@ var av = {
 		revokeConfirm: "この招待リンクは即時に無効になります。元に戻せません。",
 		revokeLabel: "リンクを取り消す",
 		revoked: "招待リンクを取り消しました。",
-		revokeFailed: "招待リンクの取り消しに失敗しました。"
+		revokeFailed: "招待リンクの取り消しに失敗しました。",
+		linkCopied: "リンクをクリップボードにコピーしました。",
+		linkCopyFailed: "リンクをコピーできませんでした。",
+		urlCopied: "招待 URL をクリップボードにコピーしました。",
+		urlCopyFailed: "URL をコピーできませんでした。",
+		tokenCopied: "招待トークンをクリップボードにコピーしました。",
+		tokenCopyFailed: "トークンをコピーできませんでした。"
 	},
 	shares: {
 		revokeConfirm: "この相手はただちにはアクセスできなくなります。再度の共有には新しい共有が必要です。",
@@ -10693,11 +11091,31 @@ var av = {
 		moreInfo: "詳細情報",
 		moreActions: "その他の操作",
 		matchMetadata: "メタデータを一致させる",
+		addToPlaylist: "プレイリストに追加",
+		markUnwatched: "未視聴にする",
+		download: "ダウンロード",
+		missingEpisodes: "不足しているエピソードを表示",
+		editMetadata: "メタデータを編集",
+		editImages: "画像を編集",
+		exploreData: "アイテムデータを調べる",
+		remove: "削除",
+		dangerSuffix: "{label}（危険）",
 		favoriteAddError: "マイリストに追加できませんでした。",
 		favoriteRemoveError: "マイリストから削除できませんでした。",
 		markWatchedError: "視聴済みとしてマークできませんでした。",
 		markUnwatchedError: "未視聴としてマークできませんでした。",
-		ratingSaveError: "評価を保存できませんでした。"
+		ratingSaveError: "評価を保存できませんでした。",
+		downloadPreparing: "ダウンロードを準備中…",
+		downloadUnsafe: "リンクが安全でないため、ダウンロードを開始できませんでした。",
+		downloadStarted: "ダウンロードを開始しました。",
+		downloadFailed: "ダウンロードを開始できませんでした。",
+		missingLoading: "不足しているエピソードを確認中…",
+		noMissingEpisodes: "不足しているエピソードはありません。",
+		missingEpisodesCount: "{count} 件のエピソードが不足しています。",
+		missingEpisodesFailed: "不足しているエピソードを読み込めませんでした。",
+		shuffleNothing: "シャッフル再生できるものがまだありません。",
+		shuffleQueued: "シャッフル再生を待機列に追加しました。",
+		shuffleFailed: "シャッフル再生を開始できませんでした。"
 	},
 	reader: {
 		decreaseFont: "フォントサイズを小さくする",
@@ -10725,7 +11143,6 @@ var av = {
 		reSyncing: "再同期中…",
 		roomName: "ルーム名",
 		roomId: "ルームID",
-		privateRoom: "非公開ルーム",
 		create: "作成",
 		join: "参加",
 		cancel: "キャンセル",
@@ -10771,7 +11188,8 @@ var av = {
 		unknownError: "問題が発生しました。",
 		loadTitlesError: "タイトルを読み込めませんでした",
 		noMediaTitle: "メディアが見つかりません",
-		noMediaHint: "フィルター条件を変更してお試しください。"
+		noMediaHint: "フィルター条件を変更してお試しください。",
+		metadataUpdated: "「{name}」のメタデータを更新しました。"
 	},
 	browse: {
 		continueWatching: "続きから見る",
@@ -10779,11 +11197,54 @@ var av = {
 		recommended: "おすすめ",
 		mostWatched: "よく見る作品",
 		noLibrariesTitle: "ライブラリがまだありません",
-		noLibrariesDescription: "ライブラリを追加すると、このページに独立したセクションとして表示されます。"
+		noLibrariesDescription: "ライブラリを追加すると、このページに独立したセクションとして表示されます。",
+		loadNextUpError: "「次に観る」を読み込めませんでした。",
+		loadFavoritesError: "マイリストを読み込めませんでした。",
+		loadRecommendationsError: "おすすめを読み込めませんでした。",
+		loadMostWatchedError: "「よく観られている作品」を読み込めませんでした。",
+		loadingLibraries: "ライブラリを読み込み中",
+		removeConfirm: "「{name}」をライブラリから削除しますか？この操作は元に戻せません。"
 	},
 	playlist: {
 		loadError: "このプレイリストを読み込めませんでした。",
-		loadErrorTitle: "このプレイリストを読み込めませんでした"
+		loadErrorTitle: "このプレイリストを読み込めませんでした",
+		itemsCount: "{count} 件",
+		play: "再生",
+		delete: "プレイリストを削除",
+		deleteConfirm: "プレイリスト {name}（{items}）を削除しますか？この操作は元に戻せません。",
+		readOnly: "共有プレイリストです。変更できるのは所有者（または管理者）のみです。",
+		emptyTitle: "このプレイリストは空です",
+		emptyHintManage: "カードの ⋯ メニューの「プレイリストに追加」からタイトルを追加できます。",
+		emptyHintReadOnly: "タイトルを追加できるのはプレイリストの所有者のみです。",
+		removeAria: "{name} をプレイリストから削除",
+		loading: "プレイリストを読み込み中…",
+		removed: "「{name}」をプレイリストから削除しました。",
+		removeFailed: "プレイリストから削除できませんでした。",
+		deleted: "プレイリスト「{name}」を削除しました。",
+		deleteFailed: "プレイリストを削除できませんでした。",
+		pickerChoice: "プレイリストの選択",
+		existingTab: "既存のプレイリスト",
+		newTab: "新規プレイリスト",
+		loadingPlaylists: "プレイリストを読み込み中…",
+		noPlaylistsTitle: "プレイリストはまだありません",
+		noPlaylistsHint: "「新規プレイリスト」に切り替えて最初の1つを作成しましょう。",
+		selectLabel: "プレイリスト",
+		selectPlaceholder: "プレイリストを選択…",
+		noLibraryId: "このアイテムにはライブラリが関連付けられていないため、新しいプレイリストを作成できません。",
+		nameLabel: "プレイリスト名",
+		namePlaceholder: "マイプレイリスト",
+		manage: "プレイリストを管理 →",
+		sharedReadOnly: "{name}（共有・読み取り専用）",
+		add: "追加",
+		loadListFailed: "プレイリストを読み込めませんでした。",
+		addedTo: "プレイリスト「{name}」に追加しました。",
+		addFailed: "プレイリストに追加できませんでした。",
+		createFailed: "プレイリストを作成できませんでした。",
+		createdAddFailed: "プレイリストは作成されましたが、アイテムを追加できませんでした。",
+		deleteEmpty: "空のプレイリストを削除",
+		emptyDeleted: "空のプレイリストを削除しました。",
+		emptyDeleteFailed: "空のプレイリストを削除できませんでした。",
+		confirmDelete: "削除"
 	},
 	music: {
 		title: "ミュージックライブラリ",
@@ -10908,6 +11369,7 @@ var av = {
 		desc: "アカウントにサインインしているデバイスを確認し、見覚えのないデバイスをサインアウトしてください。",
 		cardTitle: "アクティブなセッション",
 		count: "アクティブなセッション {count} 件",
+		truncated: "アクティブなセッション {count} 件以上（最近使用した {count} 件を表示）",
 		thisDevice: "このデバイス",
 		unknownDevice: "不明なデバイス",
 		created: "{date} にサインイン",
@@ -10915,12 +11377,13 @@ var av = {
 		refresh: "更新",
 		loading: "セッションを読み込んでいます…",
 		revoke: "サインアウト",
+		revokeDevice: "{device} からサインアウト",
 		revokeAll: "その他をサインアウト",
 		revokeConfirm: "このセッションをサインアウトしますか？ そのデバイスは再度サインインする必要があります。",
-		revokeAllConfirm: "他のすべてのセッションをサインアウトしますか？ このデバイス以外のすべてのデバイスが再度サインインする必要があります。",
+		revokeAllConfirm: "他の {count} 件のセッションをサインアウトしますか？ このデバイス以外のすべてのデバイスが再度サインインする必要があります。",
 		revokeSuccess: "デバイスをサインアウトしました。",
 		revokeError: "セッションをサインアウトできませんでした。",
-		revokeOthersSuccess: "他のセッションをサインアウトしました。",
+		revokeOthersSuccess: "他のセッション {count} 件をサインアウトしました。",
 		revokeOthersError: "他のセッションのサインアウトを完了できませんでした。",
 		loadErrorTitle: "セッションを読み込めません",
 		loadError: "セッションを読み込めませんでした。接続を確認してもう一度お試しください。",
@@ -11019,7 +11482,7 @@ var av = {
 	it: cv,
 	pt_BR: lv,
 	ja: uv
-}, fv = fr(() => import("./MediaDetail-F2wn8557.js").then((e) => e.n)), pv = fr(() => import("./MetadataMatchModal-CPWrne_A.js").then((e) => e.n)), mv = fr(() => import("./FilterBar-pPoKh_3h.js").then((e) => e.n)), hv = fr(() => import("./SearchPage-BM3b3J31.js"));
+}, fv = fr(() => import("./MediaDetail-OjQPJbC1.js").then((e) => e.n)), pv = fr(() => import("./MetadataMatchModal-DTUQuLST.js").then((e) => e.n)), mv = fr(() => import("./FilterBar-Ct79dnq3.js").then((e) => e.n)), hv = fr(() => import("./SearchPage-mmhDxF-X.js"));
 export { S as ACTIVE_PROFILE_KEY, nn as ALL_LOGS, Ad as AcceptInvitePage, yn as AdminBackupApi, bn as AdminCastApi, wn as AdminCollectionsApi, rn as AdminDashboardApi, xn as AdminDlnaServerApi, Tn as AdminHistoryApi, Bn as AdminHubDashboardApi, vn as AdminIntegrationsApi, kn as AdminLibrariesApi, Cn as AdminLiveTvApi, tn as AdminLogsApi, zn as AdminMaintenanceApi, en as AdminMetadataSourcesApi, In as AdminPluginsApi, Sn as AdminRemoteAccessApi, _n as AdminServicesApi, An as AdminSettingsApi, En as AdminSyncPlayApi, pn as AdminUsersApi, gn as AdminWebhooksApi, ht as ApiClient, $e as ApiError, e as AppBackdrop, ni as AppLayout, Gh as AudiobookDetailPage, Tg as AudiobookPlayerPage, hh as AudiobooksPage, De as BUILT_IN_THEME_IDS, N as Badge, Im as BookDetailPage, eh as BookReaderPage, hm as BooksPage, j as Button, kt as CONNECTION_API_BASE_KEY, Tt as CONNECTION_CONFIRMED_ORIGIN_KEY, ka as CURRENT_SERVER_ID_KEY, Aa as CURRENT_SERVER_NAME_KEY, Rt as Chip, Bt as Combobox, Ht as ConfirmDialog, ft as CookieTokenStore, m as DEFAULT_CAPTION_STYLE, g as DEFAULT_MESSAGES, f as DEFAULT_PREFERENCES, ln as DEFAULT_THROTTLE_BPS, sv as DE_MESSAGES, je as DeviceSessionsPage, ot as ERROR_MESSAGES, et as ERROR_TITLES, av as ES_MESSAGES, A as EmptyState, Ae as FOCUS_RING_MIN_CONTRAST, ov as FR_MESSAGES, xl as FederationPage, Wl as FederationSharesPage, mv as FilterBar, _t as GENERIC_ERROR_MESSAGE, Fa as HUB_SYNC_PLAY_PORT, wo as HelpPopover, Jt as HelpText, cv as IT_MESSAGES, l as Icon, t as IconButton, xd as InviteLinksPage, uv as JA_MESSAGES, Be as Kbd, Dn as LIBRARY_TYPES, dv as LOCALE_MESSAGES, Fs as LibraryScanPage, lt as LocalStorageTokenStore, Un as LoginForm, Ln as MAINTENANCE_ENDPOINTS, Rn as MAINTENANCE_TASK_NAMES, ve as MAX_EXTENDS_DEPTH, ro as MCP_TOKENS_ROUTE_NAME, io as MCP_TOKENS_ROUTE_PATH, ut as MUSIC_PAGE_SIZE, eu as ManageSharesPage, Xt as MediaCard, fv as MediaDetail, Zt as MediaGrid, Je as MediaHomeRow, Qt as MediaRow, qt as Menu, pv as MetadataMatchModal, Vt as Modal, Zd as MusicAlbumPage, zf as MusicArtistPage, _f as MusicArtistsPage, tm as MusicPlayerPage, wp as MusicTracksPage, tc as MyServersPage, Xe as NetworkError, Pn as PLUGIN_SECRET_MASK, Qn as PLURAL_CATEGORIES, dn as PROFILE_LAST_ERROR_CODE, sn as PROFILE_LAST_ERROR_TEXT, lv as PT_BR_MESSAGES, Gt as PageHint, vo as PageTransition, Ta as PhlixApp, s_ as PhotoAlbumPage, Kg as PhotoAlbumsPage, G_ as PhotoSlideshowPage, A_ as PhotoViewPage, Cs as ProfileImageSettings, an as RATING_LABELS, un as RATING_MAX, fn as RATING_OPTIONS, er as REQUEST_SEARCH_DEBOUNCE_MS, te as RESUME_MAX_RATIO, O as RESUME_MIN_SECONDS, we as RING_GROUND_KEYS, Do as RatingBadge, Uu as RequestsPage, _o as Reveal, On as SCAN_JOB_TYPES, jn as SETTINGS_SECRET_MASK, He as SORT_TITLE_ARTICLES, mn as SUBSCRIBABLE_EVENTS, hv as SearchPage, Ee as SecuritySettingsPage, zt as Select, cl as ServerDetailPage, mu as SharedWithMePage, Kr as Sheet, Wn as SignupForm, P as Skeleton, It as Slider, $t as SourcePriorityEditor, Wt as Spinner, Lt as Switch, Me as THEME_CACHE_KEY, ye as THEME_TOKEN_ALLOWLIST, on as THROTTLE_BPS_LEVELS, cn as THROTTLE_BPS_OPTIONS, pt as TMDB_UNCONFIGURED_CODE, Kt as Tabs, re as ThumbRating, vt as TimeoutError, Xi as ToastHost, Ut as Tooltip, ko as UserRatingPicker, hn as WEBHOOK_EVENT_CATEGORIES, b as activeProfileStorageKey, be as activeThemeStyle, ds as adminMenu, sa as applyStoredThemeEarly, Oe as applyThemeTokens, Q_ as bestCandidate, K_ as bindMediaStoreToRouter, cs as buildAdminRoutes, us as buildHubAdminRoutes, Ba as buildHubRelayUrl, Hn as buildMediaQuery, Vn as buildMediaUrl, ls as buildServerAdminRoutes, Te as clearThemeTokens, Ya as closeHubRelayConnection, rs as commonAdminPages, Ve as compareByStrippedTitle, Se as compositedContrastOver, go as createPhlixApp, _ as createTranslator, $n as debounce, ia as deriveAccentVars, M as errMessage, bt as errorCodeMessage, nt as errorCodeTitle, Ue as fetchLibraries, ge as fetchThemes, xe as focusRingLawViolation, o as focusable, r as focusableRegistry, Ft as formatPageTitle, Re as fuzzyScore, mt as getDefaultApiHeaders, Xa as getHubRelaySocket, p as hasStoredPreferences, as as hubAdminPages, n as installFocusable, Dt as isAllowedBase, he as isAllowedThemeToken, Ne as isBuiltInThemeId, Qe as isOffline, Ct as isPlaintextPublic, Jn as isPluralTemplate, xt as isPrivateHost, yt as isRegisteredErrorCode, w as isRewritableImagePath, Ie as isSafeThemeTokenValue, rt as isTmdbUnconfigured, ze as matchCommand, ao as mcpTokensMenuItem, h as mergeMessages, Et as normalizeBase, _e as normalizeServerTheme, Ka as openHubRelayConnection, Ot as originOf, Ra as parsePendingCommandFrame, Fe as parseThemeColor, Oa as phlixUiVersion, Fn as pluginErrorCode, Nn as pluginValidationErrors, Xn as plural, qn as pluralCategory, Kn as pluralCount, Yn as pluralize, St as probeServer, pe as readCachedTheme, d as readStoredPreferences, q_ as rectCenter, gt as resetCookieSessionProbe, T as resolveImageSrc, C as resolveImageSrcset, de as resolveThemeBase, Pe as resolveThemeTokens, st as resolveTokenStoreMode, Ye as safeHref, me as sanitizeThemeTokens, Zn as selectPluralTemplate, is as serverAdminPages, Nt as setAppName, it as setDefaultApiHeaders, at as setDefaultTokenStore, Pt as setPageTitle, Ge as sortLibraries, We as stripLeadingArticle, ae as useApiBase, y as useAuthStore, la as useCommandPaletteHotkey, Le as useCommandStore, wt as useConnectionStore, i as useFocusTrap, E as useImageSrc, Ke as useLibrariesStore, k as useMediaApiBase, or as useMediaStore, v as useMessages, iv as useOnline, Mt as usePageTitle, D as usePlayerStore, ma as usePreconnect, u as usePreferencesStore, Yt as usePrefetch, x as useProfileStore, va as useResumeReporter, qe as useResumeSync, Pa as useServerStore, Mn as useSettingsPrefsStore, rv as useSpatialNav, ca as useTheme, Ce as useThemesStore, ue as useToastStore, ne as useUserItemDataStore, At as withScheme, fe as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

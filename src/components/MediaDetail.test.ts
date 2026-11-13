@@ -1394,7 +1394,7 @@ describe('MediaDetail — hostile wire urls (M-UI-11)', () => {
     expect(dl).toHaveBeenCalledTimes(1);
     expect(openSpy).not.toHaveBeenCalled();
     expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link.');
+    expect(error).toHaveBeenCalledWith('Couldn’t start the download because the link is unsafe.');
     openSpy.mockRestore();
     w.unmount();
     document.body.innerHTML = '';

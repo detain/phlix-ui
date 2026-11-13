@@ -6,6 +6,7 @@
  */
 import type { MenuItem } from './ui';
 import type { MediaItem } from '../types/media-item';
+import { type Translate } from '../i18n/messages';
 export interface MediaItemMenuContext {
     isAdmin: boolean;
     isWatched: boolean;
@@ -14,22 +15,41 @@ export interface MediaItemMenuContext {
     canChoosePoster: boolean;
 }
 /**
- * Menu labels used across the card / detail ⋯ menu. Exported so the components
- * that dispatch on the label and the tests stay in lockstep with this builder
- * (a typo here would silently no-op the action).
+ * Stable action ids for the ⋯ menu. Consumers dispatch on `MenuItem.key` (never
+ * on the rendered label), so translating the labels can never silently no-op an
+ * action (browseErrors.ts precedent). Each id is also the `itemActions.<id>`
+ * catalog key except `shuffle` (catalog `player.shuffle`).
+ */
+export declare const MENU_KEYS: {
+    readonly addToPlaylist: "addToPlaylist";
+    readonly markWatched: "markWatched";
+    readonly markUnwatched: "markUnwatched";
+    readonly download: "download";
+    readonly missingEpisodes: "missingEpisodes";
+    readonly shuffle: "shuffle";
+    readonly matchMetadata: "matchMetadata";
+    readonly editMetadata: "editMetadata";
+    readonly editImages: "editImages";
+    readonly exploreData: "exploreData";
+    readonly remove: "remove";
+};
+export type MenuKey = (typeof MENU_KEYS)[keyof typeof MENU_KEYS];
+/**
+ * English reference labels (the default catalog), for tests that match rendered
+ * text under the default translator. Not used for dispatch.
  */
 export declare const MENU_LABELS: {
-    readonly addToPlaylist: "Add to playlist";
-    readonly markWatched: "Mark watched";
-    readonly markUnwatched: "Mark unwatched";
-    readonly download: "Download";
-    readonly missingEpisodes: "View missing episodes";
-    readonly shuffle: "Shuffle";
-    readonly matchMetadata: "Match metadata";
-    readonly editMetadata: "Edit metadata";
-    readonly editImages: "Edit images";
-    readonly exploreData: "Explore item data";
-    readonly remove: "Remove";
+    readonly addToPlaylist: string;
+    readonly markWatched: string;
+    readonly markUnwatched: string;
+    readonly download: string;
+    readonly missingEpisodes: string;
+    readonly shuffle: string;
+    readonly matchMetadata: string;
+    readonly editMetadata: string;
+    readonly editImages: string;
+    readonly exploreData: string;
+    readonly remove: string;
 };
 /**
  * Build the ⋯ action menu for a media item. Everyone gets the playback/library
@@ -41,4 +61,4 @@ export declare const MENU_LABELS: {
  * is the single like/dislike control. The redundant, less-capable menu aliases
  * were removed.
  */
-export declare function buildMediaItemMenu(item: MediaItem, ctx: MediaItemMenuContext): MenuItem[];
+export declare function buildMediaItemMenu(item: MediaItem, ctx: MediaItemMenuContext, t: Translate): MenuItem[];

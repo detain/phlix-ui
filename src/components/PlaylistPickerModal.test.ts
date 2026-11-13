@@ -122,7 +122,7 @@ describe('PlaylistPickerModal', () => {
     (addBtn as HTMLButtonElement).click();
     await flushPromises();
 
-    expect(error).toHaveBeenCalledWith('Failed to add to playlist.', {
+    expect(error).toHaveBeenCalledWith('Couldn’t add to the playlist.', {
       message: 'collection.items failed',
     });
     expect(w.emitted('update:modelValue')).toBeUndefined();
@@ -176,7 +176,7 @@ describe('PlaylistPickerModal', () => {
     await flushPromises();
 
     expect(client.createPlaylist).toHaveBeenCalledTimes(1);
-    const call = error.mock.calls.find(([msg]) => String(msg).startsWith('Playlist created'));
+    const call = error.mock.calls.find(([msg]) => String(msg).startsWith('Created the playlist'));
     expect(call).toBeDefined();
     const opts = call?.[1] as { message: string; action?: { label: string; onClick: () => void } };
     expect(opts.message).toBe('collection.items failed');
@@ -187,7 +187,7 @@ describe('PlaylistPickerModal', () => {
     opts.action!.onClick();
     await flushPromises();
     expect(client.deletePlaylist).toHaveBeenCalledWith('pl-new');
-    expect(success).toHaveBeenCalledWith('Empty playlist deleted.');
+    expect(success).toHaveBeenCalledWith('Deleted the empty playlist.');
   });
 
   it('new tab → an item without a library_id shows the fail-loud note and sends no request', async () => {
@@ -205,7 +205,7 @@ describe('PlaylistPickerModal', () => {
       (b) => b.textContent?.trim() === 'Add',
     );
     expect((addBtn as HTMLButtonElement).disabled).toBe(true);
-    expect(document.body.textContent).toContain('no owning library id');
+    expect(document.body.textContent).toContain('no owning library');
     expect(client.createPlaylist).not.toHaveBeenCalled();
   });
 
@@ -248,7 +248,7 @@ describe('PlaylistPickerModal', () => {
     expect(opts.length).toBe(2);
     expect(opts.every((o) => o.disabled)).toBe(true);
     expect(opts[0].text).toContain('Faves');
-    expect(opts[0].text).toContain('(shared — read-only)');
+    expect(opts[0].text).toContain('(shared, read-only)');
     // Nothing manageable ⇒ Add stays disabled and clicks fire zero requests.
     const addBtn = Array.from(document.querySelectorAll('button')).find(
       (b) => b.textContent?.trim() === 'Add',

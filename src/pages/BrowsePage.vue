@@ -100,7 +100,7 @@ function onMatchApplied(item: MediaItem): void {
   // A fresh object identity each apply so re-applying the SAME id still triggers
   // the rails' watch (a structural-equal value wouldn't re-fire on identity).
   appliedItem.value = { ...item };
-  toasts.success(`Updated metadata for “${item.name}”.`);
+  toasts.success(t('library.metadataUpdated', { name: item.name }));
 }
 
 /** Patch the item's poster in place after the admin picks a new one (same
@@ -108,7 +108,7 @@ function onMatchApplied(item: MediaItem): void {
 function onPosterApplied(updated: MediaItem): void {
   registry.set(updated.id, updated);
   appliedItem.value = { ...updated };
-  toasts.success(`Updated poster for “${updated.name}”.`);
+  toasts.success(t('library.posterUpdated', { name: updated.name }));
 }
 
 // One HomeRow config per library: a library-scoped rail titled by the library
@@ -190,7 +190,7 @@ async function loadNextUp(): Promise<void> {
     // Wire-error law (review ui__webux survivor class): never store the
     // server's raw `error` text in UI state — registered codes localize, the
     // rest keeps the generic line (typed client errors keep their copy).
-    nextUpError.value = wireErrorLine(e, 'Failed to load next up', config?.locale);
+    nextUpError.value = wireErrorLine(e, t('browse.loadNextUpError'), config?.locale);
   } finally {
     nextUpLoading.value = false;
   }
@@ -232,7 +232,7 @@ async function loadFavorites(): Promise<void> {
     items.forEach((i) => userItemData.hydrate(i));
     remember(items);
   } catch (e) {
-    favoritesError.value = wireErrorLine(e, 'Failed to load favorites', config?.locale);
+    favoritesError.value = wireErrorLine(e, t('browse.loadFavoritesError'), config?.locale);
   } finally {
     favoritesLoading.value = false;
   }
@@ -272,7 +272,7 @@ async function loadRecommendations(): Promise<void> {
     recommendedItems.value = items;
     remember(items);
   } catch (e) {
-    recommendationsError.value = wireErrorLine(e, 'Failed to load recommendations', config?.locale);
+    recommendationsError.value = wireErrorLine(e, t('browse.loadRecommendationsError'), config?.locale);
   } finally {
     recommendationsLoading.value = false;
   }
@@ -325,7 +325,7 @@ async function loadMostWatched(): Promise<void> {
     // remember() for admin match/poster reconciliation — mirroring loadRecommendations.
     remember(items);
   } catch (e) {
-    mostWatchedError.value = wireErrorLine(e, 'Failed to load most watched', config?.locale);
+    mostWatchedError.value = wireErrorLine(e, t('browse.loadMostWatchedError'), config?.locale);
   } finally {
     mostWatchedLoading.value = false;
   }
@@ -465,9 +465,9 @@ function onInfo(item: MediaItem): void {
 // `onWatchlist`).
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked “${item.name}” as watched.`);
+    toasts.success(t('library.markedWatched', { name: item.name }));
   } else {
-    toasts.info(`Marked “${item.name}” as unwatched.`);
+    toasts.info(t('library.markedUnwatched', { name: item.name }));
   }
 }
 
@@ -501,13 +501,13 @@ async function confirmRemove(): Promise<void> {
     if (stale()) return;
     favoriteItems.value = favoriteItems.value.filter((f) => f.id !== item.id);
     registry.delete(item.id);
-    toasts.success(`Removed “${item.name}”.`);
+    toasts.success(t('library.itemRemoved', { name: item.name }));
   } catch (e) {
     if (stale() || isAbort(e)) return;
-    toasts.error(`Failed to remove “${item.name}”.`, {
+    toasts.error(t('library.itemRemoveFailed', { name: item.name }), {
       // Wire-error law: catalog copy for registered codes, generic line for
       // raw server text, own message for typed client errors.
-      message: wireErrorLine(e, 'Unknown error', config?.locale),
+      message: wireErrorLine(e, t('library.unknownError'), config?.locale),
     });
   }
 }
@@ -684,7 +684,7 @@ function onSeeAll(row: HomeRowConfig): void {
     />
 
     <div v-if="showSpinner" class="browse-loading">
-      <Spinner label="Loading libraries" />
+      <Spinner :label="t('browse.loadingLibraries')" />
     </div>
 
     <EmptyState
@@ -694,7 +694,7 @@ function onSeeAll(row: HomeRowConfig): void {
       :description="errorInfo.description"
     >
       <template #actions>
-        <Button variant="solid" size="sm" left-icon="rewind" @click="load">Retry</Button>
+        <Button variant="solid" size="sm" left-icon="rewind" @click="load">{{ t('common.retry') }}</Button>
       </template>
     </EmptyState>
 
@@ -724,9 +724,9 @@ function onSeeAll(row: HomeRowConfig): void {
     <ConfirmDialog
       :open="removeTarget !== null"
       :message="removeTarget
-        ? `Remove “${removeTarget.name}” from the library? This cannot be undone.`
+        ? t('browse.removeConfirm', { name: removeTarget.name })
         : ''"
-      confirm-label="Remove"
+      :confirm-label="t('itemActions.remove')"
       danger
       @update:open="(v: boolean) => { if (!v) removeTarget = null; }"
       @confirm="confirmRemove"

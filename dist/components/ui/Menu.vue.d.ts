@@ -1,4 +1,6 @@
 export interface MenuItem {
+    /** Stable dispatch id — consumers switch on this, never on the (translated) label. */
+    key?: string;
     label: string;
     disabled?: boolean;
     danger?: boolean;

@@ -32,6 +32,11 @@ export interface ShortcutActions {
     /** Nudge volume by a 0–1 delta. */
     volumeBy(delta: number): void;
     toggleMute(): void;
+    /**
+     * Toggle fullscreen. Hosts without the Fullscreen API (`document.fullscreenEnabled`
+     * false — TV webviews, iPhone Safari) should fall back to theater mode rather than
+     * no-op; the Player does (UI-S3). The key map stays host-agnostic: F always lands here.
+     */
     toggleFullscreen(): void;
     toggleCaptions(): void;
     toggleTheater(): void;
@@ -62,6 +67,13 @@ export declare function handleShortcut(e: KeyboardEvent, a: ShortcutActions): bo
  * useKeyboardShortcuts — bind the player's global key map while mounted.
  * Suppresses shortcuts while the user is typing in an input and ignores
  * modifier chords (Ctrl/Meta/Alt) so browser/OS shortcuts still work.
+ *
+ * Event arbitration: a keydown that an earlier handler already consumed
+ * (`e.defaultPrevented`) is left alone. The listener sits on `document`, so a
+ * focused control (the Scrubber/volume slider, a menu, a host widget) sees the
+ * key first; when it handles the key and calls `preventDefault()`, the global
+ * map must not act on the same keystroke again (e.g. ArrowLeft on a focused
+ * Scrubber would otherwise seek twice).
  */
 export declare function useKeyboardShortcuts(actions: ShortcutActions, opts?: {
     enabled?: () => boolean;

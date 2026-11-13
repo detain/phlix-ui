@@ -88,6 +88,12 @@ export declare const ES_MESSAGES: {
         cancel: string;
         deleteBlocked: string;
         empty: string;
+        avatarInvalidType: string;
+        avatarTooLarge: string;
+        avatarUpdated: string;
+        avatarUploadFailed: string;
+        avatarRemoved: string;
+        avatarRemoveFailed: string;
     };
     palette: {
         title: string;
@@ -304,6 +310,12 @@ export declare const ES_MESSAGES: {
         revokeLabel: string;
         revoked: string;
         revokeFailed: string;
+        linkCopied: string;
+        linkCopyFailed: string;
+        urlCopied: string;
+        urlCopyFailed: string;
+        tokenCopied: string;
+        tokenCopyFailed: string;
     };
     shares: {
         revokeConfirm: string;
@@ -327,11 +339,31 @@ export declare const ES_MESSAGES: {
         moreInfo: string;
         moreActions: string;
         matchMetadata: string;
+        addToPlaylist: string;
+        markUnwatched: string;
+        download: string;
+        missingEpisodes: string;
+        editMetadata: string;
+        editImages: string;
+        exploreData: string;
+        remove: string;
+        dangerSuffix: string;
         favoriteAddError: string;
         favoriteRemoveError: string;
         markWatchedError: string;
         markUnwatchedError: string;
         ratingSaveError: string;
+        downloadPreparing: string;
+        downloadUnsafe: string;
+        downloadStarted: string;
+        downloadFailed: string;
+        missingLoading: string;
+        noMissingEpisodes: string;
+        missingEpisodesCount: string;
+        missingEpisodesFailed: string;
+        shuffleNothing: string;
+        shuffleQueued: string;
+        shuffleFailed: string;
     };
     reader: {
         decreaseFont: string;
@@ -359,7 +391,6 @@ export declare const ES_MESSAGES: {
         reSyncing: string;
         roomName: string;
         roomId: string;
-        privateRoom: string;
         create: string;
         join: string;
         cancel: string;
@@ -407,6 +438,7 @@ export declare const ES_MESSAGES: {
         loadTitlesError: string;
         noMediaTitle: string;
         noMediaHint: string;
+        metadataUpdated: string;
     };
     browse: {
         continueWatching: string;
@@ -415,10 +447,53 @@ export declare const ES_MESSAGES: {
         mostWatched: string;
         noLibrariesTitle: string;
         noLibrariesDescription: string;
+        loadNextUpError: string;
+        loadFavoritesError: string;
+        loadRecommendationsError: string;
+        loadMostWatchedError: string;
+        loadingLibraries: string;
+        removeConfirm: string;
     };
     playlist: {
         loadError: string;
         loadErrorTitle: string;
+        itemsCount: string;
+        play: string;
+        delete: string;
+        deleteConfirm: string;
+        readOnly: string;
+        emptyTitle: string;
+        emptyHintManage: string;
+        emptyHintReadOnly: string;
+        removeAria: string;
+        loading: string;
+        removed: string;
+        removeFailed: string;
+        deleted: string;
+        deleteFailed: string;
+        pickerChoice: string;
+        existingTab: string;
+        newTab: string;
+        loadingPlaylists: string;
+        noPlaylistsTitle: string;
+        noPlaylistsHint: string;
+        selectLabel: string;
+        selectPlaceholder: string;
+        noLibraryId: string;
+        nameLabel: string;
+        namePlaceholder: string;
+        manage: string;
+        sharedReadOnly: string;
+        add: string;
+        loadListFailed: string;
+        addedTo: string;
+        addFailed: string;
+        createFailed: string;
+        createdAddFailed: string;
+        deleteEmpty: string;
+        emptyDeleted: string;
+        emptyDeleteFailed: string;
+        confirmDelete: string;
     };
     music: {
         title: string;
@@ -543,6 +618,7 @@ export declare const ES_MESSAGES: {
         desc: string;
         cardTitle: string;
         count: string;
+        truncated: string;
         thisDevice: string;
         unknownDevice: string;
         created: string;
@@ -550,6 +626,7 @@ export declare const ES_MESSAGES: {
         refresh: string;
         loading: string;
         revoke: string;
+        revokeDevice: string;
         revokeAll: string;
         revokeConfirm: string;
         revokeAllConfirm: string;

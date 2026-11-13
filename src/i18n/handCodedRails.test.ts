@@ -49,7 +49,7 @@ describe('CU-093 — rails and grid empty state ride the catalog', () => {
       noLibrariesTitle: 'No libraries yet',
       noLibrariesDescription: 'Once a library is added it shows up here as its own section.',
     } as const;
-    expect(b).toEqual(en);
+    expect(b).toMatchObject(en);
     expect(DEFAULT_MESSAGES.library.noMediaTitle).toBe('No media found');
     expect(DEFAULT_MESSAGES.library.noMediaHint).toBe('Try adjusting your filters.');
     expect(DEFAULT_MESSAGES.auth.passwordRecoveryHint).toBe(

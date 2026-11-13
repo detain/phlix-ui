@@ -24,7 +24,10 @@
  *    must not fabricate a conversion — see the page's date formatter.
  *  - `current` is the session that authenticated THIS request. Revoking it
  *    succeeds and signs the caller out, so the UI never offers that action
- *    (it renders the row as read-only "this device" instead).
+ *    (it renders the row as read-only "this device" instead). Exact scope:
+ *    a claim-less pre-055 legacy token carries no session claim, so no row
+ *    can be marked `current` for it; the law holds for every row the wire
+ *    does flag, and that edge simply shows no "this device" row.
  *
  * There is deliberately NO "revoke all others" endpoint: the server register
  * (.reviews/2026-11-10/FIX-server-CP029-d1a.md :90-96) ships exactly two
@@ -45,13 +48,38 @@ export interface DeviceSessionRow {
     device_name: string | null;
 }
 /**
+ * The server's hard row cap for the list (phlix-server + phlix-hub
+ * `TokenSessionRepository::MAX_LISTED_SESSIONS = 200`, `LIMIT` on the
+ * `last_used_at DESC` query). A list this long may be truncated — the page
+ * must say so rather than present it as the complete set.
+ */
+export declare const DEVICE_SESSIONS_LIST_CAP = 200;
+/**
+ * The list response carried no `sessions` array. Deliberately message-light
+ * and English-free in the UI path: the page maps it to its own localized
+ * load-error line (a raw `Error.message` would otherwise surface through
+ * `errMessage`).
+ */
+export declare class MalformedSessionsEnvelopeError extends Error {
+    constructor();
+}
+/**
  * List the account's ACTIVE sessions, server-ordered by `last_used_at DESC`.
  *
  * The server sorts; the client must not re-sort (a locale-aware re-order
  * would fight the wire contract's stated order). Malformed rows — missing/
  * non-string `id` — are dropped at this parse boundary, never rendered as
- * ghosts; a malformed envelope (proxy HTML page, future reshaping) degrades
- * to an empty list rather than throwing on `.map`.
+ * ghosts.
+ *
+ * MALFORMED ≠ EMPTY (UI-14): an envelope without a `sessions` ARRAY (proxy
+ * HTML page, captive portal, future reshaping) REJECTS with
+ * {@link MalformedSessionsEnvelopeError}. On a security screen "No active
+ * sessions" is a claim about the account; it may only render when the
+ * server actually said `{"sessions": []}`, never as the fallback for a body
+ * we could not read.
+ *
+ * At most {@link DEVICE_SESSIONS_LIST_CAP} rows ever arrive (the server's
+ * `LIMIT`); the page discloses a full page as "200+" (UI-41).
  */
 export declare function fetchDeviceSessions(apiBase: string, signal?: AbortSignal): Promise<DeviceSessionRow[]>;
 /**
@@ -61,3 +89,10 @@ export declare function fetchDeviceSessions(apiBase: string, signal?: AbortSigna
  * (the server returns a uniform "Session not found" for both, no oracle).
  */
 export declare function revokeDeviceSession(apiBase: string, id: string, signal?: AbortSignal): Promise<void>;
+/**
+ * True when a revoke rejection means the session is ALREADY gone (404:
+ * unknown-or-foreign-or-expired id, uniform on the server). For a bulk
+ * sign-out that is the desired end state, so the fan-out counts it as
+ * success and continues; every other failure remains a genuine error.
+ */
+export declare function isSessionGoneError(e: unknown): boolean;

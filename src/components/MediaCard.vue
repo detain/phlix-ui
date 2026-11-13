@@ -39,7 +39,6 @@ import { mediaTypeIcon } from '../utils/mediaTypeIcon';
 import { buildMediaItemMenu, MENU_KEYS } from './mediaItemMenu';
 import PlaylistPickerModal from './PlaylistPickerModal.vue';
 import { ApiClient } from '../api/client';
-import { pluralCount } from '../utils/plural';
 import { safeHref } from '../utils/safeHref';
 import { useImageSrc } from '../composables/useImageSrc';
 
@@ -273,7 +272,7 @@ function onMenuSelect(menuItem: { key?: string; label: string }): void {
       break;
     }
     case L.download:
-      toasts.info('Preparing download\u2026');
+      toasts.info(t('itemActions.downloadPreparing'));
       mediaScopedClient()
         .getDownloadUrl(props.item.id)
         .then(({ url }) => {
@@ -282,20 +281,20 @@ function onMenuSelect(menuItem: { key?: string; label: string }): void {
           // destination. Fail loud instead of lying with 'Download started'.
           const safe = safeHref(url);
           if (!safe) {
-            toasts.error('Download blocked — unsafe link.');
+            toasts.error(t('itemActions.downloadUnsafe'));
             return;
           }
           window.open(safe, '_blank', 'noopener');
-          toasts.success('Download started.');
+          toasts.success(t('itemActions.downloadStarted'));
         })
         .catch((err) => {
-          toasts.error('Download failed.', {
+          toasts.error(t('itemActions.downloadFailed'), {
             message: err instanceof Error ? err.message : String(err),
           });
         });
       break;
     case L.missingEpisodes:
-      toasts.info('Loading\u2026');
+      toasts.info(t('itemActions.missingLoading'));
       mediaScopedClient()
         .getMissingEpisodes(props.item.id)
         .then((report) => {
@@ -308,13 +307,13 @@ function onMenuSelect(menuItem: { key?: string; label: string }): void {
           // fired (the toast read "undefined episodes missing").
           const count = report.missing_episodes.length;
           if (count === 0) {
-            toasts.success('No missing episodes.');
+            toasts.success(t('itemActions.noMissingEpisodes'));
           } else {
-            toasts.warning(`${pluralCount(count, 'episode', 'episodes')} missing.`);
+            toasts.warning(t('itemActions.missingEpisodesCount', { count }));
           }
         })
         .catch((err) => {
-          toasts.error('Failed to load missing episodes.', {
+          toasts.error(t('itemActions.missingEpisodesFailed'), {
             message: err instanceof Error ? err.message : String(err),
           });
         });
@@ -333,17 +332,17 @@ function onMenuSelect(menuItem: { key?: string; label: string }): void {
         .then((res) => {
           const first = Array.isArray(res?.shuffled_ids) ? res.shuffled_ids[0] : undefined;
           if (!first) {
-            toasts.info('Nothing to shuffle-play.');
+            toasts.info(t('itemActions.shuffleNothing'));
             return;
           }
           if (router?.hasRoute('player')) {
             void router.push({ name: 'player', params: { id: first } }).catch(() => {});
           } else {
-            toasts.success('Shuffle queued.');
+            toasts.success(t('itemActions.shuffleQueued'));
           }
         })
         .catch((err) => {
-          toasts.error('Shuffle play failed.', {
+          toasts.error(t('itemActions.shuffleFailed'), {
             message: err instanceof Error ? err.message : String(err),
           });
         });

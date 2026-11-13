@@ -26,8 +26,7 @@
  *  - Footer carries the only nav door to /playlists ("Manage playlists →"),
  *    making the route reachable from the picker surface.
  *
- * Copy stays inline English, matching the precedent of every string this
- * component replaces (MENU_LABELS + the playlist toasts were never cataloged).
+ * Copy routes through the `playlist.*` catalog keys (UI-S11).
  */
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
@@ -41,6 +40,7 @@ import { errMessage } from '../api/errors';
 import { useMediaApiBase } from '../composables/useApiBase';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 import { canManagePlaylist } from '../utils/playlistPermissions';
 
 /** The minimum an item must carry to be addable (structurally satisfied by
@@ -64,6 +64,7 @@ const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>();
 
 const apiBase = useMediaApiBase();
 const toasts = useToastStore();
+const { t } = useMessages();
 const auth = useAuthStore();
 const router = useRouter();
 
@@ -131,7 +132,7 @@ const options = computed(() =>
     value: p.id,
     // Unmanageable rows stay VISIBLE (they are readable heritage playlists)
     // but are disabled — adding to one is a guaranteed server 404.
-    label: isManageable(p) ? p.name : `${p.name} (shared — read-only)`,
+    label: isManageable(p) ? p.name : t('playlist.sharedReadOnly', { name: p.name }),
     disabled: !isManageable(p),
   })),
 );
@@ -165,7 +166,7 @@ async function loadPlaylists(): Promise<void> {
     // small list; disabled (shared read-only) rows are never pre-committed.
     selectedId.value = playlists.value.find((p) => isManageable(p))?.id ?? null;
   } catch (e) {
-    loadError.value = errMessage(e, 'Failed to load playlists.');
+    loadError.value = errMessage(e, t('playlist.loadListFailed'));
   } finally {
     loading.value = false;
   }
@@ -202,10 +203,10 @@ async function addToExisting(
   if (!target || !isManageable(target)) return;
   try {
     await getClient().addToPlaylist(playlistId, item.id);
-    toasts.success(`Added to playlist “${target.name}”.`);
+    toasts.success(t('playlist.addedTo', { name: target.name }));
     close();
   } catch (e) {
-    toasts.error('Failed to add to playlist.', { message: errMessage(e) });
+    toasts.error(t('playlist.addFailed'), { message: errMessage(e) });
   }
 }
 
@@ -220,26 +221,26 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
   try {
     created = await api.createPlaylist(name, item.library_id as string);
   } catch (e) {
-    toasts.error('Failed to create playlist.', { message: errMessage(e) });
+    toasts.error(t('playlist.createFailed'), { message: errMessage(e) });
     return;
   }
   try {
     await api.addToPlaylist(created.id, item.id);
-    toasts.success(`Added to playlist “${created.name}”.`);
+    toasts.success(t('playlist.addedTo', { name: created.name }));
     close();
   } catch (e) {
     const message = errMessage(e);
-    toasts.error('Playlist created, but adding the item failed.', {
+    toasts.error(t('playlist.createdAddFailed'), {
       message,
       duration: 10000,
       action: {
-        label: 'Delete empty playlist',
+        label: t('playlist.deleteEmpty'),
         onClick: () => {
           api
             .deletePlaylist(created.id)
-            .then(() => toasts.success('Empty playlist deleted.'))
+            .then(() => toasts.success(t('playlist.emptyDeleted')))
             .catch((cleanupError) =>
-              toasts.error('Failed to delete the empty playlist.', {
+              toasts.error(t('playlist.emptyDeleteFailed'), {
                 message: errMessage(cleanupError),
               }),
             );
@@ -252,7 +253,7 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
 </script>
 
 <template>
-  <Modal :model-value="modelValue" title="Add to playlist" size="sm" @update:model-value="emit('update:modelValue', $event)" @close="close">
+  <Modal :model-value="modelValue" :title="t('itemActions.addToPlaylist')" size="sm" @update:model-value="emit('update:modelValue', $event)" @close="close">
     <div class="playlist-picker">
       <p v-if="item" class="playlist-picker__target">
         {{ item.name }}
@@ -262,7 +263,7 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
       <div
         class="playlist-picker__tabs"
         role="radiogroup"
-        aria-label="Playlist choice"
+        :aria-label="t('playlist.pickerChoice')"
         @keydown="onTabKeydown"
       >
         <button
@@ -275,7 +276,7 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
           :tabindex="tab === 'existing' ? 0 : -1"
           @click="tab = 'existing'"
         >
-          Existing playlist
+          {{ t('playlist.existingTab') }}
         </button>
         <button
           ref="newOptionEl"
@@ -287,39 +288,39 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
           :tabindex="tab === 'new' ? 0 : -1"
           @click="tab = 'new'"
         >
-          New playlist
+          {{ t('playlist.newTab') }}
         </button>
       </div>
 
       <div v-if="tab === 'existing'" class="playlist-picker__panel">
-        <Spinner v-if="loading" label="Loading playlists…" />
+        <Spinner v-if="loading" :label="t('playlist.loadingPlaylists')" />
         <p v-else-if="loadError" class="playlist-picker__error" role="alert">{{ loadError }}</p>
         <EmptyState
           v-else-if="playlists.length === 0"
           icon="list"
-          title="No playlists yet"
-          description="Switch to “New playlist” to create your first one."
+          :title="t('playlist.noPlaylistsTitle')"
+          :description="t('playlist.noPlaylistsHint')"
         />
         <Combobox
           v-else
           v-model="selectedId"
           :options="options"
-          label="Playlist"
-          placeholder="Select a playlist…"
+          :label="t('playlist.selectLabel')"
+          :placeholder="t('playlist.selectPlaceholder')"
         />
       </div>
 
       <div v-else class="playlist-picker__panel">
         <p v-if="!canCreate" class="playlist-picker__error" role="alert">
-          This item has no owning library id, so a new playlist cannot be created for it.
+          {{ t('playlist.noLibraryId') }}
         </p>
         <label v-else class="playlist-picker__field">
-          <span class="playlist-picker__label">Playlist name</span>
+          <span class="playlist-picker__label">{{ t('playlist.nameLabel') }}</span>
           <input
             v-model="newName"
             type="text"
             class="playlist-picker__input"
-            placeholder="My playlist"
+            :placeholder="t('playlist.namePlaceholder')"
             autocomplete="off"
             @keyup.enter="onConfirm"
           />
@@ -338,11 +339,11 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
         data-testid="picker-manage-playlists"
         @click="close()"
       >
-        Manage playlists →
+        {{ t('playlist.manage') }}
       </RouterLink>
-      <Button variant="ghost" size="sm" @click="close">Cancel</Button>
+      <Button variant="ghost" size="sm" @click="close">{{ t('confirm.cancel') }}</Button>
       <Button variant="solid" size="sm" :disabled="!confirmEnabled" :loading="busy" @click="onConfirm">
-        Add
+        {{ t('playlist.add') }}
       </Button>
     </template>
   </Modal>

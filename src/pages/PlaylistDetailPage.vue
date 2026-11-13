@@ -36,7 +36,6 @@ import { useToastStore } from '../stores/useToastStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { resolvePlayable } from '../composables/useResolvePlayable';
-import { pluralCount } from '../utils/plural';
 import { canManagePlaylist } from '../utils/playlistPermissions';
 import MediaCard from '../components/MediaCard.vue';
 import Button from '../components/ui/Button.vue';
@@ -147,7 +146,7 @@ async function load(): Promise<void> {
     });
   } catch (e) {
     if (loading.value) {
-      error.value = errMessage(e, 'Failed to load this playlist.');
+      error.value = errMessage(e, t('playlist.loadError'));
       loading.value = false;
     }
   }
@@ -229,9 +228,9 @@ function onWatchlist(item: MediaItem): void {
 }
 function onMarkWatched(item: MediaItem): void {
   if (userItemData.isWatched(item.id)) {
-    toasts.success(`Marked “${item.name}” as watched.`);
+    toasts.success(t('library.markedWatched', { name: item.name }));
   } else {
-    toasts.info(`Marked “${item.name}” as unwatched.`);
+    toasts.info(t('library.markedUnwatched', { name: item.name }));
   }
 }
 
@@ -242,9 +241,9 @@ async function removeItem(item: MediaItem): Promise<void> {
   try {
     await getClient().removeFromPlaylist(playlist.id, item.id);
     items.value = items.value.filter((i) => i.id !== item.id);
-    toasts.success(`Removed “${item.name}” from the playlist.`);
+    toasts.success(t('playlist.removed', { name: item.name }));
   } catch (e) {
-    toasts.error('Failed to remove from playlist.', { message: errMessage(e) });
+    toasts.error(t('playlist.removeFailed'), { message: errMessage(e) });
   } finally {
     const next = new Set(removingIds.value);
     next.delete(item.id);
@@ -258,11 +257,11 @@ async function confirmDeletePlaylist(): Promise<void> {
   deleting.value = true;
   try {
     await getClient().deletePlaylist(playlist.id);
-    toasts.success(`Playlist “${playlist.name}” deleted.`);
+    toasts.success(t('playlist.deleted', { name: playlist.name }));
     deleteOpen.value = false;
     if (router?.hasRoute('playlists')) void router.replace({ name: 'playlists' });
   } catch (e) {
-    toasts.error('Failed to delete playlist.', { message: errMessage(e) });
+    toasts.error(t('playlist.deleteFailed'), { message: errMessage(e) });
   } finally {
     deleting.value = false;
   }
@@ -274,7 +273,7 @@ onMounted(() => void load());
 
 <template>
   <div class="playlist-detail">
-    <Spinner v-if="loading" label="Loading playlist…" />
+    <Spinner v-if="loading" :label="t('playlist.loading')" />
 
     <EmptyState
       v-else-if="error"
@@ -283,7 +282,7 @@ onMounted(() => void load());
       :description="error"
     >
       <template #actions>
-        <Button variant="solid" size="sm" left-icon="refresh" @click="load">Retry</Button>
+        <Button variant="solid" size="sm" left-icon="refresh" @click="load">{{ t('common.retry') }}</Button>
       </template>
     </EmptyState>
 
@@ -292,24 +291,24 @@ onMounted(() => void load());
         <div>
           <h1 class="playlist-detail__title">{{ collection.name }}</h1>
           <p class="playlist-detail__count">
-            {{ pluralCount(items.length, 'item', 'items') }}
+            {{ t('playlist.itemsCount', { count: items.length }) }}
           </p>
         </div>
         <div class="playlist-detail__actions">
-          <Button v-if="items.length" variant="solid" size="sm" left-icon="play" @click="playPlaylist">Play</Button>
-          <Button v-if="canManage" variant="ghost" size="sm" @click="deleteOpen = true">Delete playlist</Button>
-          <p v-else class="playlist-detail__readonly">Shared playlist — only its owner (or an admin) can change it.</p>
+          <Button v-if="items.length" variant="solid" size="sm" left-icon="play" @click="playPlaylist">{{ t('playlist.play') }}</Button>
+          <Button v-if="canManage" variant="ghost" size="sm" @click="deleteOpen = true">{{ t('playlist.delete') }}</Button>
+          <p v-else class="playlist-detail__readonly">{{ t('playlist.readOnly') }}</p>
         </div>
       </header>
 
       <EmptyState
         v-if="items.length === 0"
         icon="list"
-        title="This playlist is empty"
+        :title="t('playlist.emptyTitle')"
         :description="
           canManage
-            ? 'Add titles from any card’s ⋯ menu — “Add to playlist”.'
-            : 'Titles can only be added by the playlist’s owner.'
+            ? t('playlist.emptyHintManage')
+            : t('playlist.emptyHintReadOnly')
         "
       />
 
@@ -326,12 +325,12 @@ onMounted(() => void load());
             v-if="canManage"
             type="button"
             class="playlist-detail__remove"
-            :aria-label="`Remove ${item.name} from playlist`"
+            :aria-label="t('playlist.removeAria', { name: item.name })"
             :disabled="removingIds.has(item.id)"
             @click="removeItem(item)"
           >
             <Icon name="x" />
-            <span>Remove</span>
+            <span>{{ t('itemActions.remove') }}</span>
           </button>
         </li>
       </ul>
@@ -342,19 +341,17 @@ onMounted(() => void load());
     <Modal
       v-if="canManage"
       :model-value="deleteOpen"
-      title="Delete playlist"
+      :title="t('playlist.delete')"
       size="sm"
       @update:model-value="deleteOpen = $event"
     >
       <p>
-        Delete playlist <strong>{{ collection?.name }}</strong>
-        ({{ pluralCount(items.length, 'item', 'items') }})?
-        This cannot be undone.
+        {{ t('playlist.deleteConfirm', { name: collection?.name ?? '', items: t('playlist.itemsCount', { count: items.length }) }) }}
       </p>
       <template #footer>
-        <Button variant="ghost" size="sm" @click="deleteOpen = false">Cancel</Button>
+        <Button variant="ghost" size="sm" @click="deleteOpen = false">{{ t('confirm.cancel') }}</Button>
         <Button variant="danger" size="sm" :loading="deleting" @click="confirmDeletePlaylist">
-          Delete
+          {{ t('playlist.confirmDelete') }}
         </Button>
       </template>
     </Modal>

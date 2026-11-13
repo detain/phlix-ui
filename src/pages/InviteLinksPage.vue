@@ -258,9 +258,9 @@ async function copyLinkUrl(link: InviteLink): Promise<void> {
   copyingId.value = link.id;
   try {
     await navigator.clipboard.writeText(link.url);
-    toasts.success('Link copied to clipboard.');
+    toasts.success(t('invite.linkCopied'));
   } catch {
-    toasts.error('Failed to copy link.');
+    toasts.error(t('invite.linkCopyFailed'));
   } finally {
     copyingId.value = null;
   }
@@ -272,9 +272,9 @@ async function copyCreatedUrl(): Promise<void> {
   copyingResult.value = 'url';
   try {
     await navigator.clipboard.writeText(createdLink.value.url);
-    toasts.success('Invite URL copied to clipboard.');
+    toasts.success(t('invite.urlCopied'));
   } catch {
-    toasts.error('Failed to copy URL.');
+    toasts.error(t('invite.urlCopyFailed'));
   } finally {
     copyingResult.value = null;
   }
@@ -287,9 +287,9 @@ async function copyCreatedToken(): Promise<void> {
   copyingResult.value = 'token';
   try {
     await navigator.clipboard.writeText(token);
-    toasts.success('Invite token copied to clipboard.');
+    toasts.success(t('invite.tokenCopied'));
   } catch {
-    toasts.error('Failed to copy token.');
+    toasts.error(t('invite.tokenCopyFailed'));
   } finally {
     copyingResult.value = null;
   }

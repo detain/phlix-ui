@@ -17,6 +17,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { useImageSrc } from '../composables/useImageSrc';
 import { wireErrorLine } from '../utils/wireErrors';
+import { useMessages } from '../composables/useMessages';
 import type { PhlixAppConfig } from '../app/types';
 
 /** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
@@ -32,6 +33,7 @@ const auth = useAuthStore();
 const toasts = useToastStore();
 // Locale seam for the wire-error classifier (same idiom as FederationPage).
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
+const { t } = useMessages();
 
 // --- File input state ---
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -64,14 +66,14 @@ function onFileChange(event: Event): void {
 
   // Validate type
   if (!ALLOWED_TYPES.includes(file.type)) {
-    toasts.error('Select a PNG, JPEG, or WEBP image.');
+    toasts.error(t('profiles.avatarInvalidType'));
     resetFileInput();
     return;
   }
 
   // Validate size
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    toasts.error(`File is too large. Maximum size is 5 MB.`);
+    toasts.error(t('profiles.avatarTooLarge'));
     resetFileInput();
     return;
   }
@@ -122,11 +124,11 @@ async function uploadAvatar(): Promise<void> {
   uploadLoading.value = true;
   try {
     await auth.uploadAvatar(selectedFile.value);
-    toasts.success('Avatar updated successfully.');
+    toasts.success(t('profiles.avatarUpdated'));
     // Keep the preview URL; it matches what the server will now serve.
     selectedFile.value = null;
   } catch (e) {
-    toasts.error(wireErrorLine(e, 'Avatar upload failed.', config?.locale));
+    toasts.error(wireErrorLine(e, t('profiles.avatarUploadFailed'), config?.locale));
   } finally {
     uploadLoading.value = false;
   }
@@ -139,10 +141,10 @@ async function removeAvatar(): Promise<void> {
   deleteLoading.value = true;
   try {
     await auth.deleteAvatar();
-    toasts.success('Avatar removed.');
+    toasts.success(t('profiles.avatarRemoved'));
     clearSelection();
   } catch (e) {
-    toasts.error(wireErrorLine(e, 'Avatar removal failed.', config?.locale));
+    toasts.error(wireErrorLine(e, t('profiles.avatarRemoveFailed'), config?.locale));
   } finally {
     deleteLoading.value = false;
   }

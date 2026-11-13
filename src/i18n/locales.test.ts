@@ -140,6 +140,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'player.skipLabelIntro',
     'player.subtitleHearingImpaired',
     'player.volume',
+    'playlist.selectLabel',
     'shell.menu',
     'syncplay.syncPlay',
     'syncplay.title',
@@ -165,6 +166,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'player.skipLabelIntro',
     'player.subtitleFps',
     'player.subtitleHearingImpaired',
+    'playlist.selectLabel',
     'settings.crossfade',
     'settings.tabServer',
     'settings.theme',
@@ -178,6 +180,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     // M-UI-14: 'Password' is the Italian UI loanword (same precedent as
     // `auth.password` above); 'Parola chiave' would be the outlier no Italian
     // media app uses.
+    'playlist.selectLabel',
     'syncplay.roomPassword',
     'music.album',
     'music.crossfade',
@@ -210,6 +213,7 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'player.subtitleHearingImpaired',
     'player.volume',
     'parental.tags',
+    'playlist.selectLabel',
     'shell.menu',
     'syncplay.syncPlay',
     'syncplay.title',

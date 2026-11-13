@@ -1059,7 +1059,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
     w.unmount();
   });
 
-  it('Shuffle returning no ids → "Nothing to shuffle-play." info, no success claim (CU-092)', async () => {
+  it('Shuffle returning no ids → "Nothing to shuffle yet." info, no success claim (CU-092)', async () => {
     vi.spyOn(ApiClient.prototype, 'shufflePlay').mockResolvedValue({ shuffled_ids: [], mode: 'shuffle' });
     const w = mount(MediaCard, { props: { item: media() }, attachTo: document.body });
     const info = vi.spyOn(useToastStore(), 'info');
@@ -1067,7 +1067,7 @@ describe('MediaCard — ⋯ menu action backends (UI-3.8)', () => {
 
     await selectMenuItem(w, MENU_LABELS.shuffle);
 
-    expect(info).toHaveBeenCalledWith('Nothing to shuffle-play.');
+    expect(info).toHaveBeenCalledWith('Nothing to shuffle yet.');
     expect(success).not.toHaveBeenCalled();
     w.unmount();
   });
@@ -1516,7 +1516,7 @@ describe('MediaCard — hostile download url (M-UI-11)', () => {
 
     expect(openSpy).not.toHaveBeenCalled();
     expect(success).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledWith('Download blocked — unsafe link.');
+    expect(error).toHaveBeenCalledWith('Couldn’t start the download because the link is unsafe.');
     openSpy.mockRestore();
     w.unmount();
     document.body.innerHTML = '';

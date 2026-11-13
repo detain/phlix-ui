@@ -1380,7 +1380,7 @@ describe('BrowsePage — wire-error survivor law (remove toast)', () => {
     await flushPromises();
     const toast = useToastStore().toasts.find((t) => t.tone === 'error' && (t.title ?? '').includes('Arrival'));
     expect(toast).toBeDefined();
-    expect(toast?.message).toBe('Unknown error');
+    expect(toast?.message).toBe('Something went wrong.');
     expect(toast?.message).not.toContain('SQLSTATE');
   });
 });
