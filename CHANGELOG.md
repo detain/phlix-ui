@@ -8,23 +8,40 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
-## Unreleased — deps 2026-11-13
+## 1.0.3 - 2026-11-21
 
-### Dependency
+### Release
+
+Release cut over the four commits since the `v1.0.2` cut (`ef4d07af`): the player shortcut-gate
+minors batch (`aba92bc3` + its dist rebuild `fb8f54da`) and the estate toolchain upgrade with its
+follow-up lock refresh (`29fb2f0c`, `e10df977`). The two top-pended Unreleased sections fold in
+verbatim — bodies untouched, lane banners demoted into the group headings (house TW-ui law).
+The version advances 1.0.2 -> 1.0.3 in `package.json`/`package-lock.json` (the two own version
+echoes only), the three README version stamps rotate, and `dist/` is regenerated IN THIS COMMIT:
+the M-UI-23 version stamp moves to `1.0.3`, two consecutive builds byte-identical, the dist churn
+exactly the four stamp-bearing entry bundles, raw sizes unchanged (equal-length stamp;
+`dist/phlix-ui.js` 444,642 B ~434 KiB, `dist/player.js` 446,861 B ~436 KiB — the README size
+sites hold). No `@phlix` pin moves at this cut: `@phlix/contracts` `#v0.5.8`,
+`@phlix/syncplay` `#v0.1.7` and `@phlix/tokens` `#v0.2.1` held — the runtime/toolchain advances
+ride in the Dependency section below. Serial battery measured on this exact content: 345 files /
+7,096 passing | 10 skipped, identical to the pre-cut baseline measured at `e10df977` (the
+v1.0.2-era figures moved with the toolchain upgrade's test additions, recorded in the folded
+section). Consumer pins (server/hub vendored tarball, tizen/windows `#v1.0.2` -> `#v1.0.3`)
+rotate in this release wave.
+
+### Dependency — deps lane 2026-11-13
 
 - Full toolchain upgrade to the newest mutually-compatible set: vitest + @vitest/coverage-v8 5.1, eslint + @eslint/js 10.14, jsdom 31, pinia 4.1, globals 17, @types/node 26, @vue/test-utils 2.5, vue 3.5.45, vue-router 5.5, vite 8.3.8, vue-tsc 3.3.14, typescript-eslint 8.72.2, unplugin-icons 24, hls.js 1.7, Playwright 1.65 (and the `overrides` pins re-based). `dist/` rebuilt with the new hls.js.
 - Held back on purpose: **typescript stays 6.0.3** (7.x is rejected by typescript-eslint 8.72, peer `<6.1.0`); **apexcharts stays ^5.16** (8.x grows the single browser chunk to ~775 KB against the ~458 KB v5 chunk that every vendoring consumer inherits, tripping the UI-3.4 `dist-apex-dedupe` size guard — the guard is unchanged).
 - GitHub Actions: `actions/checkout` and `actions/setup-node` v6 to v7.
 - Lint: fixed the new eslint 10 `no-useless-assignment` / `preserve-caught-error` findings at the source (no rule disabled); tests adjusted for jsdom 31 serializing `minmax(0, ...)` as `minmax(0px, ...)`; `createPhlixApp.test.ts` hoists its `vi.mock` calls to module top level as vitest 5 requires. The audit allow-list (same two advisory ids) justifications were re-measured against the new lock.
 
-## Unreleased — minors 2026-11-13 (UI-S2/S8/S9/S12/S18/S27/S28/S31)
-
-### Fixed
+### Fixed — minors lane 2026-11-13 (UI-S2/S8/S9/S12/S18/S27/S28/S31)
 
 - Player: the similar-by-marker modal is now in the keyboard-shortcut gate, so `k` and the arrow keys no longer play/seek behind it (UI-S2).
 - Photo pages' loading spinners use the named `md` size instead of the invalid `size="large"` (UI-S27).
 
-### Changed
+### Changed — minors lane 2026-11-13 (UI-S2/S8/S9/S12/S18/S27/S28/S31)
 
 - README: size footnote split out of the headline bullet; nginx `try_files` example flagged as illustrative (UI-S31, UI-S12). Tests added for UI-S8/S9/S28; CALIBER tag-convention scoped to recent tags (UI-S18).
 
