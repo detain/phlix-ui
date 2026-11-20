@@ -8,6 +8,32 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## 1.0.3 — fix-forward correction (2026-11-20)
+
+Two statements in the `## 1.0.3 - 2026-11-21` section below are false-to-disk, named by
+the FR2-UI-REL adversarial re-review and re-measured at this tip (`1381cab3`). The
+historical lines stand as written per the verbatim-history law; this entry is the
+correction.
+
+- **The Dependency line's "eslint + @eslint/js 10.14" mis-states the js half.** At this
+  tip `package.json` declares `eslint: ^10.14.0` and `@eslint/js: ^10.0.1`, and
+  `package-lock.json` resolves `node_modules/eslint` `10.15.0` and
+  `node_modules/@eslint/js` `10.0.1`. Accurate: eslint moved onto the 10.14-declared
+  series (resolving 10.15.0); `@eslint/js` is at 10.0.1. The `29fb2f0c` commit message
+  carries the same lumped wording and is immutable history.
+
+- **The Release section's battery attribution names the wrong lane.** "the v1.0.2-era
+  figures moved with the toolchain upgrade's test additions" is not what the diffs show:
+  `29fb2f0c` adds zero test files and zero `it`/`test` definitions (its diff contains no
+  added definition lines; its folded entry records only adaptations — the jsdom 31
+  `minmax(0px, ...)` serialization and the `vi.mock` hoists). The source census at the
+  `v1.0.2` peel `ef4d07af` versus this tip: 343 `src/**/*.test.ts(x)` files and 347
+  whole-tree test/spec files — identical on both sides — while definitions move
+  6,412 → 6,416: exactly the four added in the player minors batch `aba92bc3` (three
+  `it(` plus one `it.each(` — the UI-S2/S8/S9/S28 tests the minors lane's own
+  "Tests added for UI-S8/S9/S28" line already credits). The added-test movement belongs
+  to the minors lane, not the toolchain upgrade.
+
 ## 1.0.3 - 2026-11-21
 
 ### Release
