@@ -88,7 +88,7 @@
   "license": "MIT",
   "dependencies": {
     "@phlix/contracts": "github:detain/phlix-contracts#v0.5.8",
-    "@phlix/syncplay": "github:detain/phlix-syncplay#v0.1.7",
+    "@phlix/syncplay": "github:detain/phlix-syncplay#v0.1.8",
     "apexcharts": "^5.16.0",
     "hls.js": "^1.7.4",
     "vue3-apexcharts": "^1.11.3"
