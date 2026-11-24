@@ -1355,7 +1355,7 @@ function ho(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-fiqoanRk.js")
+			component: () => import("./PlayerPage-C7WnQyVW.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1403,7 +1403,7 @@ function ho(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-CFceHhl1.js")
+			component: () => import("./SyncPlayPage-D_Wc-cb7.js")
 		},
 		{
 			path: `${t}/music`,
