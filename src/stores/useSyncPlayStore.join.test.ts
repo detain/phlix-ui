@@ -538,6 +538,25 @@ describe('audit #2 — a remote play pins the playback rate back to 1', () => {
 
         const sock = sockets.at(-1)!;
         sock.onopen?.();
+        // The server's join-ack. @phlix/syncplay v0.1.8's grouped-delivery law
+        // (LW-044, SPEC §4) refuses play/pause/seek/sync fan-out received while
+        // the client is ungrouped — the fold of this frame is what makes the
+        // client a room member, exactly as on the live :8097 wire (the server
+        // answers syncplay_group_join with it). Skipping it would measure the
+        // refusal instead of the rate-restore law this test names.
+        sock.onmessage?.({
+            data: JSON.stringify({
+                type: 'syncplay_group_state',
+                group: {
+                    group_id: GROUP_ID,
+                    group_name: 'Movie Night',
+                    members: [{ id: 'peer-1', name: 'Peer', joined_at: 1_700_000_000 }],
+                    member_count: 1,
+                    host_id: 'peer-1',
+                    playback_position: 0,
+                },
+            }),
+        } as MessageEvent);
         sock.onmessage?.({
             data: JSON.stringify({
                 type: 'syncplay_playback_sync',

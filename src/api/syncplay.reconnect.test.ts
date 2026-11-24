@@ -35,8 +35,15 @@ import {
   isSyncPlayReconnectExhausted,
   retrySyncPlayConnection,
 } from './syncplay';
+import { sha256Hex } from '../utils/syncplaySha256';
 
 const ROOM = 'sp_backoff';
+
+// S-contracts-21 — @phlix/syncplay 0.1.8 (state-fold clamps commit) makes `joinGroup`
+// fail-fast locally on any present-but-malformed gate hash: it must be 64 lowercase
+// hex (canonical SHA-256). A fixture hash therefore has to be a REAL digest, exactly
+// as the store ships one in production (M-UI-14 keeps the same value it hashed).
+const GATE_DIGEST = sha256Hex('hunter2');
 
 // ── the fake socket ───────────────────────────────────────────────────────────
 
@@ -381,7 +388,7 @@ describe('CU-077 — the ladder parks instead of dying', () => {
     });
 
     it('the wake re-dial re-joins with the HELD gate digest (M-UI-14 continuity)', () => {
-        openSyncPlayConnection(ROOM, undefined, 'me', 'Me', 'deadbeef-hash');
+        openSyncPlayConnection(ROOM, undefined, 'me', 'Me', GATE_DIGEST);
         for (let i = 0; i < 6; i++) closeAndMeasure();
         const before = FakeWebSocket.instances.length;
         window.dispatchEvent(new Event('online'));
@@ -391,7 +398,7 @@ describe('CU-077 — the ladder parks instead of dying', () => {
             .sent.map((s) => JSON.parse(s) as Record<string, unknown>)
             .find((m) => String(m.type ?? '').includes('group_join'));
         expect(join, 'the wake retry must still carry the GROUP_JOIN').toBeDefined();
-        expect(join!.password_hash).toBe('deadbeef-hash'); // NOT demoted to a locked-out stranger
+        expect(join!.password_hash).toBe(GATE_DIGEST); // NOT demoted to a locked-out stranger
     });
 
     it('an explicit close dissolves the park: listener told false, wake has nothing to retry', () => {

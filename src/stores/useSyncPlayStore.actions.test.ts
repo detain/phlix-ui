@@ -287,6 +287,23 @@ describe('useSyncPlayStore — the WebSocket callback is wired to onRemoteStateU
         // Straight down the real chain: socket → handleWsMessage → SyncPlayClient
         // → onPlaybackCommand → the store's own callback. Nothing between the
         // frame and the assertion is a mock.
+        //
+        // S-contracts-21 — v0.1.8 grouped-delivery law (LW-044): playback fan-out
+        // is refused while the client holds no group. The real server answers the
+        // join with a GROUP_STATE ack; the fake HTTP server does not push it, so
+        // the fixture must deliver the ack before the command, exactly as a live
+        // session receives it.
+        socket().deliver({
+            type: 'syncplay_group_state',
+            group: {
+                group_id: GROUP_ID,
+                group_name: 'Movie Night',
+                members: [{ id: 'someone-else', name: 'Other', joined_at: 1_700_000_000 }],
+                member_count: 1,
+                host_id: 'someone-else',
+                playback_position: 0,
+            },
+        });
         socket().deliver({ type: 'syncplay_playback_pause', member_id: 'someone-else', position: 7_000 });
         expect(store.currentSession!.state).toBe('paused');
     });
@@ -294,6 +311,19 @@ describe('useSyncPlayStore — the WebSocket callback is wired to onRemoteStateU
     it('a remote seek frame moves the joined session position', async () => {
         const store = useSyncPlayStore();
         await store.joinRoom(BASE, GROUP_ID);
+
+        // S-contracts-21 — v0.1.8 LW-044: seed the join-ack first (see pause test).
+        socket().deliver({
+            type: 'syncplay_group_state',
+            group: {
+                group_id: GROUP_ID,
+                group_name: 'Movie Night',
+                members: [{ id: 'someone-else', name: 'Other', joined_at: 1_700_000_000 }],
+                member_count: 1,
+                host_id: 'someone-else',
+                playback_position: 0,
+            },
+        });
 
         // S441 — the frame speaks the wire unit (MILLISECONDS); the session
         // position speaks seconds. The decode happens once, in `api/syncplay.ts`.

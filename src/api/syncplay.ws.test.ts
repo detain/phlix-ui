@@ -140,6 +140,36 @@ function sentTypes(s: FakeWebSocket): string[] {
     return s.sent.map((raw) => (JSON.parse(raw) as { type: string }).type);
 }
 
+/**
+ * The server's join-acknowledgement for `groupId` — the `syncplay_group_state`
+ * frame that makes the client GROUPED (era @phlix/syncplay v0.1.8, LW-044 /
+ * SPEC §4 Grouped-delivery law).
+ *
+ * Since the 0.1.8 review wave this seed is a REQUIREMENT for inbound command
+ * and state-report fixtures, not decoration: play/pause/seek/sync fan-out
+ * received while ungrouped is refused whole (`onFrameDropped('malformed')`)
+ * because it is unattributable post-leave in-flight delivery. Every honest
+ * production timeline passes through this frame anyway — the `:8097` server
+ * answers `syncplay_group_join` with exactly this state, and even in v0.1.7
+ * every OUTBOUND sender (`sendPlay`/`sendPause`/`sendSeek`/`reportPosition`)
+ * was guarded on the `handleGroupState()` fold. A fixture that skips it models
+ * a sequence the server never produces and, at 0.1.8, measures refusal instead
+ * of the law it names.
+ */
+function groupJoinAck(groupId: string, memberId: string, memberName = 'Me'): unknown {
+    return {
+        type: 'syncplay_group_state',
+        group: {
+            group_id: groupId,
+            group_name: 'Movie Night',
+            members: [{ id: memberId, name: memberName, joined_at: 1_700_000_000 }],
+            member_count: 1,
+            host_id: memberId,
+            playback_position: 0,
+        },
+    };
+}
+
 /** A logger-shaped recorder (R12-07): `vi.fn` with the SyncPlayLogger arm type. */
 const makeRecorder = () => vi.fn((..._args: unknown[]) => {});
 type Recorder = ReturnType<typeof makeRecorder>;
@@ -545,11 +575,18 @@ describe('openSyncPlayConnection — lifecycle', () => {
 // value in place (42 500 ≠ 42.5, red); doubling it yields 0.0425 (≠ 42.5, red).
 
 describe('handleWsMessage — real protocol decoding', () => {
-    /** Open a connection with a recording handler and fire `onopen`. */
+    /**
+     * Open a connection with a recording handler, fire `onopen`, and let the
+     * server confirm the join — at v0.1.8's grouped-delivery law an inbound
+     * fan-out without the `groupJoinAck` fold is refused whole, so the ack is
+     * what keeps these pins measuring delivery (see its docblock).
+     */
     function connect(): { messages: Array<{ type: string; position?: number; roomId?: string }> } {
         const messages: Array<{ type: string; position?: number; roomId?: string }> = [];
         openSyncPlayConnection(ROOM, (m) => messages.push(m), 'me', 'Me');
         socket().onopen?.();
+        socket().deliver(groupJoinAck(ROOM, 'me'));
+        socket().sent.length = 0;
         return { messages };
     }
 
@@ -751,22 +788,13 @@ function stateUpdate(position: number, rate: number): SyncPlayStateUpdate {
  * guarded by `this.group !== null`, which only `handleGroupState()` sets. A
  * "connected" fixture that skips it makes every send silently no-op, and an
  * assertion of the form `expect(sent).toEqual([])` would then pass for the wrong
- * reason.
+ * reason. Since v0.1.8 the same fold also GATES INBOUND delivery (LW-044 — see
+ * {@link groupJoinAck}); this helper now satisfies both halves of the law.
  */
 function connectedInGroup(): FakeWebSocket {
     openSyncPlayConnection(ROOM, undefined, 'm1', 'Me');
     socket().onopen?.();
-    socket().deliver({
-        type: 'syncplay_group_state',
-        group: {
-            group_id: ROOM,
-            group_name: 'Movie Night',
-            members: [{ id: 'm1', name: 'Me', joined_at: 1_700_000_000 }],
-            member_count: 1,
-            host_id: 'm1',
-            playback_position: 0,
-        },
-    });
+    socket().deliver(groupJoinAck(ROOM, 'm1'));
     socket().sent.length = 0;
     return socket();
 }
@@ -972,8 +1000,12 @@ describe('room switch — the old socket cannot clobber the new one (audit #3)',
         vi.advanceTimersByTime(60_000);
         expect(FakeWebSocket.instances).toHaveLength(2); // zero reconnect sockets
 
-        // The new socket is still THE connection: inbound frames flow to the handler.
+        // The new socket is still THE connection: inbound frames flow to the
+        // handler — after the new room's join-ack, because at v0.1.8's
+        // grouped-delivery law a fan-out delivered before the fold would be
+        // refused whole (see {@link groupJoinAck}).
         fresh.onopen?.();
+        fresh.deliver(groupJoinAck('sp_other999', 'me'));
         fresh.deliver({
             type: 'syncplay_playback_sync',
             member_id: 'peer',
