@@ -35,17 +35,28 @@
  * ⚠ VENDORED, not imported. `./server-route-manifest.json` is a byte-identical
  * copy of phlix-contracts `dist/server-route-manifest.json` (md5 pinned by
  * `routeGate.api.test.ts`). Vendoring is the sanctioned interim pattern: ui
- * pins `@phlix/contracts#v0.5.7`, but the vendored copy rides the regen
- * staircase AHEAD of the tag under the standing fixture-bytes-vs-npm-pin
- * ruling (the v0.99.16-era precedent): this copy is the regen #38 bytes
- * (418 tuples, content-derived at phlix-server `413765b6…`, vendored from
- * contracts master at `6335d818` by the ui-session-rows wave so the
- * `/api/v1/auth/sessions` routes — the device-session surface — are served
- * routes, not gate-404 ghosts),
- * but the contracts `exports` map ships only `.` and `./package.json` — JSON
- * subpath imports are blocked — so the copy stays vendored. When the contracts
- * exports map exposes the manifest JSON, switch this import to the tagged
- * package and drop the vendored copy.
+ * pins `@phlix/contracts#v0.5.8`. The vendored copy rides the regen
+ * staircase under the standing fixture-bytes-vs-npm-pin ruling (the
+ * v0.99.16-era precedent) — that ladder is the REAL sanctioned reason the
+ * copy stays vendored: between tags it follows contracts master regens and
+ * can run AHEAD of the pinned tag's embed (this copy took the 418 bytes at
+ * the 2026-11-11 lag cure while the then-latest #v0.5.7 tag still shipped
+ * the superseded 415). It is NOT vendored for access: the contracts
+ * `exports` map ships the JSON subpaths
+ * (`./dist/server-route-manifest.json`, `./dist/error-codes.json`,
+ * `./dist/mcp-scopes.json`) — the earlier claim here that the map "ships
+ * only `.` and `./package.json` — JSON subpath imports are blocked" was
+ * FALSE (cured by S-contracts-20); a tagged subpath import has been
+ * mechanically possible since the ≥v0.5.4-era map. This copy is the regen
+ * #38 bytes (418 tuples, content-derived at phlix-server `413765b6…`,
+ * vendored from contracts master at `6335d818` by the ui-session-rows wave
+ * so the `/api/v1/auth/sessions` routes — the device-session surface — are
+ * served routes, not gate-404 ghosts). Ladder parity at this leg: the
+ * #v0.5.8 tag (peel e5a33809) embeds md5 `c2111cd3…`/418 — byte-identical
+ * to this copy. Retiring the vendored copy in favour of the tagged import
+ * stays the coordinated W19 phlix-ui #349 class lane's estate-wide call
+ * (tizen and mobile vendor the same bytes), not a docstring's or a
+ * dependency re-pin's.
  *
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
