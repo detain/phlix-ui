@@ -208,11 +208,13 @@ async function handleSubmit(): Promise<void> {
   display: grid;
   gap: var(--space-5);
 }
+/* phlix-tokens-010: readable captions ride --text-subtle (lightest
+   AA-pinned tier); the faint tier is decorative-only per the phlix-tokens law. */
 .signup__divider {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  color: var(--text-faint);
+  color: var(--text-subtle);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;

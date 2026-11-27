@@ -63,8 +63,8 @@ import { i as Nn, n as Pn, r as Fn, t as In } from "./plugins-C77PT0Uu.js";
 import { n as Ln, r as Rn, t as zn } from "./maintenance-cR83erwG.js";
 import { t as Bn } from "./hubDashboard-D-eKAQ_v.js";
 import { n as Vn, t as Hn } from "./media-query-D7hrCu8r.js";
-import { t as Un } from "./LoginForm-YAwiU1vE.js";
-import { t as Wn } from "./SignupForm-Bf9Bq997.js";
+import { t as Un } from "./LoginForm-C22j7g7s.js";
+import { t as Wn } from "./SignupForm-C2zVuKon.js";
 import { r as Gn } from "./wireErrors-DDkkTtfw.js";
 import { t as F } from "./hubHelpLinks-BNMhK6oW.js";
 import { a as Kn, i as qn, n as Jn, o as Yn, r as Xn, s as Zn, t as Qn } from "./plural-B3O2rVPV.js";
@@ -1355,19 +1355,19 @@ function ho(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-C7WnQyVW.js")
+			component: () => import("./PlayerPage-D1vDN6V5.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-F5vP_PPF.js")
+			component: () => import("./LoginPage-B3RDZnxY.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-D_rFRkSM.js")
+			component: () => import("./SignupPage-CU1sQX8q.js")
 		},
 		{
 			path: `${t}/connect`,
@@ -1403,7 +1403,7 @@ function ho(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-D_Wc-cb7.js")
+			component: () => import("./SyncPlayPage-XiHrGXsB.js")
 		},
 		{
 			path: `${t}/music`,
@@ -1722,7 +1722,7 @@ var _o = /*#__PURE__*/ c(/* @__PURE__ */ W({
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-CjZsYSD9.js")
+	component: () => import("./LogsPage-BKQzTMPD.js")
 }, No = {
 	name: "admin-webhooks",
 	path: "webhooks",

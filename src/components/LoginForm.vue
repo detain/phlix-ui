@@ -167,11 +167,14 @@ async function handleSubmit(): Promise<void> {
   display: grid;
   gap: var(--space-5);
 }
+/* phlix-tokens-010: the faint color tier is decorative-only (sub-AA by the
+   phlix-tokens colors law); readable captions ride --text-subtle, the
+   lightest AA-pinned tier. */
 .login__divider {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  color: var(--text-faint);
+  color: var(--text-subtle);
   font-size: var(--text-2xs);
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
@@ -197,7 +200,7 @@ async function handleSubmit(): Promise<void> {
 }
 .login__hint {
   margin: var(--space-2) 0 0;
-  color: var(--text-faint);
+  color: var(--text-subtle);
   font-size: var(--text-xs);
 }
   /* CU-076 (review ui__crossfe): color-mix() needs Chrome/Edge 111+ (2023);

@@ -11107,7 +11107,7 @@ var Yp = class extends Error {
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-d0015165"]]), zm = {
+}), [["__scopeId", "data-v-66698f79"]]), zm = {
 	key: 0,
 	class: "syncplay-controls"
 }, Bm = ["aria-label"], Vm = { class: "syncplay-controls__wait-label" }, Hm = { class: "syncplay-controls__transport" }, Um = ["aria-label"], Wm = ["aria-label"], Gm = ["aria-label"], Km = { class: "syncplay-controls__status-label" }, qm = 10, Jm = /*#__PURE__*/ Y(/* @__PURE__ */ d({

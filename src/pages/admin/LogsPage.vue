@@ -671,9 +671,11 @@ onBeforeUnmount(() => {
   color: var(--warning);
   font-size: var(--text-xs);
 }
+/* phlix-tokens-010: the update line is read for information — route it to
+   --text-subtle (lightest AA-pinned tier); the faint tier is decorative-only. */
 .admin-logs__update {
   margin: 0 0 var(--space-2);
-  color: var(--text-faint);
+  color: var(--text-subtle);
   font-size: var(--text-2xs);
 }
 .admin-logs__truncated {

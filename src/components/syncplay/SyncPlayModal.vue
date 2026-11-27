@@ -481,8 +481,10 @@ function close(): void {
     box-shadow var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
 }
 
+/* phlix-tokens-010: placeholder is functional guidance — --text-subtle is
+   the lightest AA-pinned tier; the faint tier is decorative-only per law. */
 .syncplay-modal__input::placeholder {
-  color: var(--text-faint);
+  color: var(--text-subtle);
 }
 
 .syncplay-modal__input:focus {
