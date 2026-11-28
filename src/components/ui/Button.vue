@@ -158,11 +158,24 @@ onBeforeUnmount(() => {
    package ramp. Canonical: --error (theme-aware). The packages carry no
    red hover/active ramp, so the shade steps derive from --error itself
    via color-mix(in srgb, ..., #000) — the house derivation idiom (cf.
-   AuthCard.vue shadow mixes). Pre-Chrome-111 engines (CU-076 doctrine:
-   Tizen 6.5) drop the second declaration and keep the flat --error. */
+   AuthCard.vue shadow mixes). Per the CU-076 doctrine (review ui__crossfe;
+   the dvh block in Player.vue is the origin) the modern color-mix() rule
+   stands alone and its static fallback lives in the @supports-not block
+   below — a duplicate declaration pair is what CU-076 explicitly rejects,
+   since minification may collapse it and leave floor engines with no
+   background at all. */
 .phlix-btn--danger { background: var(--error); color: #fff; box-shadow: var(--shadow-1); }
-.phlix-btn--danger:hover:not(:disabled):not(.is-loading) { background: var(--error); background: color-mix(in srgb, var(--error) 85%, #000); }
-.phlix-btn--danger:active:not(:disabled):not(.is-loading) { background: var(--error); background: color-mix(in srgb, var(--error) 70%, #000); }
+.phlix-btn--danger:hover:not(:disabled):not(.is-loading) { background: color-mix(in srgb, var(--error) 85%, #000); }
+.phlix-btn--danger:active:not(:disabled):not(.is-loading) { background: color-mix(in srgb, var(--error) 70%, #000); }
+/* CU-076 fallback: engines below the declared floor that cannot parse
+   color-mix() (Tizen 6.5's Chromium) keep the flat theme-aware --error on
+   hover/active. Unlike the rgba-literal approximations sibling sites use,
+   var(--error) stays palette-correct for every theme — it is a plain color
+   any floor engine resolves. */
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .phlix-btn--danger:hover:not(:disabled):not(.is-loading) { background: var(--error); }
+  .phlix-btn--danger:active:not(:disabled):not(.is-loading) { background: var(--error); }
+}
 
 .phlix-btn__icon { font-size: 1.15em; }
 .phlix-btn__spinner { display: inline-flex; font-size: 1.15em; animation: phlix-btn-spin 0.7s linear infinite; }

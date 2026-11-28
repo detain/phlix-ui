@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Button danger @supports fallbacks 2026-11-27 (ui-cssfloor-cure)
+
+### Fixed
+
+- Button: the danger hover/active shade steps are now lone `color-mix()` rules with their static `var(--error)` fallbacks in an `@supports not (color: color-mix(...))` block per the CU-076 ratified shape — the duplicate declaration pair introduced by 39e27387 (S-tokens-17) trips the cssFloorFallback guard (minification may collapse a pair, leaving floor engines with no background at all). Red on `src/components/cssFloorFallback.test.ts` since that commit, invisible on CI only because dist:check failed earlier in the same job until 3443def7 rebuilt dist.
+
+
 ## Unreleased — Menu instance-id seam 2026-11-27 (S-ui-design-01)
 
 ### Fixed
