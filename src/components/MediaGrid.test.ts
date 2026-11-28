@@ -9,6 +9,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import MediaGrid from './MediaGrid.vue';
 import MediaCard from './MediaCard.vue';
 import { useMediaStore } from '../stores/useMediaStore';
@@ -848,5 +851,213 @@ describe('MediaGrid — host-owned ARIA structure (gridRole, S70)', () => {
     expect(roled.find('.media-grid').attributes('style')).toBe(
       plain.find('.media-grid').attributes('style'),
     );
+  });
+});
+
+/**
+ * S-ui-design-17, finding phlix-ui-design-019 — the paused seam made real.
+ *
+ * The `.paused` escape hatch was DEAD CSS: nothing in the template ever emitted
+ * the class, the comment above the rules promised a `skeleton-count-high`
+ * contract that did not exist, and — as scoped CSS hashes these selectors onto
+ * THIS component's elements — an externally injected class could not reach them
+ * even if a host tried. The seam is now a real `paused` PROP, bound onto the
+ * very element the rules style, and it also gates every `load-more` emission
+ * (see the re-arm block below for that half).
+ */
+describe('MediaGrid — the paused seam is a real prop (phlix-ui-design-019)', () => {
+  const sfc = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'MediaGrid.vue'),
+    'utf8',
+  );
+  const css = [...sfc.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+    .map((m) => m[1].replace(/\/\*[\s\S]*?\*\//g, ''))
+    .join('\n');
+
+  it('binds the .paused class from the prop onto the element its CSS styles', () => {
+    const skeletonTag = /<div[^>]*class="media-grid media-grid--skeleton"[^>]*>/.exec(sfc);
+    expect(skeletonTag, 'the initial-load skeleton grid must exist in the template').not.toBeNull();
+    expect(
+      skeletonTag![0],
+      'the `.paused` rules are theater unless the TEMPLATE binds the class from the ' +
+        'paused prop — scoped hashing makes an external class impossible (phlix-ui-design-019)',
+    ).toMatch(/:class="[^"]*\bpaused\b/);
+    expect(
+      css.match(/\.media-grid--skeleton\.paused \.skel-(?:poster|title|sub|block)::before/g) ?? [],
+      'all four shimmer rules must still target the paused skeleton grid',
+    ).toHaveLength(4);
+    expect(css, 'the live seam still freezes the shimmer').toContain('animation-play-state: paused;');
+  });
+
+  it('promises no phantom `skeleton-count-high` contract anywhere in the SFC', () => {
+    expect(
+      sfc,
+      'the dead class contract was pure theater — the real seam is the `paused` prop',
+    ).not.toContain('skeleton-count-high');
+  });
+
+  it('lands the .paused class on the skeleton grid when the prop is set', () => {
+    const w = mount(MediaGrid, { props: { items: [], loading: true, paused: true } });
+    expect(w.find('.media-grid--skeleton').classes()).toContain('paused');
+  });
+
+  it('keeps the skeleton markup free of the class when paused is unset (default false)', () => {
+    const w = mount(MediaGrid, { props: { items: [], loading: true } });
+    const classes = w.find('.media-grid--skeleton').classes();
+    expect(classes).toContain('media-grid--skeleton');
+    expect(classes).not.toContain('paused');
+  });
+});
+
+/**
+ * S-ui-design-17, finding phlix-ui-design-020 — the load-more re-arm law.
+ *
+ * A host whose append FAILS clears `loadingMore` without growing `items` while
+ * `hasMore` still claims more. That flip re-passed `shouldLoadMore` (watcher
+ * path) and re-mounted the still-intersecting sentinel (observer path), so a
+ * dead endpoint produced an infinite `load-more` retry loop driven by its own
+ * failures. The seam now latches closed on the concluded-with-zero flip and
+ * re-arms ONLY on explicit user input (a real scroll), a delivered/resets loaded
+ * set, or a `hasMore` claim change. `paused` (the prop above) blocks emission
+ * without touching the latch.
+ */
+describe('MediaGrid — load-more re-arm on failure (phlix-ui-design-020)', () => {
+  it('a concluded append with ZERO items delivered does not re-emit load-more (loaded-edge watcher)', async () => {
+    mockLayout(1000, 0); // measured → virtualized: 4 cols at cardSize 200, window rows [0,5) = endIndex 20 ≥ 16 loaded = at the edge
+    window.innerHeight = 768;
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(16), total: 5000, hasMore: true, cardSize: 200 },
+    });
+    await nextTick();
+    await nextTick();
+    // Baseline: mounting AT the loaded edge goes out with the healthy first
+    // request (pre-existing, intended on-demand paging). The finding is what
+    // happens AFTER that request dies.
+    expect(w.emitted('load-more'), 'mount at the edge emits the first request').toHaveLength(1);
+    await w.setProps({ loadingMore: true }); // the host starts the append…
+    await w.setProps({ loadingMore: false }); // …the endpoint fails: no items arrive
+    expect(
+      w.emitted('load-more'),
+      'the failed flag flip re-passed shouldLoadMore and added another emission — that is the retry loop (phlix-ui-design-020)',
+    ).toHaveLength(1);
+  });
+
+  it('sentinel-still-intersecting after a failed append does not loop; a scroll re-arms', async () => {
+    // Earlier blocks leave window.scrollY pinned at a fake value; normalize so
+    // the sizerTop cache and the 0 → 500 movement below are deterministic.
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+    const w = mount(MediaGrid, { props: { items: makeItems(24), hasMore: true } });
+    await nextTick();
+    IOStub.last()!.trigger(true);
+    expect(w.emitted('load-more')).toHaveLength(1);
+
+    await w.setProps({ loadingMore: true });
+    await w.setProps({ loadingMore: false }); // failed: still 24 items, hasMore still true
+    // The sentinel unmounts with the flag and REMOUNTS when it clears — a real
+    // browser re-fires the observer callback for the still-intersecting element.
+    IOStub.last()!.trigger(true);
+    expect(
+      w.emitted('load-more'),
+      'a failing endpoint must not re-loop while the sentinel still intersects (phlix-ui-design-020)',
+    ).toHaveLength(1);
+
+    // Explicit user input is the re-arm door: a genuine viewport movement.
+    Object.defineProperty(window, 'scrollY', { value: 500, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
+    await nextTick();
+    IOStub.last()!.trigger(true);
+    expect(w.emitted('load-more'), 'a scroll re-arms the seam — the user is asking again').toHaveLength(2);
+
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+  });
+
+  it('a SUCCESSFUL append (items delivered) keeps the edge chain emitting — the law must not eat healthy paging', async () => {
+    mockLayout(1000, 0); // 4 cols; window endIndex 20
+    window.innerHeight = 768;
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(16), total: 5000, hasMore: true, cardSize: 200 },
+    });
+    await nextTick();
+    await nextTick();
+    expect(w.emitted('load-more'), 'mount at the edge emits the first request').toHaveLength(1);
+    await w.setProps({ loadingMore: true });
+    // The page arrives (16 → 20, still ≤ the window's endIndex 20) → the
+    // healthy chain's next request must go out on the very same flip.
+    await w.setProps({ items: makeItems(20), loadingMore: false });
+    expect(
+      w.emitted('load-more'),
+      'a delivered append is progress, not failure — the seam stays armed and the chain continues',
+    ).toHaveLength(2);
+  });
+
+  it('hasMore=false releases the failed latch; a fresh hasMore=true session re-arms it', async () => {
+    mockLayout(1000, 0); // 4 cols; window endIndex 20 ≥ 16 = at the edge
+    window.innerHeight = 768;
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(16), total: 5000, hasMore: true, cardSize: 200 },
+    });
+    await nextTick();
+    await nextTick();
+    expect(w.emitted('load-more'), 'mount at the edge emits the first request').toHaveLength(1);
+    await w.setProps({ loadingMore: true });
+    await w.setProps({ loadingMore: false }); // failed → latched closed
+    expect(w.emitted('load-more'), 'a failed flip adds nothing to the count').toHaveLength(1);
+    await w.setProps({ hasMore: false }); // the stream ends: nothing to request
+    expect(w.emitted('load-more'), 'a closed stream requests nothing').toHaveLength(1);
+
+    // The host starts a NEW paging session: items reset, more claimed again.
+    await w.setProps({ items: makeItems(12), total: 12, hasMore: true });
+    expect(
+      w.emitted('load-more'),
+      'a fresh hasMore claim is a new session — the latch must not haunt it',
+    ).toHaveLength(2);
+  });
+
+  it('paused blocks load-more at the sentinel; un-pausing leaves the seam live', async () => {
+    const w = mount(MediaGrid, { props: { items: makeItems(24), hasMore: true, paused: true } });
+    await nextTick();
+    IOStub.last()!.trigger(true);
+    expect(w.emitted('load-more'), 'paused must stop emission at the sentinel').toBeUndefined();
+
+    await w.setProps({ paused: false });
+    IOStub.last()!.trigger(true);
+    expect(
+      w.emitted('load-more'),
+      'un-pausing does not DISARM — the next intersection emits',
+    ).toHaveLength(1);
+  });
+
+  it('un-pausing re-evaluates the loaded edge (a clean latch resumes)', async () => {
+    mockLayout(1000, 0); // 4 cols; window endIndex 20 ≥ 16 = at the edge
+    window.innerHeight = 768;
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(16), total: 5000, hasMore: true, cardSize: 200, paused: true },
+    });
+    await nextTick();
+    expect(w.emitted('load-more'), 'mounted at the loaded edge but paused — nothing goes out').toBeUndefined();
+    await w.setProps({ paused: false });
+    expect(
+      w.emitted('load-more'),
+      'un-pausing re-runs the edge check — the request the pause held off',
+    ).toHaveLength(1);
+  });
+
+  it('pause toggles are NOT the re-arm door after a failed append', async () => {
+    mockLayout(1000, 0); // 4 cols; window endIndex 20 ≥ 16 = at the edge
+    window.innerHeight = 768;
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(16), total: 5000, hasMore: true, cardSize: 200 },
+    });
+    await nextTick();
+    await nextTick();
+    expect(w.emitted('load-more'), 'mount at the edge emits the first request').toHaveLength(1);
+    await w.setProps({ loadingMore: true });
+    await w.setProps({ loadingMore: false }); // failed → latched closed
+    await w.setProps({ paused: true });
+    await w.setProps({ paused: false });
+    expect(
+      w.emitted('load-more'),
+      'pause/un-pause is not scroll, not delivery, not a claim change — the latch holds',
+    ).toHaveLength(1);
   });
 });

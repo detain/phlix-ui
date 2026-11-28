@@ -474,6 +474,78 @@ export function shouldLoadMore(
   return state.hasMore && !state.loading && !state.loadingMore && endIndex >= loadedCount;
 }
 
+/** One paging snapshot fed into {@link createLoadMoreLimiter}. */
+export interface LoadMoreState {
+  loadingMore: boolean;
+  loadedCount: number;
+  hasMore: boolean;
+}
+
+/**
+ * The re-arm law for `MediaGrid`'s `load-more` seam (phlix-ui-design-020).
+ *
+ * `shouldLoadMore` above is correct for any GIVEN snapshot: at the loaded edge,
+ * nothing in flight, more claimed. The defect it cannot see is a STATE one: a
+ * host whose append FAILED clears `loadingMore` without growing `items` while
+ * `hasMore` still claims more — which re-passes the predicate on the very flip
+ * the failure produced, then the next request fails the same way, and the next:
+ * an unbounded retry loop driven by the endpoint's own failures.
+ *
+ * This limiter closes the loop at the EMISSION seam. It starts armed; every
+ * paging-state transition goes through {@link LoadMoreLimiter.noteAppend}, and
+ * a concluded append (loadingMore true→false) that delivered NOTHING while more
+ * are still claimed DISARMS the seam. Re-arming happens only through doors that
+ * are genuinely new evidence:
+ *   - {@link LoadMoreLimiter.noteScroll} — the user moved the viewport (explicit
+ *     input: asking for more is what scrolling means here),
+ *   - a loaded-count change — items arriving from ANYWHERE (a healthy append, a
+ *     `need-range` fill, a query reset) prove the endpoint lives again,
+ *   - a `hasMore` claim change — the stream ending (false), or a fresh paging
+ *     session starting (true again), releases the old verdict.
+ * The bare flag flip never re-arms: that flip IS the loop.
+ *
+ * Pure closure (no DOM, no Vue) so the transitions are unit-testable exactly as
+ * `MediaGrid` wires them (props watcher → noteAppend, scroll handler →
+ * noteScroll, both emitters → allowsEmission).
+ */
+export interface LoadMoreLimiter {
+  /** Observe the paging state after every change; judges each transition. */
+  noteAppend(next: LoadMoreState): void;
+  /** The user genuinely scrolled — explicit intent, re-arms the seam. */
+  noteScroll(): void;
+  /**
+   * Whether a `load-more` emission may pass right now. `paused` (the host's
+   * throttle, phlix-ui-design-019) blocks emission WITHOUT touching the latch:
+   * pausing is not user intent either way.
+   */
+  allowsEmission(paused: boolean): boolean;
+}
+
+export function createLoadMoreLimiter(): LoadMoreLimiter {
+  let armed = true;
+  let prev: LoadMoreState | null = null;
+  return {
+    noteAppend(next) {
+      const before = prev;
+      prev = next;
+      if (!before) return; // first observation only primes the comparison state
+      if (next.hasMore !== before.hasMore || next.loadedCount !== before.loadedCount) {
+        armed = true; // claim change / delivered or reset page-set: fresh evidence
+        return;
+      }
+      if (before.loadingMore && !next.loadingMore && next.hasMore) {
+        armed = false; // concluded with ZERO delivered while more claimed: the loop
+      }
+    },
+    noteScroll() {
+      armed = true;
+    },
+    allowsEmission(paused) {
+      return armed && !paused;
+    },
+  };
+}
+
 /**
  * Select the slice of rows to render for the current scroll position. With a
  * fixed `rowHeight` this is O(1): only the rows intersecting the viewport (plus

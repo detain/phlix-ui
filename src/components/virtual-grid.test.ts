@@ -17,6 +17,7 @@ import {
   computeFixedRowHeight,
   computeRowHeight,
   computeWindow,
+  createLoadMoreLimiter,
   effectiveItemCount,
   fixedRowContentHeight,
   labelHeightForRootFontSize,
@@ -708,5 +709,99 @@ describe('virtual-grid — shouldLoadMore', () => {
     expect(shouldLoadMore(50, 50, { ...base, hasMore: false })).toBe(false);
     expect(shouldLoadMore(50, 50, { ...base, loading: true })).toBe(false);
     expect(shouldLoadMore(50, 50, { ...base, loadingMore: true })).toBe(false);
+  });
+});
+
+/**
+ * S-ui-design-17 (phlix-ui-design-020) — the re-arm law as a pure state machine.
+ *
+ * `shouldLoadMore` is correct for any GIVEN snapshot: at the loaded edge, nothing
+ * in flight, more claimed. The bug it cannot see is a STATE one: a host whose
+ * append FAILED clears `loadingMore` without growing `items`, which re-passes the
+ * predicate forever. `createLoadMoreLimiter` closes that at the emission seam.
+ * `MediaGrid` wires noteAppend to the prop watcher, noteScroll to the scroll
+ * handler, and allowsEmission in front of BOTH load-more emitters; the component
+ * paths are pinned in MediaGrid.test.ts. This block pins the transitions.
+ */
+describe('createLoadMoreLimiter — the re-arm law (phlix-ui-design-020)', () => {
+  it('disarms when a concluded append delivered nothing while more are still claimed', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // mount prime
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true }); // request in flight
+    expect(l.allowsEmission(false), 'the bare false→true flip disarms nothing').toBe(true);
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // concluded, ZERO delivered
+    expect(
+      l.allowsEmission(false),
+      'a failed append must latch the seam closed — the flag flip alone used to ' +
+        're-fire load-more forever (phlix-ui-design-020)',
+    ).toBe(false);
+  });
+
+  it('stays disarmed across repeat failed attempts with zero user input (the named loop)', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true }); // the retry the old code re-emitted…
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // …and fails again
+    expect(l.allowsEmission(false), 'a dead endpoint must not generate unbounded retries').toBe(false);
+  });
+
+  it('a delivered append keeps the seam armed (healthy pagination untouched)', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: false, loadedCount: 36, hasMore: true });
+    expect(l.allowsEmission(false)).toBe(true);
+  });
+
+  it('a loaded-set change re-arms a failed seam (progress from anywhere — e.g. a need-range fill)', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // failed
+    expect(l.allowsEmission(false)).toBe(false);
+    l.noteAppend({ loadingMore: false, loadedCount: 30, hasMore: true });
+    expect(l.allowsEmission(false), 'delivered items are proof the endpoint lives again').toBe(true);
+  });
+
+  it('noteScroll re-arms (the explicit-user-input door)', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // failed
+    l.noteScroll();
+    expect(l.allowsEmission(false)).toBe(true);
+  });
+
+  it('a hasMore claim change releases the hold in BOTH directions (stream end / fresh session)', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // failed
+    expect(l.allowsEmission(false)).toBe(false);
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: false }); // host closed the stream
+    expect(l.allowsEmission(false)).toBe(true);
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // fresh paging session
+    expect(l.allowsEmission(false), 'the new session must not inherit the old failure').toBe(true);
+  });
+
+  it('paused blocks an ARMED seam without touching the latch', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true });
+    expect(l.allowsEmission(true), 'paused stops emission').toBe(false);
+    expect(l.allowsEmission(false), 'un-pausing an armed seam emits again').toBe(true);
+    l.noteAppend({ loadingMore: true, loadedCount: 24, hasMore: true });
+    l.noteAppend({ loadingMore: false, loadedCount: 24, hasMore: true }); // failed while unpaused
+    expect(l.allowsEmission(true)).toBe(false);
+    l.noteScroll();
+    expect(l.allowsEmission(true), 'scroll re-arms the latch but paused still holds emission').toBe(false);
+    expect(l.allowsEmission(false)).toBe(true);
+  });
+
+  it('the first observation only primes state (a mount never disarms)', () => {
+    const l = createLoadMoreLimiter();
+    l.noteAppend({ loadingMore: false, loadedCount: 0, hasMore: true });
+    expect(l.allowsEmission(false)).toBe(true);
   });
 });

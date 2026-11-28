@@ -4,7 +4,7 @@ import { t as n } from "./useLibrariesStore-C7CVlbVW.js";
 import { t as r } from "./useAuthStore-C2WMKX0c.js";
 import { n as i } from "./ThumbRating-zFPPeN4v.js";
 import { a } from "./usePreferencesStore-CQ3hN8jz.js";
-import { i as o, n as s, r as c, t as l } from "./MediaGrid-BtbZ1YmG.js";
+import { i as o, n as s, r as c, t as l } from "./MediaGrid-AsTt-Kgk.js";
 import { t as u } from "./MediaCard-B_a_4TKb.js";
 import { n as d } from "./Icon-55iG1rR7.js";
 import { t as f } from "./useImageSrc-CSM61b-l.js";
@@ -771,4 +771,4 @@ var tt = { class: "library-page" }, nt = {
 }), [["__scopeId", "data-v-0293d9ee"]]);
 export { Z as default };
 
-//# sourceMappingURL=LibraryPage-DWTEMxCU.js.map
+//# sourceMappingURL=LibraryPage-CxXYSWIv.js.map

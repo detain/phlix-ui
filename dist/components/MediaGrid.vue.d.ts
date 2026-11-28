@@ -12,6 +12,26 @@ type __VLS_Props = {
     loadingMore?: boolean;
     /** More items remain — enables the infinite-scroll sentinel. */
     hasMore?: boolean;
+    /**
+     * Host throttle for the load-more seam (phlix-ui-design-019/020). While
+     * true, NO `load-more` emission passes — neither the loaded-edge watcher
+     * nor the sentinel observer. `need-range` (random-access paging) stays
+     * live: pausing the append chain must not starve an A-Z jump.
+     *
+     * It also lands the `.paused` class on the initial-load skeleton grid —
+     * the very element the scoped `.media-grid--skeleton.paused` rules style,
+     * freezing the shimmer's `animation-play-state` on low-power hosts (TVs).
+     * This is a PROP, not a class a host may inject from outside, because that
+     * is what made the old seam dead: scoped CSS hashes these selectors onto
+     * THIS component's elements, so an external `class="paused"` could only
+     * ever land on `.media-grid-root` and never reach the skeleton.
+     *
+     * Pausing is NOT a re-arm: un-pausing after a failed append resumes where
+     * the re-arm law left the seam (still latched closed until the user
+     * scrolls, items arrive, or the `hasMore` claim moves), it does not unlock
+     * it.
+     */
+    paused?: boolean;
     /** Min card width (px). Overrides the `cardSize` preference when set. */
     cardSize?: number;
     /**
@@ -124,11 +144,12 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {
     "onNeed-range"?: ((startIndex: number, endIndex: number) => any) | undefined;
 }>, {
     loading: boolean;
+    paused: boolean;
     canMatch: boolean;
     skeletonCount: number;
     overscan: number;
-    loadingMore: boolean;
     hasMore: boolean;
+    loadingMore: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;

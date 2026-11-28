@@ -25,6 +25,14 @@
  * Infinite scroll: an `IntersectionObserver` sentinel near the end emits
  * `load-more`; a "back to top" affordance appears once scrolled well past the
  * fold. Skeleton rows on the initial load match the final layout (no shift).
+ * A FAILED append (loadingMore true→false with no items delivered while hasMore
+ * still claims more) DISARMS the seam until the user scrolls, the loaded set
+ * changes, or the hasMore claim moves — the bare flag flip never re-fires it
+ * (`createLoadMoreLimiter` in `./virtual-grid.ts`, phlix-ui-design-020). The
+ * `paused` prop is the host's throttle over this seam: it blocks BOTH emitters
+ * AND lands the `.paused` class on the skeleton grid where the scoped CSS
+ * freezes the shimmer — a prop because scoped hashing makes an externally
+ * injected class structurally impossible (phlix-ui-design-019).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue';
 import type { MediaItem } from '../types/media-item';
@@ -39,6 +47,7 @@ import {
   computeColumns,
   computeRowHeight,
   computeWindow,
+  createLoadMoreLimiter,
   effectiveItemCount,
   fixedRowContentHeight,
   labelHeightForRootFontSize,
@@ -59,6 +68,26 @@ const props = withDefaults(
     loadingMore?: boolean;
     /** More items remain — enables the infinite-scroll sentinel. */
     hasMore?: boolean;
+    /**
+     * Host throttle for the load-more seam (phlix-ui-design-019/020). While
+     * true, NO `load-more` emission passes — neither the loaded-edge watcher
+     * nor the sentinel observer. `need-range` (random-access paging) stays
+     * live: pausing the append chain must not starve an A-Z jump.
+     *
+     * It also lands the `.paused` class on the initial-load skeleton grid —
+     * the very element the scoped `.media-grid--skeleton.paused` rules style,
+     * freezing the shimmer's `animation-play-state` on low-power hosts (TVs).
+     * This is a PROP, not a class a host may inject from outside, because that
+     * is what made the old seam dead: scoped CSS hashes these selectors onto
+     * THIS component's elements, so an external `class="paused"` could only
+     * ever land on `.media-grid-root` and never reach the skeleton.
+     *
+     * Pausing is NOT a re-arm: un-pausing after a failed append resumes where
+     * the re-arm law left the seam (still latched closed until the user
+     * scrolls, items arrive, or the `hasMore` claim moves), it does not unlock
+     * it.
+     */
+    paused?: boolean;
     /** Min card width (px). Overrides the `cardSize` preference when set. */
     cardSize?: number;
     /**
@@ -126,7 +155,7 @@ const props = withDefaults(
     /** Admin opt-in (U5): render each card's "Match" action + forward `match`. */
     canMatch?: boolean;
   }>(),
-  { loading: false, loadingMore: false, hasMore: false, skeletonCount: 18, overscan: 2, canMatch: false },
+  { loading: false, loadingMore: false, hasMore: false, paused: false, skeletonCount: 18, overscan: 2, canMatch: false },
 );
 
 const emit = defineEmits<{
@@ -244,7 +273,15 @@ function throttledMeasure(): void {
   if (now - lastScrollMeasureTime >= SCROLL_MEASURE_THROTTLE_MS) {
     lastScrollMeasureTime = now;
     // scrollTop derived from cached sizerTop — no layout read needed.
-    scrollTop.value = typeof window !== 'undefined' ? Math.max(0, window.scrollY - sizerTop) : 0;
+    const nextScrollTop =
+      typeof window !== 'undefined' ? Math.max(0, window.scrollY - sizerTop) : 0;
+    if (nextScrollTop !== scrollTop.value) {
+      scrollTop.value = nextScrollTop;
+      // GENUINE viewport movement is the explicit-user-input door of the
+      // load-more re-arm law (phlix-ui-design-020): a latched seam re-arms
+      // here — and only here, never on the bare loadingMore flag flip.
+      loadMoreLimiter.noteScroll();
+    }
   }
 }
 
@@ -362,14 +399,41 @@ const visibleItems = computed(() => {
   return out;
 });
 
+/**
+ * The load-more re-arm law (phlix-ui-design-020), in place.
+ *
+ * Every paging-state transition is fed to the limiter through this watcher,
+ * declared BEFORE the loaded-edge watcher below so a same-tick flip disarms the
+ * seam in the very flush that used to re-emit it. It watches the raw props
+ * (`loadingMore`, `items.length`, `hasMore`) rather than window output — the
+ * failure verdict is about what the APPEND delivered, which scroll churn has no
+ * bearing on. `immediate` only primes the comparison state; a mount never
+ * disarms.
+ */
+const loadMoreLimiter = createLoadMoreLimiter();
+watch(
+  () => [props.loadingMore, props.items.length, props.hasMore] as const,
+  ([loadingMore, loadedCount, hasMore]) =>
+    loadMoreLimiter.noteAppend({ loadingMore, loadedCount, hasMore }),
+  { immediate: true },
+);
+
 // On-demand paging for the pre-sized grid: when the rendered window reaches the
 // loaded edge, ask the host for the next page. The bottom sentinel can't drive
 // this once the sizer is the full `total` height (it only fires at the very end).
+// `paused` is part of the source so un-pausing RE-EVALUATES the edge (a clean
+// latch resumes the request the pause held off); `allowsEmission` carries the
+// failed-append latch — the same edge the old predicate passed on every failure
+// flip is exactly the loop (phlix-ui-design-020).
 watch(
   () =>
-    [windowResult.value.endIndex, props.items.length, props.hasMore, props.loading, props.loadingMore] as const,
-  ([endIndex, loaded, hasMore, loading, loadingMore]) => {
-    if (virtualized.value && shouldLoadMore(endIndex, loaded, { hasMore, loading, loadingMore })) {
+    [windowResult.value.endIndex, props.items.length, props.hasMore, props.loading, props.loadingMore, props.paused] as const,
+  ([endIndex, loaded, hasMore, loading, loadingMore, paused]) => {
+    if (
+      virtualized.value &&
+      loadMoreLimiter.allowsEmission(paused) &&
+      shouldLoadMore(endIndex, loaded, { hasMore, loading, loadingMore })
+    ) {
       emit('load-more');
     }
   },
@@ -495,7 +559,18 @@ function attachSentinel(): void {
   if (io || typeof IntersectionObserver === 'undefined') return;
   io = new IntersectionObserver(
     (entries) => {
-      if (entries.some((e) => e.isIntersecting) && props.hasMore && !props.loading && !props.loadingMore) {
+      // The sentinel's re-observe (it unmounts with `loadingMore` and remounts
+      // when the flag clears) used to re-fire for the still-intersecting
+      // element after every FAILED append — the observer half of the loop.
+      // Same seam law as the loaded-edge watcher (phlix-ui-design-020), same
+      // paused block (phlix-ui-design-019).
+      if (
+        entries.some((e) => e.isIntersecting) &&
+        props.hasMore &&
+        !props.loading &&
+        !props.loadingMore &&
+        loadMoreLimiter.allowsEmission(props.paused)
+      ) {
         emit('load-more');
       }
     },
@@ -623,6 +698,7 @@ watch(
     <div
       v-if="loading && items.length === 0"
       class="media-grid media-grid--skeleton"
+      :class="{ paused }"
       :style="skeletonStyle"
       role="status"
       aria-busy="true"
@@ -832,9 +908,11 @@ watch(
   100% { transform: translateX(200%); }
 }
 
-/* Pause shimmer when many skeletons are visible (e.g., initial load) to reduce
-   GPU jank on low-power devices (TVs).  The host can set `skeleton-count-high`
-   via a class binding on the grid root when appropriate. */
+/* Pause the shimmer on low-power hosts (TVs) via the `paused` PROP — bound
+   onto this very element in the template. It has to be the prop: scoped CSS
+   hashes these selectors onto this component's own elements, so a class
+   injected from outside could structurally never reach them
+   (phlix-ui-design-019 retired the old "set it on the grid root" promise). */
 .media-grid--skeleton.paused .skel-poster::before,
 .media-grid--skeleton.paused .skel-title::before,
 .media-grid--skeleton.paused .skel-sub::before,

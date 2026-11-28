@@ -1,7 +1,7 @@
 import { n as e } from "./useApiBase-DXTBY90j.js";
 import { t } from "./useMessages-B74fpn3I.js";
 import { t as n } from "./client-Bmlfq3Uy.js";
-import { t as r } from "./MediaGrid-BtbZ1YmG.js";
+import { t as r } from "./MediaGrid-AsTt-Kgk.js";
 import { t as i } from "./MetadataMatchModal-DLpGzF5b.js";
 import { n as a, t as o } from "./useItemInspector-Dz8R7MVI.js";
 import { t as s } from "./EmptyState-DjfWh3kt.js";
@@ -143,4 +143,4 @@ var k = { class: "recommendations-page" }, A = /*#__PURE__*/ h(/* @__PURE__ */ S
 }), [["__scopeId", "data-v-7af43f82"]]);
 export { A as default };
 
-//# sourceMappingURL=RecommendationsPage-D1AM_Qyx.js.map
+//# sourceMappingURL=RecommendationsPage-Cr9xKgur.js.map
