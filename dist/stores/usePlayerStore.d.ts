@@ -39,6 +39,13 @@ export interface MediaSessionHandlers {
     onPrevious?: () => void;
 }
 /**
+ * Media-delay bounds for the caption/audio offset channels (S-ui-once-16):
+ * the stepper moves in 0.1 s steps and the window is ±10 s — a delay beyond
+ * ten seconds means the user wants a track switch, not a delay.
+ */
+export declare const MEDIA_OFFSET_LIMIT_SECONDS = 10;
+export declare const MEDIA_OFFSET_STEP_SECONDS = 0.1;
+/**
  * usePlayerStore (R1.3) — singleton playback state shared across routes so a
  * mini-player can keep playing during navigation and "resume" / "up-next" work.
  *
@@ -369,6 +376,8 @@ export declare const usePlayerStore: import("pinia").SetupStoreDefinition<"phlix
     rate: import("vue").Ref<number, number>;
     quality: import("vue").Ref<string, string>;
     subtitleLang: import("vue").Ref<string | null, string | null>;
+    subtitleOffset: import("vue").Ref<number, number>;
+    audioOffset: import("vue").Ref<number, number>;
     hlsMasterUrl: import("vue").Ref<string, string>;
     miniPlayer: import("vue").Ref<boolean, boolean>;
     resumeMap: import("vue").Ref<Record<string, number>, Record<string, number>>;
@@ -404,6 +413,8 @@ export declare const usePlayerStore: import("pinia").SetupStoreDefinition<"phlix
     setRate: (r: number) => void;
     setQuality: (q: string) => void;
     setSubtitle: (lang: string | null) => void;
+    setSubtitleOffset: (seconds: number) => void;
+    setAudioOffset: (seconds: number) => void;
     setQueue: (items: MediaItem[]) => void;
     enqueue: (item: MediaItem) => void;
     next: (resolveStreamUrl?: (m: MediaItem) => string | undefined) => MediaItem | null;

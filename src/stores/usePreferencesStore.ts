@@ -131,6 +131,16 @@ export interface Preferences {
   gaplessEnabled: boolean;
   /** Preferred audio quality tier. */
   preferredAudioQuality: 'low' | 'medium' | 'high' | 'lossless';
+  /** Subtitle render delay in seconds (S-ui-once-16): positive = captions paint
+   *  later than the audio. The persisted carrier for the player store's session
+   *  mirror; readers normalise (clamp ±10 s, 0.1 s quantize) because hydration is
+   *  verbatim, like every other numeric preference. */
+  subtitleOffsetSeconds: number;
+  /** Audio-track delay in seconds (S-ui-once-16). Captions are custom-painted, so
+   *  the menu applies this as a paired compensation delta to the overlay; hosts
+   *  with a real audio graph (MediaSource/element pairs) can delay audio directly
+   *  from this channel. */
+  audioOffsetSeconds: number;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -157,6 +167,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   crossfadeFadeOut: 0.5,
   gaplessEnabled: true,
   preferredAudioQuality: 'high',
+  subtitleOffsetSeconds: 0,
+  audioOffsetSeconds: 0,
 };
 
 /** Stable id from a preset name (so re-saving the same name overwrites it). */
@@ -240,6 +252,10 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
   const crossfadeFadeOut = ref<number>(initial.crossfadeFadeOut);
   const gaplessEnabled = ref<boolean>(initial.gaplessEnabled);
   const preferredAudioQuality = ref<Preferences['preferredAudioQuality']>(initial.preferredAudioQuality);
+  // Verbatim-hydrated like every other carrier (the stored blob is trusted data);
+  // consumption normalises through the player store's parse channel.
+  const subtitleOffsetSeconds = ref<number>(initial.subtitleOffsetSeconds);
+  const audioOffsetSeconds = ref<number>(initial.audioOffsetSeconds);
 
   const systemReduced = ref(systemPrefersReduced());
   if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
@@ -276,6 +292,8 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
       crossfadeFadeOut: crossfadeFadeOut.value,
       gaplessEnabled: gaplessEnabled.value,
       preferredAudioQuality: preferredAudioQuality.value,
+      subtitleOffsetSeconds: subtitleOffsetSeconds.value,
+      audioOffsetSeconds: audioOffsetSeconds.value,
     };
   }
 
@@ -380,6 +398,8 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     crossfadeFadeOut.value = d.crossfadeFadeOut;
     gaplessEnabled.value = d.gaplessEnabled;
     preferredAudioQuality.value = d.preferredAudioQuality;
+    subtitleOffsetSeconds.value = d.subtitleOffsetSeconds;
+    audioOffsetSeconds.value = d.audioOffsetSeconds;
   }
 
   return {
@@ -406,6 +426,8 @@ export const usePreferencesStore = defineStore('phlix-prefs', () => {
     crossfadeFadeOut,
     gaplessEnabled,
     preferredAudioQuality,
+    subtitleOffsetSeconds,
+    audioOffsetSeconds,
     systemReduced,
     effectiveReducedMotion,
     snapshot,

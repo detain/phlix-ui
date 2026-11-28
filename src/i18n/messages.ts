@@ -319,6 +319,13 @@ export const DEFAULT_MESSAGES = {
     captionBackground: 'Caption background',
     edge: 'Edge',
     captionEdge: 'Caption edge',
+    // Caption / audio delay stepper (S-ui-once-16)
+    subtitleDelay: 'Subtitle delay',
+    audioDelay: 'Audio delay',
+    delayDecrease: 'Decrease delay',
+    delayIncrease: 'Increase delay',
+    delayReset: 'Reset delay',
+    delayValue: '{offset}s',
     // Subtitle search / download (Wave 3 F3)
     addSubtitles: 'Add subtitles…',
     subtitleSearchTitle: 'Add subtitles',

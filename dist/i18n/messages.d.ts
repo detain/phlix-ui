@@ -275,6 +275,12 @@ export declare const DEFAULT_MESSAGES: {
         captionBackground: string;
         edge: string;
         captionEdge: string;
+        subtitleDelay: string;
+        audioDelay: string;
+        delayDecrease: string;
+        delayIncrease: string;
+        delayReset: string;
+        delayValue: string;
         addSubtitles: string;
         subtitleSearchTitle: string;
         subtitleSearchLanguages: string;

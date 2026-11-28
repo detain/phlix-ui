@@ -201,6 +201,45 @@ export function readActiveCueLines(track: TextTrack | null | undefined): string[
   return lines;
 }
 
+// ---- render timing offset (S-ui-once-16 / phlix-ui-once-020) ------------------
+
+/**
+ * The media position whose cues should PAINT now under a delay. A positive
+ * delay means "show captions later than the audio": at media time t the
+ * overlay paints the cues of `t - delay`, i.e. it reads BACK into the past;
+ * a leading (negative) delay reads ahead. A non-finite delay is refused to 0
+ * (the raw media-time read) — the same refusal discipline the store parsers
+ * apply, so a corrupt value can never fling the render window off-scale.
+ */
+export function captionRenderTime(mediaTime: number, delaySeconds: number): number {
+  const delay = Number.isFinite(delaySeconds) ? delaySeconds : 0;
+  return mediaTime - delay;
+}
+
+/**
+ * Offset-aware twin of readActiveCueLines(): the cue lines whose `[start, end)`
+ * window covers `positionSeconds`, read from the track's FULL cue list rather
+ * than the engine's `activeCues` — the engine windows cues at the raw media
+ * time and knows nothing about our delay. Bounds are start-inclusive /
+ * end-exclusive (the engine's own semantics); cues with non-numeric bounds are
+ * skipped. A caller falls back to readActiveCueLines when `track.cues` is
+ * unavailable (sidecar still loading, an exotic engine, jsdom): the delay then
+ * stays INERT for that read rather than blanking a cue the engine can paint.
+ */
+export function readCueLinesAt(track: TextTrack | null | undefined, positionSeconds: number): string[] {
+  if (!track || !Number.isFinite(positionSeconds)) return [];
+  const cues = toArray<TextTrackCue>(track.cues as unknown as ArrayLike<TextTrackCue>);
+  const lines: string[] = [];
+  for (const cue of cues) {
+    const { start, end } = cue as { start?: number; end?: number };
+    if (typeof start !== 'number' || typeof end !== 'number') continue;
+    if (start <= positionSeconds && positionSeconds < end) {
+      lines.push(...cleanCueText((cue as VTTCue).text));
+    }
+  }
+  return lines;
+}
+
 // ---- styling ----------------------------------------------------------------
 
 /** Multiplier applied to the overlay's responsive base font-size. */

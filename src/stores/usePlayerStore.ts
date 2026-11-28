@@ -159,6 +159,27 @@ function normalizeRate(r: unknown): number | null {
 }
 
 /**
+ * Media-delay bounds for the caption/audio offset channels (S-ui-once-16):
+ * the stepper moves in 0.1 s steps and the window is ±10 s — a delay beyond
+ * ten seconds means the user wants a track switch, not a delay.
+ */
+export const MEDIA_OFFSET_LIMIT_SECONDS = 10;
+export const MEDIA_OFFSET_STEP_SECONDS = 0.1;
+
+/**
+ * Parse a requested offset onto the ±10 s window — the direct twin of
+ * normalizeVolume/normalizeRate: non-finite input is REFUSED (null) rather
+ * than clamped (Math.min/max propagate NaN), and the 0.1 s quantize absorbs
+ * float step-drift (0.1×3 → 0.30000000000000004 lands back on exactly 0.3).
+ * The 10 multiplier is 1 / MEDIA_OFFSET_STEP_SECONDS.
+ */
+function normalizeMediaOffset(v: unknown): number | null {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return null;
+  const clamped = Math.min(MEDIA_OFFSET_LIMIT_SECONDS, Math.max(-MEDIA_OFFSET_LIMIT_SECONDS, v));
+  return Math.round(clamped * 10) / 10;
+}
+
+/**
  * usePlayerStore (R1.3) — singleton playback state shared across routes so a
  * mini-player can keep playing during navigation and "resume" / "up-next" work.
  *
@@ -194,6 +215,11 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   const rate = ref(1);
   const quality = ref(prefs.defaultQuality);
   const subtitleLang = ref<string | null>(prefs.defaultSubtitleLang);
+  // Session mirrors of the persisted delay carriers (S-ui-once-16), normalised
+  // on the way in — a corrupt verbatim-hydrated preference can never land raw
+  // on the render path. The CaptionsMenu steppers write both channels.
+  const subtitleOffset = ref<number>(normalizeMediaOffset(prefs.subtitleOffsetSeconds) ?? 0);
+  const audioOffset = ref<number>(normalizeMediaOffset(prefs.audioOffsetSeconds) ?? 0);
 
   const hlsMasterUrl = ref('');
   const miniPlayer = ref(false);
@@ -512,6 +538,25 @@ export const usePlayerStore = defineStore('phlix-player', () => {
   function setSubtitle(lang: string | null): void {
     subtitleLang.value = lang;
   }
+  /** Subtitle render delay (S-ui-once-16): positive = captions later. Refused
+   *  non-finite input keeps the last good value (normalizeMediaOffset twin of
+   *  setVolume/setRate); a successful write mirrors to the persisted carrier. */
+  function setSubtitleOffset(seconds: number): void {
+    const off = normalizeMediaOffset(seconds);
+    if (off === null) return;
+    subtitleOffset.value = off;
+    prefs.subtitleOffsetSeconds = off;
+  }
+  /** Audio-track delay (S-ui-once-16). The overlay consumes it as a paired
+   *  compensation delta (captions are custom-painted; a single muxed element
+   *  cannot delay its own audio here); hosts with a real audio graph read the
+   *  same channel. */
+  function setAudioOffset(seconds: number): void {
+    const off = normalizeMediaOffset(seconds);
+    if (off === null) return;
+    audioOffset.value = off;
+    prefs.audioOffsetSeconds = off;
+  }
 
   // ---- queue / up-next ----------------------------------------------------
   function setQueue(items: MediaItem[]): void {
@@ -611,7 +656,7 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     };
   }
 
-  /** Re-seed volume/quality/subtitle from the current preferences (e.g. on open). */
+  /** Re-seed volume/quality/subtitle/offsets from the current preferences (e.g. on open). */
   function seedFromPreferences(): void {
     // defaultVolume arrives from a verbatim-hydrated localStorage blob, so it
     // flows through the same parse channel instead of a raw assignment.
@@ -619,6 +664,10 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     if (vol !== null) volume.value = vol;
     quality.value = prefs.defaultQuality;
     subtitleLang.value = prefs.defaultSubtitleLang;
+    const subOff = normalizeMediaOffset(prefs.subtitleOffsetSeconds);
+    if (subOff !== null) subtitleOffset.value = subOff;
+    const audOff = normalizeMediaOffset(prefs.audioOffsetSeconds);
+    if (audOff !== null) audioOffset.value = audOff;
   }
 
   return {
@@ -635,6 +684,8 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     rate,
     quality,
     subtitleLang,
+    subtitleOffset,
+    audioOffset,
     hlsMasterUrl,
     miniPlayer,
     resumeMap,
@@ -659,6 +710,8 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     setRate,
     setQuality,
     setSubtitle,
+    setSubtitleOffset,
+    setAudioOffset,
     setQueue,
     enqueue,
     next,

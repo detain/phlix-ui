@@ -114,6 +114,16 @@ export interface Preferences {
     gaplessEnabled: boolean;
     /** Preferred audio quality tier. */
     preferredAudioQuality: 'low' | 'medium' | 'high' | 'lossless';
+    /** Subtitle render delay in seconds (S-ui-once-16): positive = captions paint
+     *  later than the audio. The persisted carrier for the player store's session
+     *  mirror; readers normalise (clamp ±10 s, 0.1 s quantize) because hydration is
+     *  verbatim, like every other numeric preference. */
+    subtitleOffsetSeconds: number;
+    /** Audio-track delay in seconds (S-ui-once-16). Captions are custom-painted, so
+     *  the menu applies this as a paired compensation delta to the overlay; hosts
+     *  with a real audio graph (MediaSource/element pairs) can delay audio directly
+     *  from this channel. */
+    audioOffsetSeconds: number;
 }
 export declare const DEFAULT_PREFERENCES: Preferences;
 /** Read persisted prefs synchronously (used both by the store and the early
@@ -169,6 +179,8 @@ export declare const usePreferencesStore: import("pinia").SetupStoreDefinition<"
     crossfadeFadeOut: import("vue").Ref<number, number>;
     gaplessEnabled: import("vue").Ref<boolean, boolean>;
     preferredAudioQuality: import("vue").Ref<"medium" | "low" | "high" | "lossless", "medium" | "low" | "high" | "lossless">;
+    subtitleOffsetSeconds: import("vue").Ref<number, number>;
+    audioOffsetSeconds: import("vue").Ref<number, number>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;

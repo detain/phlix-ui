@@ -26,7 +26,7 @@ import Icon from '../Icon.vue';
 import IconButton from '../ui/IconButton.vue';
 import Select from '../ui/Select.vue';
 import { useFocusTrap } from '../ui/useFocusTrap';
-import { usePlayerStore } from '../../stores/usePlayerStore';
+import { usePlayerStore, MEDIA_OFFSET_STEP_SECONDS } from '../../stores/usePlayerStore';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { useMessages } from '../../composables/useMessages';
 import type { CaptionSize, CaptionBackground, CaptionEdge } from '../../stores/usePreferencesStore';
@@ -158,6 +158,29 @@ function setEdge(v: string | number): void {
   prefs.captionStyle = { ...prefs.captionStyle, edge: v as CaptionEdge };
 }
 
+// Delay steppers (S-ui-once-16): each click goes through the player store
+// action, which normalises (±10 s clamp, 0.1 s quantize) and mirrors to the
+// persisted preference — the stepper never writes raw arithmetic itself, so the
+// ceiling simply stops the value at ±10.0 instead of rejecting the click.
+function stepSubtitleOffset(dir: 1 | -1): void {
+  player.setSubtitleOffset(player.subtitleOffset + dir * MEDIA_OFFSET_STEP_SECONDS);
+}
+function stepAudioOffset(dir: 1 | -1): void {
+  player.setAudioOffset(player.audioOffset + dir * MEDIA_OFFSET_STEP_SECONDS);
+}
+function resetSubtitleOffset(): void {
+  player.setSubtitleOffset(0);
+}
+function resetAudioOffset(): void {
+  player.setAudioOffset(0);
+}
+/** Signed one-decimal display (`+0.3`, `−0.2`, `0.0`); -0 normalises so zero
+ *  never renders as "-0.0". */
+function formatMediaOffset(v: number): string {
+  const n = v === 0 ? 0 : v;
+  return n > 0 ? `+${n.toFixed(1)}` : n.toFixed(1);
+}
+
 // Real modal-ish semantics: trap Tab inside the panel, focus it on open, Esc
 // closes. No scroll-lock (this lives inside the player, incl. fullscreen).
 useFocusTrap(panelEl, toRef(props, 'open'), {
@@ -264,6 +287,26 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </template>
+
+      <div class="capmenu__field">
+        <span class="capmenu__fieldlabel">{{ translate('player.subtitleDelay') }}</span>
+        <div class="capmenu__stepper" role="group" :aria-label="translate('player.subtitleDelay')">
+          <button type="button" class="capmenu__stepbtn" :aria-label="translate('player.delayDecrease')" @click="stepSubtitleOffset(-1)">−</button>
+          <span class="capmenu__stepvalue">{{ translate('player.delayValue', { offset: formatMediaOffset(player.subtitleOffset) }) }}</span>
+          <button type="button" class="capmenu__stepbtn" :aria-label="translate('player.delayIncrease')" @click="stepSubtitleOffset(1)">+</button>
+          <button type="button" class="capmenu__stepbtn capmenu__stepreset" :aria-label="translate('player.delayReset')" :disabled="player.subtitleOffset === 0" @click="resetSubtitleOffset()">↺</button>
+        </div>
+      </div>
+
+      <div class="capmenu__field">
+        <span class="capmenu__fieldlabel">{{ translate('player.audioDelay') }}</span>
+        <div class="capmenu__stepper" role="group" :aria-label="translate('player.audioDelay')">
+          <button type="button" class="capmenu__stepbtn" :aria-label="translate('player.delayDecrease')" @click="stepAudioOffset(-1)">−</button>
+          <span class="capmenu__stepvalue">{{ translate('player.delayValue', { offset: formatMediaOffset(player.audioOffset) }) }}</span>
+          <button type="button" class="capmenu__stepbtn" :aria-label="translate('player.delayIncrease')" @click="stepAudioOffset(1)">+</button>
+          <button type="button" class="capmenu__stepbtn capmenu__stepreset" :aria-label="translate('player.delayReset')" :disabled="player.audioOffset === 0" @click="resetAudioOffset()">↺</button>
+        </div>
+      </div>
 
       <h3 class="capmenu__title capmenu__title--sub">{{ translate('player.captionStyle') }}</h3>
       <div class="capmenu__style">
@@ -451,6 +494,44 @@ onBeforeUnmount(() => {
 .capmenu__fieldlabel {
   font-size: var(--text-sm);
   color: var(--text-muted);
+}
+/* Delay steppers (S-ui-once-16): − value + reset, buttons not a Select so the
+   style-section select census is untouched. */
+.capmenu__stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.capmenu__stepbtn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.capmenu__stepbtn:hover:not([disabled]) {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.capmenu__stepbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.capmenu__stepbtn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+.capmenu__stepvalue {
+  min-width: 4.2em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--text);
 }
 .capmenu__field :deep(.phlix-select) {
   min-width: 9.5rem;

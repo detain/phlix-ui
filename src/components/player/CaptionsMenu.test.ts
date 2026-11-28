@@ -223,3 +223,110 @@ describe('CaptionsMenu — dismissal', () => {
     expect(w.emitted('update:open')).toBeUndefined();
   });
 });
+
+// ---- delay steppers (S-ui-once-16 / phlix-ui-once-020) -----------------------
+
+describe('CaptionsMenu — delay steppers (S-ui-once-16)', () => {
+  function buttons(w: ReturnType<typeof mountMenu>, group: 'Subtitle delay' | 'Audio delay') {
+    const g = w.get(`[role="group"][aria-label="${group}"]`);
+    return {
+      decrease: g.get('[aria-label="Decrease delay"]'),
+      increase: g.get('[aria-label="Increase delay"]'),
+      reset: g.get('[aria-label="Reset delay"]'),
+      value: g.get('.capmenu__stepvalue'),
+    };
+  }
+
+  it('renders both steppers at 0.0s with reset disabled at zero', () => {
+    const w = mountMenu({ tracks: [EN], open: true });
+    const sub = buttons(w, 'Subtitle delay');
+    const aud = buttons(w, 'Audio delay');
+    expect(sub.value.text()).toBe('0.0s');
+    expect(aud.value.text()).toBe('0.0s');
+    expect(sub.reset.attributes('disabled')).toBeDefined();
+    expect(aud.reset.attributes('disabled')).toBeDefined();
+  });
+
+  it('±0.1 steps move the store AND persist the preference channel (subtitle)', async () => {
+    const w = mountMenu({ tracks: [EN], open: true });
+    const player = usePlayerStore();
+    const prefs = usePreferencesStore();
+    const { increase, decrease, value } = buttons(w, 'Subtitle delay');
+    await increase.trigger('click');
+    await increase.trigger('click');
+    await increase.trigger('click');
+    expect(value.text()).toBe('+0.3s'); // toFixed(1) — float drift 0.30000000000000004 absorbed
+    expect(player.subtitleOffset).toBe(0.3);
+    expect(prefs.subtitleOffsetSeconds).toBe(0.3);
+    await decrease.trigger('click');
+    expect(value.text()).toBe('+0.2s');
+    expect(player.subtitleOffset).toBe(0.2);
+    expect(prefs.subtitleOffsetSeconds).toBe(0.2);
+  });
+
+  it('the audio stepper writes the audio channels (independent of subtitle)', async () => {
+    const w = mountMenu({ tracks: [EN], open: true });
+    const player = usePlayerStore();
+    const prefs = usePreferencesStore();
+    const { increase, value } = buttons(w, 'Audio delay');
+    await increase.trigger('click');
+    expect(value.text()).toBe('+0.1s');
+    expect(player.audioOffset).toBe(0.1);
+    expect(prefs.audioOffsetSeconds).toBe(0.1);
+    expect(player.subtitleOffset).toBe(0); // channels stay independent
+  });
+
+  it('clamps to ±10 s at both the store and the stepper edge', async () => {
+    const player = usePlayerStore();
+    player.setSubtitleOffset(50); // out-of-band write clamps, never lands raw
+    expect(player.subtitleOffset).toBe(10);
+    const w = mountMenu({ tracks: [EN], open: true });
+    const sub = buttons(w, 'Subtitle delay');
+    expect(sub.value.text()).toBe('+10.0s');
+    await sub.increase.trigger('click'); // at the ceiling the step is inert
+    expect(player.subtitleOffset).toBe(10);
+    expect(usePreferencesStore().subtitleOffsetSeconds).toBe(10);
+    player.setAudioOffset(-50);
+    expect(player.audioOffset).toBe(-10);
+    await nextTick(); // out-of-band store write — let the template re-render
+    expect(buttons(w, 'Audio delay').value.text()).toBe('-10.0s');
+  });
+
+  it('refuses non-finite offsets and leaves store + prefs at the last good value', () => {
+    const player = usePlayerStore();
+    player.setSubtitleOffset(0.3);
+    player.setSubtitleOffset(Number.NaN);
+    expect(player.subtitleOffset).toBe(0.3);
+    player.setSubtitleOffset(Infinity);
+    expect(player.subtitleOffset).toBe(0.3);
+    expect(usePreferencesStore().subtitleOffsetSeconds).toBe(0.3); // refused writes never persist
+  });
+
+  it('reset returns to 0.0s and re-disables itself', async () => {
+    const w = mountMenu({ tracks: [EN], open: true });
+    const player = usePlayerStore();
+    player.setSubtitleOffset(0.5);
+    await nextTick();
+    const { reset, value } = buttons(w, 'Subtitle delay');
+    expect(reset.attributes('disabled')).toBeUndefined();
+    await reset.trigger('click');
+    expect(value.text()).toBe('0.0s');
+    expect(player.subtitleOffset).toBe(0);
+    expect(usePreferencesStore().subtitleOffsetSeconds).toBe(0);
+  });
+
+  it('the stepper value persists across remount via the preferences store', async () => {
+    const w = mountMenu({ tracks: [EN], open: true });
+    const { increase } = buttons(w, 'Subtitle delay');
+    await increase.trigger('click');
+    await increase.trigger('click');
+    await increase.trigger('click'); // 0.3 s
+    window.dispatchEvent(new Event('pagehide')); // flush the debounced persist
+    w.unmount();
+
+    setActivePinia(createPinia()); // fresh stores — only localStorage survives
+    const w2 = mountMenu({ tracks: [EN], open: true });
+    expect(buttons(w2, 'Subtitle delay').value.text()).toBe('+0.3s'); // hydrated display
+    expect(usePlayerStore().subtitleOffset).toBe(0.3); // session mirror re-seeded from prefs
+  });
+});

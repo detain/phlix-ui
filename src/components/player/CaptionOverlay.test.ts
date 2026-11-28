@@ -8,8 +8,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick, markRaw } from 'vue';
+import { setActivePinia, createPinia } from 'pinia';
 import CaptionOverlay from './CaptionOverlay.vue';
 import { DEFAULT_CAPTION_STYLE, type CaptionStyle } from '../../stores/usePreferencesStore';
+import { usePlayerStore } from '../../stores/usePlayerStore';
+import { captionRenderTime, readCueLinesAt } from './captions';
+
+interface FakeCue {
+  start: number;
+  end: number;
+  text: string;
+}
 
 interface FakeTrack {
   kind: string;
@@ -17,6 +26,9 @@ interface FakeTrack {
   label: string;
   mode: string;
   activeCues: { text: string }[] | null;
+  /** Full cue list exposed on the track (the offset render path reads this;
+   *  absent = unavailable, like a still-loading sidecar). */
+  cues?: ArrayLike<FakeCue> | null;
   handlers: Record<string, Array<() => void>>;
   addEventListener(type: string, cb: () => void): void;
   removeEventListener(type: string, cb: () => void): void;
@@ -134,6 +146,10 @@ function stubResizeObserver(): { fire: () => void } {
 function mountOverlay(
   props: Partial<{ video: HTMLVideoElement | null; language: string | null; styleConfig: CaptionStyle; lifted: boolean; controlsRoot: HTMLElement | null }>,
 ) {
+  // S-ui-once-16: the overlay reads the player store's caption delay; a fresh
+  // pinia per mount mirrors production (singleton store, default offsets 0 —
+  // every pre-existing pin here runs at delay 0 exactly as before).
+  setActivePinia(createPinia());
   return mount(CaptionOverlay, {
     props: { video: null, language: null, styleConfig: { ...DEFAULT_CAPTION_STYLE }, lifted: false, controlsRoot: null, ...props },
   });
@@ -433,5 +449,158 @@ describe('CaptionOverlay', () => {
       await nextTick();
       expect(vi.getTimerCount()).toBe(1); // still one — the previous timer was cancelled
     });
+  });
+});
+
+// ---- render timing offset (S-ui-once-16 / phlix-ui-once-020) -----------------
+
+/** A fake video that additionally carries a readable `currentTime` and records
+ *  `timeupdate` listeners (the overlay's offset ticker attaches one only when a
+ *  delay is active and the element answers `addEventListener`). `markRaw` mirrors
+ *  a real element never being a reactive proxy. */
+function videoClock(
+  tracks: FakeTrack[],
+  currentTime = 0,
+): { video: HTMLVideoElement; handlers: Record<string, Array<() => void>>; setTime: (t: number) => void } {
+  const list: Record<number, FakeTrack> & { length: number } = { length: tracks.length };
+  tracks.forEach((t, i) => (list[i] = t));
+  const handlers: Record<string, Array<() => void>> = {};
+  const raw = markRaw({
+    textTracks: list,
+    currentTime,
+    addEventListener(type: string, cb: () => void) {
+      (handlers[type] ??= []).push(cb);
+    },
+    removeEventListener(type: string, cb: () => void) {
+      handlers[type] = (handlers[type] ?? []).filter((h) => h !== cb);
+    },
+  });
+  const setTime = (t: number) => {
+    (raw as { currentTime: number }).currentTime = t;
+  };
+  return { video: raw as unknown as HTMLVideoElement, handlers, setTime };
+}
+
+function fireTimeupdate(handlers: Record<string, Array<() => void>>): void {
+  (handlers.timeupdate ?? []).forEach((h) => h());
+}
+
+const CUES: FakeCue[] = [
+  { start: 1, end: 2, text: 'First' },
+  { start: 3, end: 4, text: 'Second' },
+];
+
+describe('render timing offset (S-ui-once-16)', () => {
+  it('paints the cues of the DELAYED render position, not the engine activeCues', async () => {
+    const en = fakeTrack({ language: 'en', activeCues: [], cues: CUES });
+    const { video, handlers, setTime } = videoClock([en], 2.5);
+    const w = mountOverlay({ video, language: 'en' });
+    await nextTick();
+    // delay 0 → engine path: activeCues empty, nothing painted (pre-fix law).
+    expect(w.find('.player__captions').exists()).toBe(false);
+
+    const player = usePlayerStore();
+    player.setSubtitleOffset(1); // "captions 1 s later" → paint the cues of t-1
+    await nextTick();
+    expect(handlers.timeupdate?.length).toBe(1); // the ticker is now attached
+    // render position 2.5 - 1.0 = 1.5 ∈ [1,2) → 'First' even though the engine's
+    // activeCues are empty: this is the offset-applied-to-render-timing pin.
+    expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['First']);
+
+    setTime(4.5); // engine ticks → recompute at 4.5 - 1.0 = 3.5 ∈ [3,4)
+    fireTimeupdate(handlers);
+    await nextTick();
+    expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Second']);
+
+    // end-exclusive boundary at the overlay level: 4.5 - 2.5 = 2.0 sits OUT of
+    // [1,2) and before [3,4) → between cues → nothing painted.
+    player.setSubtitleOffset(2.5);
+    await nextTick();
+    fireTimeupdate(handlers);
+    await nextTick();
+    expect(w.find('.player__captions').exists()).toBe(false);
+  });
+
+  it('applies the audio delay as a paired compensation delta (sum with subtitle delay)', async () => {
+    const en = fakeTrack({ language: 'en', activeCues: [], cues: CUES });
+    const { video, handlers } = videoClock([en], 4.0);
+    const w = mountOverlay({ video, language: 'en' });
+    await nextTick();
+    const player = usePlayerStore();
+    player.setAudioOffset(0.5);
+    player.setSubtitleOffset(0.5);
+    await nextTick();
+    // total 1.0 → render 3.0: cue [3,4) is start-INCLUSIVE → 'Second'.
+    expect(handlers.timeupdate?.length).toBe(1);
+    expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Second']);
+  });
+
+  it('detaches the timeupdate ticker on unmount (no listener leak on the shared element)', async () => {
+    const en = fakeTrack({ language: 'en', activeCues: [], cues: CUES });
+    const { video, handlers } = videoClock([en], 2.5);
+    const w = mountOverlay({ video, language: 'en' });
+    const player = usePlayerStore();
+    player.setSubtitleOffset(1);
+    await nextTick();
+    expect(handlers.timeupdate?.length).toBe(1);
+    w.unmount();
+    expect(handlers.timeupdate?.length).toBe(0);
+  });
+
+  it('degrades to the engine activeCues when track.cues are unavailable (delay inert, documented)', async () => {
+    // videoWith() fake has NO addEventListener and the track has no `cues` —
+    // the documented degradation surface (loading sidecar / exotic engine).
+    const en = fakeTrack({ language: 'en', activeCues: [{ text: 'Engine cue' }] });
+    const w = mountOverlay({ video: videoWith([en]), language: 'en' });
+    await nextTick();
+    expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Engine cue']);
+    const player = usePlayerStore();
+    player.setSubtitleOffset(5);
+    await nextTick();
+    fireCue(en);
+    await nextTick();
+    // offset inert: the raw activeCues still paint rather than a blank screen.
+    expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Engine cue']);
+  });
+
+  it('at delay 0 keeps the untouched engine path (cuechange reads activeCues)', async () => {
+    const en = fakeTrack({ language: 'en', activeCues: [] });
+    const { video, handlers } = videoClock([en], 1.5);
+    const w = mountOverlay({ video, language: 'en' });
+    await nextTick();
+    expect(Object.keys(handlers)).toEqual([]); // no ticker attached at delay 0
+    en.activeCues = [{ text: 'Now speaking' }];
+    fireCue(en);
+    await nextTick();
+    expect(w.findAll('.player__caption-line').map((p) => p.text())).toEqual(['Now speaking']);
+  });
+});
+
+describe('offset helpers (S-ui-once-16)', () => {
+  it('captionRenderTime reads back into the past for a positive delay', () => {
+    expect(captionRenderTime(2.5, 1)).toBe(1.5);
+    expect(captionRenderTime(2.5, -0.5)).toBe(3); // leading delay reads ahead
+  });
+
+  it('captionRenderTime refuses a non-finite delay to the raw media time', () => {
+    expect(captionRenderTime(2.5, Number.NaN)).toBe(2.5);
+    expect(captionRenderTime(2.5, Infinity)).toBe(2.5);
+  });
+
+  it('readCueLinesAt windows are start-inclusive, end-exclusive', () => {
+    const track = { cues: CUES } as unknown as TextTrack;
+    expect(readCueLinesAt(track, 1.5)).toEqual(['First']);
+    expect(readCueLinesAt(track, 1)).toEqual(['First']); // start inclusive
+    expect(readCueLinesAt(track, 2)).toEqual([]); // end exclusive
+    expect(readCueLinesAt(track, 3)).toEqual(['Second']);
+    expect(readCueLinesAt(track, 4)).toEqual([]);
+    expect(readCueLinesAt(track, 10)).toEqual([]);
+  });
+
+  it('readCueLinesAt degrades to [] for null tracks, missing cues, bad positions', () => {
+    expect(readCueLinesAt(null, 1)).toEqual([]);
+    expect(readCueLinesAt({ } as unknown as TextTrack, 1)).toEqual([]);
+    expect(readCueLinesAt({ cues: [{ start: Number.NaN, end: 2, text: 'x' }] } as unknown as TextTrack, 1)).toEqual([]);
+    expect(readCueLinesAt({ cues: CUES } as unknown as TextTrack, Number.NaN)).toEqual([]);
   });
 });

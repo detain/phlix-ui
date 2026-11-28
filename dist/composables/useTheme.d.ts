@@ -102,13 +102,15 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     crossfadeFadeOut: import("vue").Ref<number, number>;
     gaplessEnabled: import("vue").Ref<boolean, boolean>;
     preferredAudioQuality: import("vue").Ref<"medium" | "low" | "high" | "lossless", "medium" | "low" | "high" | "lossless">;
+    subtitleOffsetSeconds: import("vue").Ref<number, number>;
+    audioOffsetSeconds: import("vue").Ref<number, number>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
     saveFilterPreset: (name: string, query: Record<string, string | string[]>) => import("..").FilterPreset;
     removeFilterPreset: (id: string) => void;
     reset: () => void;
-}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "viewMode" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "systemReduced">, Pick<{
+}, "tv" | "theme" | "accent" | "density" | "cardSize" | "gridDensity" | "viewMode" | "reducedMotion" | "autoplay" | "defaultVolume" | "defaultQuality" | "defaultSubtitleLang" | "defaultAudioLang" | "subtitlePreferenceSet" | "captionStyle" | "atmosphere" | "filterPresets" | "showMarkerTimeline" | "crossfadeDuration" | "crossfadeFadeIn" | "crossfadeFadeOut" | "gaplessEnabled" | "preferredAudioQuality" | "subtitleOffsetSeconds" | "audioOffsetSeconds" | "systemReduced">, Pick<{
     theme: import("vue").Ref<string, string>;
     accent: import("vue").Ref<string | null, string | null>;
     density: import("vue").Ref<import("..").Density, import("..").Density>;
@@ -150,6 +152,8 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     crossfadeFadeOut: import("vue").Ref<number, number>;
     gaplessEnabled: import("vue").Ref<boolean, boolean>;
     preferredAudioQuality: import("vue").Ref<"medium" | "low" | "high" | "lossless", "medium" | "low" | "high" | "lossless">;
+    subtitleOffsetSeconds: import("vue").Ref<number, number>;
+    audioOffsetSeconds: import("vue").Ref<number, number>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;
@@ -198,6 +202,8 @@ export declare function useTheme(): import("pinia").Store<"phlix-prefs", Pick<{
     crossfadeFadeOut: import("vue").Ref<number, number>;
     gaplessEnabled: import("vue").Ref<boolean, boolean>;
     preferredAudioQuality: import("vue").Ref<"medium" | "low" | "high" | "lossless", "medium" | "low" | "high" | "lossless">;
+    subtitleOffsetSeconds: import("vue").Ref<number, number>;
+    audioOffsetSeconds: import("vue").Ref<number, number>;
     systemReduced: import("vue").Ref<boolean, boolean>;
     effectiveReducedMotion: import("vue").ComputedRef<boolean>;
     snapshot: () => Preferences;

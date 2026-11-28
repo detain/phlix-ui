@@ -30,10 +30,25 @@ export const S504_SUBOFFSET_TOKEN = 'S504SUBOFFSETX9P2';
  * resting line. ResizeObserver only — never a MutationObserver — and it is guarded
  * so jsdom/SSR (where it is undefined) simply degrades to a `0` offset. Custom
  * render path only: native `::cue` never mounts this overlay.
+ *
+ * Render timing offset (S-ui-once-16): with a nonzero caption delay from the
+ * player store (`subtitleOffset + audioOffset`, seconds), the overlay paints the
+ * cues of the DELAYED render position — `captionRenderTime(currentTime, delay)`
+ * against the track's full cue list — instead of the engine's raw `activeCues`,
+ * which know nothing about the delay. A `timeupdate` ticker drives the recompute
+ * while playing, and a delay change re-reads immediately. When the cue list is
+ * unavailable (loading sidecar, exotic engine) the delay is INERT for that read
+ * and the raw engine path paints — never a blank screen. The audio offset is
+ * consumed here as a paired compensation delta because captions are
+ * custom-painted while audio rides the same muxed element: no WebAudio graph
+ * exists in this library to delay audio alone, so shifting the captions by the
+ * same amount is what restores lip-sync; hosts with a real audio graph read the
+ * same store channel.
  */
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import type { CaptionStyle } from '../../stores/usePreferencesStore';
-import { applyTrackModes, resolveTextTrack, readActiveCueLines, captionStyleVars } from './captions';
+import { usePlayerStore } from '../../stores/usePlayerStore';
+import { applyTrackModes, resolveTextTrack, readActiveCueLines, captionStyleVars, readCueLinesAt, captionRenderTime } from './captions';
 
 const props = defineProps<{
   /** The `<video>` whose text tracks are read (may be null before mount). */
@@ -50,6 +65,13 @@ const props = defineProps<{
    *  ref) simply yields a `0` offset. */
   controlsRoot?: HTMLElement | null;
 }>();
+
+const player = usePlayerStore();
+
+/** Total caption delay in seconds (S-ui-once-16): the subtitle delay plus the
+ *  audio delay consumed as its paired compensation delta. Read-only here; the
+ *  CaptionsMenu steppers are the writers. */
+const captionDelay = computed(() => player.subtitleOffset + player.audioOffset);
 
 const lines = ref<string[]>([]);
 
@@ -101,8 +123,50 @@ let boundTrackEl: HTMLTrackElement | null = null;
  *  cancelled by `unbind`/rebind so at most one is ever pending. */
 let recheckTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** THE render-timing decision (S-ui-once-16). Delay 0 → the untouched engine
+ *  path (activeCues). Nonzero delay → window the track's FULL cue list at
+ *  `captionRenderTime(currentTime, delay)`, because the engine windows cues at
+ *  the raw media time. `track.cues` unavailable (loading sidecar, exotic
+ *  engine, jsdom) → degrade to the engine read with the delay inert rather than
+ *  blanking a cue the engine can paint. */
+function renderLines(): string[] {
+  if (!boundTrack) return [];
+  if (captionDelay.value === 0) return readActiveCueLines(boundTrack);
+  const cues = (boundTrack as unknown as { cues?: ArrayLike<unknown> }).cues;
+  if (!cues || typeof cues.length !== 'number') return readActiveCueLines(boundTrack);
+  const media = props.video && typeof props.video.currentTime === 'number' ? props.video.currentTime : 0;
+  return readCueLinesAt(boundTrack, captionRenderTime(media, captionDelay.value));
+}
+
+/** The shared `<video>` is a long-lived element owned by the Player, so the
+ *  `timeupdate` ticker follows the delay: attached only while a delay is active
+ *  AND a track is bound, detached on delay→0, track unbind, and unmount. */
+let tickerVideo: HTMLVideoElement | null = null;
+
+function onOffsetTimeUpdate(): void {
+  lines.value = renderLines();
+}
+
+function detachTicker(): void {
+  tickerVideo?.removeEventListener?.('timeupdate', onOffsetTimeUpdate);
+  tickerVideo = null;
+}
+
+function syncOffsetTicker(): void {
+  const el = props.video;
+  const wants = captionDelay.value !== 0 && !!boundTrack && !!el && typeof el.addEventListener === 'function';
+  if (wants && el && tickerVideo !== el) {
+    detachTicker();
+    el.addEventListener('timeupdate', onOffsetTimeUpdate);
+    tickerVideo = el;
+  } else if (!wants && tickerVideo) {
+    detachTicker();
+  }
+  lines.value = renderLines(); // re-read NOW (delay changed, or first bind)
+}
+
 function onCueChange(): void {
-  lines.value = readActiveCueLines(boundTrack);
+  lines.value = renderLines();
 }
 
 function clearRecheck(): void {
@@ -128,13 +192,14 @@ function scheduleModeRecheck(): void {
     recheckTimer = null;
     if (!boundTrack) return;
     applyTrackModes(props.video, props.language);
-    const next = readActiveCueLines(boundTrack);
+    const next = renderLines();
     if (next.length) lines.value = next;
   }, 0);
 }
 
 function unbind(): void {
   clearRecheck();
+  detachTicker(); // S-ui-once-16: the ticker rides the shared element — never leak it
   boundTrack?.removeEventListener('cuechange', onCueChange);
   boundTrackEl?.removeEventListener('load', onCueChange);
   boundTrack = null;
@@ -162,7 +227,7 @@ function rebind(): void {
   if (track) {
     boundTrack = track;
     track.addEventListener('cuechange', onCueChange);
-    lines.value = readActiveCueLines(track); // catch already-active cues
+    lines.value = renderLines(); // catch already-active cues (offset-aware S-ui-once-16)
     // Server subtitle sidecars (VTT) load their cues asynchronously the moment
     // the track flips to `hidden` above. When captions START enabled (a server
     // default), that fetch races this synchronous read — `activeCues` is still
@@ -183,12 +248,16 @@ function rebind(): void {
     // track whose first cue never fired `cuechange`, which is exactly the blank
     // state that a manual off/on toggle used to fix.
     scheduleModeRecheck();
+    syncOffsetTicker(); // S-ui-once-16: (re)point the ticker for the freshly bound track
   } else {
     lines.value = [];
   }
 }
 
 watch(() => [props.video, props.language] as const, rebind, { immediate: true });
+// A delay change repaints immediately (scrubbed to a cue while paused too) and
+// (re)attaches the ticker — no playhead event is owed to make the new offset show.
+watch(captionDelay, syncOffsetTicker);
 
 onBeforeUnmount(unbind);
 
