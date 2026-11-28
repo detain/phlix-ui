@@ -152,9 +152,17 @@ onBeforeUnmount(() => {
 .phlix-btn--subtle { background: var(--surface-2); color: var(--text); }
 .phlix-btn--subtle:hover:not(:disabled):not(.is-loading) { background: var(--surface-3); }
 
-.phlix-btn--danger { background: var(--danger, #dc2626); color: #fff; box-shadow: var(--shadow-1); }
-.phlix-btn--danger:hover:not(:disabled):not(.is-loading) { background: var(--danger-hover, #b91c1c); }
-.phlix-btn--danger:active:not(:disabled):not(.is-loading) { background: var(--danger-active, #991b1b); }
+/* phlix-tokens-016 / S-tokens-17: the old var(--danger*) fallbacks baked
+   Tailwind red-600/700/800 forks that no theme ever defined (--danger* is
+   undefined estate-wide), silently forking the danger surface off the
+   package ramp. Canonical: --error (theme-aware). The packages carry no
+   red hover/active ramp, so the shade steps derive from --error itself
+   via color-mix(in srgb, ..., #000) — the house derivation idiom (cf.
+   AuthCard.vue shadow mixes). Pre-Chrome-111 engines (CU-076 doctrine:
+   Tizen 6.5) drop the second declaration and keep the flat --error. */
+.phlix-btn--danger { background: var(--error); color: #fff; box-shadow: var(--shadow-1); }
+.phlix-btn--danger:hover:not(:disabled):not(.is-loading) { background: var(--error); background: color-mix(in srgb, var(--error) 85%, #000); }
+.phlix-btn--danger:active:not(:disabled):not(.is-loading) { background: var(--error); background: color-mix(in srgb, var(--error) 70%, #000); }
 
 .phlix-btn__icon { font-size: 1.15em; }
 .phlix-btn__spinner { display: inline-flex; font-size: 1.15em; animation: phlix-btn-spin 0.7s linear infinite; }

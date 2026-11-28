@@ -285,7 +285,7 @@ async function choose(id: string): Promise<void> {
 }
 .whos__inline-error {
   margin: var(--space-6) 0 0;
-  color: var(--danger, #e5484d);
+  color: var(--error); /* S-tokens-17: was a Radix-red fork on the undefined --danger name (phlix-tokens-016) */
   font-size: var(--text-sm);
 }
 </style>
