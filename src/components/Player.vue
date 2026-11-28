@@ -1715,10 +1715,19 @@ onMounted(() => {
     fullscreenSupported.value = document.fullscreenEnabled === true;
   }
   // OS media keys drive the element; the store's metadata is set by setCurrent.
+  // player-033: the track-change keys ride the SAME static-per-session bind as
+  // play/pause/seek — meaningfulness is enforced where each action lives, not at
+  // bind time. nexttrack routes to playNext() (store.next() no-ops on an empty
+  // up-next queue, so a single-item session advances nothing); previoustrack
+  // routes to the Skip-back button's own affordance, playPrevEpisode() (emits
+  // only when the host supplied a prevEpisode — the store keeps no back-history,
+  // so "previous" means exactly what the on-screen skip-back control means).
   mediaSessionTeardown = player.bindMediaSession({
     onPlay: () => void videoRef.value?.play()?.catch(() => {}),
     onPause: () => videoRef.value?.pause(),
     onSeek: (to) => onSeek(to),
+    onNext: () => playNext(),
+    onPrevious: () => playPrevEpisode(),
   });
   // Re-enumerate when the host adds/removes <track>s (sidecar VTT, R3.9).
   trackList = videoRef.value?.textTracks ?? null;

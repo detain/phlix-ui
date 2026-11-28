@@ -359,6 +359,47 @@ describe('usePlayerStore — Media Session', () => {
     p.setMediaPositionState();
     expect(setPositionState).not.toHaveBeenCalled();
   });
+
+  it('closePlayer clears the metadata so a stale lock-screen title never outlives playback', () => {
+    const ms: { metadata: unknown; playbackState: string; setActionHandler: ReturnType<typeof vi.fn> } = {
+      metadata: null,
+      playbackState: 'none',
+      setActionHandler: vi.fn(),
+    };
+    vi.stubGlobal('navigator', { mediaSession: ms });
+    class MM {
+      constructor(public init: unknown) {}
+    }
+    vi.stubGlobal('MediaMetadata', MM);
+    const p = usePlayerStore();
+    p.setCurrent(media('a', { name: 'Dune' }));
+    expect(ms.metadata).toBeInstanceOf(MM); // metadata rides the item into the OS layer…
+    p.closePlayer();
+    expect(ms.metadata).toBeNull(); // …and must die with the session (player-047)
+  });
+});
+
+describe('usePlayerStore — setRate normalization (S-ui-player-26)', () => {
+  it('clamps out-of-range rates onto the 0.25–4 window (the setVolume clamp idiom)', () => {
+    const p = usePlayerStore();
+    p.setRate(0.1);
+    expect(p.rate).toBe(0.25);
+    p.setRate(8);
+    expect(p.rate).toBe(4);
+    p.setRate(1.5);
+    expect(p.rate).toBe(1.5); // in-window values pass through verbatim
+  });
+
+  it('refuses NaN/±Infinity and holds the last good rate (the setVolume refuse idiom)', () => {
+    const p = usePlayerStore();
+    p.setRate(2);
+    p.setRate(Number.NaN);
+    expect(p.rate).toBe(2);
+    p.setRate(Number.POSITIVE_INFINITY);
+    expect(p.rate).toBe(2);
+    p.setRate(Number.NEGATIVE_INFINITY);
+    expect(p.rate).toBe(2);
+  });
 });
 
 describe('usePlayerStore — mergeServerResume (cross-device read sync)', () => {

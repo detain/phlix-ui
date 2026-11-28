@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Media Session completeness: next/prev handlers, setRate clamp, metadata teardown 2026-11-28 (S-ui-player-26)
+
+### Fixed
+
+- Player: the OS Media Session wiring now binds `nexttrack` and `previoustrack` alongside `play`/`pause`/`seekto` — `nexttrack` routes through the same `playNext()` path as the up-next skip (store `next()` advances the queue and no-ops when it is empty, so a single-item session never jumps), and `previoustrack` routes through the Skip-back control's own `playPrevEpisode()` (emits only when the host supplied a previous episode; the store keeps no back-history, so "previous" means exactly what the on-screen control means) (finding phlix-ui-player-033). Store: `setRate` parses its input through a `normalizeRate` twin of `normalizeVolume` — clamping onto the 0.25–4 window and refusing NaN/±Infinity by holding the last good rate rather than landing a bad value raw on `<video>.playbackRate` — and `closePlayer` now clears `navigator.mediaSession.metadata` behind the same availability guard as the setter, so a stale lock-screen title can no longer outlive the session (finding phlix-ui-player-047).
+
+
 ## Unreleased — SyncPlayPage phantom --color-destructive family killed 2026-11-28 (S-ui-player-22)
 
 ### Fixed

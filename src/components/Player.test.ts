@@ -2020,6 +2020,68 @@ describe('Player — PiP & Media Session (R3.7)', () => {
     expect(clearedToNull).toContain('pause');
     delete (navigator as { mediaSession?: unknown }).mediaSession;
   });
+
+  it('binds nexttrack/previoustrack on mount and routes them to queue advance / skip-back (player-033)', async () => {
+    const setActionHandler = vi.fn();
+    Object.defineProperty(navigator, 'mediaSession', {
+      configurable: true,
+      value: { metadata: null, playbackState: 'none', setActionHandler },
+    });
+    const store = usePlayerStore();
+    store.setQueue([media({ id: 'm2', name: 'Arrival' })]);
+    const { w } = mountPlayer({ prevEpisode: media({ id: 'm0', name: 'Pilot' }) });
+    const actions = setActionHandler.mock.calls.map((c) => c[0]);
+    expect(actions).toContain('nexttrack');
+    expect(actions).toContain('previoustrack');
+
+    const reg = Object.fromEntries(setActionHandler.mock.calls.filter((c) => typeof c[1] === 'function')) as Record<
+      string,
+      () => void
+    >;
+
+    reg.previoustrack();
+    expect(w.emitted('play-episode')?.[0]?.[0]).toMatchObject({ id: 'm0' });
+    expect(store.current?.id).toBe('m1'); // prev is host-navigated (the Skip-back button's own path)
+
+    reg.nexttrack();
+    expect(store.current?.id).toBe('m2'); // advanced through store.next() — the up-next/Play-now path
+    expect(w.emitted('play-next')?.[0]?.[0]).toMatchObject({ id: 'm2' });
+    delete (navigator as { mediaSession?: unknown }).mediaSession;
+  });
+
+  it('nexttrack on an empty queue advances nothing and emits nothing (meaningless arm)', () => {
+    const setActionHandler = vi.fn();
+    Object.defineProperty(navigator, 'mediaSession', {
+      configurable: true,
+      value: { metadata: null, playbackState: 'none', setActionHandler },
+    });
+    const store = usePlayerStore();
+    const { w } = mountPlayer(); // queue empty — current is the only item
+    const reg = Object.fromEntries(setActionHandler.mock.calls.filter((c) => typeof c[1] === 'function')) as Record<
+      string,
+      () => void
+    >;
+    reg.nexttrack();
+    expect(store.current?.id).toBe('m1');
+    expect(w.emitted('play-next')).toBeUndefined();
+    delete (navigator as { mediaSession?: unknown }).mediaSession;
+  });
+
+  it('previoustrack without a prevEpisode prop emits nothing (meaningless arm)', () => {
+    const setActionHandler = vi.fn();
+    Object.defineProperty(navigator, 'mediaSession', {
+      configurable: true,
+      value: { metadata: null, playbackState: 'none', setActionHandler },
+    });
+    const { w } = mountPlayer(); // no prevEpisode → the Skip-back affordance doesn't exist
+    const reg = Object.fromEntries(setActionHandler.mock.calls.filter((c) => typeof c[1] === 'function')) as Record<
+      string,
+      () => void
+    >;
+    reg.previoustrack();
+    expect(w.emitted('play-episode')).toBeUndefined();
+    delete (navigator as { mediaSession?: unknown }).mediaSession;
+  });
 });
 
 describe('Player — resume / up-next / transcode (R3.8)', () => {

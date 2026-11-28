@@ -140,6 +140,20 @@ function normalizeVolume(v: unknown): number | null {
 }
 
 /**
+ * Parse a requested rate onto the store's 0.25–4 window — the volume channel's
+ * direct twin: Math.min/max PROPAGATE NaN, so non-finite input is refused
+ * (null) rather than clamped, and a bad `rate` would otherwise land raw on
+ * <video>.playbackRate where browsers throw (player-047). Every in-app writer
+ * (SpeedMenu 0.25–2, the speedStep ladder, element-mirrored ratechange) already
+ * lives inside the window, so the clamp only bounds out-of-band writes; a
+ * refusal keeps the last good rate.
+ */
+function normalizeRate(r: unknown): number | null {
+  if (typeof r !== 'number' || !Number.isFinite(r)) return null;
+  return Math.min(4, Math.max(0.25, r));
+}
+
+/**
  * usePlayerStore (R1.3) — singleton playback state shared across routes so a
  * mini-player can keep playing during navigation and "resume" / "up-next" work.
  *
@@ -444,7 +458,9 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     autoplayMuted.value = false; // whatever this action just did, it is the user's choice now
   }
   function setRate(r: number): void {
-    rate.value = r;
+    const rt = normalizeRate(r);
+    if (rt === null) return; // refuse NaN/±Infinity — keep the last good rate
+    rate.value = rt;
   }
   function setQuality(q: string): void {
     quality.value = q;
@@ -489,6 +505,12 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     current.value = null;
     streamUrl.value = '';
     hlsMasterUrl.value = '';
+    // player-047: a closed session must not leave its title on the OS lock
+    // screen — same availability guard as setMediaSessionMetadata, mirrored
+    // down to the clear.
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      navigator.mediaSession.metadata = null;
+    }
   }
 
   // ---- Media Session ------------------------------------------------------
