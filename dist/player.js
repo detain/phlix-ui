@@ -11433,7 +11433,7 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 			}, 1e3);
 		}
 		function it() {
-			ve || (ve = !0, _e?.finish()), jn(), z.value = !0, m.upNext && (Fe.value = !0, _.autoplay && rt());
+			ve || (ve = !0, _e?.finish()), Mn(), z.value = !0, m.upNext && (Fe.value = !0, _.autoplay && rt());
 		}
 		function at() {
 			nt(), Fe.value = !1;
@@ -11599,16 +11599,21 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 			}
 		}
 		function tn() {
+			if (Sn !== null && (clearInterval(Sn), Sn = null), Cn) {
+				Cn = !1;
+				let e = N.value;
+				e && Math.abs(e.volume - m.volume) > .001 && (e.volume = m.volume);
+			}
 			m.play(), m.setMediaPositionState(), pt();
 		}
 		function nn() {
 			m.pause(), m.setMediaPositionState(), B.value = !1;
 		}
 		function rn() {
-			B.value = !0, jn(), z.value = !0;
+			B.value = !0, Mn(), z.value = !0;
 		}
 		function an() {
-			B.value = !1, Nn();
+			B.value = !1, Fn();
 		}
 		function on() {
 			let e = N.value;
@@ -11624,7 +11629,7 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 		}
 		function un() {
 			let e = N.value;
-			e && (Math.abs(e.volume - m.volume) > .001 && m.setVolume(e.volume), e.muted !== m.muted && m.toggleMute());
+			e && (!Cn && Math.abs(e.volume - m.volume) > .001 && m.setVolume(e.volume), e.muted !== m.muted && m.toggleMute());
 		}
 		function dn() {
 			let e = N.value;
@@ -11644,10 +11649,10 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 			mn(m.position + e);
 		}
 		function gn() {
-			H.value = !0, Nn();
+			H.value = !0, Fn();
 		}
 		function _n() {
-			H.value = !1, Nn();
+			H.value = !1, Fn();
 		}
 		function vn(e) {
 			let t = M.reduce((e, t, n) => Math.abs(t - m.rate) < Math.abs(M[e] - m.rate) ? n : e, 0), n = M[Math.min(M.length - 1, Math.max(0, t + e))];
@@ -11666,8 +11671,8 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 		function xn() {
 			ie.value?.toggleOpen();
 		}
-		let Sn = null;
-		function Cn() {
+		let Sn = null, Cn = !1;
+		function wn() {
 			let e = N.value;
 			if (!e) {
 				m.pause();
@@ -11677,7 +11682,7 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 				e.pause(), m.pause();
 				return;
 			}
-			Sn !== null && (clearInterval(Sn), Sn = null);
+			Sn !== null && (clearInterval(Sn), Sn = null), Cn = !0;
 			let t = .05;
 			Sn = setInterval(() => {
 				e.volume > t ? e.volume = Math.max(0, e.volume - t) : (clearInterval(Sn), Sn = null, e.volume = 0, e.pause(), m.pause());
@@ -11690,11 +11695,11 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 				m.playing || mn(m.position + e / 30);
 			},
 			volumeBy: (e) => m.setVolume(m.volume + e),
-			toggleMute: wn,
-			toggleFullscreen: En,
+			toggleMute: Tn,
+			toggleFullscreen: Dn,
 			toggleCaptions: Bt,
-			toggleTheater: Tn,
-			togglePip: On,
+			toggleTheater: En,
+			togglePip: kn,
 			skipIntro: yn,
 			skipOutro: bn,
 			sleepTimer: xn,
@@ -11711,10 +11716,10 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 				});
 			}
 		}, { enabled: () => !U.value && !vt.value && !Dt.value && !ce.value && !At.value && !Be.value });
-		function wn() {
+		function Tn() {
 			m.toggleMute();
 		}
-		function Tn() {
+		function En() {
 			W.value = !W.value, p("theater", W.value);
 		}
 		P(() => m.muted, (e) => {
@@ -11729,64 +11734,64 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 		}), P(() => m.lastCommand, (e) => {
 			e && (e.type === "seekTo" ? $e(e.value) : e.type === "seekBy" && $e(m.position + e.value));
 		});
-		function En() {
+		function Dn() {
 			if (typeof document > "u") return;
 			if (!re.value) {
-				Tn();
+				En();
 				return;
 			}
 			let e = I.value;
 			e && (document.fullscreenElement ? document.exitFullscreen?.().catch(() => {}) : e.requestFullscreen?.().catch(() => {}));
 		}
-		function Dn() {
+		function On() {
 			V.value = typeof document < "u" && !!document.fullscreenElement;
 		}
-		async function On() {
+		async function kn() {
 			let e = N.value;
 			if (typeof document < "u" && e) try {
 				document.pictureInPictureElement ? await document.exitPictureInPicture() : typeof e.requestPictureInPicture == "function" && await e.requestPictureInPicture();
 			} catch {}
 			p("pip");
 		}
-		function kn() {
+		function An() {
 			ee.value = !0;
 		}
-		function An() {
+		function jn() {
 			ee.value = !1;
 		}
-		function jn() {
+		function Mn() {
 			Wt &&= (clearTimeout(Wt), void 0);
 		}
-		function Mn() {
-			jn(), !m.playing || H.value || B.value || (Wt = setTimeout(() => {
+		function Nn() {
+			Mn(), !m.playing || H.value || B.value || (Wt = setTimeout(() => {
 				m.playing && !H.value && !B.value && (z.value = !1);
 			}, d.idleTimeout ?? 3e3));
 		}
-		function Nn() {
-			z.value = !0, Mn();
+		function Fn() {
+			z.value = !0, Nn();
 		}
-		let Fn = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]", In = "data-phlix-prev-tabindex", Ln = "__phlix_no_tabindex__";
-		function Rn(e) {
+		let In = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]", Ln = "data-phlix-prev-tabindex", Rn = "__phlix_no_tabindex__";
+		function zn(e) {
 			let t = I.value;
 			if (t) for (let n of Array.from(t.querySelectorAll(".player__meta, .player__controls, .player__bigplay"))) {
-				let t = n.matches(Fn) ? [n] : Array.from(n.querySelectorAll(Fn));
+				let t = n.matches(In) ? [n] : Array.from(n.querySelectorAll(In));
 				for (let n of t) if (e) {
-					let e = n.getAttribute(In);
-					e === null || e === Ln ? n.removeAttribute("tabindex") : n.setAttribute("tabindex", e), n.removeAttribute(In);
-				} else n.getAttribute("tabindex") !== "-1" && (n.setAttribute(In, n.getAttribute("tabindex") ?? Ln), n.setAttribute("tabindex", "-1"));
+					let e = n.getAttribute(Ln);
+					e === null || e === Rn ? n.removeAttribute("tabindex") : n.setAttribute("tabindex", e), n.removeAttribute(Ln);
+				} else n.getAttribute("tabindex") !== "-1" && (n.setAttribute(Ln, n.getAttribute("tabindex") ?? Rn), n.setAttribute("tabindex", "-1"));
 			}
 		}
 		P(z, (e) => {
-			typeof document < "u" && (Rn(e), !e && document.activeElement instanceof HTMLElement && I.value?.contains(document.activeElement) && document.activeElement.blur());
+			typeof document < "u" && (zn(e), !e && document.activeElement instanceof HTMLElement && I.value?.contains(document.activeElement) && document.activeElement.blur());
 		}, { flush: "post" }), P(() => m.playing, (e) => {
-			e ? (Ne.value = !1, ot(), Mn()) : (jn(), B.value = !1, z.value = !0);
+			e ? (Ne.value = !1, ot(), Nn()) : (Mn(), B.value = !1, z.value = !0);
 		});
-		let zn = null;
+		let Bn = null;
 		y(() => {
 			m.setCurrent(d.media, {
 				resetPosition: !1,
 				streamUrl: d.streamUrl
-			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", Dn), ne.value = document.pictureInPictureEnabled === !0, re.value = document.fullscreenEnabled === !0), zn = m.bindMediaSession({
+			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", On), ne.value = document.pictureInPictureEnabled === !0, re.value = document.fullscreenEnabled === !0), Bn = m.bindMediaSession({
 				onPlay: () => void N.value?.play()?.catch(() => {}),
 				onPause: () => N.value?.pause(),
 				onSeek: (e) => mn(e),
@@ -11803,7 +11808,7 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 		}), P(() => w.currentSession, (e) => {
 			e && (e.state === "playing" ? (N.value?.play()?.catch(() => {}), m.play()) : e.state === "paused" && (N.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && $e(e.playbackPosition));
 		});
-		let Bn = null;
+		let Vn = null;
 		return P(() => w.pendingPlayMedia, async (e) => {
 			if (!e) return;
 			let t = null;
@@ -11822,13 +11827,13 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 				m.setCurrent(t, {
 					resetPosition: !0,
 					streamUrl: d.streamUrlFor?.(t) ?? ""
-				}), N.value?.play()?.catch(() => {}), m.play(), w.consumePendingPlayMedia(), Bn = null;
+				}), N.value?.play()?.catch(() => {}), m.play(), w.consumePendingPlayMedia(), Vn = null;
 				return;
 			}
 			let n = `${e.mediaId}@${e.issuedAt}`;
-			Bn !== n && (Bn = n, p("pending-media", e.mediaId, e.title));
+			Vn !== n && (Vn = n, p("pending-media", e.mediaId, e.title));
 		}), v(() => {
-			_e?.reportFinal?.(), jn(), nt(), K.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", Dn), zn?.(), Ut?.removeEventListener?.("addtrack", zt), Ut?.removeEventListener?.("removetrack", zt), Sn !== null && (clearInterval(Sn), Sn = null), xe !== null && (clearTimeout(xe), xe = null), mt();
+			_e?.reportFinal?.(), Mn(), nt(), K.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", On), Bn?.(), Ut?.removeEventListener?.("addtrack", zt), Ut?.removeEventListener?.("removetrack", zt), Sn !== null && (clearInterval(Sn), Sn = null), xe !== null && (clearTimeout(xe), xe = null), mt();
 		}), (n, r) => (x(), o("div", {
 			ref_key: "containerRef",
 			ref: I,
@@ -11837,9 +11842,9 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 				"is-theater": W.value
 			}]),
 			"data-player-surface": "",
-			onPointermove: Nn,
-			onPointerdown: Nn,
-			onFocusin: Nn
+			onPointermove: Fn,
+			onPointerdown: Fn,
+			onFocusin: Fn
 		}, [u(Xu, {
 			video: N.value,
 			enabled: O(_).atmosphere,
@@ -11876,8 +11881,8 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 				onDurationchange: pn,
 				onEnded: it,
 				onError: st,
-				onEnterpictureinpicture: kn,
-				onLeavepictureinpicture: An,
+				onEnterpictureinpicture: An,
+				onLeavepictureinpicture: jn,
 				onClick: Zt
 			}, [(x(!0), o(e, null, C(kt.value, (e) => (x(), o("track", {
 				key: e.url,
@@ -12065,7 +12070,7 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 					u(Pf, {
 						ref_key: "sleepTimerRef",
 						ref: ie,
-						"on-expire": Cn
+						"on-expire": wn
 					}, null, 512),
 					s("button", {
 						type: "button",
@@ -12087,21 +12092,21 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 						class: g(["player__iconbtn", { "is-on": ee.value }]),
 						"aria-label": ee.value ? O(b)("player.exitPip") : O(b)("player.pip"),
 						"aria-pressed": ee.value,
-						onClick: On
+						onClick: kn
 					}, [u(Y, { name: "pip" })], 10, Eh)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: g(["player__iconbtn", { "is-on": W.value }]),
 						"aria-label": W.value ? O(b)("player.exitTheater") : O(b)("player.theater"),
 						"aria-pressed": W.value,
-						onClick: Tn
+						onClick: En
 					}, [u(Y, { name: "theater" })], 10, Dh),
 					re.value ? (x(), o("button", {
 						key: 4,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": V.value ? O(b)("player.exitFullscreen") : O(b)("player.fullscreen"),
-						onClick: En
+						onClick: Dn
 					}, [u(Y, { name: V.value ? "fullscreen-exit" : "fullscreen" }, null, 8, ["name"])], 8, Oh)) : a("", !0)
 				])
 			], 512)),
@@ -12220,7 +12225,7 @@ var th = { class: "player__stage" }, nh = ["src", "poster"], rh = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-cd6350fa"]]), Uh = "1.0.3", Wh = ["aria-label"], Gh = ["src", "poster"], Kh = { class: "mini__body" }, qh = { class: "mini__title" }, Jh = { class: "mini__controls" }, Yh = ["aria-label"], Xh = ["aria-label", "aria-pressed"], Zh = ["aria-label"], Qh = ["aria-label"], $h = {
+}), [["__scopeId", "data-v-767f23d0"]]), Uh = "1.0.3", Wh = ["aria-label"], Gh = ["src", "poster"], Kh = { class: "mini__body" }, qh = { class: "mini__title" }, Jh = { class: "mini__controls" }, Yh = ["aria-label"], Xh = ["aria-label", "aria-pressed"], Zh = ["aria-label"], Qh = ["aria-label"], $h = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, eg = /*#__PURE__*/ X(/* @__PURE__ */ d({

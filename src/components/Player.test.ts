@@ -3379,6 +3379,60 @@ describe('Player — fade timer ownership (UI-1.7)', () => {
   });
 });
 
+describe('Player — sleep fade keeps volume coherent (S-ui-player-31)', () => {
+  // phlix-ui-player-048: fadeOutAndPause drove the ELEMENT volume to 0 and
+  // paused — the store mirror (what the UI slider shows and what
+  // VolumeControl persists) never heard about it, so a later resume played at
+  // element volume 0 behind a full-volume UI. The fade is transient element
+  // ducking, not a user volume choice: the store must keep the user's value
+  // through the fade, and the next play must re-mirror it onto the element.
+
+  it('resumed playback after a completed sleep fade re-mirrors the store volume (not silent)', async () => {
+    const { w, video, state } = mountPlayer();
+    const store = usePlayerStore();
+    store.setVolume(0.8);
+    await nextTick();
+    expect(state.volume).toBeCloseTo(0.8); // in sync before the fade
+    (w.vm as unknown as { fadeOutAndPause: () => void }).fadeOutAndPause();
+    // Real timers, per the fade-ownership tests above: 0.8 → 0 at 0.05/50ms ≈ 800ms.
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(state.volume).toBe(0); // fade completed on the element…
+    expect(store.volume).toBeCloseTo(0.8); // …while the user's store volume survives
+    // Resume the way a browser does: play() fires the element's 'play' event
+    // (the stub never dispatches it itself).
+    void video.play();
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    // Observable contract: playback is audible at the level the UI shows.
+    expect(state.volume).toBeCloseTo(0.8);
+    expect(store.volume).toBeCloseTo(0.8);
+  });
+
+  it('a volumechange fired BY THE FADE is not mirrored into the store (user volume survives)', async () => {
+    const { w, video, state } = mountPlayer();
+    const store = usePlayerStore();
+    store.setVolume(0.8);
+    await nextTick();
+    (w.vm as unknown as { fadeOutAndPause: () => void }).fadeOutAndPause();
+    await new Promise((r) => setTimeout(r, 120)); // a couple of fade steps ran
+    expect(state.volume).toBeLessThan(0.8); // fade in progress on the element
+    // In a real browser every programmatic v.volume write fires volumechange on
+    // the element; the stub does not synthesize it, so dispatch the element-side
+    // truth exactly as the browser would.
+    video.dispatchEvent(new Event('volumechange'));
+    await nextTick();
+    // A transient duck is not the user turning the volume down — mirroring it
+    // would strand the store (and VolumeControl's persisted default) at the
+    // faded value, so the resume path would "restore" silence.
+    expect(store.volume).toBeCloseTo(0.8);
+    // And resuming mid-fade re-mirrors the store onto the element.
+    void video.play();
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+    expect(state.volume).toBeCloseTo(0.8);
+  });
+});
+
 describe('Player — trickplay prefetch on first mount (UI-0.5)', () => {
   it('fetches trickplay exactly once for the current media on first mount (deferred macrotask)', async () => {
     // UI-0.5: the seekbar sprite preview must load on the FIRST opened title, not

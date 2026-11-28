@@ -1298,6 +1298,20 @@ function bufferedEnd(v: HTMLVideoElement): number {
 }
 
 function onPlay(): void {
+  // S-ui-player-31: a resume ends the sleep fade — cancel an in-flight duck and
+  // re-mirror the store's (user) volume onto the element, so playback behind the
+  // UI's shown level is never silent. Once fadingOut drops the mirrors are live
+  // again; a queued volumechange from the restore (or the last fade step) reads
+  // the element in agreement with the store and stays a no-op.
+  if (fadeTimer !== null) {
+    clearInterval(fadeTimer);
+    fadeTimer = null;
+  }
+  if (fadingOut) {
+    fadingOut = false;
+    const v = videoRef.value;
+    if (v && Math.abs(v.volume - player.volume) > 0.001) v.volume = player.volume;
+  }
   player.play();
   player.setMediaPositionState();
   // W110 S513: playback started (or resumed) on the DIRECT source — watch for a
@@ -1366,7 +1380,11 @@ function onVolumeChange(): void {
   if (!v) return;
   // volume first (the store unmutes when volume > 0), then mute — so an explicit
   // mute reported in the same event still wins.
-  if (Math.abs(v.volume - player.volume) > 0.001) player.setVolume(v.volume);
+  // S-ui-player-31: writes made by the sleep fade are transient element ducking,
+  // not a user volume change — mirroring the volume leg down would strand the
+  // store (and VolumeControl's persisted defaultVolume behind it) at the ducked
+  // value, so a later resume would "restore" silence. The mute leg stays live.
+  if (!fadingOut && Math.abs(v.volume - player.volume) > 0.001) player.setVolume(v.volume);
   if (v.muted !== player.muted) player.toggleMute();
 }
 function onRateChange(): void {
@@ -1443,10 +1461,21 @@ function sleepTimer(): void {
 
 // Timer reference for fadeOutAndPause — stored at module scope so onBeforeUnmount can clear it.
 let fadeTimer: ReturnType<typeof setInterval> | null = null;
+/** True while the sleep fade's programmatic element writes are in flight. The
+ *  fade is transient DUCKING, not a user volume choice: element `volumechange`
+ *  events raised by these writes must not mirror into the store (that would
+ *  strand the store — and VolumeControl's persisted defaultVolume — at the
+ *  ducked value, so the restore-on-play below would "restore" silence). */
+let fadingOut = false;
 
 /**
  * Sleep timer expire handler — fade out volume over ~3 seconds, then pause.
  * Replaces a hard pause for a gentler user experience.
+ *
+ * S-ui-player-31: the duck lives on the ELEMENT only; the store keeps the
+ * user's volume (what the UI slider shows) throughout. `onPlay` re-mirrors the
+ * store onto the element when playback resumes, so post-timer playback is
+ * never silent behind a full-volume UI.
  */
 function fadeOutAndPause(): void {
   const v = videoRef.value;
@@ -1465,6 +1494,7 @@ function fadeOutAndPause(): void {
     clearInterval(fadeTimer);
     fadeTimer = null;
   }
+  fadingOut = true;
   const fadeStep = 0.05;
   const fadeInterval = 50; // ms
   fadeTimer = setInterval(() => {
@@ -1476,6 +1506,10 @@ function fadeOutAndPause(): void {
       v.volume = 0;
       v.pause();
       player.pause();
+      // `fadingOut` deliberately STAYS true: browsers queue volumechange as a
+      // task, so the event for this final write lands after the callback and
+      // must not be mirrored into the store. The flag only drops on the next
+      // play (below), once the element has been brought back in line.
     }
   }, fadeInterval);
 }

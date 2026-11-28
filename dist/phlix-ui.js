@@ -1356,7 +1356,7 @@ function _o(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-5etJdOK6.js")
+			component: () => import("./PlayerPage-B52vHuXM.js")
 		},
 		{
 			path: `${t}/login`,

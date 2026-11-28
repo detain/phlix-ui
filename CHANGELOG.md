@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Sleep fade keeps user volume: resume re-mirrors store onto element 2026-11-28 (S-ui-player-31)
+
+### Fixed
+
+- Player sleep-timer fade: `fadeOutAndPause` ducks the `<video>` element's volume directly — it now declares itself (a per-instance `fadingOut` window) so the element's `volumechange` events from those programmatic writes are no longer mirrored into the player store's volume (previously, in a real browser, the fade dragged the store — and VolumeControl's persisted `defaultVolume` — down to the ducked value), and the next `play` cancels an in-flight duck and re-mirrors the store's user volume onto the element — so playback resumed after a sleep timer is audible at the level the UI slider shows, never silent behind a full-volume control (finding phlix-ui-player-048).
+
+
 ## Unreleased — Resume selection truth: special resumes honored, write-path docblock corrected 2026-11-28 (S-ui-player-30)
 
 ### Fixed
