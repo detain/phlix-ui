@@ -197,7 +197,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointer, 
   transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
 .phlix-combobox__input::placeholder { color: var(--text-subtle); }
-.phlix-combobox__input:focus { border-color: var(--accent-ring); box-shadow: 0 0 0 3px var(--accent-soft); }
+.phlix-combobox__input:focus-visible { border-color: var(--accent-ring); box-shadow: 0 0 0 3px var(--accent-soft); }
 .phlix-combobox__input:disabled { cursor: not-allowed; }
 .phlix-combobox__caret { position: absolute; right: var(--space-3); color: var(--text-subtle); pointer-events: none;
   transition: transform var(--dur-base) var(--ease-out); }
