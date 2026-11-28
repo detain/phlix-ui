@@ -15,11 +15,13 @@
  * Driven purely by props (position/duration/buffered/chapters/thumbnailAt) and
  * emits `seek` (seconds) on drag-end and keyboard navigation, plus `scrub-start`/`scrub-end`
  * so the host can suspend chrome auto-hide. The slider owns its own keyboard contract
- * (arrows ±5s, Home/End); the global player shortcut map is R3.3.
+ * (arrows ±5s, Home/End); the global player shortcut map is R3.3. Keyboard seeks
+ * arm a brief preview too (finding phlix-ui-player-056) so arrow-navigation is not blind.
  */
-import { ref, computed } from 'vue';
+import { ref, computed, onBeforeUnmount } from 'vue';
 import { formatTime } from './format-time';
 import { useMessages } from '../../composables/useMessages';
+import { TRICKPLAY_SPRITE_COLUMNS, type TrickplayParts } from '../../composables/useTrickplay';
 
 // Aliased to avoid colliding with the `t` chapter-tick loop variable in the template.
 const { t: translate } = useMessages();
@@ -39,8 +41,13 @@ const props = withDefaults(
     buffered?: number;
     /** Chapter markers — rendered as ticks when present. */
     chapters?: Chapter[];
-    /** Optional preview-thumbnail source for a given time (VTT sprite / server hint). */
-    thumbnailAt?: (seconds: number) => string | null | undefined;
+    /**
+     * Optional preview-thumbnail source for a given time. A plain string is a
+     * single image (cover-scaled, legacy host path); a {@link TrickplayParts}
+     * object is a sprite-sheet cell composed into valid CSS here from the
+     * server-advertised grid (finding phlix-ui-player-001).
+     */
+    thumbnailAt?: (seconds: number) => string | TrickplayParts | null | undefined;
     /** Seconds the arrow keys nudge by. */
     step?: number;
   }>(),
@@ -58,8 +65,34 @@ const dragging = ref(false);
 const hovering = ref(false);
 const dragRatio = ref(0);
 const hoverRatio = ref(0);
+/** Position fraction armed by the last keyboard seek, or null when hidden (056). */
+const keyboardRatio = ref<number | null>(null);
+/** How long a keyboard-armed preview stays up after the last seek key. */
+const KEYBOARD_PREVIEW_HIDE_MS = 1600;
+let keyboardHideTimer: ReturnType<typeof setTimeout> | null = null;
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+
+/** Arm (or re-arm on a successive key) the transient keyboard seek preview. */
+function showKeyboardPreview(ratio: number): void {
+  keyboardRatio.value = clamp01(ratio);
+  if (keyboardHideTimer !== null) {
+    clearTimeout(keyboardHideTimer);
+  }
+  keyboardHideTimer = setTimeout(() => {
+    keyboardHideTimer = null;
+    keyboardRatio.value = null;
+  }, KEYBOARD_PREVIEW_HIDE_MS);
+}
+/** Drop the keyboard preview and its pending hide timer (pointer takeover / unmount). */
+function clearKeyboardPreview(): void {
+  if (keyboardHideTimer !== null) {
+    clearTimeout(keyboardHideTimer);
+    keyboardHideTimer = null;
+  }
+  keyboardRatio.value = null;
+}
+onBeforeUnmount(clearKeyboardPreview);
 
 const playedRatio = computed(() =>
   dragging.value
@@ -70,15 +103,33 @@ const playedRatio = computed(() =>
 );
 const bufferedRatio = computed(() => (props.duration > 0 ? clamp01(props.buffered / props.duration) : 0));
 
-const previewActive = computed(() => (dragging.value || hovering.value) && props.duration > 0);
-const previewRatio = computed(() => (dragging.value ? dragRatio.value : hoverRatio.value));
+const previewActive = computed(
+  () => (dragging.value || hovering.value || keyboardRatio.value !== null) && props.duration > 0,
+);
+const previewRatio = computed(() =>
+  dragging.value ? dragRatio.value : hovering.value ? hoverRatio.value : keyboardRatio.value ?? 0,
+);
 const previewTime = computed(() => previewRatio.value * props.duration);
 const previewThumb = computed(() => (previewActive.value ? props.thumbnailAt?.(previewTime.value) ?? null : null));
 /** Quote + escape a (possibly server-supplied) thumbnail URL so it can't break
  *  out of the CSS `url()` declaration. */
-const previewThumbCss = computed(() =>
-  previewThumb.value ? `url("${previewThumb.value.replace(/[\\"]/g, '\\$&').replace(/[\r\n]/g, '')}")` : 'none',
-);
+const thumbCssUrl = (raw: string): string => `url("${raw.replace(/[\\"]/g, '\\$&').replace(/[\r\n]/g, '')}")`;
+/**
+ * Inline style for the preview thumb. Sprite PARTS compose a position + size
+ * over the sheet (drawn TRICKPLAY_SPRITE_COLUMNS * 100% wide so one cell fills
+ * the box and the percent position selects the cell); a legacy plain string
+ * keeps the class-provided cover behaviour untouched (finding phlix-ui-player-001(b)).
+ */
+const previewThumbStyle = computed((): Record<string, string> => {
+  const thumb = previewThumb.value;
+  if (thumb === null) return {};
+  if (typeof thumb === 'string') return { backgroundImage: thumbCssUrl(thumb) };
+  return {
+    backgroundImage: thumbCssUrl(thumb.url),
+    backgroundPosition: `${thumb.x}% ${thumb.y}%`,
+    backgroundSize: `${TRICKPLAY_SPRITE_COLUMNS * 100}% auto`,
+  };
+});
 /** Keep the bubble within the track so the 152px thumb doesn't overflow the ends. */
 const previewLeft = computed(() => `${Math.min(96, Math.max(4, previewRatio.value * 100))}%`);
 
@@ -98,6 +149,7 @@ function ratioFromEvent(e: PointerEvent): number {
 
 function onPointerDown(e: PointerEvent): void {
   if (props.duration <= 0) return;
+  clearKeyboardPreview();
   dragging.value = true;
   try {
     trackEl.value?.setPointerCapture?.(e.pointerId);
@@ -138,6 +190,7 @@ function endDrag(e: PointerEvent): void {
   emit('scrub-end');
 }
 function onPointerEnter(): void {
+  clearKeyboardPreview();
   hovering.value = true;
 }
 function onPointerLeave(): void {
@@ -165,6 +218,7 @@ function onKeydown(e: KeyboardEvent): void {
       return;
   }
   emit('seek', next);
+  showKeyboardPreview(next / dur);
   e.preventDefault();
 }
 
@@ -214,7 +268,7 @@ defineExpose({ playedRatio, previewActive });
       :style="{ left: previewLeft }"
       aria-hidden="true"
     >
-      <div v-if="previewThumb" class="scrubber__thumb" :style="{ backgroundImage: previewThumbCss }" />
+      <div v-if="previewThumb" class="scrubber__thumb" :style="previewThumbStyle" />
       <span class="scrubber__time numeric">{{ formatTime(previewTime) }}</span>
     </div>
   </div>

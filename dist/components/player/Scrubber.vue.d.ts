@@ -1,3 +1,4 @@
+import { type TrickplayParts } from '../../composables/useTrickplay';
 export interface Chapter {
     /** Chapter start, in seconds. */
     start: number;
@@ -11,8 +12,13 @@ type __VLS_Props = {
     buffered?: number;
     /** Chapter markers — rendered as ticks when present. */
     chapters?: Chapter[];
-    /** Optional preview-thumbnail source for a given time (VTT sprite / server hint). */
-    thumbnailAt?: (seconds: number) => string | null | undefined;
+    /**
+     * Optional preview-thumbnail source for a given time. A plain string is a
+     * single image (cover-scaled, legacy host path); a {@link TrickplayParts}
+     * object is a sprite-sheet cell composed into valid CSS here from the
+     * server-advertised grid (finding phlix-ui-player-001).
+     */
+    thumbnailAt?: (seconds: number) => string | TrickplayParts | null | undefined;
     /** Seconds the arrow keys nudge by. */
     step?: number;
 };

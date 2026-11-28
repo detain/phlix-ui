@@ -10,7 +10,7 @@ import { i as ne, n as re, r as ie, t as O } from "./useImageSrc-CSM61b-l.js";
 import { i as ae, n as oe, r as se, t as ce } from "./usePlayerStore-P13f-aKf.js";
 import { n as le, t as ue } from "./ThumbRating-BMpV52OI.js";
 import { n as k, r as de, t as fe } from "./useApiBase-DXTBY90j.js";
-import { c as pe, d as me, i as he, l as ge, o as _e, u as ve } from "./shortcuts-BV2IjCso.js";
+import { d as pe, f as me, i as he, l as ge, o as _e, u as ve } from "./shortcuts-yQ_zYBCf.js";
 import { t as ye } from "./NetworkHealthIndicator-TZ_Mm0Bu.js";
 import { t as be } from "./useToastStore-CxO_ppM8.js";
 import { C as xe, E as Se, S as Ce, T as we, _ as Te, a as Ee, b as De, c as Oe, d as ke, f as Ae, g as je, h as Me, i as Ne, l as Pe, m as Fe, n as Ie, o as Le, p as Re, r as ze, s as Be, t as Ve, u as He, v as Ue, w as We, x as Ge, y as Ke } from "./DeviceSessionsPage-BX4D0Gk2.js";
@@ -957,7 +957,7 @@ var Da = ["src", "alt"], Oa = { class: "brand-wordmark" }, ka = {
 	__name: "PhlixApp",
 	setup(e) {
 		pa();
-		let n = qe(), r = Ur(), i = Hr(), { t: a } = _(), o = be(), s = ve(), c = L(() => i.meta?.fullBleed === !0 && s.theaterActive);
+		let n = qe(), r = Ur(), i = Hr(), { t: a } = _(), o = be(), s = pe(), c = L(() => i.meta?.fullBleed === !0 && s.theaterActive);
 		if (ma(), typeof window < "u") {
 			let e = () => {
 				o.warning(a("auth.sessionExpired"));
@@ -1355,7 +1355,7 @@ function bo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-DNwJaher.js")
+			component: () => import("./PlayerPage-MxX1vuI_.js")
 		},
 		{
 			path: `${t}/login`,
@@ -6237,7 +6237,7 @@ var Js = {
 					u.value && (x.value = u.value.current_chapter_index ?? 0);
 				} catch (e) {
 					let t = null;
-					e instanceof lt && ((e.status === 403 || e.status === 429) && (t = ge(e.body, o?.locale)), t ??= pe(e, o?.locale)), f.value = t ?? s("player.audiobookLoadFailed"), l.value = null;
+					e instanceof lt && ((e.status === 403 || e.status === 429) && (t = ve(e.body, o?.locale)), t ??= ge(e, o?.locale)), f.value = t ?? s("player.audiobookLoadFailed"), l.value = null;
 				} finally {
 					d.value = !1;
 				}
@@ -6323,12 +6323,12 @@ var Js = {
 				params: { id: l.value.id }
 			}) : n.push({ name: "audiobooks" });
 		}
-		function me(e) {
+		function pe(e) {
 			if (!isFinite(e) || e < 0) return "0:00";
 			let t = Math.floor(e / 3600), n = Math.floor(e % 3600 / 60), r = Math.floor(e % 60);
 			return t > 0 ? `${t}:${n.toString().padStart(2, "0")}:${r.toString().padStart(2, "0")}` : `${n}:${r.toString().padStart(2, "0")}`;
 		}
-		let he = L(() => l.value?.chapters?.length ? l.value.chapters[x.value] ?? null : null), ve = L(() => (l.value?.chapters ?? []).map((e) => ({
+		let me = L(() => l.value?.chapters?.length ? l.value.chapters[x.value] ?? null : null), he = L(() => (l.value?.chapters ?? []).map((e) => ({
 			start: e.start_ms / 1e3,
 			end: e.end_ms / 1e3,
 			title: e.title || void 0
@@ -6365,19 +6365,19 @@ var Js = {
 				V("div", pg, [
 					V("h1", mg, X(l.value.name), 1),
 					l.value.metadata?.author ? (q(), B("p", hg, X(Z(s)("player.byAuthor", { author: l.value.metadata.author })), 1)) : z("", !0),
-					he.value ? (q(), B("p", gg, X(he.value.title || Z(s)("player.chapterNumber", { number: x.value + 1 })), 1)) : z("", !0)
+					me.value ? (q(), B("p", gg, X(me.value.title || Z(s)("player.chapterNumber", { number: x.value + 1 })), 1)) : z("", !0)
 				]),
 				V("div", _g, [U(_e, {
 					class: "player-progress__scrubber",
 					position: h.value,
 					duration: g.value,
-					chapters: ve.value,
+					chapters: he.value,
 					onSeek: se
 				}, null, 8, [
 					"position",
 					"duration",
 					"chapters"
-				]), V("div", vg, [V("span", null, X(me(h.value)), 1), V("span", null, X(me(g.value)), 1)])]),
+				]), V("div", vg, [V("span", null, X(pe(h.value)), 1), V("span", null, X(pe(g.value)), 1)])]),
 				V("div", yg, [
 					V("button", {
 						type: "button",
@@ -6432,7 +6432,7 @@ var Js = {
 			}, [
 				V("span", jg, X(t + 1), 1),
 				V("span", Mg, X(e.title || Z(s)("player.chapterNumber", { number: t + 1 })), 1),
-				V("span", Ng, X(me((e.end_ms - e.start_ms) / 1e3)), 1)
+				V("span", Ng, X(pe((e.end_ms - e.start_ms) / 1e3)), 1)
 			], 10, Ag))), 128))])])])])) : z("", !0)
 		]));
 	}

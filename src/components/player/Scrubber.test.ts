@@ -203,3 +203,112 @@ describe('Scrubber — keyboard', () => {
     expect(w.emitted('seek')).toHaveLength(1); // unchanged
   });
 });
+
+describe('Scrubber — keyboard preview (finding phlix-ui-player-056)', () => {
+  it('shows the scrub preview on keyboard seek, then auto-hides', async () => {
+    vi.useFakeTimers();
+    try {
+      const w = mount(Scrubber, {
+        props: { position: 100, duration: 200, step: 5, thumbnailAt: (t: number) => `thumb-${Math.round(t)}.jpg` },
+        attachTo: document.body,
+      });
+      const el = w.get('.scrubber');
+      expect(w.find('.scrubber__preview').exists()).toBe(false);
+
+      await el.trigger('keydown', { key: 'ArrowRight' });
+      const preview = w.find('.scrubber__preview');
+      expect(preview.exists()).toBe(true); // parent: previewActive ignored keyboard → RED
+      expect(preview.find('.scrubber__time').text()).toBe('1:45'); // seek target 105s
+      expect(preview.find('.scrubber__thumb').attributes('style') ?? '').toContain('thumb-105.jpg');
+
+      await vi.advanceTimersByTimeAsync(1599);
+      expect(w.find('.scrubber__preview').exists()).toBe(true);
+      await vi.advanceTimersByTimeAsync(2);
+      expect(w.find('.scrubber__preview').exists()).toBe(false); // auto-hide window elapsed
+      w.unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keyboard preview follows successive seeks (Home/End clamp to the ends)', async () => {
+    vi.useFakeTimers();
+    try {
+      const w = mount(Scrubber, { props: { position: 100, duration: 200, step: 5 }, attachTo: document.body });
+      const el = w.get('.scrubber');
+      await el.trigger('keydown', { key: 'Home' });
+      expect(w.find('.scrubber__preview').exists()).toBe(true);
+      expect(w.find('.scrubber__time').text()).toBe('0:00');
+      await el.trigger('keydown', { key: 'End' });
+      expect(w.find('.scrubber__time').text()).toBe('3:20'); // 200s
+      w.unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('pointer hover supersedes the keyboard preview (clean hand-off, no stuck bubble)', async () => {
+    const { w, track } = mountScrubber({ position: 100, duration: 200, step: 5 });
+    await track.trigger('keydown', { key: 'ArrowRight' });
+    expect(w.find('.scrubber__preview').exists()).toBe(true); // keyboard shows (056)
+
+    await track.trigger('pointerenter');
+    firePointer(track.element, 'pointermove', 10); // ratio 0.1 → 20s
+    await w.vm.$nextTick();
+    expect(w.find('.scrubber__time').text()).toBe('0:20'); // hover position wins over keyboard 105
+
+    await track.trigger('pointerleave');
+    await w.vm.$nextTick();
+    expect(w.find('.scrubber__preview').exists()).toBe(false); // hover ends → nothing left to show
+  });
+});
+
+describe('Scrubber — sprite-sheet parts composition (finding phlix-ui-player-001)', () => {
+  it('composes {url,x,y} parts into background-position + a column-wide background-size', async () => {
+    const { w, track } = mountScrubber({
+      position: 0,
+      duration: 200,
+      thumbnailAt: () => ({ url: 'https://cdn.example.com/trickplay/s1/sprite.jpg', x: 100, y: 50 }),
+    });
+    await track.trigger('pointerenter');
+    firePointer(track.element, 'pointermove', 50);
+    await w.vm.$nextTick();
+
+    const el = w.find('.scrubber__thumb').element as HTMLElement;
+    expect(el.style.backgroundImage).toBe('url("https://cdn.example.com/trickplay/s1/sprite.jpg")');
+    expect(el.style.backgroundPosition).toBe('100% 50%');
+    // 6-column grid baked by the server (FfmpegRunner TRICKPLAY_SPRITE_COLUMNS):
+    // sheet width = 6x the cell box so the percent positions travel correctly.
+    expect(el.style.backgroundSize).toBe('600% auto');
+  });
+
+  it('escapes quotes in a parts url exactly as it does for plain strings', async () => {
+    const { w, track } = mountScrubber({
+      position: 0,
+      duration: 200,
+      thumbnailAt: () => ({ url: 'evil.jpg") ; background: url("x', x: 0, y: 0 }),
+    });
+    await track.trigger('pointerenter');
+    firePointer(track.element, 'pointermove', 50);
+    await w.vm.$nextTick();
+
+    const style = w.find('.scrubber__thumb').attributes('style') ?? '';
+    expect(style).toContain('\\"');
+    expect(style).not.toMatch(/url\("evil\.jpg"\)/); // no unescaped breakout
+  });
+
+  it('keeps legacy plain-string sources cover-scaled (no sprite math applied)', async () => {
+    const { w, track } = mountScrubber({
+      position: 0,
+      duration: 200,
+      thumbnailAt: (t: number) => `thumb-${Math.round(t)}.jpg`,
+    });
+    await track.trigger('pointerenter');
+    firePointer(track.element, 'pointermove', 25);
+    await w.vm.$nextTick();
+
+    const el = w.find('.scrubber__thumb').element as HTMLElement;
+    expect(el.style.backgroundImage).toBe('url("thumb-50.jpg")');
+    expect(el.style.backgroundSize).not.toBe('600% auto');
+  });
+});
