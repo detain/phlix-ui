@@ -389,12 +389,6 @@ export interface WindowResult {
     totalHeight: number;
 }
 /**
- * Select the slice of rows to render for the current scroll position. With a
- * fixed `rowHeight` this is O(1): only the rows intersecting the viewport (plus
- * `overscan` above/below) are returned, so the DOM never holds more than a
- * windowful regardless of `itemCount`.
- */
-/**
  * The item count the grid should size itself to. When a server `total` is known
  * it wins (so the page is the FINAL length up front and the scrollbar is
  * accurate before every page has loaded); otherwise we fall back to the loaded
@@ -413,4 +407,21 @@ export declare function shouldLoadMore(endIndex: number, loadedCount: number, st
     loading: boolean;
     loadingMore: boolean;
 }): boolean;
+/**
+ * Select the slice of rows to render for the current scroll position. With a
+ * fixed `rowHeight` this is O(1): only the rows intersecting the viewport (plus
+ * `overscan` above/below) are returned, so the DOM never holds more than a
+ * windowful regardless of `itemCount`.
+ *
+ * `input` is the {@link WindowInput} of measured pixel values: `scrollTop` (how
+ * far the grid top has scrolled above the viewport; negative counts as 0),
+ * `viewportHeight`, `rowHeight` (one row including its gap), `columns` (clamped
+ * to at least 1), `itemCount`, and `overscan` (extra rows rendered above and
+ * below the visible band). Returns a {@link WindowResult} with the inclusive
+ * `startRow` / exclusive `endRow` row band, the matching inclusive `startIndex`
+ * / exclusive `endIndex` item band (`endIndex` clamped to `itemCount`), the
+ * total `rowCount`, the `padTop` spacer height above the rendered rows, and the
+ * full scrollable `totalHeight`. When the set is empty or `rowHeight` is not
+ * positive, the window degrades to the full item range with `padTop` 0.
+ */
 export declare function computeWindow(input: WindowInput): WindowResult;

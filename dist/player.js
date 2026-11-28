@@ -11812,6 +11812,7 @@ var Zm = { class: "player__stage" }, Qm = ["src", "poster"], $m = [
 				"is-chrome-hidden": !z.value,
 				"is-theater": W.value
 			}]),
+			"data-player-surface": "",
 			onPointermove: Fn,
 			onPointerdown: Fn,
 			onFocusin: Fn
@@ -12195,7 +12196,7 @@ var Zm = { class: "player__stage" }, Qm = ["src", "poster"], $m = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-97422d11"]]), zh = "1.0.3", Bh = ["aria-label"], Vh = ["src", "poster"], Hh = { class: "mini__body" }, Uh = { class: "mini__title" }, Wh = { class: "mini__controls" }, Gh = ["aria-label"], Kh = ["aria-label", "aria-pressed"], qh = ["aria-label"], Jh = ["aria-label"], Yh = {
+}), [["__scopeId", "data-v-34d0dcfb"]]), zh = "1.0.3", Bh = ["aria-label"], Vh = ["src", "poster"], Hh = { class: "mini__body" }, Uh = { class: "mini__title" }, Wh = { class: "mini__controls" }, Gh = ["aria-label"], Kh = ["aria-label", "aria-pressed"], qh = ["aria-label"], Jh = ["aria-label"], Yh = {
 	class: "mini__progress",
 	"aria-hidden": "true"
 }, Xh = /*#__PURE__*/ Y(/* @__PURE__ */ d({
@@ -12271,6 +12272,7 @@ var Zm = { class: "player__stage" }, Qm = ["src", "poster"], $m = [
 				key: 0,
 				class: "mini",
 				role: "region",
+				"data-player-surface": "",
 				"aria-label": O(p)("player.miniPlayer")
 			}, [
 				s("video", {
@@ -12324,7 +12326,7 @@ var Zm = { class: "player__stage" }, Qm = ["src", "poster"], $m = [
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-48e27919"]]);
+}), [["__scopeId", "data-v-f27886c2"]]);
 export { Fu as AMBIENT_SAMPLE_H, Iu as AMBIENT_SAMPLE_INTERVAL_MS, Pu as AMBIENT_SAMPLE_W, lc as ARROW_ICONS, uc as ARROW_LABELS, qu as AmbientCanvas, pl as CAPTION_BACKGROUND_OPTIONS, fl as CAPTION_COLOR_OPTIONS, ml as CAPTION_EDGE_OPTIONS, dl as CAPTION_SIZE_OPTIONS, ul as CAPTION_SIZE_SCALE, vl as CaptionOverlay, ql as CaptionsMenu, $u as DIRECT_PLAY_EXTENSIONS, Xh as MiniPlayer, cc as PLAYER_SHORTCUTS, Rh as Player, qc as QualityMenu, re as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, Qu as ResumePrompt, us as Scrubber, Cc as ShortcutsHelp, Qd as SkipButton, Ic as SpeedMenu, Nu as SubtitleSearch, ed as TRANSCODE_EXTENSIONS, Gd as TranscodeNotice, Zd as TranscodePreparing, ud as UPNEXT_COUNTDOWN_SECONDS, fd as UPNEXT_RING_CIRCUMFERENCE, dd as UPNEXT_RING_RADIUS, Bd as UpNext, Dc as VolumeControl, il as activeAudioIndex, Uu as ambientGradient, rl as applyAudioTrack, nl as applyTrackModes, bs as attachHls, Ru as averageRegion, _l as captionStyleVars, cl as cleanCueText, gl as edgeShadow, nd as extensionOf, as as formatTime, pc as handleShortcut, tl as hasActiveCaptions, Ku as isBatterySaving, Rs as isFailedStatus, id as isFatalMediaError, hs as isNativeHlsSupported, Ls as isPlayable, fc as isTypingTarget, $c as listAudioTracks, Qc as listSubtitleTracks, rd as needsTranscode, Ts as parseSubtitleTracks, Fs as parseTranscodeStart, Is as parseTranscodeStatus, zh as phlixUiVersion, ll as readActiveCueLines, zs as resolveStreamUrl, el as resolveTextTrack, Bu as rgbString, Vu as rgbaString, pd as ringDashoffset, zu as sampleAmbient, Ds as transcodeStartPath, Ps as transcodeStatusPath, Vs as useHlsTranscode, mc as useKeyboardShortcuts, ue as usePlayerStore };
 
 //# sourceMappingURL=player.js.map

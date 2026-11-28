@@ -12,5 +12,5 @@
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
-/** The exact package.json version this bundle was built from, e.g. '0.99.11'. */
+/** The exact version this bundle was built from — matches package.json version. */
 export declare const phlixUiVersion: string;
