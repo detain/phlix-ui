@@ -304,7 +304,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
     height: 2.25rem;
     border-radius: var(--radius-full, 999px);
     background: var(--accent);
-    color: var(--accent-contrast, #fff);
+    color: var(--accent-contrast);
 }
 .series-seasons__play:hover {
     filter: brightness(1.08);

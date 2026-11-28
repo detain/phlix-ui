@@ -858,7 +858,7 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 .filterbar__preset-confirm {
-  color: var(--accent-contrast, #1a1205);
+  color: var(--accent-contrast);
   background: var(--accent, #f5a524);
   border: none;
 }

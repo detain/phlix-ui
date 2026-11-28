@@ -156,8 +156,8 @@ function onKeydown(e: KeyboardEvent) {
   border-radius: 999px;
   font-size: var(--text-xs, 0.75rem);
   line-height: 1.4;
-  color: var(--accent-contrast, #fff);
-  background: var(--accent-text);
+  color: var(--accent-contrast);
+  background: var(--accent);
 }
 .phlix-tabs__panel { padding-top: var(--space-5); }
 /* CU-119: the panel is tabindex=0 for scrollable content, so it must keep a

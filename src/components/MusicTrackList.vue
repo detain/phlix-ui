@@ -149,7 +149,7 @@ function formatDuration(secs: number): string {
   height: 28px;
   border-radius: var(--radius-full, 999px);
   background: var(--accent, #f5a524);
-  color: var(--accent-contrast, #1a1205);
+  color: var(--accent-contrast);
   cursor: pointer;
   transition: transform var(--dur-fast, 0.18s) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
 }

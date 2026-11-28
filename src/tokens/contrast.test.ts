@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * R6.5b — static WCAG 2.1 color-contrast lock for the Nocturne token system.
@@ -36,6 +37,12 @@ import { dirname, join } from 'node:path';
  *
  * If any token hex regresses below AA this test fails — every other unit test
  * would still pass, so this is the only guard against a silent contrast regression.
+ *
+ * S-ui-design-11 (phlix-ui-design-013) appends the IN-GROUP accent-ink consumer
+ * lock at the bottom of this file: the shipped components that paint
+ * `--accent-contrast` ink on accent fills are enumerated, their hex fallbacks are
+ * banned (the token is defined in the pinned @phlix/tokens v0.2.1 release), and
+ * the resolved ink is AA-checked against each site's per-theme accent fill.
  */
 
 // Tokens now live in the standalone @phlix/tokens package (single source of truth);
@@ -202,6 +209,129 @@ describe('WCAG AA color-contrast lock (@phlix/tokens colors.css)', () => {
         const ink = hexToRgb(accentContrastHex!);
         expect(contrast(ink, fill)).toBeGreaterThanOrEqual(AA_TEXT);
       });
+    });
+  }
+});
+
+/* ---------------- S-ui-design-11 — in-group --accent-contrast consumer lock ---------------- */
+
+const SRC = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * The shipped in-group consumers (S-ui-design-11 / phlix-ui-design-013): every
+ * rule that puts `--accent-contrast` ink (or its package alias
+ * `--text-on-accent`) on an accent fill. This table IS the census — the
+ * use-count arm below reddens if a consumer appears or disappears without an
+ * entry here. Button's solid variant rides `--text-on-accent`, which the pinned
+ * token package itself declares as `var(--accent-contrast)` (alias identity
+ * pinned below), so it is the same resolved ink, not a fallback.
+ */
+interface AccentInkSite {
+  file: string;
+  selector: string;
+  /** the accent-vocabulary background token this site's ink is designed for */
+  bgToken: string;
+}
+const IN_GROUP_SITES: AccentInkSite[] = [
+  { file: 'components/ui/Button.vue', selector: '.phlix-btn--solid', bgToken: '--accent' },
+  { file: 'components/ui/Tabs.vue', selector: '.phlix-tabs__badge', bgToken: '--accent' },
+  { file: 'components/MediaCard.vue', selector: '.media-card__badge--new', bgToken: '--accent' },
+  { file: 'components/SeriesSeasons.vue', selector: '.series-seasons__play', bgToken: '--accent' },
+  { file: 'components/MusicTrackList.vue', selector: '.track-row__play', bgToken: '--accent' },
+  { file: 'components/FilterBar.vue', selector: '.filterbar__preset-confirm', bgToken: '--accent' },
+];
+const IN_GROUP_FILES = [...new Set(IN_GROUP_SITES.map((s) => s.file))];
+
+/** all brace-bodies whose rule header ends with `selector` (matches grouped selectors too) */
+function ruleBodiesFor(src: string, selector: string): string[] {
+  const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(esc + '\\s*\\{', 'g');
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) {
+    const open = m.index + m[0].length - 1;
+    let depth = 0;
+    let i = open;
+    for (; i < src.length; i++) {
+      if (src[i] === '{') depth++;
+      else if (src[i] === '}') {
+        depth--;
+        if (depth === 0) break;
+      }
+    }
+    if (depth !== 0) throw new Error(`unclosed rule for ${selector}`);
+    out.push(src.slice(open + 1, i));
+  }
+  return out;
+}
+/** exactly one colour-bearing rule per pinned site (FilterBar's grouped shared rule has none) */
+function accentRuleBlock(src: string, selector: string): string {
+  const blocks = ruleBodiesFor(src, selector).filter((b) => /(?:^|[\n;])\s*color:/.test(b));
+  if (blocks.length !== 1) {
+    throw new Error(`${selector}: expected exactly one color-bearing rule, found ${blocks.length}`);
+  }
+  return blocks[0];
+}
+function declaration(block: string, prop: string): string {
+  const m = block.match(new RegExp('(?:^|[\\n;])\\s*' + prop + ':\\s*([^;\\n]+)'));
+  if (!m) throw new Error(`no ${prop}: declaration in block`);
+  return m[1].trim();
+}
+
+type AccentInk =
+  | { kind: 'token' }
+  | { kind: 'fallback'; hex: string }
+  | { kind: 'hardcoded'; hex: string };
+
+function classifyAccentInk(value: string): AccentInk {
+  if (value === 'var(--accent-contrast)' || value === 'var(--text-on-accent)') return { kind: 'token' };
+  const fb = value.match(/^var\(--accent-contrast\s*,\s*(#[0-9a-fA-F]{3,6})\)$/);
+  if (fb) return { kind: 'fallback', hex: fb[1] };
+  if (/^#[0-9a-fA-F]{3,6}$/.test(value)) return { kind: 'hardcoded', hex: value };
+  throw new Error(`unrecognized accent-ink declaration: ${value}`);
+}
+
+describe('S-ui-design-11 — in-group --accent-contrast consumers (ship-state lock)', () => {
+  it('--text-on-accent is the token package alias of --accent-contrast (Button solid law)', () => {
+    expect(css).toContain('--text-on-accent: var(--accent-contrast)');
+  });
+
+  it('no in-group consumer carries a hex fallback on --accent-contrast', () => {
+    const offenders: string[] = [];
+    for (const rel of IN_GROUP_FILES) {
+      const src = readFileSync(join(SRC, rel), 'utf8');
+      for (const m of src.matchAll(/var\(--accent-contrast\s*,[^)]*\)/g)) offenders.push(`${rel}: ${m[0]}`);
+    }
+    expect(offenders, `fallbacks on a now-defined token: ${offenders.join(' | ')}`).toEqual([]);
+  });
+
+  it('the in-group --accent-contrast use-census equals the shipped table (five raw uses)', () => {
+    let uses = 0;
+    for (const rel of IN_GROUP_FILES) {
+      const src = readFileSync(join(SRC, rel), 'utf8');
+      uses += (src.match(/var\(--accent-contrast\s*[,)]/g) ?? []).length;
+    }
+    expect(uses).toBe(5); // Button solid rides the alias, not the raw token
+  });
+
+  for (const site of IN_GROUP_SITES) {
+    describe(`${site.file} ${site.selector}`, () => {
+      const src = readFileSync(join(SRC, site.file), 'utf8');
+      const block = accentRuleBlock(src, site.selector);
+      const ink = classifyAccentInk(declaration(block, 'color'));
+      const label = ink.kind === 'token' ? 'shipped token ink' : `${ink.kind} ${ink.hex}`;
+
+      it(`background is the accent fill the contrast ink is designed for (${site.bgToken})`, () => {
+        expect(declaration(block, 'background')).toMatch(new RegExp('^var\\(' + site.bgToken + '\\s*[,)]'));
+      });
+
+      for (const theme of THEMES) {
+        it(`[${theme}] ${label} ≥ 4.5:1 on ${site.bgToken}`, () => {
+          const fillHex = tokenHex(bodies[theme], site.bgToken);
+          const inkHex = ink.kind === 'token' ? accentContrastHex! : ink.hex;
+          expect(contrast(hexToRgb(inkHex), hexToRgb(fillHex))).toBeGreaterThanOrEqual(AA_TEXT);
+        });
+      }
     });
   }
 });
