@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Failed room creation no longer orphans the created group; leaving a room clears stale local playback residue 2026-11-28 (S-ui-player-19)
+
+### Fixed
+
+* Two room-lifecycle hygiene defects are closed (findings phlix-ui-player-023/037). `createAndJoinRoom` used to abandon the freshly created group when the JOIN leg failed — the user saw an error while an orphan room with only them in it stayed alive server-side. The catch now issues a best-effort `POST /groups/{id}/leave` for the just-created id, strictly after the user-facing error is recorded and with the rollback's own failure swallowed: the original error still surfaces, nothing throws from the catch, and a retry starts from a clean server-side slate (a failed create itself has no room id, so no rollback is issued there). And `leaveRoom`'s teardown no longer leaves residue behind: `localPlaybackPosition` is reset and an unconsumed hub `pendingPlayMedia` command is dropped in the `finally`, so rejoining a room cannot flash the old playhead or autoplay a command the user never meant to replay in the new room. No message keys were minted; the one affected negative-control pin is flipped with its finding id disclosed in place.
+
 ## Unreleased — Signed-stream auth recovery: one re-resolve on fatal media errors; resume reporter drops dead sessions and earns its throttle window 2026-11-28 (S-ui-player-29)
 
 ### Fixed

@@ -11215,15 +11215,19 @@ var Pm = class extends Error {
 	}
 	async function w(n, r) {
 		s.value = !0, o.value = null;
+		let i = null;
 		try {
-			let e = Xp(n), i = Nm(), a = r.password !== void 0 && r.password.trim() !== "" ? r.password : void 0, o = a === void 0 ? void 0 : gp(a), s = await e.createRoom({
+			let e = Xp(n), a = Nm(), o = r.password !== void 0 && r.password.trim() !== "" ? r.password : void 0, s = o === void 0 ? void 0 : gp(o), c = await e.createRoom({
 				name: r.name,
-				...a === void 0 ? {} : { password: a },
-				memberName: i
+				...o === void 0 ? {} : { password: o },
+				memberName: a
 			});
-			t.value = s, C(s.id, await e.joinRoom(s.id, i, a), i, o);
+			t.value = c, i = c.id, C(c.id, await e.joinRoom(c.id, a, o), a, s);
 		} catch (t) {
-			throw o.value = t instanceof Error ? t.message : e("syncplay.errorCreate"), t;
+			if (o.value = t instanceof Error ? t.message : e("syncplay.errorCreate"), i !== null) try {
+				await Xp(n).leaveRoom(i);
+			} catch {}
+			throw t;
 		} finally {
 			s.value = !1;
 		}
@@ -11250,7 +11254,7 @@ var Pm = class extends Error {
 					o.value = t instanceof Error ? t.message : e("syncplay.errorLeave");
 				}
 			} finally {
-				y(), km(), t.value = null, n.value = null, a.value = [], s.value = !1;
+				y(), km(), t.value = null, n.value = null, a.value = [], l.value = 0, i.value = null, s.value = !1;
 			}
 		}
 	}

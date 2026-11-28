@@ -1372,7 +1372,7 @@ function xo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CpE_t2oa.js")
+			component: () => import("./PlayerPage-CCqFyV28.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1420,7 +1420,7 @@ function xo(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-D1wmWFu7.js")
+			component: () => import("./SyncPlayPage-BH-KJYlo.js")
 		},
 		{
 			path: `${t}/music`,

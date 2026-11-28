@@ -1202,15 +1202,19 @@ var rt = class extends Error {
 	}
 	async function ne(n, r) {
 		s.value = !0, o.value = null;
+		let i = null;
 		try {
-			let e = W(n), i = nt(), a = r.password !== void 0 && r.password.trim() !== "" ? r.password : void 0, o = a === void 0 ? void 0 : M(a), s = await e.createRoom({
+			let e = W(n), a = nt(), o = r.password !== void 0 && r.password.trim() !== "" ? r.password : void 0, s = o === void 0 ? void 0 : M(o), c = await e.createRoom({
 				name: r.name,
-				...a === void 0 ? {} : { password: a },
-				memberName: i
+				...o === void 0 ? {} : { password: o },
+				memberName: a
 			});
-			t.value = s, te(s.id, await e.joinRoom(s.id, i, a), i, o);
+			t.value = c, i = c.id, te(c.id, await e.joinRoom(c.id, a, o), a, s);
 		} catch (t) {
-			throw o.value = t instanceof Error ? t.message : e("syncplay.errorCreate"), t;
+			if (o.value = t instanceof Error ? t.message : e("syncplay.errorCreate"), i !== null) try {
+				await W(n).leaveRoom(i);
+			} catch {}
+			throw t;
 		} finally {
 			s.value = !1;
 		}
@@ -1226,18 +1230,18 @@ var rt = class extends Error {
 			s.value = !1;
 		}
 	}
-	async function re(r) {
+	async function re(i) {
 		if (t.value) {
 			s.value = !0, o.value = null;
 			try {
-				let n = W(r);
+				let n = W(i);
 				try {
 					await n.leaveRoom(t.value.id);
 				} catch (t) {
 					o.value = t instanceof Error ? t.message : e("syncplay.errorLeave");
 				}
 			} finally {
-				b(), Qe(), t.value = null, n.value = null, a.value = [], s.value = !1;
+				b(), Qe(), t.value = null, n.value = null, a.value = [], l.value = 0, r.value = null, s.value = !1;
 			}
 		}
 	}
@@ -1570,4 +1574,4 @@ var rt = class extends Error {
 }), [["__scopeId", "data-v-66698f79"]]);
 export { it as n, ke as r, It as t };
 
-//# sourceMappingURL=SyncPlayModal-Cvc8b0Z7.js.map
+//# sourceMappingURL=SyncPlayModal-COfOFk2C.js.map

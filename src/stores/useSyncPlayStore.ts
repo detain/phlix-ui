@@ -377,6 +377,9 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   ): Promise<void> {
     isLoading.value = true;
     error.value = null;
+    // phlix-ui-player-023: set the moment a room EXISTS server-side, so the
+    // catch below can roll it back. Stays null when the CREATE itself failed.
+    let createdRoomId: string | null = null;
     try {
       const api = getSyncPlayApi(apiBase);
       // S285: the creator is added to the group as a member by `createGroup()`
@@ -399,6 +402,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
         memberName,
       });
       currentRoom.value = room;
+      createdRoomId = room.id;
       // S287: the SAME tail as a join by bare id, socket included. The creator
       // is already a member server-side, but the REST join leg is what returns
       // the post-join state — and on a locked group it is also the leg that
@@ -411,6 +415,20 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       );
     } catch (e) {
       error.value = e instanceof Error ? e.message : t('syncplay.errorCreate');
+      // phlix-ui-player-023: the room was created but we are not in it — leave
+      // it best-effort so no orphan group survives this failed attempt. The
+      // rollback runs AFTER `error.value` is set and its own failure is
+      // swallowed: the user keeps seeing the original join error, and a dead
+      // rollback leg can never block it (retry-safe: the next attempt starts
+      // from a clean server-side slate, and nothing here throws from the catch).
+      if (createdRoomId !== null) {
+        try {
+          // Fresh client handle: `api` is try-scoped and not visible here.
+          await getSyncPlayApi(apiBase).leaveRoom(createdRoomId);
+        } catch {
+          /* best-effort: the server reaps idle/orphaned groups; never mask `e`. */
+        }
+      }
       throw e;
     } finally {
       isLoading.value = false;
@@ -492,6 +510,13 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       currentRoom.value = null;
       currentSession.value = null;
       members.value = [];
+      // phlix-ui-player-037: drop the residue a rejoin would otherwise inherit
+      // — a stale local position (flash of the old playhead) and an
+      // unconsumed hub pending-play command (autoplay of something the user
+      // did not ask for in the NEW room). The Player's watcher is null-safe
+      // (`if (!command) return`), so clearing mid-life is inert by design.
+      localPlaybackPosition.value = 0;
+      pendingPlayMedia.value = null;
       isLoading.value = false;
     }
   }

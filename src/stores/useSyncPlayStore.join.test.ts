@@ -318,7 +318,19 @@ describe('S287 — BOTH join-performing paths open the realtime WebSocket', () =
         ).rejects.toThrow();
         // The create succeeded, so this is not "nothing happened" — the room is
         // in the store and the socket still must not be open.
-        expect(server.requests.map((r) => r.status)).toEqual([200, 404]);
+        //
+        // S-ui-player-19 / phlix-ui-player-023 CONTRACT-FLIP (disclosed): this
+        // used to read [200, 404]. A create whose JOIN failed now best-effort
+        // leaves the just-created room instead of abandoning it, so the status
+        // tail gains the rollback's own 200 — and the list is upgraded to a
+        // method+path equality check so the leave is pinned to the CREATED id,
+        // not just to "some request happened".
+        expect(server.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
+            'POST /api/v1/syncplay/groups',
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/join`,
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/leave`,
+        ]);
+        expect(server.requests.map((r) => r.status)).toEqual([200, 404, 200]);
         expect(store.currentRoom!.id).toBe(GROUP_ID);
         expect(sockets).toHaveLength(0);
     });

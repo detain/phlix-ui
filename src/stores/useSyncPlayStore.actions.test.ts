@@ -21,6 +21,7 @@ import { useSyncPlayStore, SyncPlayCommandNotDeliveredError } from './useSyncPla
 import { closeSyncPlayConnection, sendSyncPlayCommand, setSyncPlayLogger } from '../api/syncplay';
 import { makeSyncPlayServer, type FakeSyncPlayServer } from '../api/test/syncplayServer';
 import type { SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
+import type { PendingPlayMediaCommand } from '../api/hubRelay';
 
 const BASE = 'https://media.example.com';
 const GROUP_ID = 'sp_abc123';
@@ -818,5 +819,119 @@ describe('phlix-ui-player-040 — malformed inbound JSON warns once and counts',
         socket().onmessage?.({ data: '}' } as MessageEvent);
         expect(warnSpy).toHaveBeenCalledTimes(1);
         expect(counter()).toBe(3);
+    });
+});
+
+// ── S-ui-player-19 — findings phlix-ui-player-023 / phlix-ui-player-037 ────────
+//
+// 023: a create-and-join whose JOIN leg failed used to abandon the freshly
+// created room — the user was told "failed to join" while the group stayed
+// alive server-side with only them in it. New law: the catch issues a
+// best-effort leave for the just-created id; a rollback that itself fails is
+// swallowed (the ORIGINAL error must still surface — one error, never two)
+// and never blocks the user-facing error path.
+// 037: leaving a room tore down room/session/members but left the local
+// playback position and the unconsumed hub pending-play command behind — a
+// rejoin saw a flash of the stale position, and a command the user never
+// meant to replay could autoplay into the new room.
+
+describe('phlix-ui-player-023 — a failed create-and-join rolls the created room back', () => {
+    it('join failure issues a best-effort leave for the just-created room id', async () => {
+        server = makeSyncPlayServer(BASE, { omit: ['POST /api/v1/syncplay/groups/{id}/join'] });
+        const store = useSyncPlayStore();
+
+        await expect(store.createAndJoinRoom(BASE, { name: 'x' })).rejects.toThrow();
+
+        // create → join(404) → leave: the rollback really goes out, against
+        // THE CREATED ID (retry-safe: the room is not left to orphan), and the
+        // original join error still surfaces below.
+        expect(server!.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
+            'POST /api/v1/syncplay/groups',
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/join`,
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/leave`,
+        ]);
+        expect(store.error).not.toBeNull();
+        expect(store.isLoading).toBe(false);
+    });
+
+    it('a SUCCESSFUL create-and-join issues NO rollback leave', async () => {
+        const store = useSyncPlayStore();
+        await store.createAndJoinRoom(BASE, { name: 'Movie Night' });
+
+        expect(server!.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
+            'POST /api/v1/syncplay/groups',
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/join`,
+        ]);
+        expect(store.currentRoom!.id).toBe(GROUP_ID);
+    });
+
+    it('a REJECTING rollback still surfaces the ORIGINAL join error', async () => {
+        // Both legs unserved: the join 404s, the rollback 404s too. The
+        // rollback failure must not mask the first error nor throw from the
+        // catch — the user gets the join failure, the store gets its error,
+        // and isLoading still clears.
+        server = makeSyncPlayServer(BASE, {
+            omit: ['POST /api/v1/syncplay/groups/{id}/join', 'POST /api/v1/syncplay/groups/{id}/leave'],
+        });
+        const store = useSyncPlayStore();
+
+        await expect(store.createAndJoinRoom(BASE, { name: 'x' })).rejects.toThrow();
+        expect(server!.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
+            'POST /api/v1/syncplay/groups',
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/join`,
+            `POST /api/v1/syncplay/groups/${GROUP_ID}/leave`,
+        ]);
+        expect(store.error).not.toBeNull();
+        expect(store.isLoading).toBe(false);
+        // The half-joined shape is preserved exactly as before: no extra
+        // teardown was smuggled in under the banner of "rollback".
+        expect(store.currentRoom!.id).toBe(GROUP_ID);
+        expect(store.currentSession).toBeNull();
+    });
+
+    it('a CREATE failure has no room to roll back — no leave is issued', async () => {
+        server = makeSyncPlayServer(BASE, { omit: ['POST /api/v1/syncplay/groups'] });
+        const store = useSyncPlayStore();
+
+        await expect(store.createAndJoinRoom(BASE, { name: 'x' })).rejects.toThrow();
+        expect(server!.requests.some((r) => r.path.endsWith('/leave'))).toBe(false);
+    });
+});
+
+describe('phlix-ui-player-037 — leaveRoom clears the local playback residue', () => {
+    const pending: PendingPlayMediaCommand = {
+        type: 'pending_command',
+        command: 'play_media',
+        serverId: 'srv-1',
+        mediaId: 'media-9',
+        title: 'Inception',
+        issuedAt: 1_700_000_000,
+        source: 'alexa',
+    };
+
+    it('leaveRoom resets localPlaybackPosition — a rejoin must not inherit the stale value', async () => {
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+        store.currentRoom = { ...room };
+
+        store.updateLocalPosition(42);
+        // SET-THEN-LEAVE-THEN-ASSERT: the 42 is observable BEFORE the leave,
+        // so the 0 below cannot pass vacuously.
+        expect(store.localPlaybackPosition).toBe(42);
+
+        await store.leaveRoom(BASE);
+        expect(store.localPlaybackPosition).toBe(0);
+    });
+
+    it('leaveRoom drops an unconsumed pendingPlayMedia — no autoplay into the next room', async () => {
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+        store.currentRoom = { ...room };
+
+        store.applyPendingPlayMedia(pending);
+        expect(store.pendingPlayMedia).toEqual(pending);
+
+        await store.leaveRoom(BASE);
+        expect(store.pendingPlayMedia).toBeNull();
     });
 });
