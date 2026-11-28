@@ -26,6 +26,7 @@ import {
   languageLabel,
   localizeCaptionOptions,
   trackDisplayLabel,
+  trackUid,
 } from './captions';
 import type { TextTrackInfo } from './captions';
 import { parsePlaybackAudioTracks } from './playback';
@@ -375,5 +376,95 @@ describe('playback — parsed audio tracks mark label provenance (S-ui-player-07
     const [t] = parsePlaybackAudioTracks([{ index: 0, title: '', language: 'de' }]);
     expect(t.label).toBe('de');
     expect(t.labelKind).toBeUndefined();
+  });
+});
+
+// ---- distinct subtitle-track identity (S-ui-player-16 / phlix-ui-player-017) ---
+
+describe('captions — stable per-track uid identity (S-ui-player-16)', () => {
+  const en = createTranslator();
+  const de = createTranslator(DE_MESSAGES);
+
+  /** A video whose subtitle list holds `count` distinct tracks, all 'eng'. */
+  function dupVideo(count: number) {
+    return videoWith({
+      text: Array.from({ length: count }, () => fakeTrack({ kind: 'subtitles', language: 'eng', label: '' })),
+    });
+  }
+
+  it('gives each same-language track a DISTINCT uid; first occurrence stays bare', () => {
+    const tracks = listSubtitleTracks(dupVideo(3));
+    expect(tracks.map((t) => t.uid)).toEqual(['eng', 'eng#2', 'eng#3']);
+    // the uid doubles as the `language` key so Player.vue/CaptionOverlay
+    // equality against the stored selection keeps working unchanged.
+    expect(tracks.map((t) => t.language)).toEqual(['eng', 'eng#2', 'eng#3']);
+    expect(tracks.every((t) => t.trackLanguage === 'eng')).toBe(true);
+    // .label stays populated with the English fallback (p07 raw-.label law).
+    expect(tracks.map((t) => t.label)).toEqual(['English', 'English', 'English']);
+    expect(tracks.map((t) => trackUid(t))).toEqual(['eng', 'eng#2', 'eng#3']);
+  });
+
+  it('uids are idempotent across re-listing the same track list', () => {
+    const v = dupVideo(2);
+    const first = listSubtitleTracks(v).map((t) => t.uid);
+    const again = listSubtitleTracks(v).map((t) => t.uid);
+    expect(again).toEqual(first);
+    expect(again).toEqual(['eng', 'eng#2']);
+  });
+
+  it('single-language enumerations keep the bare legacy key (persisted picks resolve)', () => {
+    const v = videoWith({ text: [fakeTrack({ language: 'eng' }), fakeTrack({ language: 'fra' })] });
+    expect(listSubtitleTracks(v).map((t) => t.uid)).toEqual(['eng', 'fra']);
+    expect(listSubtitleTracks(v).map((t) => t.trackLanguage)).toEqual(['eng', 'fra']);
+  });
+
+  it('trackUid falls back to `language` for legacy / hand-built entries', () => {
+    expect(trackUid({ index: 0, language: 'es', label: 'Spanish', kind: 'subtitles' })).toBe('es');
+  });
+
+  it('resolveTextTrack distinguishes duplicates (a second "eng" was unreachable)', () => {
+    const first = fakeTrack({ language: 'eng' });
+    const second = fakeTrack({ language: 'eng' });
+    const v = videoWith({ text: [first, second] });
+    expect(resolveTextTrack(v, 'eng')).toBe(first);
+    expect(resolveTextTrack(v, 'eng#2')).toBe(second);
+    expect(resolveTextTrack(v, 'eng#3')).toBeNull();
+    expect(hasActiveCaptions(v, 'eng#2')).toBe(true);
+    expect(hasActiveCaptions(v, 'eng#3')).toBe(false);
+  });
+
+  it('applyTrackModes hides exactly the uid-selected track', () => {
+    const first = fakeTrack({ language: 'eng', mode: 'disabled' });
+    const second = fakeTrack({ language: 'eng', mode: 'disabled' });
+    const v = videoWith({ text: [first, second] });
+    applyTrackModes(v, 'eng#2');
+    expect(second.mode).toBe('hidden');
+    expect(first.mode).toBe('disabled');
+    applyTrackModes(v, 'eng');
+    expect(first.mode).toBe('hidden');
+    expect(second.mode).toBe('disabled');
+  });
+
+  it('duplicate tracks both render with distinguishable labels (numbered reuse)', () => {
+    const tracks = listSubtitleTracks(dupVideo(2));
+    expect(trackDisplayLabel(tracks[0], en, 'en')).toBe('English');
+    expect(trackDisplayLabel(tracks[1], en, 'en')).toBe('Track 2');
+    expect(trackDisplayLabel(tracks[0], de, 'de')).toBe('Englisch');
+    expect(trackDisplayLabel(tracks[1], de, 'de')).toBe('Spur 2');
+  });
+
+  it('duplicate label-only (no language) tracks get uid suffixes too', () => {
+    const v = videoWith({ text: [fakeTrack({ label: 'Forced' }), fakeTrack({ label: 'Forced' })] });
+    expect(listSubtitleTracks(v).map((t) => t.uid)).toEqual(['Forced', 'Forced#2']);
+  });
+
+  it('audio enumerations dedup same-language entries and number the duplicate', () => {
+    const v = videoWith({ audio: [{ language: 'eng' }, { language: 'eng' }] });
+    const audio = listAudioTracks(v);
+    expect(audio.map((t) => t.uid)).toEqual(['eng', 'eng#2']);
+    expect(audio.map((t) => t.language)).toEqual(['eng', 'eng#2']);
+    expect(audio.every((t) => t.trackLanguage === 'eng')).toBe(true);
+    expect(trackDisplayLabel(audio[0], en, 'en')).toBe('English');
+    expect(trackDisplayLabel(audio[1], en, 'en')).toBe('Audio 2');
   });
 });

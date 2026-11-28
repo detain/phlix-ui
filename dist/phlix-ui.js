@@ -1363,7 +1363,7 @@ function bo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-Ryqf8Thh.js")
+			component: () => import("./PlayerPage-BJjBnDQO.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1387,7 +1387,7 @@ function bo(e) {
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-DnSn2in7.js")
+			component: () => import("./SettingsPage-Tzy-4hYc.js")
 		},
 		{
 			path: `${t}/explore`,

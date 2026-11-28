@@ -379,3 +379,58 @@ describe('CaptionsMenu — option + track labels localize at render (S-ui-player
     expect(labels).toContain('Tonspur 1');
   });
 });
+
+// ---- duplicate same-language tracks (S-ui-player-16 / phlix-ui-player-017) ----
+
+describe('CaptionsMenu — duplicate same-language tracks are reachable (S-ui-player-16)', () => {
+  /** Minimal <video> stand-in exposing textTracks for listSubtitleTracks. */
+  function videoWithTracks(count: number) {
+    return {
+      textTracks: Array.from({ length: count }, () => ({
+        kind: 'subtitles',
+        label: '',
+        language: 'eng',
+        mode: 'disabled',
+        activeCues: null,
+        addEventListener() {},
+        removeEventListener() {},
+      })),
+    } as unknown as HTMLVideoElement;
+  }
+
+  it('shows BOTH "eng" tracks with distinct labels (the second used to vanish)', async () => {
+    const w = mountMenu({ tracks: listSubtitleTracks(videoWithTracks(2)), open: true });
+    await nextTick();
+    const radios = w.get('[aria-label="Subtitle track"]').findAll('[role="radio"]');
+    expect(radios.map((r) => r.text())).toEqual(['Off', 'English', 'Track 2']);
+  });
+
+  it('clicking the duplicate stores its uid and checks exactly that radio', async () => {
+    const w = mountMenu({ tracks: listSubtitleTracks(videoWithTracks(2)), open: true });
+    await nextTick();
+    const group = () => w.get('[aria-label="Subtitle track"]').findAll('[role="radio"]');
+    await group()[2].trigger('click');
+    expect(usePlayerStore().subtitleLang).toBe('eng#2');
+    expect(usePreferencesStore().defaultSubtitleLang).toBe('eng#2');
+    await nextTick();
+    expect(group().map((r) => r.attributes('aria-checked'))).toEqual(['false', 'false', 'true']);
+    expect(w.find('.capmenu__btn').attributes('aria-label')).toBe('Captions (on)');
+    // first track unselected despite sharing the language
+    expect(group()[1].find('.capmenu__check svg').exists()).toBe(false);
+  });
+
+  it('arrow navigation reaches the duplicate', async () => {
+    const w = mountMenu({ tracks: listSubtitleTracks(videoWithTracks(2)), open: true });
+    await nextTick();
+    await w.get('[aria-label="Subtitle track"]').trigger('keydown', { key: 'End' });
+    expect(usePlayerStore().subtitleLang).toBe('eng#2');
+  });
+
+  it('the two uid-keyed radios carry distinct tab stops when the duplicate is active', async () => {
+    usePlayerStore().setSubtitle('eng#2');
+    const w = mountMenu({ tracks: listSubtitleTracks(videoWithTracks(2)), open: true });
+    await nextTick();
+    const radios = w.get('[aria-label="Subtitle track"]').findAll('[role="radio"]');
+    expect(radios.map((r) => r.attributes('tabindex'))).toEqual(['-1', '-1', '0']);
+  });
+});

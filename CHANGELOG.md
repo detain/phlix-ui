@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Distinct subtitle-track identity: occurrence-deduped per-track uids make duplicate same-language tracks reachable 2026-11-28 (S-ui-player-16)
+
+### Fixed
+
+* A second same-language subtitle track is now selectable and visible (finding phlix-ui-player-017). Track keys were language-equality (`t.language || t.label || track-N`), so two `eng` tracks collapsed onto one key: `resolveTextTrack` and `applyTrackModes` always hit the first, the menu's `v-for :key` collided, and the duplicate vanished from the track list. `listSubtitleTracks`/`listAudioTracks` now stamp a stable per-track uid — base `language → id → label → positional` deduped by occurrence within the enumerated list, the first occurrence keeping the BARE base so keys persisted under the old scheme still resolve, later ones gaining `#2`, `#3` — carried on the new optional `uid` field (with the raw reported language on `trackLanguage`) and derived identically at resolution time via the exported `trackUid` so a stored uid round-trips. `resolveTextTrack`, `hasActiveCaptions` and `applyTrackModes` match on the uid key instead of language equality, and `CaptionsMenu` binds radio keys, checked state, keyboard navigation and selection through `trackUid`. Disambiguated duplicates render through the existing `player.trackNumbered`/`player.audioTrackNumbered` catalog keys, so both `eng` tracks appear (say "English" and "Track 2") with no new message keys.
+
 ## Unreleased — Caption and audio option labels localize at render: catalog-keyed option consts, locale-driven language names, numbered track fallbacks 2026-11-28 (S-ui-player-07)
 
 ### Fixed

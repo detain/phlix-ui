@@ -23,7 +23,14 @@ import type {
 export interface TextTrackInfo {
   /** Position within its (filtered) kind list — the key used to switch audio. */
   index: number;
-  /** BCP-47 language code, or a stable fallback key when the track has none. */
+  /**
+   * The stable per-track key (the track's uid). For entries produced by
+   * {@link listSubtitleTracks} / {@link listAudioTracks} this equals `uid`:
+   * the track's identity, NOT necessarily its raw language — same-language
+   * duplicates get an occurrence suffix (finding phlix-ui-player-017) so each
+   * stays separately selectable. Hand-built / legacy entries may carry a plain
+   * language code here; {@link trackUid} resolves either shape.
+   */
   language: string;
   /** Human label (track label → language display name → "Track N"). */
   label: string;
@@ -35,11 +42,26 @@ export interface TextTrackInfo {
    */
   labelKind?: CaptionLabelSource;
   kind: string;
+  /**
+   * Stable unique identity for THIS track within its enumeration (finding
+   * phlix-ui-player-017): the raw language/id/label base, with `#2`, `#3` …
+   * suffixed on duplicate occurrences so two 'eng' subtitle tracks get
+   * distinct, idempotent keys. Absent on legacy hand-built entries, where
+   * `language` stands in via {@link trackUid}.
+   */
+  uid?: string;
+  /** Raw BCP-47 code reported by the engine ('' when the track has none) —
+   *  the label input, kept separate from the uid so a disambiguated duplicate
+   *  ('eng#2') can still render its language name or a numbered fallback. */
+  trackLanguage?: string;
 }
+
+/** A non-standard `audioTracks` entry (Safari / flagged Chromium). */
+type AudioTrackLike = { language?: string; label?: string; id?: string; enabled?: boolean };
 
 /** Loosely-typed media element (audioTracks isn't in the standard DOM lib). */
 type MediaElementLike = (HTMLVideoElement | null | undefined) & {
-  audioTracks?: ArrayLike<{ language?: string; label?: string; id?: string; enabled?: boolean }>;
+  audioTracks?: ArrayLike<AudioTrackLike>;
 };
 
 /** A live array-like (TextTrackList / AudioTrackList) → a real array. */
@@ -58,10 +80,40 @@ function isSubtitleTrack(t: TextTrack): boolean {
   return t.kind === 'subtitles' || t.kind === 'captions';
 }
 
-/** The stable key for a subtitle track (== `TextTrackInfo.language`). Enumeration
- *  and resolution MUST share this so a stored selection round-trips. */
-function subtitleKey(t: TextTrack, i: number): string {
-  return t.language || t.label || `track-${i}`;
+/** The stable uid for a track entry: its dedicated `uid` when enumerated,
+ *  otherwise the `language` key (legacy / hand-built entries). Consumers that
+ *  compare a stored selection against track rows MUST use this, never raw
+ *  language equality (finding phlix-ui-player-017). */
+export function trackUid(t: TextTrackInfo): string {
+  return t.uid ?? t.language;
+}
+
+/** Count-occurrence dedup: the base key of entry `i` gets `#N` when the same
+ *  base has appeared N≥2 times in the list up to and including `i`. The first
+ *  occurrence keeps the BARE base, so keys persisted under the old
+ *  language-equality scheme still resolve (phlix-ui-player-017). Pure re-walk
+ *  over the list → deterministic and idempotent: re-listing the same tracks
+ *  (TextTrackList/AudioTrackList order is stable) yields the same uids. */
+function dedupAt<T>(list: ArrayLike<T>, i: number, baseOf: (t: T, k: number) => string): string {
+  const base = baseOf(list[i], i);
+  let occurrence = 0;
+  for (let j = 0; j <= i; j++) {
+    if (baseOf(list[j], j) === base) occurrence += 1;
+  }
+  if (occurrence > 1) return `${base}#${occurrence}`;
+  return base;
+}
+
+/** Subtitle-track identity: language → id → label → `track-N` base, deduped by
+ *  occurrence. Enumeration AND resolution MUST share this so a stored uid
+ *  round-trips (finding phlix-ui-player-017). */
+function subtitleUidAt(subs: TextTrack[], i: number): string {
+  return dedupAt(subs, i, (t, k) => t.language || t.id || t.label || `track-${k}`);
+}
+
+/** Audio-track identity: language → id → `audio-N` base, deduped by occurrence. */
+function audioUidAt(tracks: ArrayLike<AudioTrackLike>, i: number): string {
+  return dedupAt(tracks, i, (t, k) => t.language || t.id || `audio-${k}`);
 }
 
 /**
@@ -96,36 +148,48 @@ export function languageLabel(code: string | undefined, locale?: string | null):
 export function listSubtitleTracks(video: HTMLVideoElement | null | undefined): TextTrackInfo[] {
   if (!video) return [];
   const subs = toArray<TextTrack>(video.textTracks as unknown as ArrayLike<TextTrack>).filter(isSubtitleTrack);
-  return subs.map((t, i) => ({
-    index: i,
-    language: subtitleKey(t, i),
-    label: t.label || languageLabel(t.language) || `Track ${i + 1}`,
-    kind: t.kind,
-    labelKind: t.label ? 'title' : t.language ? 'language' : 'generated',
-  }));
+  return subs.map((t, i) => {
+    const uid = subtitleUidAt(subs, i);
+    return {
+      index: i,
+      language: uid,
+      uid,
+      trackLanguage: t.language || '',
+      label: t.label || languageLabel(t.language) || `Track ${i + 1}`,
+      kind: t.kind,
+      labelKind: t.label ? 'title' : t.language ? 'language' : 'generated',
+    };
+  });
 }
 
 /** Audio tracks on a `<video>` — only meaningful where the browser exposes
  *  `audioTracks` (Safari / flagged Chromium); empty elsewhere. */
 export function listAudioTracks(video: HTMLVideoElement | null | undefined): TextTrackInfo[] {
   const list = (video as MediaElementLike)?.audioTracks;
-  return toArray(list).map((t, i) => ({
-    index: i,
-    language: t.language || t.id || `audio-${i}`,
-    label: t.label || languageLabel(t.language) || `Audio ${i + 1}`,
-    kind: 'audio',
-    labelKind: t.label ? 'title' : t.language ? 'language' : 'generated',
-  }));
+  if (!list) return [];
+  const tracks = toArray<AudioTrackLike>(list);
+  return tracks.map((t, i) => {
+    const uid = audioUidAt(tracks, i);
+    return {
+      index: i,
+      language: uid,
+      uid,
+      trackLanguage: t.language || '',
+      label: t.label || languageLabel(t.language) || `Audio ${i + 1}`,
+      kind: 'audio',
+      labelKind: t.label ? 'title' : t.language ? 'language' : 'generated',
+    };
+  });
 }
 
-/** The native TextTrack for a stored language key, or null (off / no match). */
+/** The native TextTrack for a stored uid, or null (off / no match). */
 export function resolveTextTrack(
   video: HTMLVideoElement | null | undefined,
   language: string | null | undefined,
 ): TextTrack | null {
   if (!video || language == null) return null;
   const subs = toArray<TextTrack>(video.textTracks as unknown as ArrayLike<TextTrack>).filter(isSubtitleTrack);
-  const found = subs.find((t, i) => subtitleKey(t, i) === language);
+  const found = subs.find((_, i) => subtitleUidAt(subs, i) === language);
   return found ?? null;
 }
 
@@ -138,7 +202,9 @@ export function hasActiveCaptions(
 }
 
 /** Put the selected track in `mode='hidden'` (parsed, not painted) and disable
- *  the rest, so only our overlay renders. Safe if `mode` is read-only. */
+ *  the rest, so only our overlay renders. Matching is by uid (finding
+ *  phlix-ui-player-017), never by raw language equality. Safe if `mode` is
+ *  read-only. */
 export function applyTrackModes(
   video: HTMLVideoElement | null | undefined,
   activeLanguage: string | null | undefined,
@@ -147,7 +213,7 @@ export function applyTrackModes(
   const subs = toArray<TextTrack>(video.textTracks as unknown as ArrayLike<TextTrack>).filter(isSubtitleTrack);
   subs.forEach((t, i) => {
     try {
-      t.mode = subtitleKey(t, i) === activeLanguage ? 'hidden' : 'disabled';
+      t.mode = subtitleUidAt(subs, i) === activeLanguage ? 'hidden' : 'disabled';
     } catch {
       /* mode may be read-only in some engines — ignore */
     }
@@ -347,7 +413,16 @@ export function trackDisplayLabel(
     });
   }
   if (track.labelKind === 'language') {
-    return languageLabel(track.language, locale) || track.label;
+    const raw = track.trackLanguage ?? track.language;
+    if (track.language !== raw) {
+      // Disambiguated same-language duplicate (finding phlix-ui-player-017):
+      // naming both rows identically would hide which is which, so fall back
+      // to the numbered catalog label (position carries the distinction).
+      return translate(track.kind === 'audio' ? 'player.audioTrackNumbered' : 'player.trackNumbered', {
+        number: track.index + 1,
+      });
+    }
+    return languageLabel(raw, locale) || track.label;
   }
   return track.label;
 }

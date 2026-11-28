@@ -9,7 +9,7 @@ import { C as c, i as ee, n as l, r as te, t as u, w as ne } from "./DeviceSessi
 import { t as re } from "./useToastStore-CxO_ppM8.js";
 import { t as d } from "./useMessages-C-PrFAcm.js";
 import { t as ie } from "./useApiBase-DXTBY90j.js";
-import { i as ae, n as oe, r as se, t as ce } from "./captions-GTHY6uBf.js";
+import { i as ae, n as oe, r as se, t as ce } from "./captions--D8s1c0W.js";
 import { Fragment as f, computed as p, createBlock as m, createCommentVNode as h, createElementBlock as g, createElementVNode as _, createTextVNode as v, createVNode as y, defineComponent as b, normalizeClass as x, normalizeStyle as S, onBeforeUnmount as le, onMounted as ue, openBlock as C, ref as w, renderList as T, toDisplayString as E, unref as D, watch as O, withCtx as k } from "vue";
 import { useRoute as A, useRouter as j } from "vue-router";
 // src/components/AppearanceSettings.vue?vue&type=script&setup=true&lang.ts
@@ -550,4 +550,4 @@ var de = {
 }), [["__scopeId", "data-v-cd270171"]]);
 export { H as default };
 
-//# sourceMappingURL=SettingsPage-DnSn2in7.js.map
+//# sourceMappingURL=SettingsPage-Tzy-4hYc.js.map

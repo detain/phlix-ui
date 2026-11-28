@@ -39,6 +39,7 @@ import {
   CAPTION_EDGE_OPTIONS,
   localizeCaptionOptions,
   trackDisplayLabel,
+  trackUid,
 } from './captions';
 
 const props = withDefaults(
@@ -81,14 +82,16 @@ const rootEl = ref<HTMLElement | null>(null);
 const panelEl = ref<HTMLElement | null>(null);
 
 const activeLang = computed(() => player.subtitleLang);
-/** Captions are "on" only when the selected language resolves to a real track. */
-const captionsOn = computed(() => props.tracks.some((t) => t.language === activeLang.value));
+/** Captions are "on" only when the selected uid resolves to a real track
+ *  (uid equality, not language equality — same-language duplicates are
+ *  distinct entries, finding phlix-ui-player-017). */
+const captionsOn = computed(() => props.tracks.some((t) => trackUid(t) === activeLang.value));
 const iconName = computed(() => (captionsOn.value ? 'captions' : 'captions-off'));
 
 // Roving-tabindex anchors: the checked radio is the group's single Tab stop
 // (the subtitle group always has one — "Off" when no track is active).
 const subtitleCheckedIndex = computed(() =>
-  captionsOn.value ? props.tracks.findIndex((t) => t.language === activeLang.value) + 1 : 0,
+  captionsOn.value ? props.tracks.findIndex((t) => trackUid(t) === activeLang.value) + 1 : 0,
 );
 const audioRovingIndex = computed(() => (props.activeAudio >= 0 ? props.activeAudio : 0));
 
@@ -148,7 +151,7 @@ function moveRadio(e: KeyboardEvent, count: number, current: number): number | n
 function onSubtitleKeydown(e: KeyboardEvent): void {
   const next = moveRadio(e, props.tracks.length + 1, subtitleCheckedIndex.value);
   if (next === null) return;
-  selectSubtitle(next === 0 ? null : props.tracks[next - 1].language);
+  selectSubtitle(next === 0 ? null : trackUid(props.tracks[next - 1]));
 }
 function onAudioKeydown(e: KeyboardEvent): void {
   const next = moveRadio(e, props.audioTracks.length, audioRovingIndex.value);
@@ -262,15 +265,15 @@ onBeforeUnmount(() => {
         </button>
         <button
           v-for="(t, i) in tracks"
-          :key="t.language"
+          :key="trackUid(t)"
           type="button"
           class="capmenu__opt"
           role="radio"
-          :aria-checked="activeLang === t.language"
+          :aria-checked="activeLang === trackUid(t)"
           :tabindex="subtitleCheckedIndex === i + 1 ? 0 : -1"
-          @click="selectSubtitle(t.language)"
+          @click="selectSubtitle(trackUid(t))"
         >
-          <span class="capmenu__check"><Icon v-if="activeLang === t.language" name="check" /></span>
+          <span class="capmenu__check"><Icon v-if="activeLang === trackUid(t)" name="check" /></span>
           <span class="capmenu__optlabel">{{ trackDisplayLabel(t, translate, messageLocale) }}</span>
         </button>
       </div>
