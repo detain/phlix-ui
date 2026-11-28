@@ -62,6 +62,9 @@ export const ES_MESSAGES = {
     description: 'La página que buscas no existe o se ha movido.',
     goHome: 'Ir al inicio',
   },
+  errors: {
+    network: 'No se pudo conectar con el servidor. Comprueba la conexión e inténtalo de nuevo.',
+  },
   shell: {
     skipToContent: 'Saltar al contenido',
     primaryNav: 'Navegación principal',

@@ -64,6 +64,9 @@ export const FR_MESSAGES = {
     description: 'La page que vous recherchez n’existe pas ou a été déplacée.',
     goHome: 'Retour à l’accueil',
   },
+  errors: {
+    network: 'Impossible de joindre le serveur. Vérifiez la connexion et réessayez.',
+  },
   shell: {
     skipToContent: 'Aller au contenu',
     primaryNav: 'Navigation principale',

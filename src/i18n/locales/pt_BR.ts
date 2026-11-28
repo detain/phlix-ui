@@ -60,6 +60,9 @@ export const PT_BR_MESSAGES = {
     description: 'A página que você procura não existe ou foi movida.',
     goHome: 'Ir para o início',
   },
+  errors: {
+    network: 'Não foi possível conectar ao servidor. Verifique a conexão e tente novamente.',
+  },
   shell: {
     skipToContent: 'Pular para o conteúdo',
     primaryNav: 'Navegação principal',

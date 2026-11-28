@@ -37,7 +37,12 @@ const props = withDefaults(
     items: MediaItem[];
     /** Initial load — show skeleton cards instead of items. */
     loading?: boolean;
-    /** Error message; renders an inline retry affordance. */
+    /**
+     * Error message; renders an inline retry affordance. S-ui-design-46
+     * (design-064) contract: callers pass mapped catalog copy (e.g.
+     * `t('errors.network')`) — raw transport/exception text belongs in the
+     * console, not in this user-facing alert region.
+     */
     error?: string | null;
     /** Optional count shown next to the title (e.g. total available). */
     count?: number | null;

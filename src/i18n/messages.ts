@@ -78,6 +78,15 @@ export const DEFAULT_MESSAGES = {
     description: 'The page you are looking for does not exist or has moved.',
     goHome: 'Go home',
   },
+  /**
+   * S-ui-design-46 (design-064): client-side failure chrome for user-facing
+   * alert regions — mapped copy shown in place of raw transport text, which
+   * stays console-only. This is NOT the wire-code catalog: server error codes
+   * keep living in ./errors.ts.
+   */
+  errors: {
+    network: 'Couldn’t reach the server. Check your connection and try again.',
+  },
   shell: {
     skipToContent: 'Skip to content',
     primaryNav: 'Primary navigation',

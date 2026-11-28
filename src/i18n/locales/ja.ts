@@ -61,6 +61,9 @@ export const JA_MESSAGES = {
     description: 'お探しのページは存在しないか、移動されました。',
     goHome: 'ホームへ戻る',
   },
+  errors: {
+    network: 'サーバーに接続できませんでした。接続を確認してもう一度お試しください。',
+  },
   shell: {
     skipToContent: '本文へスキップ',
     primaryNav: 'メインナビゲーション',

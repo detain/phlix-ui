@@ -57,6 +57,9 @@ export declare const PT_BR_MESSAGES: {
         description: string;
         goHome: string;
     };
+    errors: {
+        network: string;
+    };
     shell: {
         skipToContent: string;
         primaryNav: string;

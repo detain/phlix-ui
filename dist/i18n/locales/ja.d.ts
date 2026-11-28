@@ -58,6 +58,9 @@ export declare const JA_MESSAGES: {
         description: string;
         goHome: string;
     };
+    errors: {
+        network: string;
+    };
     shell: {
         skipToContent: string;
         primaryNav: string;

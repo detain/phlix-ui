@@ -71,6 +71,15 @@ export declare const DEFAULT_MESSAGES: {
         description: string;
         goHome: string;
     };
+    /**
+     * S-ui-design-46 (design-064): client-side failure chrome for user-facing
+     * alert regions — mapped copy shown in place of raw transport text, which
+     * stays console-only. This is NOT the wire-code catalog: server error codes
+     * keep living in ./errors.ts.
+     */
+    errors: {
+        network: string;
+    };
     shell: {
         skipToContent: string;
         primaryNav: string;

@@ -15,6 +15,7 @@ import { readBuiltCss, scopedRuleBodies } from '../test/builtCss';
 import MediaRow from './MediaRow.vue';
 import MediaCard from './MediaCard.vue';
 import EmptyState from './ui/EmptyState.vue';
+import { DEFAULT_MESSAGES } from '../i18n/messages';
 import type { MediaItem } from '../types/media-item';
 
 function media(over: Partial<MediaItem> = {}): MediaItem {
@@ -133,6 +134,17 @@ describe('MediaRow', () => {
     expect(alert.text()).toContain('Boom');
     await w.find('.media-row__retry').trigger('click');
     expect(w.emitted('retry')).toHaveLength(1);
+  });
+
+  // S-ui-design-46 presentational contract: the alert renders the caller's
+  // mapped catalog copy verbatim — MediaRow itself never logs, so raw
+  // transport text can only reach users if the caller passes it in.
+  it('renders caller-mapped catalog copy in the alert verbatim with no console output', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const w = mount(MediaRow, { props: { title: 'X', items: [], error: DEFAULT_MESSAGES.errors.network } });
+    expect(w.find('[role="alert"] span').text()).toBe(DEFAULT_MESSAGES.errors.network);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it('forwards play/watchlist/info from a card', async () => {

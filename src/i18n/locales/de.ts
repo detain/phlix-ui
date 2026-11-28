@@ -60,6 +60,9 @@ export const DE_MESSAGES = {
     description: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
     goHome: 'Zur Startseite',
   },
+  errors: {
+    network: 'Der Server konnte nicht erreicht werden. Verbindung prüfen und erneut versuchen.',
+  },
   shell: {
     skipToContent: 'Zum Inhalt springen',
     primaryNav: 'Hauptnavigation',

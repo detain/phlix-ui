@@ -3228,6 +3228,7 @@ var gn = {
 		description: "The page you are looking for does not exist or has moved.",
 		goHome: "Go home"
 	},
+	errors: { network: "Couldn’t reach the server. Check your connection and try again." },
 	shell: {
 		skipToContent: "Skip to content",
 		primaryNav: "Primary navigation",

@@ -60,6 +60,9 @@ export const IT_MESSAGES = {
     description: 'La pagina che cerchi non esiste o è stata spostata.',
     goHome: 'Vai alla home',
   },
+  errors: {
+    network: 'Impossibile raggiungere il server. Controlla la connessione e riprova.',
+  },
   shell: {
     skipToContent: 'Vai al contenuto',
     primaryNav: 'Navigazione principale',

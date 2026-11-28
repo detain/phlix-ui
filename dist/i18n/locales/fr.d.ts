@@ -61,6 +61,9 @@ export declare const FR_MESSAGES: {
         description: string;
         goHome: string;
     };
+    errors: {
+        network: string;
+    };
     shell: {
         skipToContent: string;
         primaryNav: string;

@@ -12,6 +12,7 @@ import HomeRow from './HomeRow.vue';
 import MediaRow from './MediaRow.vue';
 import MediaCard from './MediaCard.vue';
 import { useToastStore } from '../stores/useToastStore';
+import { DEFAULT_MESSAGES } from '../i18n/messages';
 import type { MediaItem } from '../types/media-item';
 import type { HomeRow as HomeRowConfig } from '../app/types';
 
@@ -94,6 +95,24 @@ describe('HomeRow — eager (no IntersectionObserver)', () => {
     await flushPromises();
     expect(w.find('[role="alert"]').exists()).toBe(true);
     expect(toasts.toasts.some((t) => t.tone === 'error')).toBe(true);
+  });
+
+  // S-ui-design-46: a rejected fetch must surface mapped catalog copy in the
+  // alert region — the raw exception message stays console-only.
+  it('renders errors.network copy (not the raw exception message) when the fetch rejects', async () => {
+    const raw = 'ECONNREFUSED: secret transport detail';
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error(raw)));
+    const w = mount(HomeRow, { props: { row, apiBase: '' } });
+    await flushPromises();
+
+    const alert = w.find('[role="alert"]');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain(DEFAULT_MESSAGES.errors.network);
+    expect(alert.text()).not.toContain(raw);
+    expect(w.html()).not.toContain(raw);
+    expect(spy.mock.calls.flat().some((a) => a instanceof Error && a.message === raw)).toBe(true);
+    spy.mockRestore();
   });
 
   it('retries the fetch from the error state', async () => {

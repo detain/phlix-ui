@@ -22,6 +22,7 @@ import type { HomeRow as HomeRowConfig } from '../app/types';
 import { ApiClient } from '../api/client';
 import { buildMediaUrl } from '../api/media-query';
 import { useToastStore } from '../stores/useToastStore';
+import { useMessages } from '../composables/useMessages';
 
 interface MediaResponse {
   items: MediaItem[];
@@ -68,6 +69,7 @@ const emit = defineEmits<{
 }>();
 
 const toasts = useToastStore();
+const { t } = useMessages();
 
 const items = ref<MediaItem[]>([]);
 const total = ref<number | null>(null);
@@ -100,7 +102,10 @@ async function load(): Promise<void> {
     emit('items-loaded', items.value);
   } catch (e) {
     if (disposed || isAbort(e)) return; // superseded / torn down — stay quiet
-    error.value = e instanceof Error ? e.message : 'Couldn’t load';
+    // S-ui-design-46 (design-064): the alert region gets mapped catalog copy;
+    // the raw failure detail stays console-only.
+    console.error(`phlix: HomeRow “${props.row.title}” fetch failed`, e);
+    error.value = t('errors.network');
     toasts.error(`Couldn’t load “${props.row.title}”.`);
   } finally {
     if (!disposed) loading.value = false;
