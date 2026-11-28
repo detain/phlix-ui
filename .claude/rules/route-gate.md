@@ -35,5 +35,5 @@ paths:
 - Hub-addressed modules (`claimServer`, invite-links, mcp-tokens) are enumerated and asserted NOT to
   be server routes — their gate is the hub's contract.
 - The manifest is imported only by `src/api/test/*.test.ts`, so it can never reach the app bundle;
-  the one dist artefact it touches is `dist/api/test/routeGateServer.d.ts`, kept honest by
-  `npm run dist:check`.
+  `tsconfig.build.json` excludes `src/api/test/**/*` from declaration emit, so nothing in that
+  directory — manifest or `routeGateServer.ts` — reaches any dist artefact at all.
