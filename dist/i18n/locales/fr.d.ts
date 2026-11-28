@@ -48,6 +48,7 @@ export declare const FR_MESSAGES: {
         scrollLeft: string;
         scrollRight: string;
         toggle: string;
+        seeAll: string;
     };
     /** Generic chrome for the shared ConfirmDialog (R13-05). */
     confirm: {
@@ -387,9 +388,25 @@ export declare const FR_MESSAGES: {
         shuffleNothing: string;
         shuffleQueued: string;
         shuffleFailed: string;
+        like: string;
+        dislike: string;
     };
     media: {
         new: string;
+        loadingMedia: string;
+        loadingMore: string;
+        backToTop: string;
+        choosePoster: string;
+        posterSubject: string;
+        loadingPosters: string;
+        tmdbNotConfigured: string;
+        tmdbMetadataHint: string;
+        tmdbPosterHint: string;
+        postersAlt: string;
+        posterAlt: string;
+        posterAltCurrent: string;
+        noPosters: string;
+        noPostersHint: string;
     };
     reader: {
         decreaseFont: string;
@@ -479,6 +496,7 @@ export declare const FR_MESSAGES: {
         loadMostWatchedError: string;
         loadingLibraries: string;
         removeConfirm: string;
+        rowLoadError: string;
     };
     playlist: {
         loadError: string;
@@ -759,5 +777,83 @@ export declare const FR_MESSAGES: {
         settingsRejectAdminLockout: string;
         settingsForbidden: string;
         settingsConflict: string;
+    };
+    filter: {
+        searchHint: string;
+        searchAria: string;
+        clearSearchAria: string;
+        sortBy: string;
+        sortAscending: string;
+        sortDescending: string;
+        sortArtist: string;
+        sortName: string;
+        sortDateAdded: string;
+        sortRuntime: string;
+        sortGenre: string;
+        filters: string;
+        viewModeGroup: string;
+        viewGrid: string;
+        viewList: string;
+        viewBackdrop: string;
+        viewTable: string;
+        genres: string;
+        addGenre: string;
+        rating: string;
+        type: string;
+        metadata: string;
+        matchStatusGroup: string;
+        matched: string;
+        unmatched: string;
+        year: string;
+        ratingRange: string;
+        yearFrom: string;
+        yearTo: string;
+        yearFromHint: string;
+        yearToHint: string;
+        min: string;
+        max: string;
+        minRating: string;
+        maxRating: string;
+        presets: string;
+        presetName: string;
+        save: string;
+        saveCurrent: string;
+        noPresets: string;
+        clearAll: string;
+        deletePreset: string;
+        removePill: string;
+        pillFrom: string;
+        pillTo: string;
+        pillMinRating: string;
+        pillMaxRating: string;
+    };
+    match: {
+        subjectNoYear: string;
+        subjectWithYear: string;
+        search: string;
+        titlePlaceholder: string;
+        yearPlaceholder: string;
+        sourceInfo: string;
+        fileLabel: string;
+        pathLabel: string;
+        tryAgain: string;
+        searching: string;
+        noResults: string;
+        noResultsHint: string;
+        useThis: string;
+        noDetails: string;
+    };
+    network: {
+        statusHealthy: string;
+        statusDegraded: string;
+        statusOffline: string;
+        statusLoading: string;
+        statusUnavailable: string;
+    };
+    rail: {
+        letterNavLabel: string;
+        jumpToCount: string;
+        nonAlphaTitles: string;
+        startingWith: string;
     };
 };

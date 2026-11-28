@@ -1,22 +1,22 @@
-import { i as e } from "./safeRedirect-CUcCL6Se.js";
+import { i as e } from "./safeRedirect-DBUCEPV5.js";
 import { t } from "./IconButton-DsjtwjU1.js";
 import { a as n, i as r, n as i, o as a, r as o, t as s } from "./useFocusTrap-DStfPnC8.js";
-import { a as c, c as l, d as u, i as d, l as f, n as p, o as m, r as h, s as g, t as _, u as v } from "./useMessages-B74fpn3I.js";
+import { a as c, c as l, d as u, i as d, l as f, n as p, o as m, r as h, s as g, t as _, u as v } from "./useMessages-DAu9N4Ud.js";
 import { n as y, t as b } from "./Icon-55iG1rR7.js";
 import { a as x, i as S, n as C, r as w, t as T } from "./usePreferencesStore-CQ3hN8jz.js";
-import { t as E } from "./useAuthStore-C2WMKX0c.js";
-import { n as D, r as ee, t as te } from "./useProfileStore-FNuE6dbf.js";
+import { t as E } from "./useAuthStore-BsOClGVF.js";
+import { n as D, r as ee, t as te } from "./useProfileStore-rlWp2sBi.js";
 import { i as ne, n as re, r as ie, t as O } from "./useImageSrc-CSM61b-l.js";
 import { i as ae, n as oe, r as se, t as ce } from "./usePlayerStore-P13f-aKf.js";
-import { n as le, t as ue } from "./ThumbRating-zFPPeN4v.js";
+import { n as le, t as ue } from "./ThumbRating-C9MGQzc6.js";
 import { n as k, r as de, t as fe } from "./useApiBase-DXTBY90j.js";
-import { c as pe, d as me, i as he, l as ge, o as _e, u as ve } from "./shortcuts-hRq1Gf5g.js";
-import { t as ye } from "./NetworkHealthIndicator-BkpQ00wj.js";
+import { c as pe, d as me, i as he, l as ge, o as _e, u as ve } from "./shortcuts-Jw3TEvRV.js";
+import { t as ye } from "./NetworkHealthIndicator-ClILgkUH.js";
 import { t as be } from "./useToastStore-CxO_ppM8.js";
-import { C as xe, E as Se, S as Ce, T as we, _ as Te, a as Ee, b as De, c as Oe, d as ke, f as Ae, g as je, h as Me, i as Ne, l as Pe, m as Fe, n as Ie, o as Le, p as Re, r as ze, s as Be, t as Ve, u as He, v as Ue, w as We, x as Ge, y as Ke } from "./DeviceSessionsPage-DKn5Ptoy.js";
+import { C as xe, E as Se, S as Ce, T as we, _ as Te, a as Ee, b as De, c as Oe, d as ke, f as Ae, g as je, h as Me, i as Ne, l as Pe, m as Fe, n as Ie, o as Le, p as Re, r as ze, s as Be, t as Ve, u as He, v as Ue, w as We, x as Ge, y as Ke } from "./DeviceSessionsPage-Cau1LA4t.js";
 import { i as qe, n as Je, r as Ye, t as Xe } from "./Kbd-B47x87jw.js";
 import { a as Ze, i as Qe, n as $e, o as et, r as tt, t as nt } from "./useLibrariesStore-C7CVlbVW.js";
-import { n as rt, t as it } from "./HomeRow-0ZpUsKfa.js";
+import { n as rt, t as it } from "./HomeRow-C1WI9rpo.js";
 import { t as at } from "./safeHref-Be5nFpx7.js";
 import { t as A } from "./EmptyState-DjfWh3kt.js";
 import { t as j } from "./Button-DTiNkl61.js";
@@ -26,23 +26,23 @@ import { t as Vt } from "./socketHint-C0yqQROO.js";
 import { i as Ht, n as Ut, r as Wt, t as Gt } from "./usePageTitle-j6j9gAmo.js";
 import { t as N } from "./Badge-D7vacFbh.js";
 import { t as Kt } from "./Slider-Bj5BaBUu.js";
-import { t as qt } from "./Switch-C1HUlyez.js";
-import { t as Jt } from "./Chip-BnM6aq2b.js";
-import { t as Yt } from "./Select-DouDCgpb.js";
-import { t as Xt } from "./Combobox-DOP5Op5i.js";
-import { t as Zt } from "./Modal-B151-vz5.js";
-import { t as Qt } from "./ConfirmDialog-BeR8qJbc.js";
+import { t as qt } from "./Switch-CCH4BEbj.js";
+import { t as Jt } from "./Chip-CVUI_8dV.js";
+import { t as Yt } from "./Select-Bn9E4rRC.js";
+import { t as Xt } from "./Combobox-CF0SR2be.js";
+import { t as Zt } from "./Modal-B-LxPk5M.js";
+import { t as Qt } from "./ConfirmDialog-BfYChfkF.js";
 import { t as $t } from "./Tooltip-CaS-pDMB.js";
 import { t as P } from "./Skeleton-DDhrDRE7.js";
-import { t as en } from "./Spinner-CiUudlM6.js";
-import { t as tn } from "./PageHint-D3_DrQ54.js";
+import { t as en } from "./Spinner-5vMuRSiA.js";
+import { t as tn } from "./PageHint-B5Ma9K-4.js";
 import { t as nn } from "./Tabs-DozRtxsh.js";
-import { t as rn } from "./Menu-Bztvoq1Z.js";
+import { t as rn } from "./Menu-DqT7AURt.js";
 import { t as an } from "./HelpText-B3jlK4n_.js";
-import { o as on, t as sn } from "./MediaCard-B_a_4TKb.js";
-import { t as cn } from "./MediaGrid-AsTt-Kgk.js";
-import { t as ln } from "./MediaRow-C8iIxcXt.js";
-import { n as un, t as dn } from "./metadata-sources-Dssk3ul6.js";
+import { o as on, t as sn } from "./MediaCard-DU7zie-e.js";
+import { t as cn } from "./MediaGrid-BO_RtD0r.js";
+import { t as ln } from "./MediaRow-BZlCFW2n.js";
+import { n as un, t as dn } from "./metadata-sources-C7SJtCrR.js";
 import { n as fn, t as pn } from "./logs-1A_PM2An.js";
 import { t as mn } from "./dashboard-C-XveqQJ.js";
 import { a as hn, c as gn, i as _n, l as vn, n as yn, o as bn, r as xn, s as Sn, t as Cn } from "./users-BOaYe835.js";
@@ -63,13 +63,13 @@ import { i as Un, n as Wn, r as Gn, t as Kn } from "./plugins-C77PT0Uu.js";
 import { n as qn, r as Jn, t as Yn } from "./maintenance-cR83erwG.js";
 import { t as Xn } from "./hubDashboard-D-eKAQ_v.js";
 import { n as Zn, t as Qn } from "./media-query-D7hrCu8r.js";
-import { t as $n } from "./LoginForm-DChfzlC-.js";
-import { t as er } from "./SignupForm-B0K1eFrW.js";
+import { t as $n } from "./LoginForm-8Mm75YBQ.js";
+import { t as er } from "./SignupForm-DtDNP9N-.js";
 import { r as tr } from "./wireErrors-DDkkTtfw.js";
 import { t as F } from "./hubHelpLinks-BNMhK6oW.js";
 import { n as nr, t as rr } from "./debounce-BnRz-bwe.js";
 import { t as ir } from "./Input-DUSkplC0.js";
-import { i as ar, n as or, r as sr, t as cr } from "./MusicAlbumCard-DZfkF8Y9.js";
+import { i as ar, n as or, r as sr, t as cr } from "./MusicAlbumCard-CS1hSqlh.js";
 import { t as lr } from "./useMediaStore-CWsJIuak.js";
 import { Fragment as I, Teleport as ur, Transition as dr, TransitionGroup as fr, computed as L, createApp as pr, createBlock as R, createCommentVNode as z, createElementBlock as B, createElementVNode as V, createStaticVNode as mr, createTextVNode as H, createVNode as U, defineAsyncComponent as hr, defineComponent as W, getCurrentScope as gr, inject as _r, nextTick as vr, normalizeClass as G, normalizeStyle as yr, onBeforeUnmount as br, onMounted as K, onScopeDispose as xr, onUnmounted as Sr, openBlock as q, provide as Cr, readonly as wr, ref as J, renderList as Y, renderSlot as Tr, resolveComponent as Er, resolveDynamicComponent as Dr, toDisplayString as X, toValue as Or, unref as Z, useId as kr, vModelSelect as Ar, vModelText as jr, vShow as Mr, watch as Q, watchEffect as Nr, withCtx as $, withDirectives as Pr, withModifiers as Fr } from "vue";
 import { createPinia as Ir, defineStore as Lr } from "pinia";
@@ -969,7 +969,7 @@ var Da = ["src", "alt"], Oa = { class: "brand-wordmark" }, ka = {
 			};
 			window.addEventListener("phlix:auth-expired", e), xr(() => window.removeEventListener("phlix:auth-expired", e));
 		}
-		let l = hr(() => import("./CommandPalette-DTLXluy6.js")), u = J(!1);
+		let l = hr(() => import("./CommandPalette-BYIare5Q.js")), u = J(!1);
 		Q(() => n.open, (e) => {
 			e && (u.value = !0);
 		});
@@ -1334,111 +1334,111 @@ function bo(e) {
 			path: t === "" ? "/" : t,
 			name: "browse",
 			meta: { title: "shell.browse" },
-			component: () => import("./BrowsePage-Cp_fHEdh.js")
+			component: () => import("./BrowsePage-DF1B7Rwk.js")
 		},
 		{
 			path: `${t}/media/:id`,
 			name: "media",
-			component: () => import("./MediaDetailPage-963INxBs.js")
+			component: () => import("./MediaDetailPage-DGKUNdIW.js")
 		},
 		{
 			path: `${t}/media/:id/season/:season`,
 			name: "season",
-			component: () => import("./SeasonPage-CmoyLcAd.js")
+			component: () => import("./SeasonPage-CleqWIK_.js")
 		},
 		{
 			path: `${t}/library/:id`,
 			name: "library",
-			component: () => import("./LibraryPage-CxXYSWIv.js")
+			component: () => import("./LibraryPage-DcPxBbgB.js")
 		},
 		{
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CVECQXaR.js")
+			component: () => import("./PlayerPage-0U5D-Gdt.js")
 		},
 		{
 			path: `${t}/login`,
 			name: "login",
 			meta: { title: "auth.loginTitle" },
-			component: () => import("./LoginPage-B_rQkzTs.js")
+			component: () => import("./LoginPage-C_6vx0x4.js")
 		},
 		{
 			path: `${t}/signup`,
 			name: "signup",
 			meta: { title: "auth.signupTitle" },
-			component: () => import("./SignupPage-CYHZacC8.js")
+			component: () => import("./SignupPage-DpZFzMr4.js")
 		},
 		{
 			path: `${t}/connect`,
 			name: "connect",
 			meta: { title: "connect.title" },
-			component: () => import("./ConnectPage-qiR7qBL3.js")
+			component: () => import("./ConnectPage-AIL27eIx.js")
 		},
 		{
 			path: `${t}/settings`,
 			name: "settings",
 			meta: { title: "settings.title" },
-			component: () => import("./SettingsPage-D_pZ4qEs.js")
+			component: () => import("./SettingsPage-BppQhQ6M.js")
 		},
 		{
 			path: `${t}/explore`,
 			name: "explore",
 			meta: { title: "explore.title" },
-			component: () => import("./ExplorePage-BesrGSde.js")
+			component: () => import("./ExplorePage-ClCz0YtW.js")
 		},
 		{
 			path: `${t}/recommendations`,
 			name: "recommendations",
 			meta: { title: "recommendations.title" },
-			component: () => import("./RecommendationsPage-Cr9xKgur.js")
+			component: () => import("./RecommendationsPage-BNYKJVbs.js")
 		},
 		{
 			path: `${t}/history`,
 			name: "history",
 			meta: { title: "history.title" },
-			component: () => import("./WatchHistoryPage-CIABZJn_.js")
+			component: () => import("./WatchHistoryPage-CVOXZmfS.js")
 		},
 		{
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-zhfKuxZe.js")
+			component: () => import("./SyncPlayPage-CAzKf1DO.js")
 		},
 		{
 			path: `${t}/music`,
 			name: "music",
 			meta: { title: "music.title" },
-			component: () => import("./MusicLibraryPage-Bw-xJLFH.js")
+			component: () => import("./MusicLibraryPage-BB3uWLXb.js")
 		},
 		{
 			path: `${t}/parental`,
 			name: "parental",
 			meta: { title: "parental.title" },
-			component: () => import("./ParentalControlsPage-CCU_NUoI.js")
+			component: () => import("./ParentalControlsPage-Dfry2a9q.js")
 		},
 		{
 			path: `${t}/profiles`,
 			name: "profiles",
 			meta: { title: "profiles.manageTitle" },
-			component: () => import("./ProfilesPage-Da5yY-9o.js")
+			component: () => import("./ProfilesPage-C6jnZb01.js")
 		},
 		{
 			path: `${t}/playlists`,
 			name: "playlists",
-			component: () => import("./PlaylistsPage-CqANRxQG.js")
+			component: () => import("./PlaylistsPage-CN3HBN6y.js")
 		},
 		{
 			path: `${t}/playlists/:id`,
 			name: "playlist",
-			component: () => import("./PlaylistDetailPage-h5iO4iAb.js")
+			component: () => import("./PlaylistDetailPage-DxdiEqaW.js")
 		}
 	];
 	return e.app === "hub" && n.push({
 		path: `${t}/${lo}`,
 		name: co,
 		meta: { title: "mcpTokens.title" },
-		component: () => import("./McpTokensPage-CqOdrBap.js")
+		component: () => import("./McpTokensPage-GLhxlmXZ.js")
 	}), e.extraRoutes && n.push(...e.extraRoutes), n.push({
 		path: `${t}/:pathMatch(.*)*`,
 		name: "catchall",
@@ -1710,145 +1710,145 @@ var So = /*#__PURE__*/ y(/* @__PURE__ */ W({
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./DashboardPage-mlARigkQ.js")
+	component: () => import("./DashboardPage-DIw8Wimq.js")
 }, Io = {
 	name: "admin-users",
 	path: "users",
 	label: "Users",
 	icon: "user",
-	component: () => import("./UsersPage-C1Pu8Z-I.js")
+	component: () => import("./UsersPage-DwMhONnH.js")
 }, Lo = {
 	name: "admin-logs",
 	path: "logs",
 	label: "Logs",
 	icon: "list",
-	component: () => import("./LogsPage-8cZxutxe.js")
+	component: () => import("./LogsPage-sPt9SYD0.js")
 }, Ro = {
 	name: "admin-webhooks",
 	path: "webhooks",
 	label: "Webhooks",
 	icon: "settings",
-	component: () => import("./WebhooksPage-BSU4i8Fd.js")
+	component: () => import("./WebhooksPage-B4JVi6uv.js")
 }, zo = {
 	name: "admin-services",
 	path: "services",
 	label: "Services",
 	icon: "star",
-	component: () => import("./ServicesPage-BpVDQ_v7.js")
+	component: () => import("./ServicesPage-i2ST5Bxf.js")
 }, Bo = {
 	name: "admin-integrations",
 	path: "integrations",
 	label: "Integrations",
 	icon: "settings",
-	component: () => import("./IntegrationsPage-G6Ixsios.js")
+	component: () => import("./IntegrationsPage-CFeuE09N.js")
 }, Vo = {
 	name: "admin-backup",
 	path: "backup",
 	label: "Backup",
 	icon: "bookmark",
-	component: () => import("./BackupPage-Cat1imXs.js")
+	component: () => import("./BackupPage-B4QkrwsM.js")
 }, Ho = {
 	name: "admin-cast",
 	path: "cast-devices",
 	label: "Cast Devices",
 	icon: "cast",
-	component: () => import("./CastDevicesPage-Df4dR49u.js")
+	component: () => import("./CastDevicesPage-59r8PVPg.js")
 }, Uo = {
 	name: "admin-dlna",
 	path: "dlna",
 	label: "DLNA Server",
 	icon: "monitor",
-	component: () => import("./DlnaServerPage-Cu7VoM6d.js")
+	component: () => import("./DlnaServerPage-Dg-kuqVq.js")
 }, Wo = {
 	name: "admin-remote-access",
 	path: "remote-access",
 	label: "Remote Access",
 	icon: "expand",
-	component: () => import("./RemoteAccessPage-BnBKZu_G.js")
+	component: () => import("./RemoteAccessPage-p1_9wL2z.js")
 }, Go = {
 	name: "admin-livetv",
 	path: "livetv",
 	label: "Live TV / DVR",
 	icon: "tv",
-	component: () => import("./LiveTvPage-BVM6h-38.js")
+	component: () => import("./LiveTvPage-sItWcYxt.js")
 }, Ko = {
 	name: "admin-collections",
 	path: "collections",
 	label: "Collections",
 	icon: "list",
-	component: () => import("./CollectionsPage-CqjwEgnZ.js")
+	component: () => import("./CollectionsPage-Dh8-X9Xj.js")
 }, qo = {
 	name: "admin-history",
 	path: "history",
 	label: "Watch history",
 	icon: "film",
-	component: () => import("./HistoryPage-GBQxA5X1.js")
+	component: () => import("./HistoryPage-BtNkTklM.js")
 }, Jo = {
 	name: "admin-syncplay",
 	path: "syncplay",
 	label: "SyncPlay",
 	icon: "play",
-	component: () => import("./SyncPlayPage-CLBLoNCG.js")
+	component: () => import("./SyncPlayPage-G6-rFLWR.js")
 }, Yo = {
 	name: "admin-libraries",
 	path: "libraries",
 	label: "Libraries",
 	icon: "image",
-	component: () => import("./LibrariesPage-ChRU3mOp.js")
+	component: () => import("./LibrariesPage-zuHfReyd.js")
 }, Xo = {
 	name: "admin-duplicates",
 	path: "duplicates",
 	label: "Duplicates",
 	icon: "filter",
-	component: () => import("./DuplicatesPage-C58ssJPu.js")
+	component: () => import("./DuplicatesPage-CbzH64iN.js")
 }, Zo = {
 	name: "admin-plugins",
 	path: "plugins",
 	label: "Plugins",
 	icon: "settings",
-	component: () => import("./PluginsPage-DOnNbsUn.js")
+	component: () => import("./PluginsPage-DKQLep0n.js")
 }, Qo = {
 	name: "admin-tasks",
 	path: "tasks",
 	label: "Tasks",
 	icon: "refresh",
-	component: () => import("./TasksPage-Cpkj0q3g.js")
+	component: () => import("./TasksPage-Cgb8me2Z.js")
 }, $o = {
 	name: "admin-transcoding",
 	path: "transcoding",
 	label: "Transcoding",
 	icon: "play",
-	component: () => import("./TranscodingSettingsPage-B9-_q7wk.js")
+	component: () => import("./TranscodingSettingsPage-7e7u2XwO.js")
 }, es = {
 	name: "admin-settings",
 	path: "settings",
 	label: "Settings",
 	icon: "settings",
-	component: () => import("./SettingsPage-BpLP_L9G.js")
+	component: () => import("./SettingsPage-vSZ95GTD.js")
 }, ts = {
 	name: "admin-hub-dashboard",
 	path: "dashboard",
 	label: "Dashboard",
 	icon: "speed",
-	component: () => import("./HubDashboardPage-B3nOLD25.js")
+	component: () => import("./HubDashboardPage-DyeBGOGK.js")
 }, ns = {
 	name: "admin-metrics",
 	path: "metrics",
 	label: "Server Traffic",
 	icon: "speed",
-	component: () => import("./MetricsPage-D-dTNS1B.js").then((e) => e.t)
+	component: () => import("./MetricsPage-CImYGqAE.js").then((e) => e.t)
 }, rs = {
 	name: "admin-audit-logs",
 	path: "audit-logs",
 	label: "Audit Logs",
 	icon: "eye",
-	component: () => import("./AuditLogsPage-CvbM_bAg.js")
+	component: () => import("./AuditLogsPage-SYb3YNkC.js")
 }, is = {
 	name: "admin-requests",
 	path: "requests",
 	label: "Request Queue",
 	icon: "list",
-	component: () => import("./RequestsPage-Cv2o7D0c.js")
+	component: () => import("./RequestsPage-Qbdh4xG6.js")
 }, as = [
 	Fo,
 	ns,
@@ -7357,7 +7357,8 @@ var pv = {
 		learnMore: "Más información",
 		scrollLeft: "Desplazar a la izquierda",
 		scrollRight: "Desplazar a la derecha",
-		toggle: "Alternar"
+		toggle: "Alternar",
+		seeAll: "Ver todo"
 	},
 	confirm: {
 		title: "¿Estás seguro?",
@@ -7691,9 +7692,27 @@ var pv = {
 		missingEpisodesFailed: "No se pudieron cargar los episodios que faltan.",
 		shuffleNothing: "Aún no hay nada que reproducir al azar.",
 		shuffleQueued: "Reproducción aleatoria en cola.",
-		shuffleFailed: "No se pudo iniciar la reproducción aleatoria."
+		shuffleFailed: "No se pudo iniciar la reproducción aleatoria.",
+		like: "Me gusta",
+		dislike: "No me gusta"
 	},
-	media: { new: "Nuevo" },
+	media: {
+		new: "Nuevo",
+		loadingMedia: "Cargando medios",
+		loadingMore: "Cargando más…",
+		backToTop: "Volver arriba",
+		choosePoster: "Elegir póster",
+		posterSubject: "Selecciona un póster para {name}",
+		loadingPosters: "Cargando pósteres",
+		tmdbNotConfigured: "TMDB no está configurado",
+		tmdbMetadataHint: "Configura una clave de API de TMDB en los ajustes de administración para buscar coincidencias de metadatos.",
+		tmdbPosterHint: "Configura una clave de API de TMDB en los ajustes de administración para buscar pósteres alternativos.",
+		postersAlt: "Pósteres de {provider}",
+		posterAlt: "Póster de {provider}",
+		posterAltCurrent: "Póster de {provider} (actual)",
+		noPosters: "No hay pósteres disponibles",
+		noPostersHint: "No se encontraron pósteres alternativos para este elemento."
+	},
 	reader: {
 		decreaseFont: "Reducir el tamaño de la fuente",
 		increaseFont: "Aumentar el tamaño de la fuente",
@@ -7780,7 +7799,8 @@ var pv = {
 		loadRecommendationsError: "No se pudieron cargar las recomendaciones.",
 		loadMostWatchedError: "No se pudo cargar “Lo más visto”.",
 		loadingLibraries: "Cargando bibliotecas",
-		removeConfirm: "¿Quitar “{name}” de la biblioteca? Esta acción no se puede deshacer."
+		removeConfirm: "¿Quitar “{name}” de la biblioteca? Esta acción no se puede deshacer.",
+		rowLoadError: "No se pudo cargar “{name}”."
 	},
 	playlist: {
 		loadError: "No se pudo cargar esta lista de reproducción.",
@@ -8055,6 +8075,84 @@ var pv = {
 		settingsRejectAdminLockout: "Este cambio dejaría a un administrador activo sin ninguna forma de iniciar sesión. Habilita primero otro método de inicio de sesión para esa cuenta y vuelve a guardar.",
 		settingsForbidden: "Ya no tienes permiso para cambiar los ajustes del servidor. Inicia sesión de nuevo como administrador e inténtalo otra vez.",
 		settingsConflict: "El servidor no pudo aplicar estos ajustes en su estado actual. Recarga los ajustes e inténtalo de nuevo."
+	},
+	filter: {
+		searchHint: "Busca títulos, personas, géneros…",
+		searchAria: "Buscar medios",
+		clearSearchAria: "Borrar búsqueda",
+		sortBy: "Ordenar por",
+		sortAscending: "Ordenar ascendente",
+		sortDescending: "Ordenar descendente",
+		sortArtist: "Artista",
+		sortName: "Nombre",
+		sortDateAdded: "Fecha de adición",
+		sortRuntime: "Duración",
+		sortGenre: "Género",
+		filters: "Filtros",
+		viewModeGroup: "Modo de vista",
+		viewGrid: "Vista de cuadrícula",
+		viewList: "Vista de lista",
+		viewBackdrop: "Vista de fondo",
+		viewTable: "Vista de tabla",
+		genres: "Géneros",
+		addGenre: "Añadir un género…",
+		rating: "Valoración",
+		type: "Tipo",
+		metadata: "Metadatos",
+		matchStatusGroup: "Estado de coincidencia de metadatos",
+		matched: "Coincidente",
+		unmatched: "No coincidente",
+		year: "Año",
+		ratingRange: "Rango de valoración",
+		yearFrom: "Año desde",
+		yearTo: "Año hasta",
+		yearFromHint: "Desde",
+		yearToHint: "Hasta",
+		min: "Mín.",
+		max: "Máx.",
+		minRating: "Valoración mínima",
+		maxRating: "Valoración máxima",
+		presets: "Preajustes",
+		presetName: "Nombre del preajuste",
+		save: "Guardar",
+		saveCurrent: "Guardar la vista actual",
+		noPresets: "No hay preajustes guardados",
+		clearAll: "Borrar todo",
+		deletePreset: "Eliminar preajuste {name}",
+		removePill: "Quitar {label}",
+		pillFrom: "Desde {year}",
+		pillTo: "Hasta {year}",
+		pillMinRating: "Mín. {rating}★",
+		pillMaxRating: "Máx. {rating}★"
+	},
+	match: {
+		subjectNoYear: "Busca la entrada correcta de TMDB para {name}.",
+		subjectWithYear: "Busca la entrada correcta de TMDB para {name} ({year}).",
+		search: "Buscar",
+		titlePlaceholder: "Título a buscar",
+		yearPlaceholder: "Cualquiera",
+		sourceInfo: "Info de la fuente",
+		fileLabel: "Archivo:",
+		pathLabel: "Ruta:",
+		tryAgain: "Intentar de nuevo",
+		searching: "Buscando en TMDB",
+		noResults: "No se encontraron resultados",
+		noResultsHint: "Prueba con otro título o borra el año.",
+		useThis: "Usar esto",
+		noDetails: "No se encontraron detalles de coincidencia para ese resultado. Prueba con otro."
+	},
+	network: {
+		statusHealthy: "Red en buen estado",
+		statusDegraded: "Red degradada",
+		statusOffline: "Red sin conexión",
+		statusLoading: "Cargando estado…",
+		statusUnavailable: "No se pudo cargar el estado"
+	},
+	rail: {
+		letterNavLabel: "Saltar a una letra",
+		jumpToCount: "Saltar a {label} ({count})",
+		nonAlphaTitles: "títulos no alfabéticos",
+		startingWith: "títulos que empiezan por {letter}"
 	}
 }, mv = {
 	common: {
@@ -8075,7 +8173,8 @@ var pv = {
 		learnMore: "En savoir plus",
 		scrollLeft: "Faire défiler vers la gauche",
 		scrollRight: "Faire défiler vers la droite",
-		toggle: "Basculer"
+		toggle: "Basculer",
+		seeAll: "Tout afficher"
 	},
 	confirm: {
 		title: "Confirmer ?",
@@ -8409,9 +8508,27 @@ var pv = {
 		missingEpisodesFailed: "Impossible de charger les épisodes manquants.",
 		shuffleNothing: "Rien à lire en aléatoire pour l’instant.",
 		shuffleQueued: "Lecture aléatoire mise en file d’attente.",
-		shuffleFailed: "Impossible de lancer la lecture aléatoire."
+		shuffleFailed: "Impossible de lancer la lecture aléatoire.",
+		like: "J’aime",
+		dislike: "Je n’aime pas"
 	},
-	media: { new: "Nouveau" },
+	media: {
+		new: "Nouveau",
+		loadingMedia: "Chargement des médias",
+		loadingMore: "Chargement de la suite…",
+		backToTop: "Retour en haut",
+		choosePoster: "Choisir une affiche",
+		posterSubject: "Choisissez une affiche pour {name}",
+		loadingPosters: "Chargement des affiches",
+		tmdbNotConfigured: "TMDB n’est pas configuré",
+		tmdbMetadataHint: "Configurez une clé API TMDB dans les paramètres d’administration pour rechercher des correspondances de métadonnées.",
+		tmdbPosterHint: "Configurez une clé API TMDB dans les paramètres d’administration pour rechercher des affiches alternatives.",
+		postersAlt: "Affiches {provider}",
+		posterAlt: "Affiche {provider}",
+		posterAltCurrent: "Affiche {provider} (actuelle)",
+		noPosters: "Aucune affiche disponible",
+		noPostersHint: "Aucune affiche alternative a été trouvée pour cet élément."
+	},
 	reader: {
 		decreaseFont: "Réduire la taille du texte",
 		increaseFont: "Agrandir la taille du texte",
@@ -8498,7 +8615,8 @@ var pv = {
 		loadRecommendationsError: "Impossible de charger les recommandations.",
 		loadMostWatchedError: "Impossible de charger « Les plus regardés ».",
 		loadingLibraries: "Chargement des bibliothèques",
-		removeConfirm: "Retirer « {name} » de la bibliothèque ? Cette action est irréversible."
+		removeConfirm: "Retirer « {name} » de la bibliothèque ? Cette action est irréversible.",
+		rowLoadError: "Impossible de charger « {name} »."
 	},
 	playlist: {
 		loadError: "Impossible de charger cette playlist.",
@@ -8773,6 +8891,84 @@ var pv = {
 		settingsRejectAdminLockout: "Cette modification laisserait un administrateur actif sans aucun moyen utilisable de se connecter. Activez d’abord un autre mode de connexion pour lui, puis enregistrez à nouveau.",
 		settingsForbidden: "Vous n’avez plus l’autorisation de modifier les paramètres du serveur. Reconnectez-vous en tant qu’administrateur et réessayez.",
 		settingsConflict: "Le serveur n’a pas pu appliquer ces paramètres dans l’état actuel. Rechargez les paramètres et réessayez."
+	},
+	filter: {
+		searchHint: "Rechercher titres, personnes, genres…",
+		searchAria: "Rechercher des médias",
+		clearSearchAria: "Effacer la recherche",
+		sortBy: "Trier par",
+		sortAscending: "Trier par ordre croissant",
+		sortDescending: "Trier par ordre décroissant",
+		sortArtist: "Artiste",
+		sortName: "Nom",
+		sortDateAdded: "Date d’ajout",
+		sortRuntime: "Durée",
+		sortGenre: "Genres",
+		filters: "Filtres",
+		viewModeGroup: "Mode d’affichage",
+		viewGrid: "Vue en grille",
+		viewList: "Vue en liste",
+		viewBackdrop: "Vue arrière-plan",
+		viewTable: "Vue en tableau",
+		genres: "Genre",
+		addGenre: "Ajouter un genre…",
+		rating: "Note",
+		type: "Type de contenu",
+		metadata: "Métadonnées",
+		matchStatusGroup: "Statut de correspondance des métadonnées",
+		matched: "Correspondant",
+		unmatched: "Non correspondant",
+		year: "Année",
+		ratingRange: "Plage de notes",
+		yearFrom: "Année de début",
+		yearTo: "Année de fin",
+		yearFromHint: "De",
+		yearToHint: "À",
+		min: "Min.",
+		max: "Max.",
+		minRating: "Note minimale",
+		maxRating: "Note maximale",
+		presets: "Préréglages",
+		presetName: "Nom du préréglage",
+		save: "Enregistrer",
+		saveCurrent: "Enregistrer la vue actuelle",
+		noPresets: "Aucun préréglage enregistré",
+		clearAll: "Tout effacer",
+		deletePreset: "Supprimer le préréglage {name}",
+		removePill: "Retirer {label}",
+		pillFrom: "De {year}",
+		pillTo: "À {year}",
+		pillMinRating: "Min. {rating}★",
+		pillMaxRating: "Max. {rating}★"
+	},
+	match: {
+		subjectNoYear: "Trouvez la bonne entrée TMDB pour {name}.",
+		subjectWithYear: "Trouvez la bonne entrée TMDB pour {name} ({year}).",
+		search: "Rechercher",
+		titlePlaceholder: "Titre à rechercher",
+		yearPlaceholder: "Peu importe",
+		sourceInfo: "Infos source",
+		fileLabel: "Fichier :",
+		pathLabel: "Chemin :",
+		tryAgain: "Réessayer",
+		searching: "Recherche TMDB",
+		noResults: "Aucun résultat",
+		noResultsHint: "Essayez un autre titre ou retirez l’année.",
+		useThis: "Utiliser",
+		noDetails: "Aucun détail de correspondance trouvé pour ce résultat. Essayez-en un autre."
+	},
+	network: {
+		statusHealthy: "Réseau opérationnel",
+		statusDegraded: "Réseau dégradé",
+		statusOffline: "Réseau hors ligne",
+		statusLoading: "Chargement de l’état…",
+		statusUnavailable: "État indisponible"
+	},
+	rail: {
+		letterNavLabel: "Aller à une lettre",
+		jumpToCount: "Aller à {label} ({count})",
+		nonAlphaTitles: "titres non alphabétiques",
+		startingWith: "titres commençant par {letter}"
 	}
 }, hv = {
 	common: {
@@ -8793,7 +8989,8 @@ var pv = {
 		learnMore: "Mehr erfahren",
 		scrollLeft: "Nach links scrollen",
 		scrollRight: "Nach rechts scrollen",
-		toggle: "Umschalten"
+		toggle: "Umschalten",
+		seeAll: "Alle anzeigen"
 	},
 	confirm: {
 		title: "Bist du sicher?",
@@ -9127,9 +9324,27 @@ var pv = {
 		missingEpisodesFailed: "Fehlende Folgen konnten nicht geladen werden.",
 		shuffleNothing: "Noch nichts zum Mischen vorhanden.",
 		shuffleQueued: "Zufallswiedergabe vorgemerkt.",
-		shuffleFailed: "Die Zufallswiedergabe konnte nicht gestartet werden."
+		shuffleFailed: "Die Zufallswiedergabe konnte nicht gestartet werden.",
+		like: "Gefällt mir",
+		dislike: "Gefällt mir nicht"
 	},
-	media: { new: "Neu" },
+	media: {
+		new: "Neu",
+		loadingMedia: "Medien werden geladen",
+		loadingMore: "Weitere werden geladen…",
+		backToTop: "Zurück nach oben",
+		choosePoster: "Poster auswählen",
+		posterSubject: "Wähle ein Poster für {name}",
+		loadingPosters: "Poster werden geladen",
+		tmdbNotConfigured: "TMDB ist nicht konfiguriert",
+		tmdbMetadataHint: "Konfiguriere einen TMDB-API-Schlüssel in den Admin-Einstellungen, um nach Metadaten-Abgleichen zu suchen.",
+		tmdbPosterHint: "Konfiguriere einen TMDB-API-Schlüssel in den Admin-Einstellungen, um nach Poster-Alternativen zu suchen.",
+		postersAlt: "Poster von {provider}",
+		posterAlt: "Poster von {provider}",
+		posterAltCurrent: "Aktuelles Poster von {provider}",
+		noPosters: "Keine Poster verfügbar",
+		noPostersHint: "Für diesen Eintrag wurden keine alternativen Poster gefunden."
+	},
 	reader: {
 		decreaseFont: "Schriftgröße verringern",
 		increaseFont: "Schriftgröße erhöhen",
@@ -9216,7 +9431,8 @@ var pv = {
 		loadRecommendationsError: "Empfehlungen konnten nicht geladen werden.",
 		loadMostWatchedError: "„Am meisten gesehen“ konnte nicht geladen werden.",
 		loadingLibraries: "Bibliotheken werden geladen",
-		removeConfirm: "„{name}“ aus der Bibliothek entfernen? Das lässt sich nicht rückgängig machen."
+		removeConfirm: "„{name}“ aus der Bibliothek entfernen? Das lässt sich nicht rückgängig machen.",
+		rowLoadError: "„{name}“ konnte nicht geladen werden."
 	},
 	playlist: {
 		loadError: "Die Playlist konnte nicht geladen werden.",
@@ -9491,6 +9707,84 @@ var pv = {
 		settingsRejectAdminLockout: "Diese Änderung würde einen aktiven Administrator ohne nutzbare Anmelde-Methode aussperren. Aktiviere zuerst für ihn eine weitere Anmelde-Methode und speichere erneut.",
 		settingsForbidden: "Du hast keine Berechtigung mehr, Server-Einstellungen zu ändern. Melde dich erneut als Administrator an und versuche es erneut.",
 		settingsConflict: "Der Server konnte diese Einstellungen im aktuellen Zustand nicht anwenden. Lade die Einstellungen neu und versuche es erneut."
+	},
+	filter: {
+		searchHint: "Titel, Personen, Genres suchen…",
+		searchAria: "Medien durchsuchen",
+		clearSearchAria: "Suche löschen",
+		sortBy: "Sortieren nach",
+		sortAscending: "Aufsteigend sortieren",
+		sortDescending: "Absteigend sortieren",
+		sortArtist: "Künstler",
+		sortName: "Titel",
+		sortDateAdded: "Datum hinzugefügt",
+		sortRuntime: "Laufzeit",
+		sortGenre: "Genres",
+		filters: "Filter",
+		viewModeGroup: "Ansichtsmodus",
+		viewGrid: "Rasteransicht",
+		viewList: "Listenansicht",
+		viewBackdrop: "Hintergrundansicht",
+		viewTable: "Tabellenansicht",
+		genres: "Genre",
+		addGenre: "Genre hinzufügen…",
+		rating: "Bewertung",
+		type: "Typ",
+		metadata: "Metadaten",
+		matchStatusGroup: "Metadaten-Abgleichstatus",
+		matched: "Abgeglichen",
+		unmatched: "Nicht abgeglichen",
+		year: "Jahr",
+		ratingRange: "Bewertungsspanne",
+		yearFrom: "Jahr von",
+		yearTo: "Jahr bis",
+		yearFromHint: "Von",
+		yearToHint: "Bis",
+		min: "Min.",
+		max: "Max.",
+		minRating: "Mindestbewertung",
+		maxRating: "Maximalbewertung",
+		presets: "Vorgaben",
+		presetName: "Name der Vorgabe",
+		save: "Speichern",
+		saveCurrent: "Aktuelle Ansicht speichern",
+		noPresets: "Keine gespeicherten Vorgaben",
+		clearAll: "Alle löschen",
+		deletePreset: "Vorgabe „{name}“ löschen",
+		removePill: "{label} entfernen",
+		pillFrom: "Von {year}",
+		pillTo: "Bis {year}",
+		pillMinRating: "Min. {rating}★",
+		pillMaxRating: "Max. {rating}★"
+	},
+	match: {
+		subjectNoYear: "Finde den passenden TMDB-Eintrag für {name}.",
+		subjectWithYear: "Finde den passenden TMDB-Eintrag für {name} ({year}).",
+		search: "Suchen",
+		titlePlaceholder: "Titel für die Suche",
+		yearPlaceholder: "Beliebig",
+		sourceInfo: "Quelleninfo",
+		fileLabel: "Datei:",
+		pathLabel: "Pfad:",
+		tryAgain: "Erneut versuchen",
+		searching: "TMDB wird durchsucht",
+		noResults: "Keine Ergebnisse gefunden",
+		noResultsHint: "Versuche einen anderen Titel oder entferne das Jahr.",
+		useThis: "Diesen verwenden",
+		noDetails: "Für dieses Ergebnis wurden keine Abgleichdetails gefunden. Versuche ein anderes."
+	},
+	network: {
+		statusHealthy: "Netzwerk fehlerfrei",
+		statusDegraded: "Netzwerk beeinträchtigt",
+		statusOffline: "Netzwerk offline",
+		statusLoading: "Status wird geladen…",
+		statusUnavailable: "Status konnte nicht geladen werden"
+	},
+	rail: {
+		letterNavLabel: "Zum Buchstaben springen",
+		jumpToCount: "Zum Bereich {label} ({count}) springen",
+		nonAlphaTitles: "nicht alphabetische Titel",
+		startingWith: "Titel mit {letter}"
 	}
 }, gv = {
 	common: {
@@ -9511,7 +9805,8 @@ var pv = {
 		learnMore: "Scopri di più",
 		scrollLeft: "Scorri a sinistra",
 		scrollRight: "Scorri a destra",
-		toggle: "Attiva o disattiva"
+		toggle: "Attiva o disattiva",
+		seeAll: "Vedi tutto"
 	},
 	confirm: {
 		title: "Confermi?",
@@ -9845,9 +10140,27 @@ var pv = {
 		missingEpisodesFailed: "Impossibile caricare gli episodi mancanti.",
 		shuffleNothing: "Ancora nulla da riprodurre in ordine casuale.",
 		shuffleQueued: "Riproduzione casuale in coda.",
-		shuffleFailed: "Impossibile avviare la riproduzione casuale."
+		shuffleFailed: "Impossibile avviare la riproduzione casuale.",
+		like: "Mi piace",
+		dislike: "Non mi piace"
 	},
-	media: { new: "Nuovo" },
+	media: {
+		new: "Nuovo",
+		loadingMedia: "Caricamento media",
+		loadingMore: "Caricamento in corso…",
+		backToTop: "Torna in alto",
+		choosePoster: "Scegli un poster",
+		posterSubject: "Seleziona un poster per {name}",
+		loadingPosters: "Caricamento poster",
+		tmdbNotConfigured: "TMDB non configurato",
+		tmdbMetadataHint: "Configura una chiave API TMDB nelle impostazioni di amministrazione per cercare corrispondenze di metadati.",
+		tmdbPosterHint: "Configura una chiave API TMDB nelle impostazioni di amministrazione per cercare poster alternativi.",
+		postersAlt: "Poster di {provider}",
+		posterAlt: "Poster di {provider}",
+		posterAltCurrent: "Poster di {provider} (attuale)",
+		noPosters: "Nessun poster disponibile",
+		noPostersHint: "Nessun poster alternativo trovato per questo elemento."
+	},
 	reader: {
 		decreaseFont: "Riduci dimensione del testo",
 		increaseFont: "Aumenta dimensione del testo",
@@ -9934,7 +10247,8 @@ var pv = {
 		loadRecommendationsError: "Impossibile caricare i consigli.",
 		loadMostWatchedError: "Impossibile caricare “Più guardati”.",
 		loadingLibraries: "Caricamento delle librerie",
-		removeConfirm: "Rimuovere “{name}” dalla libreria? Questa azione non può essere annullata."
+		removeConfirm: "Rimuovere “{name}” dalla libreria? Questa azione non può essere annullata.",
+		rowLoadError: "Impossibile caricare “{name}”."
 	},
 	playlist: {
 		loadError: "Impossibile caricare questa playlist.",
@@ -10209,6 +10523,84 @@ var pv = {
 		settingsRejectAdminLockout: "Questa modifica lascerebbe un amministratore attivo senza alcun modo di accedere. Abilita prima un altro metodo di accesso per quell’account, poi salva di nuovo.",
 		settingsForbidden: "Non hai più l’autorizzazione per modificare le impostazioni del server. Accedi di nuovo come amministratore e riprova.",
 		settingsConflict: "Il server non ha potuto applicare queste impostazioni nello stato attuale. Ricarica le impostazioni e riprova."
+	},
+	filter: {
+		searchHint: "Cerca titoli, persone, generi…",
+		searchAria: "Cerca media",
+		clearSearchAria: "Cancella ricerca",
+		sortBy: "Ordina per",
+		sortAscending: "Ordinamento crescente",
+		sortDescending: "Ordinamento decrescente",
+		sortArtist: "Artista",
+		sortName: "Nome",
+		sortDateAdded: "Data di aggiunta",
+		sortRuntime: "Durata",
+		sortGenre: "Genere",
+		filters: "Filtri",
+		viewModeGroup: "Modalità di visualizzazione",
+		viewGrid: "Vista griglia",
+		viewList: "Vista elenco",
+		viewBackdrop: "Vista sfondo",
+		viewTable: "Vista tabella",
+		genres: "Generi",
+		addGenre: "Aggiungi un genere…",
+		rating: "Valutazione",
+		type: "Tipo",
+		metadata: "Metadati",
+		matchStatusGroup: "Stato corrispondenza metadati",
+		matched: "Corrisposto",
+		unmatched: "Non corrisposto",
+		year: "Anno",
+		ratingRange: "Intervallo di valutazione",
+		yearFrom: "Anno dal",
+		yearTo: "Anno al",
+		yearFromHint: "Da",
+		yearToHint: "A",
+		min: "Min.",
+		max: "Max.",
+		minRating: "Valutazione minima",
+		maxRating: "Valutazione massima",
+		presets: "Preset",
+		presetName: "Nome preset",
+		save: "Salva",
+		saveCurrent: "Salva la vista attuale",
+		noPresets: "Nessun preset salvato",
+		clearAll: "Cancella tutto",
+		deletePreset: "Elimina il preset {name}",
+		removePill: "Rimuovi {label}",
+		pillFrom: "Da {year}",
+		pillTo: "A {year}",
+		pillMinRating: "Min. {rating}★",
+		pillMaxRating: "Max. {rating}★"
+	},
+	match: {
+		subjectNoYear: "Trova la voce TMDB giusta per {name}.",
+		subjectWithYear: "Trova la voce TMDB giusta per {name} ({year}).",
+		search: "Cerca",
+		titlePlaceholder: "Titolo da cercare",
+		yearPlaceholder: "Qualsiasi",
+		sourceInfo: "Info fonte",
+		fileLabel: "Nome file:",
+		pathLabel: "Percorso:",
+		tryAgain: "Riprova",
+		searching: "Ricerca su TMDB",
+		noResults: "Nessun risultato",
+		noResultsHint: "Prova un titolo diverso o rimuovi l’anno.",
+		useThis: "Usa questo",
+		noDetails: "Nessun dettaglio di corrispondenza trovato per questo risultato. Provane un altro."
+	},
+	network: {
+		statusHealthy: "Rete integra",
+		statusDegraded: "Rete degradata",
+		statusOffline: "Rete offline",
+		statusLoading: "Caricamento stato…",
+		statusUnavailable: "Impossibile caricare lo stato"
+	},
+	rail: {
+		letterNavLabel: "Vai a una lettera",
+		jumpToCount: "Vai a {label} ({count})",
+		nonAlphaTitles: "titoli non alfabetici",
+		startingWith: "titoli che iniziano con {letter}"
 	}
 }, _v = {
 	common: {
@@ -10229,7 +10621,8 @@ var pv = {
 		learnMore: "Saiba mais",
 		scrollLeft: "Rolar para a esquerda",
 		scrollRight: "Rolar para a direita",
-		toggle: "Alternar"
+		toggle: "Alternar",
+		seeAll: "Ver tudo"
 	},
 	confirm: {
 		title: "Tem certeza?",
@@ -10563,9 +10956,27 @@ var pv = {
 		missingEpisodesFailed: "Não foi possível carregar os episódios ausentes.",
 		shuffleNothing: "Ainda não há nada para reproduzir aleatoriamente.",
 		shuffleQueued: "Reprodução aleatória na fila.",
-		shuffleFailed: "Não foi possível iniciar a reprodução aleatória."
+		shuffleFailed: "Não foi possível iniciar a reprodução aleatória.",
+		like: "Gostei",
+		dislike: "Não gostei"
 	},
-	media: { new: "Novo" },
+	media: {
+		new: "Novo",
+		loadingMedia: "Carregando mídia",
+		loadingMore: "Carregando mais…",
+		backToTop: "Voltar ao topo",
+		choosePoster: "Escolher pôster",
+		posterSubject: "Selecione um pôster para {name}",
+		loadingPosters: "Carregando pôsteres",
+		tmdbNotConfigured: "O TMDB não está configurado",
+		tmdbMetadataHint: "Configure uma chave de API do TMDB nas configurações do administrador para buscar correspondências de metadados.",
+		tmdbPosterHint: "Configure uma chave de API do TMDB nas configurações do administrador para buscar pôsteres alternativos.",
+		postersAlt: "Pôsteres de {provider}",
+		posterAlt: "Pôster de {provider}",
+		posterAltCurrent: "Pôster de {provider} (atual)",
+		noPosters: "Nenhum pôster disponível",
+		noPostersHint: "Nenhum pôster alternativo encontrado para este item."
+	},
 	reader: {
 		decreaseFont: "Diminuir tamanho da fonte",
 		increaseFont: "Aumentar tamanho da fonte",
@@ -10652,7 +11063,8 @@ var pv = {
 		loadRecommendationsError: "Não foi possível carregar as recomendações.",
 		loadMostWatchedError: "Não foi possível carregar “Mais assistidos”.",
 		loadingLibraries: "Carregando bibliotecas",
-		removeConfirm: "Remover “{name}” da biblioteca? Esta ação não pode ser desfeita."
+		removeConfirm: "Remover “{name}” da biblioteca? Esta ação não pode ser desfeita.",
+		rowLoadError: "Não foi possível carregar “{name}”."
 	},
 	playlist: {
 		loadError: "Não foi possível carregar esta playlist.",
@@ -10927,6 +11339,84 @@ var pv = {
 		settingsRejectAdminLockout: "Esta alteração deixaria um administrador ativo sem nenhuma forma de fazer login. Ative primeiro outro método de login para essa conta e salve novamente.",
 		settingsForbidden: "Você não tem mais permissão para alterar as configurações do servidor. Entre novamente como administrador e tente de novo.",
 		settingsConflict: "O servidor não pôde aplicar essas configurações no estado atual. Recarregue as configurações e tente novamente."
+	},
+	filter: {
+		searchHint: "Pesquise títulos, pessoas, gêneros…",
+		searchAria: "Pesquisar mídia",
+		clearSearchAria: "Limpar busca",
+		sortBy: "Classificar por",
+		sortAscending: "Classificar em ordem crescente",
+		sortDescending: "Classificar em ordem decrescente",
+		sortArtist: "Artista",
+		sortName: "Nome",
+		sortDateAdded: "Data de adição",
+		sortRuntime: "Duração",
+		sortGenre: "Gênero",
+		filters: "Filtros",
+		viewModeGroup: "Modo de exibição",
+		viewGrid: "Exibição em grade",
+		viewList: "Exibição em lista",
+		viewBackdrop: "Exibição em pano de fundo",
+		viewTable: "Exibição em tabela",
+		genres: "Gêneros",
+		addGenre: "Adicionar um gênero…",
+		rating: "Avaliação",
+		type: "Tipo",
+		metadata: "Metadados",
+		matchStatusGroup: "Status de correspondência de metadados",
+		matched: "Correspondente",
+		unmatched: "Não correspondente",
+		year: "Ano",
+		ratingRange: "Faixa de avaliação",
+		yearFrom: "Ano de",
+		yearTo: "Ano até",
+		yearFromHint: "De",
+		yearToHint: "Até",
+		min: "Mín.",
+		max: "Máx.",
+		minRating: "Avaliação mínima",
+		maxRating: "Avaliação máxima",
+		presets: "Predefinições",
+		presetName: "Nome da predefinição",
+		save: "Salvar",
+		saveCurrent: "Salvar a visualização atual",
+		noPresets: "Nenhuma predefinição salva",
+		clearAll: "Limpar tudo",
+		deletePreset: "Excluir predefinição {name}",
+		removePill: "Remover {label}",
+		pillFrom: "De {year}",
+		pillTo: "Até {year}",
+		pillMinRating: "Mín. {rating}★",
+		pillMaxRating: "Máx. {rating}★"
+	},
+	match: {
+		subjectNoYear: "Encontre a entrada correta do TMDB para {name}.",
+		subjectWithYear: "Encontre a entrada correta do TMDB para {name} ({year}).",
+		search: "Pesquisar",
+		titlePlaceholder: "Título a pesquisar",
+		yearPlaceholder: "Qualquer",
+		sourceInfo: "Info da fonte",
+		fileLabel: "Arquivo:",
+		pathLabel: "Caminho:",
+		tryAgain: "Tentar novamente",
+		searching: "Pesquisando no TMDB",
+		noResults: "Nenhum resultado encontrado",
+		noResultsHint: "Tente um título diferente ou limpe o ano.",
+		useThis: "Usar este",
+		noDetails: "Nenhum detalhe de correspondência foi encontrado para esse resultado. Tente outro."
+	},
+	network: {
+		statusHealthy: "Rede saudável",
+		statusDegraded: "Rede degradada",
+		statusOffline: "Rede offline",
+		statusLoading: "Carregando status…",
+		statusUnavailable: "Não foi possível carregar o status"
+	},
+	rail: {
+		letterNavLabel: "Ir para uma letra",
+		jumpToCount: "Ir para {label} ({count})",
+		nonAlphaTitles: "títulos não alfabéticos",
+		startingWith: "títulos que começam com {letter}"
 	}
 }, vv = {
 	common: {
@@ -10947,7 +11437,8 @@ var pv = {
 		learnMore: "詳細を見る",
 		scrollLeft: "左にスクロール",
 		scrollRight: "右にスクロール",
-		toggle: "トグル"
+		toggle: "トグル",
+		seeAll: "すべて表示"
 	},
 	confirm: {
 		title: "本当によろしいですか？",
@@ -11281,9 +11772,27 @@ var pv = {
 		missingEpisodesFailed: "不足しているエピソードを読み込めませんでした。",
 		shuffleNothing: "シャッフル再生できるものがまだありません。",
 		shuffleQueued: "シャッフル再生を待機列に追加しました。",
-		shuffleFailed: "シャッフル再生を開始できませんでした。"
+		shuffleFailed: "シャッフル再生を開始できませんでした。",
+		like: "いいね",
+		dislike: "よくない"
 	},
-	media: { new: "新着" },
+	media: {
+		new: "新着",
+		loadingMedia: "メディアを読み込み中",
+		loadingMore: "さらに読み込み中…",
+		backToTop: "トップへ戻る",
+		choosePoster: "ポスターを選択",
+		posterSubject: "{name} のポスターを選択してください",
+		loadingPosters: "ポスターを読み込み中",
+		tmdbNotConfigured: "TMDB が設定されていません",
+		tmdbMetadataHint: "メタデータの一致を検索するには、管理設定で TMDB API キーを設定してください。",
+		tmdbPosterHint: "ポスターの代替を検索するには、管理設定で TMDB API キーを設定してください。",
+		postersAlt: "{provider} のポスター",
+		posterAlt: "{provider} のポスター",
+		posterAltCurrent: "{provider} のポスター (現在)",
+		noPosters: "ポスターを利用できません",
+		noPostersHint: "この項目の利用可能なポスターが見つかりませんでした。"
+	},
 	reader: {
 		decreaseFont: "フォントサイズを小さくする",
 		increaseFont: "フォントサイズを大きくする",
@@ -11370,7 +11879,8 @@ var pv = {
 		loadRecommendationsError: "おすすめを読み込めませんでした。",
 		loadMostWatchedError: "「よく観られている作品」を読み込めませんでした。",
 		loadingLibraries: "ライブラリを読み込み中",
-		removeConfirm: "「{name}」をライブラリから削除しますか？この操作は元に戻せません。"
+		removeConfirm: "「{name}」をライブラリから削除しますか？この操作は元に戻せません。",
+		rowLoadError: "「{name}」を読み込めませんでした。"
 	},
 	playlist: {
 		loadError: "このプレイリストを読み込めませんでした。",
@@ -11645,6 +12155,84 @@ var pv = {
 		settingsRejectAdminLockout: "この変更では、有効な管理者が利用可能なサインイン方法をすべて失い、ロックアウトされます。まずその管理者用に別のサインイン方法を有効にしてから、もう一度保存してください。",
 		settingsForbidden: "サーバー設定を変更する権限がありません。管理者として再度サインインしてから、もう一度お試しください。",
 		settingsConflict: "現在の状態ではサーバーが設定を適用できませんでした。設定を再読み込みしてもう一度お試しください。"
+	},
+	filter: {
+		searchHint: "タイトル、人物、ジャンルを検索…",
+		searchAria: "メディアを検索",
+		clearSearchAria: "検索をクリア",
+		sortBy: "並び替え",
+		sortAscending: "昇順で並び替え",
+		sortDescending: "降順で並び替え",
+		sortArtist: "アーティスト",
+		sortName: "名前",
+		sortDateAdded: "追加日",
+		sortRuntime: "上映時間",
+		sortGenre: "ジャンル",
+		filters: "フィルター",
+		viewModeGroup: "表示モード",
+		viewGrid: "グリッド表示",
+		viewList: "リスト表示",
+		viewBackdrop: "背景表示",
+		viewTable: "テーブル表示",
+		genres: "ジャンル",
+		addGenre: "ジャンルを追加…",
+		rating: "評価",
+		type: "タイプ",
+		metadata: "メタデータ",
+		matchStatusGroup: "メタデータ一致ステータス",
+		matched: "一致済み",
+		unmatched: "未一致",
+		year: "年",
+		ratingRange: "評価の範囲",
+		yearFrom: "開始年",
+		yearTo: "終了年",
+		yearFromHint: "開始",
+		yearToHint: "終了",
+		min: "最小",
+		max: "最大",
+		minRating: "最小評価",
+		maxRating: "最大評価",
+		presets: "プリセット",
+		presetName: "プリセット名",
+		save: "保存",
+		saveCurrent: "現在の表示を保存",
+		noPresets: "保存済みのプリセットはありません",
+		clearAll: "すべてクリア",
+		deletePreset: "プリセット「{name}」を削除",
+		removePill: "{label} を削除",
+		pillFrom: "{year} 年から",
+		pillTo: "{year} 年まで",
+		pillMinRating: "最小 {rating}★",
+		pillMaxRating: "最大 {rating}★"
+	},
+	match: {
+		subjectNoYear: "{name} の適切な TMDB エントリを見つけます。",
+		subjectWithYear: "{name} ({year}) の適切な TMDB エントリを見つけます。",
+		search: "検索",
+		titlePlaceholder: "検索するタイトル",
+		yearPlaceholder: "指定なし",
+		sourceInfo: "ソース情報",
+		fileLabel: "ファイル:",
+		pathLabel: "パス:",
+		tryAgain: "再試行",
+		searching: "TMDB を検索中",
+		noResults: "結果が見つかりません",
+		noResultsHint: "別のタイトルを試すか、年をクリアしてください。",
+		useThis: "これを使用",
+		noDetails: "その結果の一致詳細が見つかりませんでした。他をお試しください。"
+	},
+	network: {
+		statusHealthy: "ネットワーク正常",
+		statusDegraded: "ネットワーク低下",
+		statusOffline: "ネットワークオフライン",
+		statusLoading: "ステータスを読み込み中…",
+		statusUnavailable: "ステータスを読み込めません"
+	},
+	rail: {
+		letterNavLabel: "文字へ移動",
+		jumpToCount: "{label} へ移動 ({count})",
+		nonAlphaTitles: "アルファベット以外のタイトル",
+		startingWith: "{letter} で始まるタイトル"
 	}
 }, yv = {
 	es: pv,
@@ -11653,7 +12241,7 @@ var pv = {
 	it: gv,
 	pt_BR: _v,
 	ja: vv
-}, bv = hr(() => import("./MediaDetail-BRg5b5YI.js").then((e) => e.n)), xv = hr(() => import("./MetadataMatchModal-DLpGzF5b.js").then((e) => e.n)), Sv = hr(() => import("./FilterBar-Dyx4K7Tf.js").then((e) => e.n)), Cv = hr(() => import("./SearchPage-Cxt2kzbL.js"));
+}, bv = hr(() => import("./MediaDetail-epDiqIYW.js").then((e) => e.n)), xv = hr(() => import("./MetadataMatchModal-D53-fqr5.js").then((e) => e.n)), Sv = hr(() => import("./FilterBar-BbgA2Nd5.js").then((e) => e.n)), Cv = hr(() => import("./SearchPage-CjDAyPrR.js"));
 export { te as ACTIVE_PROFILE_KEY, pn as ALL_LOGS, Ld as AcceptInvitePage, kn as AdminBackupApi, An as AdminCastApi, Pn as AdminCollectionsApi, mn as AdminDashboardApi, jn as AdminDlnaServerApi, Fn as AdminHistoryApi, Xn as AdminHubDashboardApi, On as AdminIntegrationsApi, zn as AdminLibrariesApi, Nn as AdminLiveTvApi, fn as AdminLogsApi, Yn as AdminMaintenanceApi, dn as AdminMetadataSourcesApi, Kn as AdminPluginsApi, Mn as AdminRemoteAccessApi, Dn as AdminServicesApi, Bn as AdminSettingsApi, In as AdminSyncPlayApi, Cn as AdminUsersApi, En as AdminWebhooksApi, Tt as ApiClient, lt as ApiError, e as AppBackdrop, ai as AppLayout, Qh as AudiobookDetailPage, Ng as AudiobookPlayerPage, Sh as AudiobooksPage, Le as BUILT_IN_THEME_IDS, N as Badge, Um as BookDetailPage, sh as BookReaderPage, Sm as BooksPage, j as Button, zt as CONNECTION_API_BASE_KEY, Ft as CONNECTION_CONFIRMED_ORIGIN_KEY, Pa as CURRENT_SERVER_ID_KEY, Fa as CURRENT_SERVER_NAME_KEY, Jt as Chip, Xt as Combobox, Qt as ConfirmDialog, St as CookieTokenStore, T as DEFAULT_CAPTION_STYLE, p as DEFAULT_MESSAGES, C as DEFAULT_PREFERENCES, yn as DEFAULT_THROTTLE_BPS, hv as DE_MESSAGES, Ve as DeviceSessionsPage, gt as ERROR_MESSAGES, ut as ERROR_TITLES, pv as ES_MESSAGES, A as EmptyState, Be as FOCUS_RING_MIN_CONTRAST, mv as FR_MESSAGES, Ol as FederationPage, Zl as FederationSharesPage, Sv as FilterBar, Dt as GENERIC_ERROR_MESSAGE, Ba as HUB_SYNC_PLAY_PORT, ko as HelpPopover, an as HelpText, gv as IT_MESSAGES, b as Icon, t as IconButton, Od as InviteLinksPage, vv as JA_MESSAGES, Xe as Kbd, Ln as LIBRARY_TYPES, yv as LOCALE_MESSAGES, Bs as LibraryScanPage, yt as LocalStorageTokenStore, $n as LoginForm, qn as MAINTENANCE_ENDPOINTS, Jn as MAINTENANCE_TASK_NAMES, Oe as MAX_EXTENDS_DEPTH, co as MCP_TOKENS_ROUTE_NAME, lo as MCP_TOKENS_ROUTE_PATH, bt as MUSIC_PAGE_SIZE, su as ManageSharesPage, sn as MediaCard, bv as MediaDetail, cn as MediaGrid, it as MediaHomeRow, ln as MediaRow, rn as Menu, xv as MetadataMatchModal, Zt as Modal, af as MusicAlbumPage, Kf as MusicArtistPage, wf as MusicArtistsPage, cm as MusicPlayerPage, jp as MusicTracksPage, oc as MyServersPage, ot as NetworkError, Wn as PLUGIN_SECRET_MASK, c as PLURAL_CATEGORIES, xn as PROFILE_LAST_ERROR_CODE, _n as PROFILE_LAST_ERROR_TEXT, _v as PT_BR_MESSAGES, tn as PageHint, Co as PageTransition, Aa as PhlixApp, h_ as PhotoAlbumPage, e_ as PhotoAlbumsPage, $_ as PhotoSlideshowPage, R_ as PhotoViewPage, Os as ProfileImageSettings, hn as RATING_LABELS, bn as RATING_MAX, Sn as RATING_OPTIONS, rr as REQUEST_SEARCH_DEBOUNCE_MS, ce as RESUME_MAX_RATIO, oe as RESUME_MIN_SECONDS, Pe as RING_GROUND_KEYS, Mo as RatingBadge, Xu as RequestsPage, So as Reveal, Rn as SCAN_JOB_TYPES, Vn as SETTINGS_SECRET_MASK, Qe as SORT_TITLE_ARTICLES, wn as SUBSCRIBABLE_EVENTS, Cv as SearchPage, Ie as SecuritySettingsPage, Yt as Select, pl as ServerDetailPage, xu as SharedWithMePage, Yr as Sheet, er as SignupForm, P as Skeleton, Kt as Slider, un as SourcePriorityEditor, en as Spinner, qt as Switch, He as THEME_CACHE_KEY, ke as THEME_TOKEN_ALLOWLIST, gn as THROTTLE_BPS_LEVELS, vn as THROTTLE_BPS_OPTIONS, Ct as TMDB_UNCONFIGURED_CODE, nn as Tabs, ue as ThumbRating, Ot as TimeoutError, $i as ToastHost, $t as Tooltip, Po as UserRatingPicker, Tn as WEBHOOK_EVENT_CATEGORIES, D as activeProfileStorageKey, Ae as activeThemeStyle, gs as adminMenu, fa as applyStoredThemeEarly, Re as applyThemeTokens, ov as bestCandidate, ev as bindMediaStoreToRouter, ps as buildAdminRoutes, hs as buildHubAdminRoutes, Ga as buildHubRelayUrl, Qn as buildMediaQuery, Zn as buildMediaUrl, ms as buildServerAdminRoutes, Fe as clearThemeTokens, eo as closeHubRelayConnection, cs as commonAdminPages, Ze as compareByStrippedTitle, Me as compositedContrastOver, xo as createPhlixApp, h as createTranslator, nr as debounce, ua as deriveAccentVars, M as errMessage, At as errorCodeMessage, ft as errorCodeTitle, $e as fetchLibraries, Ee as fetchThemes, je as focusRingLawViolation, o as focusable, r as focusableRegistry, Gt as formatPageTitle, Je as fuzzyScore, wt as getDefaultApiHeaders, to as getHubRelaySocket, w as hasStoredPreferences, us as hubAdminPages, n as installFocusable, Lt as isAllowedBase, Te as isAllowedThemeToken, Ue as isBuiltInThemeId, ct as isOffline, Nt as isPlaintextPublic, m as isPluralTemplate, jt as isPrivateHost, kt as isRegisteredErrorCode, re as isRewritableImagePath, Ke as isSafeThemeTokenValue, pt as isTmdbUnconfigured, Ye as matchCommand, uo as mcpTokensMenuItem, d as mergeMessages, It as normalizeBase, De as normalizeServerTheme, Za as openHubRelayConnection, Rt as originOf, Ua as parsePendingCommandFrame, Ge as parseThemeColor, Na as phlixUiVersion, Gn as pluginErrorCode, Un as pluginValidationErrors, g as plural, l as pluralCategory, f as pluralCount, v as pluralize, Mt as probeServer, Ce as readCachedTheme, S as readStoredPreferences, tv as rectCenter, Et as resetCookieSessionProbe, ie as resolveImageSrc, ne as resolveImageSrcset, xe as resolveThemeBase, We as resolveThemeTokens, _t as resolveTokenStoreMode, at as safeHref, we as sanitizeThemeTokens, u as selectPluralTemplate, ls as serverAdminPages, Ut as setAppName, mt as setDefaultApiHeaders, ht as setDefaultTokenStore, Wt as setPageTitle, tt as sortLibraries, et as stripLeadingArticle, fe as useApiBase, E as useAuthStore, ma as useCommandPaletteHotkey, qe as useCommandStore, Pt as useConnectionStore, i as useFocusTrap, O as useImageSrc, nt as useLibrariesStore, k as useMediaApiBase, lr as useMediaStore, _ as useMessages, fv as useOnline, Ht as usePageTitle, ae as usePlayerStore, ya as usePreconnect, x as usePreferencesStore, on as usePrefetch, ee as useProfileStore, Ca as useResumeReporter, rt as useResumeSync, za as useServerStore, Hn as useSettingsPrefsStore, dv as useSpatialNav, pa as useTheme, Ne as useThemesStore, be as useToastStore, le as useUserItemDataStore, Bt as withScheme, Se as writeCachedTheme };
 
 //# sourceMappingURL=phlix-ui.js.map

@@ -3216,7 +3216,8 @@ var gn = {
 		learnMore: "Learn more",
 		scrollLeft: "Scroll left",
 		scrollRight: "Scroll right",
-		toggle: "Toggle"
+		toggle: "Toggle",
+		seeAll: "See all"
 	},
 	confirm: {
 		title: "Are you sure?",
@@ -3550,9 +3551,27 @@ var gn = {
 		missingEpisodesFailed: "Couldn’t load missing episodes.",
 		shuffleNothing: "Nothing to shuffle yet.",
 		shuffleQueued: "Shuffle queued.",
-		shuffleFailed: "Couldn’t start shuffle play."
+		shuffleFailed: "Couldn’t start shuffle play.",
+		like: "Like",
+		dislike: "Dislike"
 	},
-	media: { new: "New" },
+	media: {
+		new: "New",
+		loadingMedia: "Loading media",
+		loadingMore: "Loading more…",
+		backToTop: "Back to top",
+		choosePoster: "Choose poster",
+		posterSubject: "Select a poster for {name}",
+		loadingPosters: "Loading posters",
+		tmdbNotConfigured: "TMDB is not configured",
+		tmdbMetadataHint: "Configure a TMDB API key in admin settings to search for metadata matches.",
+		tmdbPosterHint: "Configure a TMDB API key in admin settings to search for poster alternatives.",
+		postersAlt: "{provider} posters",
+		posterAlt: "{provider} poster",
+		posterAltCurrent: "{provider} poster (current)",
+		noPosters: "No posters available",
+		noPostersHint: "No poster alternatives were found for this item."
+	},
 	reader: {
 		decreaseFont: "Decrease font size",
 		increaseFont: "Increase font size",
@@ -3639,7 +3658,8 @@ var gn = {
 		loadRecommendationsError: "Couldn’t load recommendations.",
 		loadMostWatchedError: "Couldn’t load most watched.",
 		loadingLibraries: "Loading libraries",
-		removeConfirm: "Remove “{name}” from the library? This cannot be undone."
+		removeConfirm: "Remove “{name}” from the library? This cannot be undone.",
+		rowLoadError: "Couldn’t load “{name}”."
 	},
 	playlist: {
 		loadError: "Couldn’t load this playlist.",
@@ -3914,6 +3934,84 @@ var gn = {
 		settingsRejectAdminLockout: "This change would leave an active administrator with no usable way to sign in. Enable another sign-in method for them first, then save again.",
 		settingsForbidden: "You no longer have permission to change server settings. Sign in again as an administrator and try again.",
 		settingsConflict: "The server could not apply those settings in its current state. Reload the settings and try again."
+	},
+	filter: {
+		searchHint: "Search titles, people, genres…",
+		searchAria: "Search media",
+		clearSearchAria: "Clear search",
+		sortBy: "Sort by",
+		sortAscending: "Sort ascending",
+		sortDescending: "Sort descending",
+		sortArtist: "Artist",
+		sortName: "Name",
+		sortDateAdded: "Date added",
+		sortRuntime: "Runtime",
+		sortGenre: "Genre",
+		filters: "Filters",
+		viewModeGroup: "View mode",
+		viewGrid: "Grid view",
+		viewList: "List view",
+		viewBackdrop: "Backdrop view",
+		viewTable: "Table view",
+		genres: "Genres",
+		addGenre: "Add a genre…",
+		rating: "Rating",
+		type: "Type",
+		metadata: "Metadata",
+		matchStatusGroup: "Metadata match status",
+		matched: "Matched",
+		unmatched: "Unmatched",
+		year: "Year",
+		ratingRange: "Rating range",
+		yearFrom: "Year from",
+		yearTo: "Year to",
+		yearFromHint: "From",
+		yearToHint: "To",
+		min: "Min",
+		max: "Max",
+		minRating: "Minimum rating",
+		maxRating: "Maximum rating",
+		presets: "Presets",
+		presetName: "Preset name",
+		save: "Save",
+		saveCurrent: "Save current",
+		noPresets: "No saved presets",
+		clearAll: "Clear all",
+		deletePreset: "Delete preset {name}",
+		removePill: "Remove {label}",
+		pillFrom: "From {year}",
+		pillTo: "To {year}",
+		pillMinRating: "Min {rating}★",
+		pillMaxRating: "Max {rating}★"
+	},
+	match: {
+		subjectNoYear: "Find the right TMDB entry for {name}.",
+		subjectWithYear: "Find the right TMDB entry for {name} ({year}).",
+		search: "Search",
+		titlePlaceholder: "Title to search for",
+		yearPlaceholder: "Any",
+		sourceInfo: "Source info",
+		fileLabel: "File:",
+		pathLabel: "Path:",
+		tryAgain: "Try again",
+		searching: "Searching TMDB",
+		noResults: "No results found",
+		noResultsHint: "Try a different title or clear the year.",
+		useThis: "Use this",
+		noDetails: "No match details were found for that result. Try another."
+	},
+	network: {
+		statusHealthy: "Network Healthy",
+		statusDegraded: "Network Degraded",
+		statusOffline: "Network Offline",
+		statusLoading: "Loading health status…",
+		statusUnavailable: "Unable to load health status"
+	},
+	rail: {
+		letterNavLabel: "Jump to a letter",
+		jumpToCount: "Jump to {label} ({count})",
+		nonAlphaTitles: "non-alphabetic titles",
+		startingWith: "titles starting with {letter}"
 	}
 }, _n = /\{(\w+)\}/g;
 function vn(e) {
@@ -6036,7 +6134,15 @@ var Y = /* @__PURE__ */ d({
 	let n = e.__vccOpts || e;
 	for (let [e, r] of t) n[e] = r;
 	return n;
-}, rs = /*#__PURE__*/ X(ns, [["__scopeId", "data-v-83b83959"]]), is = ["data-level"], as = ["disabled", "aria-pressed"], os = ["disabled", "aria-pressed"], ss = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, rs = /*#__PURE__*/ X(ns, [["__scopeId", "data-v-83b83959"]]), is = ["data-level"], as = [
+	"disabled",
+	"aria-label",
+	"aria-pressed"
+], os = [
+	"disabled",
+	"aria-label",
+	"aria-pressed"
+], ss = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "ThumbRating",
 	props: {
 		level: { default: 0 },
@@ -6047,70 +6153,70 @@ var Y = /* @__PURE__ */ d({
 	},
 	emits: ["cycle", "update:level"],
 	setup(e, { emit: t }) {
-		let n = e, c = t, l = r(() => {
-			let e = Math.trunc(Number(n.level));
+		let { t: n } = J(), c = e, l = t, d = r(() => {
+			let e = Math.trunc(Number(c.level));
 			return Number.isFinite(e) ? e < -2 ? -2 : e > 2 ? 2 : e : 0;
-		}), d = r(() => l.value >= 0), f = r(() => l.value <= 0), p = r(() => l.value >= 1), m = r(() => l.value === 2), h = r(() => l.value <= -1), _ = r(() => l.value === -2);
-		function v() {
-			return l.value <= 0 ? 1 : l.value === 1 ? 2 : 0;
-		}
+		}), f = r(() => d.value >= 0), p = r(() => d.value <= 0), m = r(() => d.value >= 1), h = r(() => d.value === 2), _ = r(() => d.value <= -1), v = r(() => d.value === -2);
 		function y() {
-			return l.value >= 0 ? -1 : l.value === -1 ? -2 : 0;
+			return d.value <= 0 ? 1 : d.value === 1 ? 2 : 0;
 		}
 		function b() {
-			if (n.disabled) return;
-			let e = v();
-			c("cycle", e), c("update:level", e);
+			return d.value >= 0 ? -1 : d.value === -1 ? -2 : 0;
 		}
 		function S() {
-			if (n.disabled) return;
+			if (c.disabled) return;
 			let e = y();
-			c("cycle", e), c("update:level", e);
+			l("cycle", e), l("update:level", e);
 		}
-		return (t, n) => (x(), o("div", {
+		function C() {
+			if (c.disabled) return;
+			let e = b();
+			l("cycle", e), l("update:level", e);
+		}
+		return (t, r) => (x(), o("div", {
 			class: "thumb-rating",
-			"data-level": l.value
-		}, [d.value ? (x(), i(rs, {
+			"data-level": d.value
+		}, [f.value ? (x(), i(rs, {
 			key: 0,
-			text: "Like"
+			text: O(n)("itemActions.like")
 		}, {
 			default: F(() => [s("button", {
 				type: "button",
 				class: g(["thumb-rating__btn thumb-rating__btn--up", {
-					"is-filled": p.value,
-					"is-blue": m.value
+					"is-filled": m.value,
+					"is-blue": h.value
 				}]),
 				disabled: e.disabled,
-				"aria-label": "Like",
-				"aria-pressed": p.value ? "true" : "false",
-				onClick: b
+				"aria-label": O(n)("itemActions.like"),
+				"aria-pressed": m.value ? "true" : "false",
+				onClick: S
 			}, [u(Y, {
 				name: "thumbs-up",
 				class: "thumb-rating__icon"
 			})], 10, as)]),
 			_: 1
-		})) : a("", !0), f.value ? (x(), i(rs, {
+		}, 8, ["text"])) : a("", !0), p.value ? (x(), i(rs, {
 			key: 1,
-			text: "Dislike"
+			text: O(n)("itemActions.dislike")
 		}, {
 			default: F(() => [s("button", {
 				type: "button",
 				class: g(["thumb-rating__btn thumb-rating__btn--down", {
-					"is-filled": h.value,
-					"is-blue": _.value
+					"is-filled": _.value,
+					"is-blue": v.value
 				}]),
 				disabled: e.disabled,
-				"aria-label": "Dislike",
-				"aria-pressed": h.value ? "true" : "false",
-				onClick: S
+				"aria-label": O(n)("itemActions.dislike"),
+				"aria-pressed": _.value ? "true" : "false",
+				onClick: C
 			}, [u(Y, {
 				name: "thumbs-down",
 				class: "thumb-rating__icon"
 			})], 10, os)]),
 			_: 1
-		})) : a("", !0)], 8, is));
+		}, 8, ["text"])) : a("", !0)], 8, is));
 	}
-}), [["__scopeId", "data-v-18d82ecf"]]);
+}), [["__scopeId", "data-v-4de56ed3"]]);
 // src/components/player/format-time.ts
 function cs(e) {
 	if (!isFinite(e) || e < 0) return "0:00";
