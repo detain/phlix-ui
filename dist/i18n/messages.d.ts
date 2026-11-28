@@ -231,6 +231,7 @@ export declare const DEFAULT_MESSAGES: {
         seekForward: string;
         keyboardShortcuts: string;
         sleepTimer: string;
+        sleepTimerRemaining: string;
         pip: string;
         exitPip: string;
         theater: string;

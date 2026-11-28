@@ -71,25 +71,40 @@ function isVisible(marker: SkipMarker, pos: number): boolean {
 const SKIP_TYPES = ['intro', 'outro', 'credits'] as const;
 type SkipType = (typeof SKIP_TYPES)[number];
 
-/** Get the display label for a marker type. */
-function labelFor(type: SkipMarker['type']): string {
+/** Narrow a wire marker type to the skipable set (drops 'ad'/unknowns). */
+function isSkipType(type: SkipMarker['type']): type is SkipType {
+  return (SKIP_TYPES as readonly string[]).includes(type);
+}
+
+/** Marker-level narrowing so the visible list carries the skipable type only. */
+function isSkipMarker(m: SkipMarker): m is SkipMarker & { type: SkipType } {
+  return isSkipType(m.type);
+}
+
+/**
+ * Get the display label for a skipable marker type — FULL-SENTENCE catalog
+ * strings (phlix-ui-player-027): each is the complete accessible name, so the
+ * button renders no additional 'Skip ' concatenation (which doubled the word on
+ * the old ad branch — 'Skip Skip credits'). The dead 'ad' arm is gone; the
+ * outro aligns with the catalog's 'Skip end credits'.
+ */
+function labelFor(type: SkipType): string {
   switch (type) {
     case 'intro':
-      return t('player.skipLabelIntro');
+      return t('player.skipIntro');
     case 'outro':
-      return t('player.skipLabelCredits');
+      return t('player.skipOutro');
     case 'credits':
-      return t('player.skipLabelCredits');
-    case 'ad':
       return t('player.skipLabelSkipCredits');
   }
 }
 
 /** The markers that should currently be shown, sorted by start time. */
-const visibleMarkers = computed<SkipMarker[]>(() => {
+const visibleMarkers = computed<(SkipMarker & { type: SkipType })[]>(() => {
   if (!props.markers || props.markers.length === 0) return [];
   return props.markers
-    .filter((m) => SKIP_TYPES.includes(m.type as SkipType) && isVisible(m, props.position))
+    .filter(isSkipMarker)
+    .filter((m) => isVisible(m, props.position))
     .sort((a, b) => a.startMs - b.startMs);
 });
 
@@ -105,7 +120,6 @@ function onSkip(marker: SkipMarker): void {
       :key="marker.id"
       type="button"
       class="skip-controls__btn"
-      :aria-label="`Skip ${labelFor(marker.type)}`"
       @click.stop="onSkip(marker)"
     >
       <span class="skip-controls__label">{{ labelFor(marker.type) }}</span>

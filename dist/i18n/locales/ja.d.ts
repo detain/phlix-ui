@@ -212,6 +212,7 @@ export declare const JA_MESSAGES: {
         seekForward: string;
         keyboardShortcuts: string;
         sleepTimer: string;
+        sleepTimerRemaining: string;
         pip: string;
         exitPip: string;
         theater: string;

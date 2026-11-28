@@ -219,6 +219,7 @@ export const FR_MESSAGES = {
     seekForward: 'Avancer de 10 secondes',
     keyboardShortcuts: 'Raccourcis clavier',
     sleepTimer: 'Minuterie d’arrêt',
+    sleepTimerRemaining: 'Minuterie d’arrêt : {time} restantes',
     pip: 'Image dans l’image',
     exitPip: 'Quitter l’image dans l’image',
     theater: 'Mode cinéma',

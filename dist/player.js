@@ -3412,6 +3412,7 @@ var vn = {
 		seekForward: "Forward 10 seconds",
 		keyboardShortcuts: "Keyboard shortcuts",
 		sleepTimer: "Sleep timer",
+		sleepTimerRemaining: "Sleep timer: {time} remaining",
 		pip: "Picture-in-picture",
 		exitPip: "Exit picture-in-picture",
 		theater: "Theater mode",
@@ -9638,7 +9639,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-d3fc1b53"]]), Pf = ["aria-label"], Ff = ["aria-label", "onClick"], If = { class: "skip-controls__label" }, Lf = 5, Rf = 30, zf = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-d3fc1b53"]]), Pf = ["aria-label"], Ff = ["onClick"], If = { class: "skip-controls__label" }, Lf = 5, Rf = 30, zf = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SkipControls",
 	props: {
 		position: {},
@@ -9664,30 +9665,34 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			"credits"
 		];
 		function h(e) {
+			return m.includes(e);
+		}
+		function g(e) {
+			return h(e.type);
+		}
+		function _(e) {
 			switch (e) {
-				case "intro": return l("player.skipLabelIntro");
-				case "outro": return l("player.skipLabelCredits");
-				case "credits": return l("player.skipLabelCredits");
-				case "ad": return l("player.skipLabelSkipCredits");
+				case "intro": return l("player.skipIntro");
+				case "outro": return l("player.skipOutro");
+				case "credits": return l("player.skipLabelSkipCredits");
 			}
 		}
-		let g = r(() => !i.markers || i.markers.length === 0 ? [] : i.markers.filter((e) => m.includes(e.type) && p(e, i.position)).sort((e, t) => e.startMs - t.startMs));
-		function _(e) {
+		let v = r(() => !i.markers || i.markers.length === 0 ? [] : i.markers.filter(g).filter((e) => p(e, i.position)).sort((e, t) => e.startMs - t.startMs));
+		function y(e) {
 			c("skip", d(e.startMs));
 		}
-		return (t, n) => g.value.length > 0 ? (x(), o("div", {
+		return (t, n) => v.value.length > 0 ? (x(), o("div", {
 			key: 0,
 			class: "skip-controls",
 			"aria-label": O(l)("player.skipControls")
-		}, [(x(!0), o(e, null, C(g.value, (e) => (x(), o("button", {
+		}, [(x(!0), o(e, null, C(v.value, (e) => (x(), o("button", {
 			key: e.id,
 			type: "button",
 			class: "skip-controls__btn",
-			"aria-label": `Skip ${h(e.type)}`,
-			onClick: R((t) => _(e), ["stop"])
-		}, [s("span", If, E(h(e.type)), 1), u(Y, { name: "skip-forward" })], 8, Ff))), 128))], 8, Pf)) : a("", !0);
+			onClick: R((t) => y(e), ["stop"])
+		}, [s("span", If, E(_(e.type)), 1), u(Y, { name: "skip-forward" })], 8, Ff))), 128))], 8, Pf)) : a("", !0);
 	}
-}), [["__scopeId", "data-v-acac8ee3"]]), Bf = ["aria-label", "aria-expanded"], Vf = ["aria-label"], Hf = { class: "chapterlist__head" }, Uf = { class: "chapterlist__title" }, Wf = ["aria-label"], Gf = ["onClick"], Kf = { class: "chapterlist__index" }, qf = { class: "chapterlist__name" }, Jf = { class: "chapterlist__meta" }, Yf = { class: "chapterlist__time" }, Xf = {
+}), [["__scopeId", "data-v-29a255de"]]), Bf = ["aria-label", "aria-expanded"], Vf = ["aria-label"], Hf = { class: "chapterlist__head" }, Uf = { class: "chapterlist__title" }, Wf = ["aria-label"], Gf = ["onClick"], Kf = { class: "chapterlist__index" }, qf = { class: "chapterlist__name" }, Jf = { class: "chapterlist__meta" }, Yf = { class: "chapterlist__time" }, Xf = {
 	key: 0,
 	class: "chapterlist__duration"
 }, Zf = {
@@ -9861,91 +9866,145 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			}, " Find similar ", 8, ap)
 		])], 14, tp))), 128))])], 2)) : a("", !0);
 	}
-}), [["__scopeId", "data-v-52c56b64"]]), sp = ["aria-label", "aria-expanded"], cp = {
+}), [["__scopeId", "data-v-52c56b64"]]), sp = [
+	"aria-label",
+	"aria-expanded",
+	"aria-controls",
+	"onKeydown"
+], cp = {
 	key: 0,
 	class: "sleep-timer__remaining numeric"
-}, lp = ["aria-label"], up = ["aria-selected", "onClick"], dp = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, lp = ["aria-label"], up = [
+	"aria-selected",
+	"tabindex",
+	"onFocus",
+	"onClick"
+], dp = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SleepTimer",
 	props: { onExpire: { type: Function } },
 	setup(t, { expose: i }) {
 		let c = t, { t: l } = J(), d = [
-			{
-				label: "Off",
-				value: 0
-			},
-			{
-				label: "5m",
-				value: 300
-			},
-			{
-				label: "15m",
-				value: 900
-			},
-			{
-				label: "30m",
-				value: 1800
-			},
-			{
-				label: "45m",
-				value: 2700
-			},
-			{
-				label: "60m",
-				value: 3600
-			},
-			{
-				label: "90m",
-				value: 5400
-			}
-		], f = S(0), p = S(0), m = r(() => p.value > 0), h;
-		function _() {
-			h &&= (clearInterval(h), void 0);
-		}
-		function y(e) {
-			_(), p.value = e, e <= 0 || (h = setInterval(() => {
-				--p.value, p.value <= 0 && (_(), p.value = 0, c.onExpire());
-			}, 1e3));
-		}
-		function b(e) {
-			f.value = e, e === 0 ? (_(), p.value = 0) : y(e);
+			5,
+			15,
+			30,
+			45,
+			60,
+			90
+		], f = r(() => [{
+			value: 0,
+			label: l("player.off")
+		}, ...d.map((e) => ({
+			value: e * 60,
+			label: l("media.runtimeMinutes", { minutes: e })
+		}))]), p = S(0), m = S(0), _ = r(() => m.value > 0), y;
+		function b() {
+			y &&= (clearInterval(y), void 0);
 		}
 		function w(e) {
+			b(), m.value = e, e <= 0 || (y = setInterval(() => {
+				--m.value, m.value <= 0 && (b(), m.value = 0, c.onExpire());
+			}, 1e3));
+		}
+		function T(e) {
+			p.value = e, e === 0 ? (b(), m.value = 0) : w(e);
+		}
+		function D(e) {
 			let t = Math.floor(e / 60), n = e % 60;
 			return `${t}:${String(n).padStart(2, "0")}`;
 		}
-		let T = S(!1);
-		function D() {
-			m.value ? (b(0), T.value = !1) : T.value = !T.value;
+		let k = S(!1), A = S(null), j = S(null), M = S(null), N = S(0);
+		function I() {
+			_.value ? (T(0), k.value = !1) : k.value = !k.value;
 		}
-		function k(e) {
-			b(e), T.value = !1;
+		function z() {
+			return Array.from(M.value?.querySelectorAll("[role=\"option\"]") ?? []);
 		}
-		return v(() => {
-			_();
-		}), i({ toggleOpen: D }), (t, r) => (x(), o("div", { class: g(["sleep-timer", { "is-active": m.value }]) }, [s("button", {
+		function B(e, t) {
+			e.length !== 0 && e[(t % e.length + e.length) % e.length]?.focus();
+		}
+		function V() {
+			let e = f.value.findIndex((e) => e.value === p.value);
+			N.value = e >= 0 ? e : 0, k.value = !0;
+		}
+		function H(e) {
+			k.value = !1, e && h(() => j.value?.focus());
+		}
+		function U(e, t = !0) {
+			T(e), k.value = !1, t && h(() => j.value?.focus());
+		}
+		function W(e) {
+			let t = z();
+			if (t.length !== 0) switch (e.key) {
+				case "ArrowDown":
+					e.preventDefault(), B(t, N.value + 1);
+					break;
+				case "ArrowUp":
+					e.preventDefault(), B(t, N.value - 1);
+					break;
+				case "Home":
+					e.preventDefault(), B(t, 0);
+					break;
+				case "End":
+					e.preventDefault(), B(t, t.length - 1);
+					break;
+				case "Enter":
+				case " ":
+					e.preventDefault(), U(f.value[N.value]?.value ?? 0);
+					break;
+				case "Escape":
+					e.preventDefault(), e.stopPropagation(), H(!0);
+					break;
+				case "Tab": H(!1);
+			}
+		}
+		function ee(e) {
+			N.value = e;
+		}
+		function te(e) {
+			A.value && e.target instanceof Node && !A.value.contains(e.target) && H(!1);
+		}
+		return P(k, (e) => {
+			typeof document < "u" && (e ? (document.addEventListener("pointerdown", te, !0), h(() => B(z(), N.value))) : document.removeEventListener("pointerdown", te, !0));
+		}), v(() => {
+			b(), typeof document < "u" && document.removeEventListener("pointerdown", te, !0);
+		}), i({ toggleOpen: I }), (t, r) => (x(), o("div", {
+			ref_key: "rootEl",
+			ref: A,
+			class: g(["sleep-timer", { "is-active": _.value }])
+		}, [s("button", {
+			ref_key: "triggerEl",
+			ref: j,
 			type: "button",
-			class: g(["sleep-timer__trigger", { "is-active": m.value }]),
-			"aria-label": m.value ? `Sleep timer: ${w(p.value)} remaining` : O(l)("player.sleepTimer"),
-			"aria-expanded": T.value,
+			class: g(["sleep-timer__trigger", { "is-active": _.value }]),
+			"aria-label": _.value ? O(l)("player.sleepTimerRemaining", { time: D(m.value) }) : O(l)("player.sleepTimer"),
+			"aria-expanded": k.value,
 			"aria-haspopup": "listbox",
-			onClick: D
-		}, [u(Y, { name: "moon" }), m.value ? (x(), o("span", cp, E(w(p.value)), 1)) : a("", !0)], 10, sp), u(n, { name: "dropdown" }, {
-			default: F(() => [T.value ? (x(), o("ul", {
+			"aria-controls": k.value ? "sleep-timer-menu" : void 0,
+			onClick: I,
+			onKeydown: [L(R(V, ["prevent"]), ["down"]), L(R(V, ["prevent"]), ["up"])]
+		}, [u(Y, { name: "moon" }), _.value ? (x(), o("span", cp, E(D(m.value)), 1)) : a("", !0)], 42, sp), u(n, { name: "dropdown" }, {
+			default: F(() => [k.value ? (x(), o("ul", {
 				key: 0,
+				ref_key: "menuEl",
+				ref: M,
+				id: "sleep-timer-menu",
 				class: "sleep-timer__menu",
 				role: "listbox",
-				"aria-label": O(l)("player.sleepTimer")
-			}, [(x(), o(e, null, C(d, (e) => s("li", {
+				"aria-label": O(l)("player.sleepTimer"),
+				onKeydown: W
+			}, [(x(!0), o(e, null, C(f.value, (e, t) => (x(), o("li", {
 				key: e.value,
-				class: g(["sleep-timer__option", { "is-selected": f.value === e.value }]),
+				class: g(["sleep-timer__option", { "is-selected": p.value === e.value }]),
 				role: "option",
-				"aria-selected": f.value === e.value,
-				onClick: (t) => k(e.value)
-			}, E(e.label), 11, up)), 64))], 8, lp)) : a("", !0)]),
+				"aria-selected": p.value === e.value,
+				tabindex: N.value === t ? 0 : -1,
+				onFocus: (e) => ee(t),
+				onClick: (t) => U(e.value)
+			}, E(e.label), 43, up))), 128))], 40, lp)) : a("", !0)]),
 			_: 1
 		})], 2));
 	}
-}), [["__scopeId", "data-v-a0b86647"]]), fp = [
+}), [["__scopeId", "data-v-8fd9146b"]]), fp = [
 	1116352408,
 	1899447441,
 	3049323471,

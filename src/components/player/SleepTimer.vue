@@ -10,8 +10,20 @@
  * Counts down from a user-selected duration and calls `onExpire()` when it
  * elapses, which the <Player> wires to pause playback. The timer is shown in
  * the control bar as a dropdown that also displays remaining time when active.
+ *
+ * S-ui-player-21 (phlix-ui-player-026): the `role="listbox"` is now fully
+ * keyboard-operable — opening (trigger ArrowDown/ArrowUp, click, or the Player's
+ * exposed `toggleOpen()`) moves a roving focus onto the options (single tab
+ * stop, WAI-ARIA listbox pattern); ArrowUp/Down walk with wrap-around, Home/End
+ * jump to the edges, Enter/Space select and close, Escape closes and restores
+ * focus to the trigger, Tab closes without stealing focus, and a pointer-down
+ * outside the root dismisses the menu (the same click-outside idiom
+ * UserMenu/CaptionsMenu use). Option labels resolve through the catalog
+ * (`player.off` + `media.runtimeMinutes` — reused, not shadow-minted) and the
+ * active trigger name uses the `player.sleepTimerRemaining` template instead of
+ * an English concatenation.
  */
-import { ref, computed, onBeforeUnmount } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import Icon from '../Icon.vue';
 import { useMessages } from '../../composables/useMessages';
 
@@ -22,20 +34,16 @@ const props = defineProps<{
 
 const { t } = useMessages();
 
-/** Available timer options in seconds. 0 = off. */
-const TIMER_OPTIONS = [
-  { label: 'Off', value: 0 },
-  { label: '5m', value: 5 * 60 },
-  { label: '15m', value: 15 * 60 },
-  { label: '30m', value: 30 * 60 },
-  { label: '45m', value: 45 * 60 },
-  { label: '60m', value: 60 * 60 },
-  { label: '90m', value: 90 * 60 },
-] as const;
+/** Minutes offered besides Off; labels interpolate `media.runtimeMinutes`. */
+const SLEEP_MINUTES = [5, 15, 30, 45, 60, 90] as const;
 
-type TimerValue = (typeof TIMER_OPTIONS)[number]['value'];
+/** Available timer options in seconds. 0 = off. Labels are localized. */
+const options = computed<{ value: number; label: string }[]>(() => [
+  { value: 0, label: t('player.off') },
+  ...SLEEP_MINUTES.map((m) => ({ value: m * 60, label: t('media.runtimeMinutes', { minutes: m }) })),
+]);
 
-const selectedValue = ref<TimerValue>(0);
+const selectedValue = ref(0);
 const remaining = ref(0);
 const isActive = computed(() => remaining.value > 0);
 
@@ -62,7 +70,7 @@ function startTimer(seconds: number): void {
   }, 1000);
 }
 
-function onSelect(value: TimerValue): void {
+function onSelect(value: number): void {
   selectedValue.value = value;
   if (value === 0) {
     clearTimer();
@@ -79,8 +87,18 @@ function formatRemaining(secs: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-/** Toggle the sleep timer open/closed — if already open and active, cancel it. */
+/**
+ * Toggle the sleep timer open/closed — if already open and active, cancel it.
+ * This is the exposed Player-shortcut contract (`toggleOpen`); it must not
+ * change without updating `Player.vue`'s sleep-timer key handler.
+ */
 const open = ref(false);
+const rootEl = ref<HTMLElement | null>(null);
+const triggerEl = ref<HTMLButtonElement | null>(null);
+const menuEl = ref<HTMLElement | null>(null);
+/** Index holding the listbox's single tab stop (roving focus). */
+const activeIndex = ref(0);
+
 function toggleOpen(): void {
   if (isActive.value) {
     onSelect(0); // cancel active timer
@@ -90,28 +108,125 @@ function toggleOpen(): void {
   }
 }
 
-function onSelectAndClose(value: TimerValue): void {
+/** Current option elements in DOM order (rendered only while open). */
+function optionEls(): HTMLElement[] {
+  return Array.from(menuEl.value?.querySelectorAll<HTMLElement>('[role="option"]') ?? []);
+}
+
+function focusItemAt(items: HTMLElement[], index: number): void {
+  if (items.length === 0) return;
+  const wrapped = ((index % items.length) + items.length) % items.length;
+  items[wrapped]?.focus();
+}
+
+function openMenu(): void {
+  // Land the roving stop on the selected option so opening is orientation-first.
+  const selected = options.value.findIndex((o) => o.value === selectedValue.value);
+  activeIndex.value = selected >= 0 ? selected : 0;
+  open.value = true;
+}
+
+function closeMenu(restoreFocusToTrigger: boolean): void {
+  open.value = false;
+  if (restoreFocusToTrigger) {
+    void nextTick(() => triggerEl.value?.focus());
+  }
+}
+
+function pick(value: number, restoreFocusToTrigger = true): void {
   onSelect(value);
   open.value = false;
+  if (restoreFocusToTrigger) {
+    void nextTick(() => triggerEl.value?.focus());
+  }
 }
+
+/** Keyboard on the listbox container (events bubble from the focused option). */
+function onMenuKeydown(e: KeyboardEvent): void {
+  const items = optionEls();
+  if (items.length === 0) return;
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      focusItemAt(items, activeIndex.value + 1);
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      focusItemAt(items, activeIndex.value - 1);
+      break;
+    case 'Home':
+      e.preventDefault();
+      focusItemAt(items, 0);
+      break;
+    case 'End':
+      e.preventDefault();
+      focusItemAt(items, items.length - 1);
+      break;
+    case 'Enter':
+    case ' ':
+      e.preventDefault();
+      pick(options.value[activeIndex.value]?.value ?? 0);
+      break;
+    case 'Escape':
+      // Own the Escape: close + restore focus, and do not let the Player's
+      // global keydown handler react to the same press.
+      e.preventDefault();
+      e.stopPropagation();
+      closeMenu(true);
+      break;
+    case 'Tab':
+      // Let Tab leave the menu naturally — close without moving focus.
+      closeMenu(false);
+      break;
+  }
+}
+
+/** Roving focus: the focused option becomes the single tab stop. */
+function onFocusOption(index: number): void {
+  activeIndex.value = index;
+}
+
+/** Click-outside (capture, like UserMenu/CaptionsMenu): dismiss silently. */
+function onDocPointer(e: Event): void {
+  if (rootEl.value && e.target instanceof Node && !rootEl.value.contains(e.target)) {
+    closeMenu(false);
+  }
+}
+
+watch(open, (isOpen) => {
+  if (typeof document === 'undefined') return;
+  if (isOpen) {
+    document.addEventListener('pointerdown', onDocPointer, true);
+    void nextTick(() => focusItemAt(optionEls(), activeIndex.value));
+  } else {
+    document.removeEventListener('pointerdown', onDocPointer, true);
+  }
+});
 
 onBeforeUnmount(() => {
   clearTimer();
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('pointerdown', onDocPointer, true);
+  }
 });
 
 defineExpose({ toggleOpen });
 </script>
 
 <template>
-  <div class="sleep-timer" :class="{ 'is-active': isActive }">
+  <div ref="rootEl" class="sleep-timer" :class="{ 'is-active': isActive }">
     <button
+      ref="triggerEl"
       type="button"
       class="sleep-timer__trigger"
       :class="{ 'is-active': isActive }"
-      :aria-label="isActive ? `Sleep timer: ${formatRemaining(remaining)} remaining` : t('player.sleepTimer')"
+      :aria-label="isActive ? t('player.sleepTimerRemaining', { time: formatRemaining(remaining) }) : t('player.sleepTimer')"
       :aria-expanded="open"
       aria-haspopup="listbox"
+      :aria-controls="open ? 'sleep-timer-menu' : undefined"
       @click="toggleOpen"
+      @keydown.down.prevent="openMenu"
+      @keydown.up.prevent="openMenu"
     >
       <Icon name="moon" />
       <span v-if="isActive" class="sleep-timer__remaining numeric">{{ formatRemaining(remaining) }}</span>
@@ -120,18 +235,23 @@ defineExpose({ toggleOpen });
     <Transition name="dropdown">
       <ul
         v-if="open"
+        ref="menuEl"
+        id="sleep-timer-menu"
         class="sleep-timer__menu"
         role="listbox"
         :aria-label="t('player.sleepTimer')"
+        @keydown="onMenuKeydown"
       >
         <li
-          v-for="opt in TIMER_OPTIONS"
+          v-for="(opt, i) in options"
           :key="opt.value"
           class="sleep-timer__option"
           :class="{ 'is-selected': selectedValue === opt.value }"
           role="option"
           :aria-selected="selectedValue === opt.value"
-          @click="onSelectAndClose(opt.value)"
+          :tabindex="activeIndex === i ? 0 : -1"
+          @focus="onFocusOption(i)"
+          @click="pick(opt.value)"
         >
           {{ opt.label }}
         </li>
@@ -197,12 +317,19 @@ defineExpose({ toggleOpen });
   color: var(--text-muted);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  outline: none;
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
 .sleep-timer__option:hover {
   background: var(--surface-2);
   color: var(--text);
+}
+
+.sleep-timer__option:focus-visible {
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: 0 0 0 2px var(--accent-ring);
 }
 
 .sleep-timer__option.is-selected {

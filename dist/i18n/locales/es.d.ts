@@ -213,6 +213,7 @@ export declare const ES_MESSAGES: {
         seekForward: string;
         keyboardShortcuts: string;
         sleepTimer: string;
+        sleepTimerRemaining: string;
         pip: string;
         exitPip: string;
         theater: string;

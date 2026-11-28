@@ -215,6 +215,7 @@ export const IT_MESSAGES = {
     seekForward: 'Avanti di 10 secondi',
     keyboardShortcuts: 'Scorciatoie da tastiera',
     sleepTimer: 'Timer di spegnimento',
+    sleepTimerRemaining: 'Timer di spegnimento: {time} rimanenti',
     pip: 'Picture in picture',
     exitPip: 'Esci da picture in picture',
     theater: 'Modalità cinema',

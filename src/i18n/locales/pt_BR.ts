@@ -215,6 +215,7 @@ export const PT_BR_MESSAGES = {
     seekForward: 'Avançar 10 segundos',
     keyboardShortcuts: 'Atalhos de teclado',
     sleepTimer: 'Timer de sono',
+    sleepTimerRemaining: 'Timer de sono: {time} restante',
     pip: 'Imagem na imagem',
     exitPip: 'Sair de imagem na imagem',
     theater: 'Modo cinema',

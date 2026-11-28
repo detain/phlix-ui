@@ -215,6 +215,7 @@ export const DE_MESSAGES = {
     seekForward: '10 Sekunden vor',
     keyboardShortcuts: 'Tastaturkürzel',
     sleepTimer: 'Schlaf-Timer',
+    sleepTimerRemaining: 'Schlaf-Timer: noch {time} verbleibend',
     pip: 'Bild im Bild',
     exitPip: 'Bild-im-Bild beenden',
     theater: 'Kinomodus',

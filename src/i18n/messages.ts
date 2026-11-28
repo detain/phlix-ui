@@ -267,6 +267,7 @@ export const DEFAULT_MESSAGES = {
     seekForward: 'Forward 10 seconds',
     keyboardShortcuts: 'Keyboard shortcuts',
     sleepTimer: 'Sleep timer',
+    sleepTimerRemaining: 'Sleep timer: {time} remaining',
     pip: 'Picture-in-picture',
     exitPip: 'Exit picture-in-picture',
     theater: 'Theater mode',

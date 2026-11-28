@@ -217,6 +217,7 @@ export const ES_MESSAGES = {
     seekForward: 'Avanzar 10 segundos',
     keyboardShortcuts: 'Atajos de teclado',
     sleepTimer: 'Temporizador de apagado',
+    sleepTimerRemaining: 'Temporizador de apagado: {time} restante',
     pip: 'Imagen en imagen',
     exitPip: 'Salir de imagen en imagen',
     theater: 'Modo cine',

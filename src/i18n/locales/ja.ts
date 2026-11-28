@@ -216,6 +216,7 @@ export const JA_MESSAGES = {
     seekForward: '10秒すすむ',
     keyboardShortcuts: 'キーボードショートカット',
     sleepTimer: 'スリープタイマー',
+    sleepTimerRemaining: 'スリープタイマー：残り{time}',
     pip: 'ピクチャー・イン・ピクチャー',
     exitPip: 'ピクチャー・イン・ピクチャーを終了',
     theater: 'シアターモード',
