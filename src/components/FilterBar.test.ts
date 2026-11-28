@@ -557,3 +557,99 @@ describe('FilterBar — search cluster token contract (S-ui-design-26)', () => {
     expect(src.slice(start, end)).not.toMatch(/var\(--[a-z0-9-]+,\s/);
   });
 });
+
+/**
+ * S-ui-design-22 (phlix-ui-design-026 part 1) — every FilterBar label, placeholder,
+ * aria name, pill template and the result count flow through the central message
+ * catalog. Overrides are DEEP-PARTIAL: keys left out here must still render their
+ * English catalog values (the fallback pins below prove the merge, the sentinels
+ * prove the routing).
+ */
+describe('FilterBar — copy is catalog-backed (S-ui-design-22)', () => {
+  const messages = {
+    filter: {
+      searchHint: 'HINT-SENTINEL',
+      searchAria: 'ARIA-SENTINEL',
+      clearSearchAria: 'CLEAR-ARIA-SENTINEL',
+      filters: 'TOGGLE-SENTINEL',
+      viewModeGroup: 'GROUP-SENTINEL',
+      yearFrom: 'YFROM-SENTINEL',
+      minRating: 'MINARIA-SENTINEL',
+      saveCurrent: 'SAVECUR-SENTINEL',
+      noPresets: 'NOPRE-SENTINEL',
+      clearAll: 'CLEARALL-SENTINEL',
+      matched: 'MATCH-SENTINEL',
+      deletePreset: 'DEL {name}!',
+      removePill: 'REM {label}!',
+    },
+    library: { titlesCount: '{total} COUNT-SENTINEL' },
+  };
+  function mountLocalized() {
+    return mount(FilterBar, { global: { provide: { phlixConfig: { messages } } } });
+  }
+
+  it('routes the primary row copy through the catalog with English fallbacks', async () => {
+    const w = mountLocalized();
+    const input = w.find('.filterbar__search-input');
+    expect(input.attributes('placeholder')).toBe('HINT-SENTINEL');
+    expect(input.attributes('aria-label')).toBe('ARIA-SENTINEL');
+    expect(w.find('.filterbar__toggle span').text()).toBe('TOGGLE-SENTINEL');
+    expect(w.find('.filterbar__views').attributes('aria-label')).toBe('GROUP-SENTINEL');
+    // Non-overridden siblings keep their catalog English values (deep-partial merge).
+    const viewBtns = w.find('.filterbar__views').findAll('button');
+    expect(viewBtns[0].attributes('aria-label')).toBe('Grid view');
+    await w.find('.filterbar__toggle').trigger('click');
+    await nextTick();
+    expect(w.find('.filterbar__search-clear').exists()).toBe(false);
+  });
+
+  it('routes the advanced panel labels and the count line through the catalog', async () => {
+    const w = mountLocalized();
+    const store = useMediaStore();
+    store.total = 1284;
+    await w.find('.filterbar__toggle').trigger('click');
+    await nextTick();
+    expect(w.find('.filterbar__count').text()).toBe('1,284 COUNT-SENTINEL');
+    const yearFromInput = w
+      .findAllComponents(Combobox)
+      .find((c) => (c.find('input').attributes('aria-label') ?? '') === 'YFROM-SENTINEL');
+    expect(yearFromInput).toBeTruthy();
+    expect(w.find('.filterbar__rating-number').attributes('aria-label')).toBe(
+      'MINARIA-SENTINEL',
+    );
+    expect(w.find('.filterbar__preset-add').text()).toContain('SAVECUR-SENTINEL');
+    expect(w.find('.filterbar__presets-empty').text()).toBe('NOPRE-SENTINEL');
+    // field-label fallback proves the merge on a site without an override
+    expect(w.find('.filterbar__field-label').text()).toBe('Genres');
+  });
+
+  it('routes pill templates, remove labels and clear-all through the catalog', async () => {
+    const w = mountLocalized();
+    const store = useMediaStore();
+    const prefs = usePreferencesStore();
+    prefs.saveFilterPreset('My Set', { genres: ['Action'] });
+    store.setYearRange(1990, undefined);
+    store.setMatchStatus('matched');
+    store.setSearch('dune');
+    await w.find('.filterbar__toggle').trigger('click');
+    await nextTick();
+    const pills = w.find('.filterbar__pills');
+    const labels = pills.findAll('.phlix-chip').map((c) => c.text());
+    expect(labels).toContain('“dune”'); // data decoration, catalog-free by design
+    expect(labels).toContain('From 1990'); // pillFrom English fallback (not overridden)
+    expect(labels).toContain('MATCH-SENTINEL');
+    // remove-label interpolates {label}
+    const yearPill = pills.findAll('.phlix-chip').find((c) => c.text().includes('From 1990'));
+    expect(yearPill!.find('.phlix-chip__remove').attributes('aria-label')).toBe(
+      'REM From 1990!',
+    );
+    const presetChip = w
+      .find('.filterbar__presets')
+      .findAll('.phlix-chip')
+      .find((c) => c.text().includes('My Set'));
+    expect(presetChip!.find('.phlix-chip__remove').attributes('aria-label')).toBe('DEL My Set!');
+    expect(w.find('.filterbar__clear').text()).toBe('CLEARALL-SENTINEL');
+    await w.find('.filterbar__clear').trigger('click');
+    expect(store.search).toBe('');
+  });
+});

@@ -28,7 +28,7 @@ import Combobox from './ui/Combobox.vue';
 import Select from './ui/Select.vue';
 import Badge from './ui/Badge.vue';
 import IconButton from './ui/IconButton.vue';
-import { pluralize } from '../utils/plural';
+import { useMessages } from '../composables/useMessages';
 import { debounce, type Debounced } from '../utils/debounce';
 
 const props = withDefaults(
@@ -50,16 +50,21 @@ const emit = defineEmits<{
 
 const store = useMediaStore();
 const prefs = usePreferencesStore();
+// Local alias `t` is used for iteration/handler params in this file; it must
+// yield to the translator (d26 sweep), so those were renamed to `type`.
+const { t } = useMessages();
 
 const sortOptions = computed<{ value: SortField; label: string }[]>(() => [
   // Artist first for music libraries so it reads as the primary/default sort.
-  ...(props.showArtistSort ? [{ value: 'artist' as SortField, label: 'Artist' }] : []),
-  { value: 'name', label: 'Name' },
-  { value: 'year', label: 'Year' },
-  { value: 'rating', label: 'Rating' },
-  { value: 'date_added', label: 'Date added' },
-  { value: 'runtime', label: 'Runtime' },
-  { value: 'genre', label: 'Genre' },
+  ...(props.showArtistSort
+    ? [{ value: 'artist' as SortField, label: t('filter.sortArtist') }]
+    : []),
+  { value: 'name', label: t('filter.sortName') },
+  { value: 'year', label: t('filter.year') },
+  { value: 'rating', label: t('filter.rating') },
+  { value: 'date_added', label: t('filter.sortDateAdded') },
+  { value: 'runtime', label: t('filter.sortRuntime') },
+  { value: 'genre', label: t('filter.sortGenre') },
 ]);
 
 // ---- search (debounced) -------------------------------------------------
@@ -120,16 +125,16 @@ function toggleRating(r: string) {
   store.setRatings(cur.includes(r) ? cur.filter((x) => x !== r) : [...cur, r]);
   emit('change');
 }
-function toggleType(t: MediaType) {
+function toggleType(type: MediaType) {
   const cur = store.selectedTypes;
-  store.setTypes(cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]);
+  store.setTypes(cur.includes(type) ? cur.filter((x) => x !== type) : [...cur, type]);
   emit('change');
 }
 /** Match-status filter is single-select: clicking the active option clears it. */
-const MATCH_OPTIONS = [
-  { value: 'matched', label: 'Matched' },
-  { value: 'unmatched', label: 'Unmatched' },
-] as const;
+const matchOptions = computed(() => [
+  { value: 'matched' as const, label: t('filter.matched') },
+  { value: 'unmatched' as const, label: t('filter.unmatched') },
+]);
 function toggleMatch(v: 'matched' | 'unmatched') {
   store.setMatchStatus(store.matchStatus === v ? '' : v);
   emit('change');
@@ -190,12 +195,12 @@ function toggleOrder() {
  *  `#card` slot from `LibraryPage`. The mode is a persisted PREFERENCE (not a
  *  filter), so switching it never emits `change` — it must not refetch the
  *  library. */
-const VIEW_MODES: { value: ViewMode; label: string; icon: IconName }[] = [
-  { value: 'grid', label: 'Grid view', icon: 'grid' },
-  { value: 'list', label: 'List view', icon: 'list' },
-  { value: 'backdrop', label: 'Backdrop view', icon: 'backdrop' },
-  { value: 'table', label: 'Table view', icon: 'table' },
-];
+const viewModes = computed<{ value: ViewMode; label: string; icon: IconName }[]>(() => [
+  { value: 'grid', label: t('filter.viewGrid'), icon: 'grid' },
+  { value: 'list', label: t('filter.viewList'), icon: 'list' },
+  { value: 'backdrop', label: t('filter.viewBackdrop'), icon: 'backdrop' },
+  { value: 'table', label: t('filter.viewTable'), icon: 'table' },
+]);
 function setViewMode(v: ViewMode) {
   prefs.viewMode = v;
 }
@@ -228,8 +233,8 @@ const activePills = computed<ActivePill[]>(() => {
   store.selectedRatings.forEach((r) =>
     pills.push({ key: `r:${r}`, label: r, remove: () => toggleRating(r) }),
   );
-  store.selectedTypes.forEach((t) =>
-    pills.push({ key: `t:${t}`, label: t, remove: () => toggleType(t) }),
+  store.selectedTypes.forEach((type) =>
+    pills.push({ key: `t:${type}`, label: type, remove: () => toggleType(type) }),
   );
   store.selectedActors.forEach((a) =>
     pills.push({ key: `a:${a}`, label: a, remove: () => removeActor(a) }),
@@ -237,31 +242,35 @@ const activePills = computed<ActivePill[]>(() => {
   if (store.matchStatus) {
     pills.push({
       key: 'match',
-      label: store.matchStatus === 'matched' ? 'Matched' : 'Unmatched',
+      label: store.matchStatus === 'matched' ? t('filter.matched') : t('filter.unmatched'),
       remove: () => toggleMatch(store.matchStatus as 'matched' | 'unmatched'),
     });
   }
   if (store.yearFrom !== undefined) {
     pills.push({
       key: 'yf',
-      label: `From ${store.yearFrom}`,
+      label: t('filter.pillFrom', { year: store.yearFrom }),
       remove: () => setYearFrom(null),
     });
   }
   if (store.yearTo !== undefined) {
-    pills.push({ key: 'yt', label: `To ${store.yearTo}`, remove: () => setYearTo(null) });
+    pills.push({
+      key: 'yt',
+      label: t('filter.pillTo', { year: store.yearTo }),
+      remove: () => setYearTo(null),
+    });
   }
   if (store.minRating !== undefined) {
     pills.push({
       key: 'minR',
-      label: `Min ${store.minRating.toFixed(1)}★`,
+      label: t('filter.pillMinRating', { rating: store.minRating.toFixed(1) }),
       remove: () => setMinRating(null),
     });
   }
   if (store.maxRating !== undefined) {
     pills.push({
       key: 'maxR',
-      label: `Max ${store.maxRating.toFixed(1)}★`,
+      label: t('filter.pillMaxRating', { rating: store.maxRating.toFixed(1) }),
       remove: () => setMaxRating(null),
     });
   }
@@ -352,15 +361,15 @@ onBeforeUnmount(() => {
           v-model="searchText"
           type="search"
           class="filterbar__search-input"
-          placeholder="Search titles, people, genres…"
-          aria-label="Search media"
+          :placeholder="t('filter.searchHint')"
+          :aria-label="t('filter.searchAria')"
           @input="onSearchInput"
         />
         <button
           v-if="searchText"
           type="button"
           class="filterbar__search-clear"
-          aria-label="Clear search"
+          :aria-label="t('filter.clearSearchAria')"
           @click="clearSearch"
         >
           <Icon name="x" />
@@ -371,13 +380,13 @@ onBeforeUnmount(() => {
         <Select
           :model-value="store.sort"
           :options="sortOptions"
-          label="Sort by"
+          :label="t('filter.sortBy')"
           @update:model-value="onSort"
         />
         <button
           type="button"
           class="filterbar__order"
-          :aria-label="`Sort ${store.order === 'asc' ? 'ascending' : 'descending'}`"
+          :aria-label="store.order === 'asc' ? t('filter.sortAscending') : t('filter.sortDescending')"
           @click="toggleOrder"
         >
           <Icon :name="store.order === 'asc' ? 'arrow-up' : 'arrow-down'" />
@@ -391,7 +400,7 @@ onBeforeUnmount(() => {
         @click="expanded = !expanded"
       >
         <Icon name="filter" />
-        <span>Filters</span>
+        <span>{{ t('filter.filters') }}</span>
         <Badge v-if="advancedCount" class="filterbar__toggle-badge">{{ advancedCount }}</Badge>
         <Icon :name="expanded ? 'chevron-up' : 'chevron-down'" class="filterbar__toggle-caret" />
       </button>
@@ -400,9 +409,9 @@ onBeforeUnmount(() => {
            <button> from IconButton, so it carries an accessible name (aria-label
            + title), aria-pressed for the selected mode, and native keyboard
            operability; the wrapper groups them under one label. -->
-      <div class="filterbar__views" role="group" aria-label="View mode">
+      <div class="filterbar__views" role="group" :aria-label="t('filter.viewModeGroup')">
         <IconButton
-          v-for="m in VIEW_MODES"
+          v-for="m in viewModes"
           :key="m.value"
           :name="m.icon"
           :label="m.label"
@@ -417,20 +426,20 @@ onBeforeUnmount(() => {
     <Transition name="filterbar-panel">
       <div v-show="expanded" class="filterbar__advanced">
         <div class="filterbar__field">
-          <span class="filterbar__field-label">Genres</span>
+          <span class="filterbar__field-label">{{ t('filter.genres') }}</span>
           <Combobox
             :key="genreComboKey"
             :model-value="genreToAdd"
             :options="genreOptions"
-            label="Genres"
-            placeholder="Add a genre…"
+            :label="t('filter.genres')"
+            :placeholder="t('filter.addGenre')"
             @update:model-value="addGenre"
           />
         </div>
 
         <div class="filterbar__field">
-          <span class="filterbar__field-label">Rating</span>
-          <div class="filterbar__chips" role="group" aria-label="Rating">
+          <span class="filterbar__field-label">{{ t('filter.rating') }}</span>
+          <div class="filterbar__chips" role="group" :aria-label="t('filter.rating')">
             <Chip
               v-for="r in store.availableRatings"
               :key="r"
@@ -443,24 +452,24 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="filterbar__field">
-          <span class="filterbar__field-label">Type</span>
-          <div class="filterbar__chips" role="group" aria-label="Type">
+          <span class="filterbar__field-label">{{ t('filter.type') }}</span>
+          <div class="filterbar__chips" role="group" :aria-label="t('filter.type')">
             <Chip
-              v-for="t in store.availableTypes"
-              :key="t"
-              :selected="store.selectedTypes.includes(t)"
-              @update:selected="toggleType(t)"
+              v-for="type in store.availableTypes"
+              :key="type"
+              :selected="store.selectedTypes.includes(type)"
+              @update:selected="toggleType(type)"
             >
-              {{ t }}
+              {{ type }}
             </Chip>
           </div>
         </div>
 
         <div class="filterbar__field">
-          <span class="filterbar__field-label">Metadata</span>
-          <div class="filterbar__chips" role="group" aria-label="Metadata match status">
+          <span class="filterbar__field-label">{{ t('filter.metadata') }}</span>
+          <div class="filterbar__chips" role="group" :aria-label="t('filter.matchStatusGroup')">
             <Chip
-              v-for="m in MATCH_OPTIONS"
+              v-for="m in matchOptions"
               :key="m.value"
               :selected="store.matchStatus === m.value"
               @update:selected="toggleMatch(m.value)"
@@ -471,31 +480,31 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="filterbar__field">
-          <span class="filterbar__field-label">Year</span>
+          <span class="filterbar__field-label">{{ t('filter.year') }}</span>
           <div class="filterbar__years">
             <Combobox
               :model-value="store.yearFrom ?? null"
               :options="yearOptions"
-              placeholder="From"
-              label="Year from"
+              :placeholder="t('filter.yearFromHint')"
+              :label="t('filter.yearFrom')"
               @update:model-value="setYearFrom"
             />
             <span class="filterbar__years-dash" aria-hidden="true">–</span>
             <Combobox
               :model-value="store.yearTo ?? null"
               :options="yearOptions"
-              placeholder="To"
-              label="Year to"
+              :placeholder="t('filter.yearToHint')"
+              :label="t('filter.yearTo')"
               @update:model-value="setYearTo"
             />
           </div>
         </div>
 
         <div class="filterbar__field">
-          <span class="filterbar__field-label">Rating range</span>
+          <span class="filterbar__field-label">{{ t('filter.ratingRange') }}</span>
           <div class="filterbar__ratings">
             <label class="filterbar__rating-input">
-              <span>Min</span>
+              <span>{{ t('filter.min') }}</span>
               <input
                 type="number"
                 class="filterbar__rating-number"
@@ -504,13 +513,13 @@ onBeforeUnmount(() => {
                 min="0"
                 max="10"
                 step="0.5"
-                aria-label="Minimum rating"
+                :aria-label="t('filter.minRating')"
                 @change="setMinRating(($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value))"
               />
             </label>
             <span class="filterbar__years-dash" aria-hidden="true">–</span>
             <label class="filterbar__rating-input">
-              <span>Max</span>
+              <span>{{ t('filter.max') }}</span>
               <input
                 type="number"
                 class="filterbar__rating-number"
@@ -519,7 +528,7 @@ onBeforeUnmount(() => {
                 min="0"
                 max="10"
                 step="0.5"
-                aria-label="Maximum rating"
+                :aria-label="t('filter.maxRating')"
                 @change="setMaxRating(($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value))"
               />
             </label>
@@ -528,32 +537,34 @@ onBeforeUnmount(() => {
 
         <!-- presets -->
         <div class="filterbar__field filterbar__presets">
-          <span class="filterbar__field-label">Presets</span>
+          <span class="filterbar__field-label">{{ t('filter.presets') }}</span>
           <div class="filterbar__chips">
             <Chip
               v-for="p in presets"
               :key="p.id"
               removable
-              :remove-label="`Delete preset ${p.name}`"
+              :remove-label="t('filter.deletePreset', { name: p.name })"
               @click="applyPreset(p)"
               @remove="removePreset(p)"
             >
               {{ p.name }}
             </Chip>
-            <span v-if="!presets.length" class="filterbar__presets-empty">No saved presets</span>
+            <span v-if="!presets.length" class="filterbar__presets-empty">{{
+              t('filter.noPresets')
+            }}</span>
           </div>
           <div v-if="naming" class="filterbar__preset-save">
             <input
               v-model="presetName"
               type="text"
               class="filterbar__preset-input"
-              placeholder="Preset name"
-              aria-label="Preset name"
+              :placeholder="t('filter.presetName')"
+              :aria-label="t('filter.presetName')"
               @keydown.enter.prevent="confirmSavePreset"
               @keydown.esc="naming = false"
             />
             <button type="button" class="filterbar__preset-confirm" @click="confirmSavePreset">
-              <Icon name="check" /> Save
+              <Icon name="check" /> {{ t('filter.save') }}
             </button>
           </div>
           <button
@@ -563,7 +574,7 @@ onBeforeUnmount(() => {
             :disabled="!hasActiveFilters"
             @click="startSavePreset"
           >
-            <Icon name="plus" /> Save current
+            <Icon name="plus" /> {{ t('filter.saveCurrent') }}
           </button>
         </div>
       </div>
@@ -571,23 +582,24 @@ onBeforeUnmount(() => {
 
     <!-- active filters + count (count region persists so aria-live updates in place) -->
     <div class="filterbar__active">
-      <span class="filterbar__count" aria-live="polite">
-        <b>{{ store.total.toLocaleString() }}</b>
-        {{ pluralize(store.total, 'title', 'titles') }}
-      </span>
+      <span class="filterbar__count" aria-live="polite">{{
+        t('library.titlesCount', { count: store.total, total: store.total.toLocaleString() })
+      }}</span>
       <template v-if="hasActiveFilters">
         <div class="filterbar__pills">
           <Chip
             v-for="pill in activePills"
             :key="pill.key"
             removable
-            :remove-label="`Remove ${pill.label}`"
+            :remove-label="t('filter.removePill', { label: pill.label })"
             @remove="pill.remove"
           >
             {{ pill.label }}
           </Chip>
         </div>
-        <button type="button" class="filterbar__clear" @click="clearAll">Clear all</button>
+        <button type="button" class="filterbar__clear" @click="clearAll">
+          {{ t('filter.clearAll') }}
+        </button>
       </template>
     </div>
   </div>
@@ -875,10 +887,6 @@ onBeforeUnmount(() => {
 .filterbar__count {
   font-size: var(--text-sm, 0.875rem);
   color: var(--text-muted, #a1a1aa);
-}
-.filterbar__count b {
-  color: var(--text, #e4e4e7);
-  font-family: var(--font-mono, monospace);
 }
 .filterbar__pills {
   display: flex;
