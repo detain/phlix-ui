@@ -290,3 +290,39 @@ describe('HomeRow — lazy (IntersectionObserver present)', () => {
     expect(w.findComponent(MediaRow).props('count')).toBe(2);
   });
 });
+
+// S-ui-design-22 (design-026 sweep): the See-all affordance and the shelf
+// load-error toast are catalog-backed. Pre-conversion these were hardcoded
+// strings, so a messages override rendered as default English (red).
+describe('HomeRow — S-ui-design-22 catalog routing', () => {
+  const localized = {
+    global: {
+      provide: {
+        phlixConfig: {
+          messages: {
+            common: { seeAll: 'SENTINEL-SEE-ALL' },
+            browse: { rowLoadError: 'SENTINEL-ROW-ERR {name}' },
+          },
+        },
+      },
+    },
+  };
+
+  it('routes the See-all button through common.seeAll', async () => {
+    vi.stubGlobal('IntersectionObserver', undefined);
+    const w = mount(HomeRow, { props: { row, apiBase: '' }, global: localized.global });
+    await flushPromises();
+    expect(w.find('.home-row__seeall').text()).toBe('SENTINEL-SEE-ALL');
+  });
+
+  it('routes the shelf load-error toast through browse.rowLoadError', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const w = mount(HomeRow, { props: { row, apiBase: 'https://api.test' }, global: localized.global });
+    const toasts = useToastStore();
+    await flushPromises();
+    expect(w.find('[role="alert"]').exists()).toBe(true);
+    expect(toasts.toasts.some((t) => t.message === 'SENTINEL-ROW-ERR Recently Added')).toBe(true);
+    spy.mockRestore();
+  });
+});

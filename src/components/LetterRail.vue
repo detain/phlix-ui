@@ -15,12 +15,14 @@
 import { computed } from 'vue';
 import IndexRail from './IndexRail.vue';
 import type { LetterBucket } from '../api/letter-index';
+import { useMessages } from '../composables/useMessages';
 
 const props = defineProps<{ letters: LetterBucket[] }>();
 const emit = defineEmits<{ (e: 'jump', offset: number): void }>();
+const { t } = useMessages();
 
 function label(letter: string): string {
-  return letter === '#' ? 'non-alphabetic titles' : `titles starting with ${letter}`;
+  return letter === '#' ? t('rail.nonAlphaTitles') : t('rail.startingWith', { letter });
 }
 
 const buckets = computed(() =>
@@ -29,7 +31,7 @@ const buckets = computed(() =>
     label: l.letter,
     offset: l.offset,
     count: l.count,
-    ariaLabel: `Jump to ${label(l.letter)} (${l.count})`,
+    ariaLabel: t('rail.jumpToCount', { label: label(l.letter), count: l.count }),
   })),
 );
 </script>
@@ -38,7 +40,7 @@ const buckets = computed(() =>
   <IndexRail
     :buckets="buckets"
     css-prefix="letter-rail"
-    nav-label="Jump to a letter"
+    :nav-label="t('rail.letterNavLabel')"
     @jump="(offset) => emit('jump', offset)"
   />
 </template>

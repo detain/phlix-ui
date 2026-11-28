@@ -1061,3 +1061,48 @@ describe('MediaGrid — load-more re-arm on failure (phlix-ui-design-020)', () =
     ).toHaveLength(1);
   });
 });
+
+// S-ui-design-22 (design-026 sweep): every string below must come from the
+// catalog — a sentinel override changes what is rendered. Pre-conversion,
+// these literals were hardcoded English and the overrides were inert (red).
+describe('S-ui-design-22 catalog routing (MediaGrid)', () => {
+  const localized = {
+    global: {
+      provide: {
+        phlixConfig: {
+          messages: {
+            media: {
+              loadingMedia: 'SENTINEL-LOADING-MEDIA',
+              loadingMore: 'SENTINEL-LOADING-MORE',
+              backToTop: 'SENTINEL-BACK-TO-TOP',
+            },
+          },
+        },
+      },
+    },
+  };
+
+  it('routes the skeleton landmark through media.loadingMedia', () => {
+    const w = mount(MediaGrid, {
+      props: { items: [], loading: true, skeletonCount: 12 },
+      global: localized.global,
+    });
+    expect(w.find('.media-grid--skeleton').attributes('aria-label')).toBe('SENTINEL-LOADING-MEDIA');
+  });
+
+  it('routes the append spinner through media.loadingMore', async () => {
+    const w = mount(MediaGrid, {
+      props: { items: makeItems(24), hasMore: true, loadingMore: true },
+      global: localized.global,
+    });
+    await nextTick();
+    expect(w.find('.media-grid-more').text()).toBe('SENTINEL-LOADING-MORE');
+  });
+
+  it('routes the back-to-top control through media.backToTop', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync('src/components/MediaGrid.vue', 'utf8');
+    expect(src).toContain(`aria-label="t('media.backToTop')"`);
+    expect(src).not.toMatch(/aria-label="Back to top"/);
+  });
+});

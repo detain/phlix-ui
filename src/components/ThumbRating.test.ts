@@ -300,3 +300,23 @@ describe('ThumbRating — reduced motion', () => {
     expect(block).toContain('transition: none');
   });
 });
+
+// S-ui-design-22 (design-026 sweep): the like/dislike tooltip + button labels
+// are catalog-backed (itemActions.like / itemActions.dislike). Pre-conversion
+// they were hardcoded, so overrides were inert (red).
+describe('ThumbRating — S-ui-design-22 catalog routing', () => {
+  it('routes like/dislike labels through the itemActions catalog', () => {
+    const w = mount(ThumbRating, {
+      props: { level: 0 },
+      global: {
+        provide: {
+          phlixConfig: {
+            messages: { itemActions: { like: 'SENTINEL-LIKE', dislike: 'SENTINEL-DISLIKE' } },
+          },
+        },
+      },
+    });
+    expect(w.get('.thumb-rating__btn--up').attributes('aria-label')).toBe('SENTINEL-LIKE');
+    expect(w.get('.thumb-rating__btn--down').attributes('aria-label')).toBe('SENTINEL-DISLIKE');
+  });
+});

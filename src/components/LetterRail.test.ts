@@ -38,3 +38,35 @@ describe('LetterRail', () => {
     expect(w.findAll('.letter-rail__btn')[0].attributes('aria-label')).toContain('non-alphabetic');
   });
 });
+
+// S-ui-design-22 (design-026 sweep): rail copy is catalog-backed (rail.*).
+// Pre-conversion the label()/ariaLabel strings were hardcoded (red).
+describe('LetterRail — S-ui-design-22 catalog routing', () => {
+  it('routes nav label, per-letter aria labels through the rail catalog', () => {
+    const letters = [
+      { letter: '#', offset: 0, count: 3 },
+      { letter: 'A', offset: 3, count: 5 },
+    ];
+    const w = mount(LetterRail, {
+      props: { letters },
+      global: {
+        provide: {
+          phlixConfig: {
+            messages: {
+              rail: {
+                nonAlphaTitles: 'SENTINEL-NONALPHA',
+                startingWith: 'SENTINEL-START {letter}',
+                jumpToCount: 'SENTINEL-JUMP {label} ({count})',
+                letterNavLabel: 'SENTINEL-NAV',
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(w.find('nav').attributes('aria-label')).toBe('SENTINEL-NAV');
+    const btns = w.findAll('.letter-rail__btn');
+    expect(btns[0].attributes('aria-label')).toBe('SENTINEL-JUMP SENTINEL-NONALPHA (3)');
+    expect(btns[1].attributes('aria-label')).toBe('SENTINEL-JUMP SENTINEL-START A (5)');
+  });
+});

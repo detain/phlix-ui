@@ -106,7 +106,7 @@ async function load(): Promise<void> {
     // the raw failure detail stays console-only.
     console.error(`phlix: HomeRow “${props.row.title}” fetch failed`, e);
     error.value = t('errors.network');
-    toasts.error(`Couldn’t load “${props.row.title}”.`);
+    toasts.error(t('browse.rowLoadError', { name: props.row.title }));
   } finally {
     if (!disposed) loading.value = false;
   }
@@ -183,7 +183,9 @@ onBeforeUnmount(() => {
       @explore-data="emit('explore-data', $event)"
     >
       <template v-if="showSeeAll" #action>
-        <button type="button" class="home-row__seeall" @click="emit('see-all', row)">See all</button>
+        <button type="button" class="home-row__seeall" @click="emit('see-all', row)">
+          {{ t('common.seeAll') }}
+        </button>
       </template>
     </MediaRow>
   </div>

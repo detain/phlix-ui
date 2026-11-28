@@ -702,7 +702,7 @@ watch(
       :style="skeletonStyle"
       role="status"
       aria-busy="true"
-      aria-label="Loading media"
+      :aria-label="t('media.loadingMedia')"
     >
       <div
         v-for="n in skeletonCount"
@@ -780,7 +780,7 @@ watch(
         aria-live="polite"
       >
         <span class="media-grid-more__spinner" aria-hidden="true" />
-        Loading more…
+        {{ t('media.loadingMore') }}
       </div>
 
       <div v-if="hasMore && !loadingMore" ref="sentinelEl" class="media-grid-sentinel" aria-hidden="true" />
@@ -791,7 +791,7 @@ watch(
         v-if="showBackToTop"
         type="button"
         class="media-grid-top"
-        aria-label="Back to top"
+        :aria-label="t('media.backToTop')"
         @click="backToTop"
       >
         <Icon name="arrow-up" />

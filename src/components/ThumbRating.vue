@@ -41,6 +41,9 @@
 import { computed } from 'vue';
 import Icon from './Icon.vue';
 import Tooltip from './ui/Tooltip.vue';
+import { useMessages } from '../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -111,13 +114,13 @@ function onDown(): void {
 
 <template>
   <div class="thumb-rating" :data-level="current">
-    <Tooltip v-if="showUp" text="Like">
+    <Tooltip v-if="showUp" :text="t('itemActions.like')">
       <button
         type="button"
         class="thumb-rating__btn thumb-rating__btn--up"
         :class="{ 'is-filled': upFilled, 'is-blue': upBlue }"
         :disabled="disabled"
-        aria-label="Like"
+        :aria-label="t('itemActions.like')"
         :aria-pressed="upFilled ? 'true' : 'false'"
         @click="onUp"
       >
@@ -125,13 +128,13 @@ function onDown(): void {
       </button>
     </Tooltip>
 
-    <Tooltip v-if="showDown" text="Dislike">
+    <Tooltip v-if="showDown" :text="t('itemActions.dislike')">
       <button
         type="button"
         class="thumb-rating__btn thumb-rating__btn--down"
         :class="{ 'is-filled': downFilled, 'is-blue': downBlue }"
         :disabled="disabled"
-        aria-label="Dislike"
+        :aria-label="t('itemActions.dislike')"
         :aria-pressed="downFilled ? 'true' : 'false'"
         @click="onDown"
       >
