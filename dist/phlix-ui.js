@@ -1404,7 +1404,7 @@ function _o(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-DBKiyVau.js")
+			component: () => import("./SyncPlayPage-5C_Gu3t_.js")
 		},
 		{
 			path: `${t}/music`,

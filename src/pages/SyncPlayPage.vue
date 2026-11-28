@@ -316,13 +316,13 @@ function onJoined(room: SyncPlayRoom): void {
 }
 
 .syncplay-page__error-icon {
-  color: var(--color-destructive);
+  color: var(--error);
   width: 32px;
   height: 32px;
 }
 
 .syncplay-page__error-text {
-  color: var(--color-destructive);
+  color: var(--error);
   margin: 0;
 }
 

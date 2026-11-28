@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — SyncPlayPage phantom --color-destructive family killed 2026-11-28 (S-ui-player-22)
+
+### Fixed
+
+- SyncPlay: the error icon and error text on `SyncPlayPage` now use the defined `--error` status colour instead of the phantom `var(--color-destructive)` — the family has zero definitions anywhere (defs=0 measured in `src/` and `dist/style.css`), so both colours rendered as transparent inheritance while the sibling error panel already used `--error-bg` (the direct foreground mapping is faithful: no alpha/`-subtle` variant was ever in play at those sites). The M-UI-29 tripwire `src/test/phantom-tokens.test.ts` knew only the `-subtle` member, which is how the bare name slipped past; the guard now censuses the full `--color-destructive*` family with a suffix-aware arm so any future phantom member reddens, and pins `--error` among the real shipped bundle names (finding phlix-ui-player-028; S-ui-player-22).
+
+
 ## Unreleased — Unique local-file resume id 2026-11-28 (S-ui-player-18)
 
 ### Fixed

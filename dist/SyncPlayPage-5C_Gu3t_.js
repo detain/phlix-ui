@@ -157,7 +157,7 @@ var C = { class: "syncplay-page" }, w = { class: "syncplay-page__header" }, T = 
 			])
 		]));
 	}
-}), [["__scopeId", "data-v-82e5e5ed"]]);
+}), [["__scopeId", "data-v-7b611871"]]);
 export { K as default };
 
-//# sourceMappingURL=SyncPlayPage-DBKiyVau.js.map
+//# sourceMappingURL=SyncPlayPage-5C_Gu3t_.js.map
