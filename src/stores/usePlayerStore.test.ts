@@ -825,3 +825,97 @@ describe('usePlayerStore — S-ui-player-18 unique local-file ids', () => {
     expect(p.current!.id).toBe('host-given');
   });
 });
+
+// S-ui-player-24 (phlix-ui-player-031): resume persistence off the hot path.
+// The ~4Hz updateProgress tick must behave like useResumeReporter's
+// Math.floor(position) watch: a tick that leaves the whole-second resume state
+// untouched may not write localStorage nor churn the persist timer, and one
+// armed flush coalesces every change in its window into ONE setItem per key.
+describe('usePlayerStore — S-ui-player-24 hot-path resume persistence (player-031)', () => {
+  const T0 = 1_700_000_000_000;
+
+  function watchStorage() {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    const arm = vi.spyOn(globalThis, 'setTimeout');
+    return {
+      setItem,
+      arm,
+      writesFor: (key: string) => setItem.mock.calls.filter((call) => call[0] === key).length,
+      restore: () => {
+        setItem.mockRestore();
+        arm.mockRestore();
+      },
+    };
+  }
+
+  it('sub-second ticks inside the same whole second cause no writes and no timer churn', () => {
+    vi.useFakeTimers({ now: T0 });
+    const p = usePlayerStore();
+    p.setCurrent(media('p1'));
+    p.updateProgress(40, 120); // first in-band tick persists (immediate — lastPersist=0)
+    const w = watchStorage();
+    const timersBefore = vi.getTimerCount();
+    for (const pos of [40.25, 40.5, 40.75, 40.9]) p.updateProgress(pos, 120);
+    expect(w.setItem.mock.calls.length).toBe(0); // zero setItem — not "was called", ZERO
+    expect(w.arm.mock.calls.length).toBe(0); // zero timer re-arms (parent churns 4)
+    expect(vi.getTimerCount()).toBe(timersBefore); // no timer left armed or swapped
+    expect(p.resumePositionFor('p1')).toBe(40); // value law: the whole second stands
+    w.restore();
+  });
+
+  it('4Hz ticks over ~6s coalesce to one armed timer per window and one write per key per flush', () => {
+    vi.useFakeTimers({ now: T0 });
+    const p = usePlayerStore();
+    p.setCurrent(media('p2'));
+    const w = watchStorage();
+    for (let t = 0; t <= 5700; t += 300) {
+      if (t > 0) vi.advanceTimersByTime(300);
+      p.updateProgress(60 + t / 1000, 120);
+    }
+    // Six whole-second changes fire inside the window but only the window's
+    // FIRST change arms a timer (t=1200 → fires at 5000; after that flush the
+    // t=5100 change arms once). Parent churns one re-arm per tick (~18).
+    expect(w.arm.mock.calls.length).toBe(2);
+    // Each flush writes each map exactly once: t=0 immediate + t=5000 pending fire.
+    expect(w.writesFor('phlix.resume')).toBe(2);
+    expect(w.writesFor('phlix.resume.touched')).toBe(2);
+    // The pending flush serialises the live map AS OF ITS FIRE TIME (64, not the
+    // raw-every-tick 65 nor a per-change write) ...
+    expect((JSON.parse(localStorage.getItem('phlix.resume')!) as Record<string, number>).p2).toBe(64);
+    // ... and a forced flush (pause) lands the latest coalesced second.
+    p.pause();
+    expect(w.writesFor('phlix.resume')).toBe(3); // +1, again one setItem per key
+    expect(w.writesFor('phlix.resume.touched')).toBe(3);
+    expect((JSON.parse(localStorage.getItem('phlix.resume')!) as Record<string, number>).p2).toBe(65);
+    setActivePinia(createPinia());
+    expect(usePlayerStore().resumePositionFor('p2')).toBe(65); // reload round-trip
+    w.restore();
+  });
+
+  it('keeps the whole-second law per media id — a second item at the same second is recorded', () => {
+    vi.useFakeTimers({ now: T0 });
+    const p = usePlayerStore();
+    p.setCurrent(media('a3'));
+    p.updateProgress(60, 120);
+    p.updateProgress(60.5, 120); // same whole second for a3 → suppressed
+    p.setCurrent(media('b3'));
+    p.updateProgress(60.5, 120); // a DIFFERENT id at the same second must record
+    expect(p.resumePositionFor('a3')).toBe(60);
+    expect(p.resumePositionFor('b3')).toBe(60); // an id-blind guard would lose b3
+  });
+
+  it('the map read re-arms the tick path after clearResume and a same-id out-of-band seek still heals', () => {
+    vi.useFakeTimers({ now: T0 });
+    const p = usePlayerStore();
+    p.setCurrent(media('a4'));
+    p.updateProgress(60, 120);
+    p.clearResume('a4'); // an external mutation must not be invisible to the guard
+    expect(p.resumePositionFor('a4')).toBeNull();
+    p.updateProgress(60.4, 120); // same whole second, entry gone → the next tick re-records
+    expect(p.resumePositionFor('a4')).toBe(60);
+    p.setCurrent(media('d4'));
+    p.updateProgress(45, 120);
+    p.updateProgress(10, 120); // same id, changed second → proceeds into the delete path
+    expect(p.resumePositionFor('d4')).toBeNull();
+  });
+});

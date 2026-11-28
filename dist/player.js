@@ -225,7 +225,9 @@ var pe = z("phlix-player", () => {
 				} catch {}
 			}
 		}, n = Date.now() - D;
-		clearTimeout(E), e || n >= ie ? t() : E = setTimeout(t, ie - n);
+		e || n >= ie ? (clearTimeout(E), E = void 0, t()) : E === void 0 && (E = setTimeout(() => {
+			E = void 0, t();
+		}, ie - n));
 	}
 	function k(e, t) {
 		return t > 0 && e > 30 && e < t * .95;
@@ -252,7 +254,11 @@ var pe = z("phlix-player", () => {
 		H(), t.value = e, r.streamUrl !== void 0 && (n.value = r.streamUrl), r.resetPosition !== !1 && (o.value = 0, s.value = typeof e.duration == "number" && isFinite(e.duration) && e.duration > 0 ? e.duration : 0, c.value = 0), _e(e);
 	}
 	function F(e, n, r) {
-		o.value = e, n !== void 0 && (s.value > 0 ? isFinite(n) && n > s.value && (s.value = n) : s.value = n), r !== void 0 && (c.value = r), t.value && A(t.value.id, e, s.value);
+		o.value = e, n !== void 0 && (s.value > 0 ? isFinite(n) && n > s.value && (s.value = n) : s.value = n), r !== void 0 && (c.value = r);
+		let i = t.value;
+		if (!i) return;
+		let a = Math.floor(e), l = i.id in _.value;
+		(k(e, s.value) ? l && _.value[i.id] === a : !l) || A(i.id, e, s.value);
 	}
 	function I(e) {
 		y.value = {

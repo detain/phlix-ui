@@ -266,11 +266,18 @@ export const usePlayerStore = defineStore('phlix-player', () => {
       }
     };
     const since = Date.now() - lastPersist;
-    clearTimeout(persistTimer);
     if (force || since >= RESUME_PERSIST_THROTTLE) {
+      clearTimeout(persistTimer);
+      persistTimer = undefined;
       write();
-    } else {
-      persistTimer = setTimeout(write, RESUME_PERSIST_THROTTLE - since);
+    } else if (persistTimer === undefined) {
+      // S-ui-player-24 (player-031): ONE armed timer per interval. The pending
+      // flush serialises the LIVE maps when it fires, so the old per-call
+      // clearTimeout/re-arm was pure churn on the ~4Hz hot path.
+      persistTimer = setTimeout(() => {
+        persistTimer = undefined;
+        write();
+      }, RESUME_PERSIST_THROTTLE - since);
     }
   }
 
@@ -368,7 +375,23 @@ export const usePlayerStore = defineStore('phlix-player', () => {
       }
     }
     if (buf !== undefined) buffered.value = buf;
-    if (current.value) saveResume(current.value.id, pos, duration.value);
+    const media = current.value;
+    if (!media) return;
+    // S-ui-player-24 (player-031): quantized change detection mirroring
+    // useResumeReporter's Math.floor(position) watch. A transport tick that
+    // leaves the persisted resume state untouched — the same whole second is
+    // already recorded for THIS id, or we are outside the band with nothing
+    // recorded — may not mutate the two maps, stamp a touch, re-arm the
+    // persist timer, or write localStorage. The map itself is the guard's
+    // memory: clearResume, eviction, or a direct saveResume re-arm the next
+    // tick automatically (no stale internal cache to invalidate).
+    const seconds = Math.floor(pos);
+    const recorded = media.id in resumeMap.value;
+    const unchanged = inResumeBand(pos, duration.value)
+      ? recorded && resumeMap.value[media.id] === seconds
+      : !recorded;
+    if (unchanged) return;
+    saveResume(media.id, pos, duration.value);
   }
 
   // ---- command bus (external transport seam) ------------------------------

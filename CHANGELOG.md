@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Hot-path resume persistence: integer-seconds change detection and one coalesced write per interval 2026-11-28 (S-ui-player-24)
+
+### Fixed
+
+- `usePlayerStore.updateProgress` no longer drives the resume pipeline on every ~4Hz transport tick. The store now mirrors `useResumeReporter`'s `Math.floor(position)` watch: a tick whose whole second is already recorded for the current media id (or a tick outside the resume band with nothing recorded) returns before touching `resumeMap`, stamping `lastTouched`, arming the persist timer, or writing `localStorage`, and the pending persist flush coalesces to ONE armed timer per `RESUME_PERSIST_THROTTLE` window that serialises both maps exactly once each per key (the old path cleared and re-armed the timer on every call, so a second of playback churned four `setItem`s of two 200-entry maps). External mutations stay visible because the map itself is the guard's memory: `clearResume`, capacity eviction, or a direct `saveResume` re-arm the next tick automatically, an out-of-band same-id seek still deletes the stale entry, and a second media id at the same whole second records independently (finding phlix-ui-player-031).
+
 ## Unreleased — Trickplay wire law honoured: timeline leg, sprite parts, cache and signal honesty, keyboard preview 2026-11-28 (S-ui-player-01)
 
 ### Fixed
