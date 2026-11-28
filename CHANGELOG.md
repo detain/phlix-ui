@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Resume selection truth: special resumes honored, write-path docblock corrected 2026-11-28 (S-ui-player-30)
+
+### Fixed
+
+- Player resume: the whole-series Play lookup (`pickPlayableEpisode`) now treats an in-progress season-0 SPECIAL as a legitimate resume candidate — when no numbered-season episode carries a recorded resume position, the lookup falls through to the Specials bucket, so continuing a special picks up where it stopped instead of silently restarting at episode 1 (and a specials-only series with a resume resolves to it rather than "nothing playable"); numbered-season playback order keeps priority, specials stay excluded from the auto-advance chain and the never-watched fallback (only an actual recorded resume admits one), and `useResumeSync`'s stale claim that the web player's progress write path "is a separate follow-up" is retired to truth — it ships as `useResumeReporter` (finding phlix-ui-player-046).
+
+
 ## Unreleased — Media Session completeness: next/prev handlers, setRate clamp, metadata teardown 2026-11-28 (S-ui-player-26)
 
 ### Fixed

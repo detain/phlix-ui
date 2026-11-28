@@ -39,7 +39,13 @@ export type ResumeMap = Record<string, number>;
  *
  * Playback order reuses {@link orderEpisodesForPlayback}: numbered seasons in
  * (season, episode) order, Specials excluded — the same sequence prev/next +
- * auto-advance use, so "resume / next-up" never lands on a Special.
+ * auto-advance use, so "next-up" never lands on a Special. But an in-progress
+ * Special is still a legitimate RESUME target: when no numbered-season episode
+ * is resume-in-progress, the lookup falls through to the season-0 (Specials)
+ * bucket so continuing a special picks up where it stopped instead of falling
+ * back to episode 1 (finding phlix-ui-player-046). Specials stay out of the
+ * auto-advance chain and the never-watched fallback — only an actual recorded
+ * resume admits one.
  *
  * No I/O — unit-testable without mocking the client.
  */
@@ -48,11 +54,12 @@ export declare function pickPlayableEpisode(groups: SeasonGroup[], resumeMap: Re
  * PURE single-season picker: the episode to play when Play is pressed on ONE
  * season (a season card on the series page, or the season page's top Play).
  * Prefers the season's first resume-in-progress episode in playback order, else
- * its first episode. Unlike {@link pickPlayableEpisode}, a SPECIALS season falls
- * back to its first special (orderEpisodesForPlayback excludes season 0, but an
- * explicit Play on the Specials bucket must still play a special); `null` only
- * when the season has no episodes at all. Auto-advance from the picked episode
- * is the player's existing whole-series chain.
+ * its first episode. For a SPECIALS season that first fallback is the first
+ * special: {@link pickPlayableEpisode} also resumes an in-progress special, but
+ * its never-watched fallback skips season 0 — an explicit Play on the Specials
+ * bucket must still play a special; `null` only when the season has no episodes
+ * at all. Auto-advance from the picked episode is the player's existing
+ * whole-series chain.
  */
 export declare function pickSeasonPlayable(group: SeasonGroup, resumeMap: ResumeMap): MediaItem | null;
 /**

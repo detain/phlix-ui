@@ -105,8 +105,43 @@ describe('pickPlayableEpisode (pure)', () => {
       { key: 'specials', seasonNumber: null, label: 'Specials', isSpecials: true, episodes: [ep({ id: 'sp1', season_number: 0, episode_number: 1 })] },
       group(1, [ep({ id: 's1e1', season_number: 1, episode_number: 1 })]),
     ];
-    // Even with a resume on the special, only numbered seasons are playable order.
-    expect(pickPlayableEpisode(groups, { sp1: 500 })?.id).toBe('s1e1');
+    // Nothing in progress: the never-watched fallback is the first NUMBERED
+    // episode — a Special is never the auto-start (finding phlix-ui-player-046:
+    // the old blanket exclusion also swallowed genuine special resumes, which
+    // the dedicated tests below now cover as the two separate laws they are).
+    expect(pickPlayableEpisode(groups, {})?.id).toBe('s1e1');
+  });
+
+  it('resumes an in-progress season-0 SPECIAL instead of falling back to episode 1', () => {
+    const groups: SeasonGroup[] = [
+      {
+        key: 'specials', seasonNumber: null, label: 'Specials', isSpecials: true,
+        episodes: [
+          ep({ id: 'sp1', season_number: 0, episode_number: 1 }),
+          ep({ id: 'sp2', season_number: 0, episode_number: 2 }),
+        ],
+      },
+      group(1, [ep({ id: 's1e1', season_number: 1, episode_number: 1 })]),
+    ];
+    // Continuing a special must land on the special, not on S1E1.
+    expect(pickPlayableEpisode(groups, { sp2: 400 })?.id).toBe('sp2');
+  });
+
+  it('prefers an in-progress numbered episode over an in-progress special', () => {
+    const groups: SeasonGroup[] = [
+      { key: 'specials', seasonNumber: null, label: 'Specials', isSpecials: true, episodes: [ep({ id: 'sp1', season_number: 0, episode_number: 1 })] },
+      group(1, [ep({ id: 's1e1', season_number: 1, episode_number: 1 })]),
+    ];
+    // Numbered-season playback order keeps priority; specials enter the
+    // resume lookup only when no numbered episode is in progress.
+    expect(pickPlayableEpisode(groups, { sp1: 500, s1e1: 100 })?.id).toBe('s1e1');
+  });
+
+  it('a specials-only series with a resume on a special resolves to that special', () => {
+    const groups: SeasonGroup[] = [
+      { key: 'specials', seasonNumber: null, label: 'Specials', isSpecials: true, episodes: [ep({ id: 'sp1', season_number: 0, episode_number: 1 })] },
+    ];
+    expect(pickPlayableEpisode(groups, { sp1: 300 })?.id).toBe('sp1');
   });
 });
 
@@ -149,6 +184,22 @@ describe('pickSeasonPlayable (pure — whole-season Play)', () => {
       ],
     };
     expect(pickSeasonPlayable(specials, {})?.id).toBe('sp1');
+  });
+
+  it('prefers an in-progress special over the first special of a SPECIALS season', () => {
+    const specials: SeasonGroup = {
+      key: 'specials',
+      seasonNumber: null,
+      label: 'Specials',
+      isSpecials: true,
+      episodes: [
+        ep({ id: 'sp1', season_number: 0, episode_number: 1 }),
+        ep({ id: 'sp2', season_number: 0, episode_number: 2 }),
+      ],
+    };
+    // Mirrors the season picker's own stated law ("prefers the season's first
+    // resume-in-progress episode") on the specials bucket too.
+    expect(pickSeasonPlayable(specials, { sp2: 250 })?.id).toBe('sp2');
   });
 
   it('returns null for an empty season', () => {

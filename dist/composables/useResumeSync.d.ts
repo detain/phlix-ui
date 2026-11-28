@@ -32,7 +32,9 @@ export interface UseResumeSync {
  * both the player's resume prompt and the Browse "Continue Watching" rail, while the
  * full item payloads feed the rail directly (`continueWatchingItems`).
  *
- * Reporting the web player's OWN progress back to the server (the write path) needs
- * the web player to participate in the session model and is a separate follow-up.
+ * Reporting the web player's OWN progress back to the server (the write path)
+ * ships alongside this as `useResumeReporter` (src/composables/useResumeReporter.ts
+ * — stable device id, throttled progress reports, final position on unmount);
+ * together the two close the cross-device resume loop.
  */
 export declare function useResumeSync(): UseResumeSync;
