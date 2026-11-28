@@ -29,6 +29,7 @@ vi.mock('../stores/useAuthStore', () => ({
 
 import { useResumeReporter } from './useResumeReporter';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { ApiError } from '../api/errors';
 import type { MediaItem } from '../types/media-item';
 
 function media(id = 'm1'): MediaItem {
@@ -331,5 +332,116 @@ describe('audit #8 — watcher lifetime + session hygiene', () => {
     expect(
       post.mock.calls.filter((c) => String(c[0]).startsWith('/api/v1/sessions/sess-1/progress')),
     ).toHaveLength(1); // only the original pre-logout report ever touched sess-1
+  });
+});
+
+// phlix-ui-player-045 — a session the server has already forgotten must not stay
+// cached, and a FAILED report must not consume the throttle window. The pre-fix
+// shape stamped lastReport before the mint/POST even ran and swallowed every
+// error alike, so a 401/404 pinned the reporter to a dead session (and lost the
+// resume window after a mint failure) until logout.
+describe('phlix-ui-player-045 — dead-session invalidation + honest throttle window', () => {
+  const mintCalls = () => post.mock.calls.filter((c) => String(c[0]) === '/api/v1/sessions').length;
+  const progressCalls = () => post.mock.calls.filter((c) => String(c[0]).endsWith('/progress')).length;
+
+  it('drops the dead session on a 404 progress response and re-mints on the next report', async () => {
+    let minted = 0;
+    post.mockImplementation((url: string) => {
+      if (url === '/api/v1/sessions') {
+        minted += 1;
+        return Promise.resolve({ session_id: `sess-${minted}` });
+      }
+      if (url === '/api/v1/sessions/sess-1/progress') {
+        return Promise.reject(new ApiError('gone', 404));
+      }
+      return Promise.resolve({});
+    });
+    watching(120, 600);
+    const r = useResumeReporter();
+    await r.report(true);
+    await r.report(true);
+    // Pre-fix: sess-1 stayed cached forever — every later report POSTed to the
+    // dead session and no second mint ever happened.
+    expect(minted).toBe(2);
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions/sess-1/progress', expect.anything());
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions/sess-2/progress', expect.anything());
+  });
+
+  it('drops the dead session on a 401 progress response and re-mints on the next report', async () => {
+    let minted = 0;
+    post.mockImplementation((url: string) => {
+      if (url === '/api/v1/sessions') {
+        minted += 1;
+        return Promise.resolve({ session_id: `sess-${minted}` });
+      }
+      if (url === '/api/v1/sessions/sess-1/progress') {
+        return Promise.reject(new ApiError('expired', 401));
+      }
+      return Promise.resolve({});
+    });
+    watching(120, 600);
+    const r = useResumeReporter();
+    await r.report(true);
+    await r.report(true);
+    expect(minted).toBe(2);
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions/sess-2/progress', expect.anything());
+  });
+
+  it('keeps the session on a TRANSIENT (500) progress failure — only dead codes invalidate it', async () => {
+    let minted = 0;
+    post.mockImplementation((url: string) => {
+      if (url === '/api/v1/sessions') {
+        minted += 1;
+        return Promise.resolve({ session_id: `sess-${minted}` });
+      }
+      if (url === '/api/v1/sessions/sess-1/progress') {
+        return Promise.reject(new ApiError('boom', 500));
+      }
+      return Promise.resolve({});
+    });
+    watching(120, 600);
+    const r = useResumeReporter();
+    await r.report(true);
+    await r.report(true);
+    expect(minted).toBe(1); // a server hiccup must not churn sessions
+    expect(progressCalls()).toBe(2); // both reports targeted the SAME live session
+    expect(post).toHaveBeenCalledWith('/api/v1/sessions/sess-1/progress', expect.anything());
+  });
+
+  it('does not burn the throttle window when the progress POST fails', async () => {
+    post.mockImplementation((url: string) =>
+      url === '/api/v1/sessions'
+        ? Promise.resolve({ session_id: 'sess-1' })
+        : Promise.reject(new Error('offline')),
+    );
+    watching(120, 600);
+    const r = useResumeReporter();
+    // UN-forced back-to-back: pre-fix the first (failed) report stamped
+    // lastReport, so the second was throttled and the checkpoint was lost.
+    await r.report();
+    await r.report();
+    expect(progressCalls()).toBe(2);
+  });
+
+  it('does not burn the throttle window when the session mint fails', async () => {
+    post.mockImplementation((url: string) =>
+      url === '/api/v1/sessions' ? Promise.reject(new Error('offline')) : Promise.resolve({}),
+    );
+    watching(120, 600);
+    const r = useResumeReporter();
+    await r.report();
+    await r.report();
+    expect(mintCalls()).toBe(2);
+  });
+
+  it('a successful report still consumes the throttle window (no double-post)', async () => {
+    post.mockImplementation((url: string) =>
+      url === '/api/v1/sessions' ? Promise.resolve({ session_id: 'sess-1' }) : Promise.resolve({}),
+    );
+    watching(120, 600);
+    const r = useResumeReporter();
+    await r.report();
+    await r.report();
+    expect(progressCalls()).toBe(1);
   });
 });

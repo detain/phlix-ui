@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Signed-stream auth recovery: one re-resolve on fatal media errors; resume reporter drops dead sessions and earns its throttle window 2026-11-28 (S-ui-player-29)
+
+### Fixed
+
+* A stale signed stream URL is no longer a dead end, and a revoked resume session can no longer black out the checkpoint window (findings phlix-ui-player-044/045). `PlayerPage` now watches the stage for fatal-class media errors (`isStreamAuthRecoverableMediaError`: codes 3/4, or code 2 before the first frame — the same escalation gate `Player.vue` uses; a server 401/403 on an expired signed URL surfaces as one of these): the page intercepts the error in capture phase, re-resolves the item's stream URL exactly once via a fresh `GET /api/v1/media/{id}`, and reactively swaps `streamUrl` so the `<video>` reloads with the new mint — no loading overlay, no state beyond the URL moves. The recovery is strictly one-shot per load: once the attempt is spent (or the re-resolve itself failed), later errors fall through untouched to the legacy transcode fallback, and on re-resolve failure the error is replayed at the live video node so the fallback path fires without waiting for the next real error. In the resume reporter, a cached session id is now invalidated on a 401/404 response (the session is dead; POSTing into it forever was the old behaviour) so the next tick re-mints a fresh one — transient failures (5xx, network) keep the id, and the logout drop is unchanged. And `lastReport` is stamped only once a checkpoint actually lands, so a session-mint failure or a rejected progress POST no longer eats the 15-second resume window for nothing: the retry is not throttled, while a successful report still consumes the window exactly as before. The recovery is silent-mechanical; no new message keys were minted.
+
 ## Unreleased — SyncPlay wire honesty: real cached group state in seek/sync frames, a tracked reconnect rung, logged parse failures 2026-11-28 (S-ui-player-28)
 
 ### Fixed

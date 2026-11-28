@@ -54,6 +54,17 @@ export declare function isFatalMediaError(video: HTMLVideoElement | null | undef
  * network blip does not wrongly tear a healthy session down.
  */
 export declare function isNetworkMediaError(video: HTMLVideoElement | null | undefined): boolean;
+/**
+ * True when a <video> error is the class that a STALE signed stream URL can
+ * produce (finding phlix-ui-player-044): the server rejects an expired HMAC
+ * with 401/403 on the media GET, which surfaces on the element as a network
+ * error before the first frame (2) or a source-not-supported/decode failure
+ * (3/4). Same posture as Player.vue's escalation gate — fatal codes at any
+ * position, code 2 only when nothing has played yet, so a healthy mid-playback
+ * session is never torn down for a blip. The consumer's recovery is to
+ * re-resolve the signed URL once via the API before falling back.
+ */
+export declare function isStreamAuthRecoverableMediaError(video: HTMLVideoElement | null | undefined): boolean;
 /** W110 S513 survival sentinel — must stay in this one file (see the plan step). */
 export declare const S513_PLAYBACK_FALLBACK_TOKEN = "S513FALLBACKX9P5";
 /**

@@ -1671,3 +1671,129 @@ describe('PlayerPage generic load-failure catalog routing', () => {
     expect(w.findComponent(Player).exists()).toBe(false);
   });
 });
+
+// phlix-ui-player-044 [low]: a fatal <video> error (decode 3 / unsupported 4 /
+// network 2 before the first frame) used to be indistinguishable from a stale
+// signed stream URL — the page resolved streamUrlFor() once per load and the
+// watchdog covered codes 2/3/4 only, never re-minting. The page now intercepts
+// such an error in the CAPTURE phase, re-resolves the URL EXACTLY ONCE, swaps
+// it in; a spent gate or a failed re-resolve passes the error through to the
+// legacy Player fallback untouched.
+describe('phlix-ui-player-044 — one-shot signed-stream re-resolve on fatal media error', () => {
+  function fatalVideo(w: VueWrapper, code: number): HTMLVideoElement {
+    const video = w.find('video').element as HTMLVideoElement;
+    Object.defineProperty(video, 'error', { configurable: true, get: () => ({ code }) });
+    return video;
+  }
+
+  function remintFetch(secondById: 'fresh' | 'fail') {
+    const calls = { byId: 0 };
+    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+      const urlStr = String(url);
+      if (isById(urlStr, 'm1')) {
+        calls.byId += 1;
+        if (calls.byId === 1) {
+          return Promise.resolve(jsonResponse({ item: media({ stream_url: '/media/m1/stream?sig=old' }) }));
+        }
+        if (secondById === 'fail') return Promise.resolve(errorResponse(500, { error: 'mint failed' }));
+        return Promise.resolve(jsonResponse({ item: media({ stream_url: '/media/m1/stream?sig=new' }) }));
+      }
+      if (isAnyPlaybackInfo(urlStr)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    return { fetchMock, calls };
+  }
+
+  it('re-resolves the signed stream URL exactly once and swaps it in', async () => {
+    const { fetchMock, calls } = remintFetch('fresh');
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    expect(w.findComponent(Player).props('streamUrl')).toBe('/media/m1/stream?sig=old');
+    expect(calls.byId).toBe(1);
+
+    fatalVideo(w, 4).dispatchEvent(new Event('error'));
+    await flushPromises();
+    await w.vm.$nextTick();
+
+    expect(calls.byId).toBe(2); // exactly one re-resolve
+    expect(w.findComponent(Player).props('streamUrl')).toBe('/media/m1/stream?sig=new');
+    // The swap lands on the element too, and the legacy fallback stayed deferred.
+    expect(w.find('video').attributes('src')).toBe('/media/m1/stream?sig=new');
+    expect(w.find('.transcode').exists()).toBe(false);
+    expect(w.find('.prep').exists()).toBe(false);
+  });
+
+  it('re-resolves only ONCE — the spent gate passes a later error to the legacy fallback', async () => {
+    const { fetchMock, calls } = remintFetch('fresh');
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    fatalVideo(w, 4).dispatchEvent(new Event('error'));
+    await flushPromises();
+    expect(calls.byId).toBe(2);
+
+    // Second fatal error with the URL already re-minted: no re-resolve loop —
+    // the error reaches Player.vue, which escalates to the transcode fallback.
+    fatalVideo(w, 4).dispatchEvent(new Event('error'));
+    await flushPromises();
+    await w.vm.$nextTick();
+    expect(calls.byId).toBe(2);
+    expect(w.find('video').attributes('src')).toBeUndefined(); // transcodeNeeded flipped
+    expect(w.find('.transcode').exists() || w.find('.prep').exists()).toBe(true);
+  });
+
+  it('falls through to the legacy fallback when the re-resolve itself fails', async () => {
+    const { fetchMock, calls } = remintFetch('fail');
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    fatalVideo(w, 4).dispatchEvent(new Event('error'));
+    await flushPromises();
+    await w.vm.$nextTick();
+
+    expect(calls.byId).toBe(2); // one attempt, never a retry loop
+    expect(w.findComponent(Player).props('streamUrl')).toBe('/media/m1/stream?sig=old'); // never swapped
+
+    // The stream is still broken, so the (settled) live element errors again —
+    // a real <video> carries its MediaError across reloads and re-fires; the
+    // gate is spent, so this time the error reaches Player.vue untouched and
+    // the legacy transcode fallback escalates.
+    fatalVideo(w, 4).dispatchEvent(new Event('error'));
+    await flushPromises();
+    await w.vm.$nextTick();
+
+    expect(calls.byId).toBe(2); // the failed attempt is not retried
+    expect(w.findComponent(Player).props('streamUrl')).toBe('/media/m1/stream?sig=old');
+    expect(w.find('video').attributes('src')).toBeUndefined(); // transcodeNeeded flipped
+    expect(w.find('.transcode').exists() || w.find('.prep').exists()).toBe(true);
+  });
+
+  it('does not intercept a mid-playback network error (code 2 after the first frame)', async () => {
+    const { fetchMock, calls } = remintFetch('fresh');
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    const video = fatalVideo(w, 2);
+    Object.defineProperty(video, 'currentTime', { configurable: true, get: () => 42 });
+    video.dispatchEvent(new Event('error'));
+    await flushPromises();
+    await w.vm.$nextTick();
+
+    expect(calls.byId).toBe(1); // untouched by the page (and Player ignores it too)
+    expect(w.find('video').attributes('src')).toBe('/media/m1/stream?sig=old');
+  });
+
+  it('does not intercept an abort error (code 1)', async () => {
+    const { fetchMock, calls } = remintFetch('fresh');
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    fatalVideo(w, 1).dispatchEvent(new Event('error'));
+    await flushPromises();
+    await w.vm.$nextTick();
+
+    expect(calls.byId).toBe(1);
+  });
+});

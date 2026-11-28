@@ -12,6 +12,7 @@ import {
   parsePlaybackAudioTracks,
   isFatalMediaError,
   isNetworkMediaError,
+  isStreamAuthRecoverableMediaError,
   ringDashoffset,
   DIRECT_PLAY_EXTENSIONS,
   TRANSCODE_EXTENSIONS,
@@ -142,8 +143,12 @@ describe('playback — parsePlaybackAudioTracks (playback-info audio_tracks)', (
       { id: 'a0', codec: 'aac', language: 'eng', channels: 6, bitrate: 384000, title: 'English 5.1', index: 0, stream_index: 1, default: true },
       { id: 'a1', codec: 'ac3', language: 'jpn', channels: 2, bitrate: 192000, title: '', index: 1, stream_index: 2, default: false },
     ]);
+    // labelKind is the p07 (phlix-ui-player-018) contract this pin predated: a
+    // source-provided title marks 'title'; a raw-language label stays undefined
+    // (menus keep it as-is). Disclosed stale-pin repair surfaced by the
+    // phlix-ui-player-044 red-first run — truthful update, zero deletions.
     expect(out).toEqual([
-      { index: 0, streamIndex: 1, language: 'eng', label: 'English 5.1', default: true, codec: 'aac' },
+      { index: 0, streamIndex: 1, language: 'eng', label: 'English 5.1', labelKind: 'title', default: true, codec: 'aac' },
       { index: 1, streamIndex: 2, language: 'jpn', label: 'jpn', default: false, codec: 'ac3' },
     ]);
   });
@@ -863,5 +868,29 @@ describe('playback — isPlaybackStalled (W110 S513)', () => {
 
   it('is false when playback advanced past the armed position', () => {
     expect(isPlaybackStalled(BASE + PLAYBACK_FALLBACK_STALL_MS, BASE, 3.2, 0.0)).toBe(false);
+  });
+});
+
+describe('playback — isStreamAuthRecoverableMediaError (phlix-ui-player-044)', () => {
+  const withErrorAt = (code: number | undefined, currentTime: number) =>
+    ({ error: code === undefined ? null : { code }, currentTime }) as unknown as HTMLVideoElement;
+
+  it('accepts the decode/unsupported fatal codes at any playback position', () => {
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(3, 0))).toBe(true);
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(3, 240))).toBe(true);
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(4, 0))).toBe(true);
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(4, 240))).toBe(true);
+  });
+
+  it('accepts a network error only before any frame played — the Player escalation gate', () => {
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(2, 0))).toBe(true);
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(2, 42))).toBe(false);
+  });
+
+  it('rejects abort, unknown and no-error states', () => {
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(1, 0))).toBe(false);
+    expect(isStreamAuthRecoverableMediaError(withErrorAt(undefined, 0))).toBe(false);
+    expect(isStreamAuthRecoverableMediaError(null)).toBe(false);
+    expect(isStreamAuthRecoverableMediaError(undefined)).toBe(false);
   });
 });

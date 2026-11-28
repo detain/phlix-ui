@@ -26,7 +26,7 @@
  * Resume restoration + the mkv/hevc transcode notice live INSIDE <Player> (R3.8);
  * this page just feeds it real data. Deep-links work and re-fetch when the id changes.
  */
-import { ref, computed, inject, onMounted, watch, onBeforeUnmount } from 'vue';
+import { ref, computed, inject, onMounted, watch, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import type { MediaItem } from '../types/media-item';
 import { ApiClient, ApiError } from '../api/client';
@@ -41,7 +41,7 @@ import { playbackBlockingMessage, mediaLoadErrorMessage } from './playerErrors';
 import type { PhlixAppConfig } from '../app/types';
 import Player from '../components/Player.vue';
 import type { Chapter } from '../components/player/Scrubber.vue';
-import { parsePlaybackAudioTracks, type PlaybackAudioTrack, type TimeMarker } from '../components/player/playback';
+import { parsePlaybackAudioTracks, isStreamAuthRecoverableMediaError, type PlaybackAudioTrack, type TimeMarker } from '../components/player/playback';
 import { parseSubtitleTracks, type SubtitleTrack } from '../components/player/transcode';
 import { hasSeasonRows } from '../components/series-grouping';
 import { orderEpisodesForPlayback, previousEpisode, nextEpisode } from '../components/player/episode-order';
@@ -134,6 +134,9 @@ const playerUi = usePlayerUiStore();
 
 const item = ref<MediaItem | null>(null);
 const streamUrl = ref('');
+/** Root element of this page — carries the CAPTURE-phase media-error listener
+ *  (phlix-ui-player-044; template ref below). */
+const pageEl = ref<HTMLElement | null>(null);
 const chapters = ref<Chapter[]>([]);
 const introMarker = ref<TimeMarker | null>(null);
 const outroMarker = ref<TimeMarker | null>(null);
@@ -187,6 +190,8 @@ const ambientStyle = computed(() => {
 
 let controller: AbortController | null = null;
 let disposed = false;
+/** phlix-ui-player-044 — ONE signed-URL re-resolve per loaded item; reset in load(). */
+let remintAttempted = false;
 
 /**
  * Monotonic id of the newest `load()` run (S172).
@@ -438,6 +443,7 @@ async function load(): Promise<void> {
   // up-next queue over the newer item's.
   generation += 1;
   const run: LoadRun = { generation, controller };
+  remintAttempted = false; // fresh item (or retry) gets its own one-shot recovery chance
   loading.value = true;
   error.value = null;
   chapters.value = [];
@@ -601,7 +607,55 @@ async function applyItem(client: ApiClient, mediaItem: MediaItem, run: LoadRun):
   void loadQueue(client, mediaItem, run);
 }
 
-onMounted(load);
+/**
+ * phlix-ui-player-044 — a fatal <video> error (decode 3 / unsupported 4, or a
+ * network 2 before the first frame) is also what an EXPIRED signed stream URL
+ * looks like from the client side. The page used to resolve streamUrlFor()
+ * once per load and never re-mint, so such an item was dead until reload.
+ * This CAPTURE-phase listener intercepts the first qualifying error, asks the
+ * API for the item once more (fresh stream_url), and swaps only the URL — the
+ * item data / cache are left untouched. If the re-resolve itself fails (or the
+ * gate is already spent), the error proceeds untouched to Player.vue's legacy
+ * fallback, so recovery can never loop or swallow the escalation path.
+ */
+function onStageMediaError(event: Event): void {
+  const target = event.target;
+  if (!(target instanceof HTMLVideoElement)) return;
+  if (!isStreamAuthRecoverableMediaError(target)) return;
+  if (remintAttempted || disposed) return;
+  remintAttempted = true;
+  event.stopPropagation(); // defer the Player fallback — one re-resolve comes first
+  const id = currentId.value;
+  void (async () => {
+    try {
+      const client = new ApiClient({ baseUrl: apiBase.value });
+      const res = await client.get<{ item: MediaItem }>(`/api/v1/media/${encodeURIComponent(id)}`);
+      if (disposed || currentId.value !== id || !res || !res.item) {
+        throw new Error('stream re-resolve unavailable');
+      }
+      streamUrl.value = streamUrlFor(res.item); // reactive swap → <video> reloads
+    } catch {
+      // The attempt is spent; re-dispatch so Player.vue's at-target handler sees
+      // it and runs the legacy transcode fallback (gate spent → not intercepted).
+      // Defer one render tick and target the LIVE element, not the captured node:
+      // the loading→loaded patch may still be queued and can replace the <video>
+      // while the re-resolve is in flight.
+      await nextTick();
+      if (disposed) return;
+      const live = pageEl.value?.querySelector('video');
+      const sink = live ?? target;
+      if (sink.isConnected) sink.dispatchEvent(new Event('error'));
+    }
+  })();
+}
+
+onMounted(() => {
+  load();
+  // Capture phase on purpose: media 'error' events do NOT bubble, but capture
+  // ancestors still sit on the dispatch path, so the page can try the URL
+  // recovery before the player's own at-target fallback handler runs.
+  pageEl.value?.addEventListener('error', onStageMediaError, true);
+});
 watch(currentId, load);
 
 // Hand playback off to the persistent mini-player when navigating AWAY from the player
@@ -613,6 +667,7 @@ onBeforeRouteLeave(() => {
 
 onBeforeUnmount(() => {
   disposed = true;
+  pageEl.value?.removeEventListener('error', onStageMediaError, true);
   controller?.abort();
   controller = null;
   // Leaving the player route (this page unmounts) clears the shared theater state
@@ -649,7 +704,7 @@ function onBlockingErrorOk(): void {
 </script>
 
 <template>
-  <div class="player-page" :class="{ 'is-theater': theater }">
+  <div ref="pageEl" class="player-page" :class="{ 'is-theater': theater }">
     <div
       v-if="ambientStyle && !loading && !error"
       class="player-page__ambient"

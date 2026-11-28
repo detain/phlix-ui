@@ -8,6 +8,7 @@
 import { getCurrentScope, onScopeDispose, watch } from 'vue';
 import { usePlayerStore, TICKS_PER_SECOND, RESUME_MIN_SECONDS } from '../stores/usePlayerStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { ApiError } from '../api/errors';
 
 /** W109 S506 code-resident survival token for the final-position-on-unmount path. */
 export const S506_FINALPOS_TOKEN = 'S506FINALPOSX9P4';
@@ -17,6 +18,16 @@ const DEVICE_ID_KEY = 'phlix.deviceId';
  *  local persist throttle — the server only needs a periodic checkpoint, not every
  *  second of playback. */
 const REPORT_THROTTLE = 15000;
+
+/**
+ * phlix-ui-player-045 — a 401/404 from a session-scoped endpoint means the
+ * held session id is DEAD (revoked, expired, or minted for another auth
+ * context). Any other failure (network blip, 5xx) leaves the session alive
+ * so the next tick retries against it rather than churning mints.
+ */
+function isDeadSessionError(e: unknown): boolean {
+  return e instanceof ApiError && (e.status === 401 || e.status === 404);
+}
 
 /** The subset of playback state the resume WRITE path needs to persist. Retained
  *  across report() calls so the final position survives a store clear (S506). */
@@ -137,7 +148,6 @@ export function useResumeReporter(): UseResumeReporter {
     const now = Date.now();
     if (inFlight || (!force && now - lastReport < REPORT_THROTTLE)) return;
     inFlight = true;
-    lastReport = now;
     try {
       const sid = await ensureSession();
       if (!sid) return;
@@ -147,7 +157,16 @@ export function useResumeReporter(): UseResumeReporter {
         duration_ticks: Math.floor(player.duration * TICKS_PER_SECOND),
         is_paused: !player.playing,
       });
-    } catch {
+      // phlix-ui-player-045 — the throttle window is earned by a DELIVERED
+      // checkpoint, never promised before one. Pre-fix lastReport was stamped
+      // up-front, so a session-mint failure or a rejected POST silently ate
+      // 15s of the resume window for nothing.
+      lastReport = now;
+    } catch (e) {
+      // phlix-ui-player-045 — a 401/404 means the session we just reported to
+      // is dead: drop it so the NEXT tick re-mints instead of POSTing into a
+      // tombstone forever. Other failures keep it (retry against the same id).
+      if (isDeadSessionError(e)) sessionId = null;
       // best-effort — a missed checkpoint just means the next one (or the local map) covers it
     } finally {
       inFlight = false;
@@ -174,7 +193,10 @@ export function useResumeReporter(): UseResumeReporter {
         media_item_id: mediaItemId,
         reached_end: true,
       });
-    } catch {
+    } catch (e) {
+      // phlix-ui-player-045 — dead session (401/404): drop it so a later report
+      // re-mints rather than POSTing to a tombstone.
+      if (isDeadSessionError(e)) sessionId = null;
       // best-effort — a failed finish just leaves the item in continue-watching; a
       // later report / another device reconciles. Must never crash the player.
     }
@@ -212,7 +234,10 @@ export function useResumeReporter(): UseResumeReporter {
         duration_ticks: Math.floor(progress.duration * TICKS_PER_SECOND),
         is_paused: !progress.playing,
       });
-    } catch {
+    } catch (e) {
+      // phlix-ui-player-045 — dead session (401/404): drop it so a re-login or
+      // a fresh report path re-mints instead of trusting a tombstone.
+      if (isDeadSessionError(e)) sessionId = null;
       // best-effort — a failed final flush leaves the last server checkpoint (or the
       // local resume map / another device) to cover it. Must never crash teardown.
     }
