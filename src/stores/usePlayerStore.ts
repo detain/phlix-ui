@@ -58,12 +58,15 @@ function readResumeMap(): Record<string, number> {
   try {
     const raw = localStorage.getItem(RESUME_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
-    // Mirror `readTouchedMap`: a corrupt blob like "null" parses fine but is not
-    // an object — returning it would flip `resumeMap.value` to null and every
-    // later write would throw. Known design gap (not fixed here): the map is
-    // keyed by media id only, so resume positions bleed across profiles on a
-    // shared browser.
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : {};
+    // Mirror `readTouchedMap`: a corrupt blob like "null" parses fine but is
+    // not a usable object — returning it would flip `resumeMap.value` to null
+    // and every later write would throw. A JSON ARRAY parses to an object too
+    // (typeof-safe but index-shaped): a stored "[7,8,9]" would have become the
+    // map itself and numeric ids would read as bogus positions, so
+    // `!Array.isArray` refuses arrays with the same severity as the scalar
+    // forms. Known design gap (not fixed here): the map is keyed by media id
+    // only, so resume positions bleed across profiles on a shared browser.
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, number>) : {};
   } catch {
     return {};
   }
@@ -77,7 +80,9 @@ function readTouchedMap(): Record<string, number> {
   try {
     const raw = localStorage.getItem(RESUME_TOUCHED_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : {};
+    // Same law as `readResumeMap`: refuse null, scalars AND JSON arrays — an
+    // array would become the touched map itself and corrupt eviction order.
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, number>) : {};
   } catch {
     return {};
   }

@@ -615,6 +615,32 @@ describe('audit #14 — corrupt resume blob cannot poison the store', () => {
     expect(() => p.saveResume('y', 60, 120)).not.toThrow();
     expect(p.resumePositionFor('y')).toBe(60);
   });
+
+  it('refuses a stored ARRAY payload in both the resume and touched maps (phlix-ui-player-051)', () => {
+    // JSON.parse("[7,8,9]") is an OBJECT, and the bare `typeof parsed === 'object'`
+    // guard let it through: the resume map became the array itself, so
+    // resumePositionFor('0') read a numeric-index "position" (7) and every later
+    // index/touched bookkeeping corrupted the state. Arrays must be refused
+    // exactly like the null/scalar payloads audit #14 pinned.
+    localStorage.setItem('phlix.resume', JSON.stringify([7, 8, 9]));
+    localStorage.setItem('phlix.resume.touched', JSON.stringify([5, 6]));
+    const p = usePlayerStore();
+    expect(p.resumeMap).toEqual({});
+    expect(p.resumePositionFor('0')).toBeNull();
+    expect(() => p.saveResume('z', 60, 120)).not.toThrow(); // state never poisoned → writes stay clean
+    expect(p.resumePositionFor('z')).toBe(60);
+
+    // Companion pin: a corrupt touched store must not poison a VALID resume map —
+    // rejection is per-map, not all-or-nothing (green pre-change too; the teeth
+    // are on the array-resume assertions above).
+    localStorage.clear();
+    localStorage.setItem('phlix.resume', JSON.stringify({ a: 60 }));
+    localStorage.setItem('phlix.resume.touched', JSON.stringify([5, 6]));
+    setActivePinia(createPinia());
+    const q = usePlayerStore();
+    expect(q.resumeMap).toEqual({ a: 60 });
+    expect(q.resumePositionFor('a')).toBe(60);
+  });
 });
 
 describe('ui-min2w — a corrupted volume can never poison the player store', () => {

@@ -60,7 +60,7 @@ export interface TranscodeStart {
     jobId: string;
     /** Server-relative master playlist URL, e.g. `/hls/<job>/master.m3u8`. */
     masterUrl: string;
-    status: string;
+    status: TranscodeStatusKind;
     reused: boolean;
     /** Embedded text subtitle tracks extracted to WebVTT sidecars (may be empty). */
     subtitles: SubtitleTrack[];
@@ -70,7 +70,7 @@ export interface TranscodeStart {
 /** A transcode job's readiness snapshot. */
 export interface TranscodeStatus {
     jobId: string;
-    status: string;
+    status: TranscodeStatusKind;
     playlistReady: boolean;
     /** 0–100 best-effort progress. */
     progress: number;
@@ -80,6 +80,25 @@ export interface TranscodeStatus {
     /** The playable quality ladder from the server (null on a legacy pre-ABR job). */
     variants: Variant[] | null;
 }
+/**
+ * The transcode job's lifecycle state as it crosses the wire.
+ *
+ * Literal union replaces the bare `string` (phlix-ui-player-051): comparisons
+ * against a mistyped status ('comleted', 'cancled') now fail the type-check
+ * instead of silently evaluating false forever. The members mirror the server
+ * vocabulary verbatim:
+ *   queued running completed failed cancelled  — phlix-server transcode_jobs
+ *                                                DB enum
+ *   pending                                    — TranscodeManager::STATUS_PENDING
+ *   not_found                                  — TranscodeController HTTP responses
+ *   error                                        terminal fold the UI treats as failed
+ *
+ * The parser FOLDS any unknown string onto 'running' — exactly the server's own
+ * read-side normalization default (and the previous `str(o.status, 'running')`
+ * fallback for absent values) — so the field is total over the union while
+ * unknown futures keep polling and stay non-failed, as they did before.
+ */
+export type TranscodeStatusKind = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'not_found' | 'error';
 /**
  * Normalizes the server's `subtitles` array (per-track snake- or camelCase) into
  * a list of {@link SubtitleTrack}. Tolerates a missing/non-array value (→ []),
@@ -141,7 +160,7 @@ export declare function parseTranscodeStatus(raw: unknown): TranscodeStatus;
 /** True once the variant playlist has segments and can start playing. */
 export declare function isPlayable(status: TranscodeStatus): boolean;
 /** True when the job has terminally failed and will never play. */
-export declare function isFailedStatus(status: string): boolean;
+export declare function isFailedStatus(status: TranscodeStatusKind): boolean;
 /**
  * Joins an API base with a server-relative URL, avoiding a double slash.
  * An already-absolute URL (http/https) is returned unchanged.

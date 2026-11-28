@@ -63,7 +63,7 @@ export interface TranscodeStart {
   jobId: string;
   /** Server-relative master playlist URL, e.g. `/hls/<job>/master.m3u8`. */
   masterUrl: string;
-  status: string;
+  status: TranscodeStatusKind;
   reused: boolean;
   /** Embedded text subtitle tracks extracted to WebVTT sidecars (may be empty). */
   subtitles: SubtitleTrack[];
@@ -74,7 +74,7 @@ export interface TranscodeStart {
 /** A transcode job's readiness snapshot. */
 export interface TranscodeStatus {
   jobId: string;
-  status: string;
+  status: TranscodeStatusKind;
   playlistReady: boolean;
   /** 0–100 best-effort progress. */
   progress: number;
@@ -85,8 +85,61 @@ export interface TranscodeStatus {
   variants: Variant[] | null;
 }
 
+/**
+ * The transcode job's lifecycle state as it crosses the wire.
+ *
+ * Literal union replaces the bare `string` (phlix-ui-player-051): comparisons
+ * against a mistyped status ('comleted', 'cancled') now fail the type-check
+ * instead of silently evaluating false forever. The members mirror the server
+ * vocabulary verbatim:
+ *   queued running completed failed cancelled  — phlix-server transcode_jobs
+ *                                                DB enum
+ *   pending                                    — TranscodeManager::STATUS_PENDING
+ *   not_found                                  — TranscodeController HTTP responses
+ *   error                                        terminal fold the UI treats as failed
+ *
+ * The parser FOLDS any unknown string onto 'running' — exactly the server's own
+ * read-side normalization default (and the previous `str(o.status, 'running')`
+ * fallback for absent values) — so the field is total over the union while
+ * unknown futures keep polling and stay non-failed, as they did before.
+ */
+export type TranscodeStatusKind =
+  | 'pending'
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'not_found'
+  | 'error';
+
+/** The complete wire vocabulary {@link TranscodeStatusKind} admits. */
+const KNOWN_STATUSES: ReadonlySet<TranscodeStatusKind> = new Set<TranscodeStatusKind>([
+  'pending',
+  'queued',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+  'not_found',
+  'error',
+]);
+
+/** Maps a wire status value onto {@link TranscodeStatusKind}; unknown folds to
+ *  the fallback (phlix-server read-side normalization uses STATUS_RUNNING). */
+function statusKind(value: unknown, fallback: TranscodeStatusKind): TranscodeStatusKind {
+  return typeof value === 'string' && KNOWN_STATUSES.has(value as TranscodeStatusKind)
+    ? (value as TranscodeStatusKind)
+    : fallback;
+}
+
 /** Statuses from which the job will never become playable. */
-const FAILED_STATUSES: ReadonlySet<string> = new Set(['failed', 'cancelled', 'not_found', 'error']);
+const FAILED_STATUSES: ReadonlySet<TranscodeStatusKind> = new Set<TranscodeStatusKind>([
+  'failed',
+  'cancelled',
+  'not_found',
+  'error',
+]);
 
 function str(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
@@ -270,7 +323,7 @@ export function parseTranscodeStart(raw: unknown): TranscodeStart {
   return {
     jobId: str(o.job_id ?? o.jobId),
     masterUrl: str(o.master_url ?? o.masterUrl ?? o.hls_url ?? o.hlsUrl),
-    status: str(o.status, 'running'),
+    status: statusKind(o.status, 'running'),
     reused: bool(o.reused),
     subtitles: parseSubtitleTracks(o.subtitles ?? o.subtitle_tracks ?? o.subtitleTracks),
     variants: parseVariants(o.variants ?? o.variants_list ?? o.Variants),
@@ -282,7 +335,7 @@ export function parseTranscodeStatus(raw: unknown): TranscodeStatus {
   const o = (raw ?? {}) as Record<string, unknown>;
   return {
     jobId: str(o.job_id ?? o.jobId),
-    status: str(o.status, 'running'),
+    status: statusKind(o.status, 'running'),
     playlistReady: bool(o.playlist_ready ?? o.playlistReady),
     progress: num(o.progress),
     masterUrl: str(o.master_url ?? o.masterUrl),
@@ -297,7 +350,7 @@ export function isPlayable(status: TranscodeStatus): boolean {
 }
 
 /** True when the job has terminally failed and will never play. */
-export function isFailedStatus(status: string): boolean {
+export function isFailedStatus(status: TranscodeStatusKind): boolean {
   return FAILED_STATUSES.has(status);
 }
 

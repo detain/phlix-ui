@@ -148,28 +148,38 @@ async function setupHls(): Promise<void> {
   // Destroy any previous handle before creating a new one.
   hlsHandle.value?.destroy();
   hlsHandle.value = null;
-  const handle = await attachHls(v, masterUrl, {
-    startPosition: player.position,
-    onReady: () => {
-      const video = videoRef.value;
-      if (!video) return;
-      video.volume = player.volume;
-      video.muted = player.muted;
-      video.playbackRate = player.rate;
-      if (player.playing) void video.play()?.catch(() => {});
-    },
-  });
-  // `attachHls` awaits (manifest load). During that window this run can go stale
-  // three ways: a newer setupHls superseded it (`seq !== setupSeq`), the dock
-  // unmounted (teardown bumps the token), or it hid / the stream changed — the
-  // hide-branch destroyed `hlsHandle` while it was still null, so installing
-  // now would strand a LIVE segment-fetcher with no owner. A stale run discards
-  // its own handle instead of assigning.
-  if (seq !== setupSeq || !visible.value || player.hlsMasterUrl !== masterUrl) {
-    handle.destroy();
+  try {
+    const handle = await attachHls(v, masterUrl, {
+      startPosition: player.position,
+      onReady: () => {
+        const video = videoRef.value;
+        if (!video) return;
+        video.volume = player.volume;
+        video.muted = player.muted;
+        video.playbackRate = player.rate;
+        if (player.playing) void video.play()?.catch(() => {});
+      },
+    });
+    // `attachHls` awaits (manifest load). During that window this run can go stale
+    // three ways: a newer setupHls superseded it (`seq !== setupSeq`), the dock
+    // unmounted (teardown bumps the token), or it hid / the stream changed — the
+    // hide-branch destroyed `hlsHandle` while it was still null, so installing
+    // now would strand a LIVE segment-fetcher with no owner. A stale run discards
+    // its own handle instead of assigning.
+    if (seq !== setupSeq || !visible.value || player.hlsMasterUrl !== masterUrl) {
+      handle.destroy();
+      return;
+    }
+    hlsHandle.value = handle;
+  } catch {
+    // attachHls rejects when the browser supports neither MSE nor native HLS
+    // (hls-playback.ts). A rejected attach owns NO handle, so there is nothing
+    // to destroy and nothing to install; without this catch the rejection
+    // escaped the async watch/onMounted callbacks as an unhandled promise
+    // rejection. The dock degrades to its poster exactly like the native-HLS
+    // branch above, and a newer run supersedes via the seq law unchanged.
     return;
   }
-  hlsHandle.value = handle;
 }
 
 /** Watch visible to attach HLS when the dock becomes active with a transcoded session.

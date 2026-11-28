@@ -18,6 +18,7 @@ import {
   resolveStreamUrl,
   downlinkBitrateCapBps,
   profileForDownlinkCap,
+  type TranscodeStatusKind,
 } from './transcode';
 
 describe('transcode helpers', () => {
@@ -109,12 +110,42 @@ describe('transcode helpers', () => {
   });
 
   describe('isFailedStatus', () => {
-    it.each(['failed', 'cancelled', 'not_found', 'error'])('treats %s as terminal failure', (s) => {
+    it.each<TranscodeStatusKind>(['failed', 'cancelled', 'not_found', 'error'])('treats %s as terminal failure', (s) => {
       expect(isFailedStatus(s)).toBe(true);
     });
-    it.each(['running', 'completed', ''])('does not fail on %s', (s) => {
+    it.each<TranscodeStatusKind>(['pending', 'queued', 'running', 'completed'])('does not fail on %s', (s) => {
       expect(isFailedStatus(s)).toBe(false);
     });
+  });
+
+  describe('status vocabulary (phlix-ui-player-051)', () => {
+    // The status fields ride a LITERAL UNION now instead of a bare string, so
+    // comparisons typos could not survive a type-check. The union is total over
+    // the server vocabulary (transcode_jobs DB enum 'queued|running|completed|
+    // failed|cancelled', the legacy 'pending' constant, and the HTTP layer's
+    // 'not_found' / 'error' fold) and every member must parse through both
+    // endpoints unchanged.
+    it.each<TranscodeStatusKind>([
+      'pending',
+      'queued',
+      'running',
+      'completed',
+      'failed',
+      'cancelled',
+      'not_found',
+      'error',
+    ])('maps known status %s through parseTranscodeStart and parseTranscodeStatus', (s) => {
+      expect(parseTranscodeStart({ job_id: 'j', master_url: '/hls/j/master.m3u8', status: s }).status).toBe(s);
+      expect(parseTranscodeStatus({ job_id: 'j', status: s }).status).toBe(s);
+    });
+
+    it.each(['', 'starting', 'QUEUED', 'done', 123, null, undefined])(
+      'folds unknown status %j to running (red pre-union: the raw string rode through)',
+      (s) => {
+        expect(parseTranscodeStatus({ job_id: 'j', status: s }).status).toBe('running');
+        expect(parseTranscodeStart({ job_id: 'j', status: s }).status).toBe('running');
+      },
+    );
   });
 
   describe('parseSubtitleTracks', () => {

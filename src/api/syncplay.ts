@@ -650,8 +650,21 @@ let syncPlayMemberName: string | null = null;
  */
 let syncPlayPasswordHash: string | null = null;
 
+/**
+ * The FULL frame the module hands to a registered consumer: exactly the shape
+ * `useSyncPlayStore` projects onto its `SyncPlayPlaybackCommand` handler minus
+ * the server-issued identity fields (`issuedBy`/`issuedAt`) the WebSocket
+ * layer does not own — the consumer stamps those itself. Both wire commands
+ * (`@phlix/syncplay` `PlaybackCommand`, type `play|pause|seek`) and the
+ * locally synthesized `onPlaybackSync` play/pause pair fill this frame
+ * completely. Previously the parameter was a fictional narrowed
+ * `{ type: string; position?: number; roomId?: string }` shape: the bare
+ * `string` let a mistyped event kind ride through the type-checker unnoticed.
+ */
+export type SyncPlayMessageFrame = Omit<SyncPlayPlaybackCommand, 'issuedBy' | 'issuedAt'> & { roomId?: string };
+
 /** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
-type SyncPlayMessageHandler = (msg: { type: string; position?: number; roomId?: string }) => void;
+type SyncPlayMessageHandler = (msg: SyncPlayMessageFrame) => void;
 
 /** Message handler registered by the consumer (useSyncPlayStore). */
 let messageHandler: SyncPlayMessageHandler | null = null;

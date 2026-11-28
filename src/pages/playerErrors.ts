@@ -29,9 +29,19 @@ import type { PhlixErrorLocale } from '../i18n/errors';
 export const LEGACY_ACCESS_SCHEDULE_TEXT = 'AccessScheduled';
 export const LEGACY_STREAM_LIMIT_TEXT = 'StreamLimitExceeded';
 
+/**
+ * True only for a genuine key/value record — a non-null object that is NOT an
+ * array. Arrays are `typeof 'object'` too, and the old bare guard plus a cast
+ * let a wire body shaped like an array slip through and still be indexed;
+ * anything that is not a record is refused outright.
+ */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function readWireString(body: unknown, key: 'code' | 'error'): string | null {
-  if (typeof body !== 'object' || body === null) return null;
-  const value = (body as Record<string, unknown>)[key];
+  if (!isRecord(body)) return null;
+  const value = body[key];
   return typeof value === 'string' && value !== '' ? value : null;
 }
 

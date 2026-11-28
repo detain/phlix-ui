@@ -114,8 +114,19 @@ async function refresh(): Promise<void> {
 
 onMounted(() => {
   void refresh();
-  // Support "join by link" — if ?room=<id> is in the URL, pre-fill and open join modal
-  const roomParam = route.query.room as string | undefined;
+  // Support "join by link" — if ?room=<id> is in the URL, pre-fill and open join modal.
+  // route.query.room is LocationQueryValue = string | string[] | null, so NARROW
+  // it honestly instead of casting: a repeated ?room=a&room=b arrives as an
+  // ARRAY, and `.trim()` on that array would throw a TypeError inside onMounted
+  // (the `as string | undefined` cast hid exactly that). Array form → first
+  // string entry; null/absent/anything else → undefined.
+  const rawRoom = route.query.room;
+  const roomParam =
+    typeof rawRoom === 'string'
+      ? rawRoom
+      : Array.isArray(rawRoom)
+        ? rawRoom.find((entry): entry is string => typeof entry === 'string')
+        : undefined;
   if (roomParam && roomParam.trim()) {
     prefilledRoomId.value = roomParam.trim();
     showModal.value = true;

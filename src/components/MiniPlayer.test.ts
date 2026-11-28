@@ -475,6 +475,36 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
 
     expect(handle.destroy).toHaveBeenCalledTimes(1); // stale run discarded its own handle
   });
+
+  it('catches a rejected attach instead of leaking an unhandled rejection (phlix-ui-player-051)', async () => {
+    // Red-first pin: setupHls() awaited attachHls WITHOUT a catch, so a rejection
+    // (hls-playback.ts:269 rejects when the browser has neither MSE nor native
+    // HLS) escaped the async watch/onMounted callbacks as an UNHANDLED promise
+    // rejection. The caught path must settle silently: the attach is attempted
+    // exactly once, zero unhandled rejections surface, and the dock stays mounted.
+    const unhandled: unknown[] = [];
+    const onWindowRejection = (event: PromiseRejectionEvent) => unhandled.push(event.reason);
+    const onNodeRejection = (reason: unknown) => unhandled.push(reason);
+    window.addEventListener('unhandledrejection', onWindowRejection);
+    process.on('unhandledRejection', onNodeRejection);
+    try {
+      const attachHls = vi.fn(async (): Promise<never> => {
+        throw new Error('HLS is not supported on this browser');
+      });
+      vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+      const { w } = mountTranscoded(attachHls);
+      await nextTick();
+      await flushPromises();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0)); // let the host-check for unhandled rejections fire
+
+      expect(attachHls).toHaveBeenCalledTimes(1);
+      expect(unhandled).toEqual([]);
+      expect(w.find('.mini').exists()).toBe(true);
+    } finally {
+      window.removeEventListener('unhandledrejection', onWindowRejection);
+      process.off('unhandledRejection', onNodeRejection);
+    }
+  });
 });
 
 describe('MiniPlayer — finish signal (S30)', () => {

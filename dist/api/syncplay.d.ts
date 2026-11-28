@@ -316,12 +316,22 @@ export declare function isSyncPlayReconnectExhausted(): boolean;
  * must survive — the member must not be demoted to a locked-out stranger.
  */
 export declare function retrySyncPlayConnection(): boolean;
-/** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
-type SyncPlayMessageHandler = (msg: {
-    type: string;
-    position?: number;
+/**
+ * The FULL frame the module hands to a registered consumer: exactly the shape
+ * `useSyncPlayStore` projects onto its `SyncPlayPlaybackCommand` handler minus
+ * the server-issued identity fields (`issuedBy`/`issuedAt`) the WebSocket
+ * layer does not own — the consumer stamps those itself. Both wire commands
+ * (`@phlix/syncplay` `PlaybackCommand`, type `play|pause|seek`) and the
+ * locally synthesized `onPlaybackSync` play/pause pair fill this frame
+ * completely. Previously the parameter was a fictional narrowed
+ * `{ type: string; position?: number; roomId?: string }` shape: the bare
+ * `string` let a mistyped event kind ride through the type-checker unnoticed.
+ */
+export type SyncPlayMessageFrame = Omit<SyncPlayPlaybackCommand, 'issuedBy' | 'issuedAt'> & {
     roomId?: string;
-}) => void;
+};
+/** Callback invoked when the server sends a SyncPlay message over the WebSocket. */
+type SyncPlayMessageHandler = (msg: SyncPlayMessageFrame) => void;
 /**
  * Open a WebSocket connection to the SyncPlay server for the given room.
  * If a connection is already open for a different room, it is closed first.

@@ -328,6 +328,20 @@ describe('SyncPlayPage — join by link (?room=)', () => {
     expect(modalStub(w).props('prefilledRoomId')).toBeUndefined();
     expect(modalStub(w).props('modelValue')).toBe(false);
   });
+
+  it('prefers the first ?room entry when the query repeats (phlix-ui-player-051)', async () => {
+    // route.query.room is LocationQueryValue = string | string[] | null. The
+    // `as string | undefined` cast LIED for ?room=a&room=b: the raw array
+    // reached roomParam.trim(), which is not a function — a TypeError fired
+    // inside onMounted (red pre-change). A repeated param must prefill the
+    // first entry with no crash, exactly like the scalar form.
+    const { w } = await mountPage({ query: '?room=a&room=b' });
+    await flushPromises();
+    const modal = modalStub(w);
+    expect(modal.exists()).toBe(true);
+    expect(modal.props('prefilledRoomId')).toBe('a');
+    expect(modal.props('modelValue')).toBe(true);
+  });
 });
 
 describe('SyncPlayPage — active room', () => {

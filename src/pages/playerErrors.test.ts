@@ -74,6 +74,29 @@ describe('playbackBlockingMessage', () => {
       expect(playbackBlockingMessage(body), JSON.stringify(body)).toBeNull();
     }
   });
+
+  it('refuses a non-record wire body even when it CARRIES a registered code key (phlix-ui-player-051)', () => {
+    // The reader used to guard only `typeof body === 'object'` and then index
+    // through an `as Record` cast — arrays are objects, so an anomalous ARRAY
+    // body carrying a code key slipped past the guard and the cast read the key
+    // anyway, producing a blocking message from a payload a real shape guard
+    // must refuse outright. The isRecord predicate rejects arrays before any
+    // property access (red pre-change: the localized string came back).
+    const coded: unknown[] = [];
+    Object.defineProperty(coded, 'code', { value: 'stream.limit_exceeded', enumerable: true, writable: true });
+    expect(playbackBlockingMessage(coded)).toBeNull();
+    expect(mediaLoadErrorMessage(coded)).toBe('Failed to load media');
+
+    const legacy: unknown[] = [];
+    Object.defineProperty(legacy, 'error', { value: 'AccessScheduled', enumerable: true, writable: true });
+    expect(playbackBlockingMessage(legacy)).toBeNull();
+  });
+
+  it('still resolves registered codes on genuine objects (positive control)', () => {
+    expect(playbackBlockingMessage({ code: 'stream.limit_exceeded' })).toBe(
+      ERROR_MESSAGES.en['stream.limit_exceeded'],
+    );
+  });
 });
 
 /**
