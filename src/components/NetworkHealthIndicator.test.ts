@@ -208,3 +208,100 @@ describe('NetworkHealthIndicator — honest latency + relay reason (S257)', () =
     expect(lines).toContain('Hub enrolled: Yes');
   });
 });
+
+/**
+ * S-ui-design-22 (phlix-ui-design-026) — catalog-backed status copy.
+ * The aria status label and the health-null tooltip headline route through
+ * t(); the composed telemetry lines below them stay server-data shaped
+ * (documented exemptions). Sentinels prove routing both ways.
+ */
+describe('NetworkHealthIndicator — catalog-backed status copy (S-ui-design-22)', () => {
+  function mountLocalized(
+    messages: Record<string, Record<string, string>>,
+    list: (() => Promise<HealthSnapshot>) | undefined,
+  ) {
+    vi.useFakeTimers();
+    useAuthStore().user = { id: 'u1', is_admin: true };
+    const spy = vi.spyOn(AdminNetworkHealthApi.prototype, 'getHealthSnapshot');
+    if (list) spy.mockImplementation(list);
+    else spy.mockResolvedValue(snapshot());
+    const w = mount(NetworkHealthIndicator, {
+      global: { provide: { apiBase: '', phlixConfig: { messages } } },
+    });
+    wrapper = w;
+    return w;
+  }
+
+  async function tooltipText(w: VueWrapper): Promise<string> {
+    await w.find('.phlix-tooltip-wrap').trigger('mouseenter');
+    await vi.advanceTimersByTimeAsync(1_000);
+    await w.vm.$nextTick();
+    const tip = w.find('[role="tooltip"]');
+    expect(tip.exists()).toBe(true);
+    return tip.text();
+  }
+
+  it('routes the aria status label through the catalog for each health verdict', async () => {
+    const messages = {
+      network: { statusHealthy: '__NH_HEALTHY__', statusDegraded: '__NH_DEGRADED__', statusOffline: '__NH_OFFLINE__' },
+    };
+    // Pending first poll: no data yet → offline arm.
+    let resolveSnap!: (r: HealthSnapshot) => void;
+    const wPending = mountLocalized(messages, () => new Promise<HealthSnapshot>((r) => { resolveSnap = r; }));
+    await vi.advanceTimersByTimeAsync(0);
+    await wPending.vm.$nextTick();
+    expect(wPending.find('[role="img"]').attributes('aria-label')).toBe('__NH_OFFLINE__');
+    resolveSnap(snapshot());
+    await vi.advanceTimersByTimeAsync(0);
+    await wPending.vm.$nextTick();
+    expect(wPending.find('[role="img"]').attributes('aria-label')).toBe('__NH_HEALTHY__');
+    wPending.unmount();
+    wrapper = null;
+
+    // Relay down → degraded arm.
+    const degraded = snapshot();
+    degraded.relay = { ...degraded.relay, connected: false };
+    const wDegraded = mountLocalized(messages, () => Promise.resolve(degraded));
+    await vi.advanceTimersByTimeAsync(0);
+    await wDegraded.vm.$nextTick();
+    expect(wDegraded.find('[role="img"]').attributes('aria-label')).toBe('__NH_DEGRADED__');
+    wDegraded.unmount();
+    wrapper = null;
+
+    // Network offline → offline arm with data present.
+    const offline = snapshot();
+    offline.network = { latencyMs: null, status: 'offline', measuredAt: new Date().toISOString(), stale: false };
+    const wOffline = mountLocalized(messages, () => Promise.resolve(offline));
+    await vi.advanceTimersByTimeAsync(0);
+    await wOffline.vm.$nextTick();
+    expect(wOffline.find('[role="img"]').attributes('aria-label')).toBe('__NH_OFFLINE__');
+    wOffline.unmount();
+    wrapper = null;
+  });
+
+  it('routes the health-null tooltip headline (loading then unavailable)', async () => {
+    let resolveSnap!: (r: HealthSnapshot) => void;
+    const w = mountLocalized(
+      { network: { statusLoading: '__NH_LOADING__', statusUnavailable: '__NH_UNAVAILABLE__' } },
+      () => new Promise<HealthSnapshot>((r) => { resolveSnap = r; }),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await tooltipText(w)).toContain('__NH_LOADING__');
+    resolveSnap(snapshot());
+    await vi.advanceTimersByTimeAsync(0);
+    await w.vm.$nextTick();
+    // With data the headline is gone — the tooltip shows telemetry lines instead.
+    expect(await tooltipText(w)).not.toContain('__NH_LOADING__');
+    w.unmount();
+    wrapper = null;
+
+    const wErr = mountLocalized(
+      { network: { statusUnavailable: '__NH_UNAVAILABLE__' } },
+      () => Promise.reject(new Error('down')),
+    );
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await tooltipText(wErr)).toContain('__NH_UNAVAILABLE__');
+    wErr.unmount();
+    wrapper = null;
+  });
+});

@@ -37,6 +37,7 @@ import Button from './ui/Button.vue';
 import Icon from './Icon.vue';
 import Spinner from './ui/Spinner.vue';
 import { useImageSrc } from '../composables/useImageSrc';
+import { useMessages } from '../composables/useMessages';
 
 /** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
  *  so bound verbatim they resolve against the HUB origin instead of the selected server's
@@ -58,6 +59,7 @@ const emit = defineEmits<{
 }>();
 
 const auth = useAuthStore();
+const { t } = useMessages();
 
 const query = ref('');
 const year = ref('');
@@ -192,7 +194,7 @@ async function applyCandidate(c: MatchCandidate): Promise<void> {
     if (isTmdbUnconfigured(e)) {
       unconfigured.value = true;
     } else if (e instanceof ApiError && e.status === 422) {
-      applyError.value = 'No match details were found for that result. Try another.';
+      applyError.value = t('match.noDetails');
     } else {
       applyError.value = errMessage(e, 'Could not apply that match. Please try again.');
     }
@@ -225,51 +227,53 @@ onBeforeUnmount(abortSearch);
 </script>
 
 <template>
-  <Modal v-model="open" title="Match metadata" size="lg">
+  <Modal v-model="open" :title="t('itemActions.matchMetadata')" size="lg">
     <div class="match-modal">
       <p v-if="item" class="match-modal__subject">
-        Find the right TMDB entry for
-        <strong>{{ item.name }}</strong>
-        <span v-if="item.year" class="numeric">({{ item.year }})</span>.
+        {{
+          item.year
+            ? t('match.subjectWithYear', { name: item.name, year: item.year })
+            : t('match.subjectNoYear', { name: item.name })
+        }}
       </p>
 
       <form class="match-modal__form" @submit.prevent="onSubmit">
         <div class="match-modal__field match-modal__field--query">
-          <label class="match-modal__label" for="match-query">Search</label>
+          <label class="match-modal__label" for="match-query">{{ t('match.search') }}</label>
           <input
             id="match-query"
             v-model="query"
             type="text"
             class="match-modal__input"
-            placeholder="Title to search for"
+            :placeholder="t('match.titlePlaceholder')"
             autocomplete="off"
             @input="onQueryInput"
           />
         </div>
         <div class="match-modal__field match-modal__field--year">
-          <label class="match-modal__label" for="match-year">Year</label>
+          <label class="match-modal__label" for="match-year">{{ t('filter.year') }}</label>
           <input
             id="match-year"
             v-model="year"
             type="text"
             inputmode="numeric"
             class="match-modal__input numeric"
-            placeholder="Any"
+            :placeholder="t('match.yearPlaceholder')"
             autocomplete="off"
           />
         </div>
-        <Button type="submit" variant="solid" left-icon="search" :loading="searching">Search</Button>
+        <Button type="submit" variant="solid" left-icon="search" :loading="searching">{{ t('match.search') }}</Button>
       </form>
 
       <details v-if="matchContext && (matchContext.original_filename || matchContext.path || (matchContext.tags && Object.keys(matchContext.tags).length))" class="match-modal__source">
-        <summary class="match-modal__source-summary">Source info</summary>
+        <summary class="match-modal__source-summary">{{ t('match.sourceInfo') }}</summary>
         <div class="match-modal__source-body">
           <p v-if="matchContext.original_filename" class="match-modal__source-filename">
-            <span class="match-modal__source-label">File:</span>
+            <span class="match-modal__source-label">{{ t('match.fileLabel') }}</span>
             <code>{{ matchContext.original_filename }}</code>
           </p>
           <p v-if="matchContext.path" class="match-modal__source-path" :title="matchContext.path">
-            <span class="match-modal__source-label">Path:</span>
+            <span class="match-modal__source-label">{{ t('match.pathLabel') }}</span>
             <span v-html="pathBreadcrumb(matchContext.path)" />
           </p>
           <dl v-if="matchContext.tags && Object.keys(matchContext.tags).length" class="match-modal__source-tags">
@@ -284,9 +288,9 @@ onBeforeUnmount(abortSearch);
       <!-- TMDB not configured -->
       <div v-if="unconfigured" class="match-modal__state" role="status">
         <Icon name="alert" class="match-modal__state-icon" />
-        <p class="match-modal__state-title">TMDB is not configured</p>
+        <p class="match-modal__state-title">{{ t('media.tmdbNotConfigured') }}</p>
         <p class="match-modal__state-hint">
-          Configure a TMDB API key in admin settings to search for metadata matches.
+          {{ t('media.tmdbMetadataHint') }}
         </p>
       </div>
 
@@ -294,19 +298,19 @@ onBeforeUnmount(abortSearch);
       <div v-else-if="error" class="match-modal__state" role="alert">
         <Icon name="error" class="match-modal__state-icon" />
         <p class="match-modal__state-title">{{ error }}</p>
-        <Button variant="outline" size="sm" left-icon="rewind" @click="onSubmit">Try again</Button>
+        <Button variant="outline" size="sm" left-icon="rewind" @click="onSubmit">{{ t('match.tryAgain') }}</Button>
       </div>
 
       <!-- loading -->
       <div v-else-if="searching" class="match-modal__loading" role="status" aria-busy="true">
-        <Spinner label="Searching TMDB" />
+        <Spinner :label="t('match.searching')" />
       </div>
 
       <!-- empty -->
       <div v-else-if="searched && results.length === 0" class="match-modal__state" role="status">
         <Icon name="search" class="match-modal__state-icon" />
-        <p class="match-modal__state-title">No results found</p>
-        <p class="match-modal__state-hint">Try a different title or clear the year.</p>
+        <p class="match-modal__state-title">{{ t('match.noResults') }}</p>
+        <p class="match-modal__state-hint">{{ t('match.noResultsHint') }}</p>
       </div>
 
       <!-- results -->
@@ -341,7 +345,7 @@ onBeforeUnmount(abortSearch);
               :disabled="applyingId !== null && applyingId !== candidateKey(c)"
               @click="applyCandidate(c)"
             >
-              Use this
+              {{ t('match.useThis') }}
             </Button>
           </li>
         </ul>

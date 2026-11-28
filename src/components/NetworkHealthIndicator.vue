@@ -26,6 +26,7 @@ import Tooltip from './ui/Tooltip.vue';
 import Icon from './Icon.vue';
 import Spinner from './ui/Spinner.vue';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useMessages } from '../composables/useMessages';
 
 const POLL_INTERVAL_MS = 30_000;
 const BACKOFF_MULTIPLIER = 2;
@@ -42,6 +43,7 @@ const api = new AdminNetworkHealthApi(
 // ── State ───────────────────────────────────────────────────────────────────
 
 const auth = useAuthStore();
+const { t } = useMessages();
 const health = ref<HealthSnapshot | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -93,10 +95,10 @@ const iconName = computed(() => {
 /** Human-readable label for the status. */
 const statusLabel = computed(() => {
   switch (status.value) {
-    case 'healthy':  return 'Network Healthy';
-    case 'degraded': return 'Network Degraded';
-    case 'offline':  return 'Network Offline';
-    default:         return 'Network Offline';
+    case 'healthy':  return t('network.statusHealthy');
+    case 'degraded': return t('network.statusDegraded');
+    case 'offline':  return t('network.statusOffline');
+    default:         return t('network.statusOffline');
   }
 });
 
@@ -104,7 +106,7 @@ const statusLabel = computed(() => {
 
 const tooltipContent = computed(() => {
   if (health.value === null) {
-    return loading.value ? 'Loading health status…' : 'Unable to load health status';
+    return loading.value ? t('network.statusLoading') : t('network.statusUnavailable');
   }
   const { relay, hub, network } = health.value;
   const lines = [

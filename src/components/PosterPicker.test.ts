@@ -278,3 +278,113 @@ describe('PosterPicker', () => {
     expect(listPostersSpy.mock.calls.length).toBe(callCount1 + 1);
   });
 });
+
+/**
+ * S-ui-design-22 (phlix-ui-design-026) — catalog-backed copy.
+ * Sentinel phlixConfig overrides prove the chrome, state and a11y strings
+ * flow through t() (baked-in literals ignore overrides; un-routed sites
+ * leak the English default).
+ */
+describe('PosterPicker — catalog-backed copy (S-ui-design-22)', () => {
+  function mountLocalized(
+    messages: Record<string, Record<string, string>>,
+    opts: {
+      listPosters?: () => Promise<PosterCandidatesResponse>;
+    } = {},
+  ) {
+    const auth = useAuthStore();
+    vi.spyOn(auth.client, 'listPosters').mockImplementation(
+      opts.listPosters ?? (() => Promise.resolve(okResponse([candidate()]))),
+    );
+    vi.spyOn(auth.client, 'setPoster').mockImplementation(
+      () => Promise.resolve(media({ poster_url: 'https://image.tmdb.org/t/p/w500/abc.jpg' })),
+    );
+    const w = mount(PosterPicker, {
+      props: { modelValue: false, item: media() },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages } } },
+    });
+    return w;
+  }
+
+  it('routes title, subject, grid and thumb a11y copy through the catalog', async () => {
+    const w = mountLocalized(
+      {
+        media: {
+          choosePoster: '__PP_TITLE__',
+          posterSubject: '__PP_SUBJECT__',
+          postersAlt: '__PP_ALTS__',
+          posterAlt: '__PP_ALT__',
+          posterAltCurrent: '__PP_ALTC__',
+        },
+      },
+      {
+        listPosters: () => Promise.resolve(okResponse(
+          [
+            candidate({ provider: 'tmdb', poster_url: 'https://image.tmdb.org/t/p/w500/abc.jpg' }),
+            candidate({ provider: 'fanart.tv', poster_url: 'https://fanart.io/xyz.jpg' }),
+          ],
+          'https://image.tmdb.org/t/p/w500/abc.jpg',
+        )),
+      },
+    );
+    await w.setProps({ modelValue: true });
+    await flushPromises();
+
+    expect(document.body.textContent).toContain('__PP_TITLE__');
+    expect(document.body.textContent).toContain('__PP_SUBJECT__');
+    expect(document.body.textContent).not.toContain('Choose poster');
+
+    const listboxes = document.body.querySelectorAll('.poster-picker__grid[role="listbox"]');
+    expect(listboxes.length).toBe(2);
+    for (const lb of listboxes) {
+      expect(lb.getAttribute('aria-label')).toBe('__PP_ALTS__');
+    }
+    const currentThumb = document.body.querySelector('.poster-picker__thumb.is-current');
+    expect(currentThumb?.getAttribute('aria-label')).toBe('__PP_ALTC__');
+    const otherThumb = Array.from(document.body.querySelectorAll('.poster-picker__thumb'))
+      .find((t) => !t.classList.contains('is-current'));
+    expect(otherThumb?.getAttribute('aria-label')).toBe('__PP_ALT__');
+    expect(otherThumb?.querySelector('img')?.getAttribute('alt')).toBe('__PP_ALT__');
+  });
+
+  it('routes the loading spinner, unconfigured pair and empty pair through the catalog', async () => {
+    let resolveList!: (r: PosterCandidatesResponse) => void;
+    const pending = new Promise<PosterCandidatesResponse>((r) => { resolveList = r; });
+    const w = mountLocalized(
+      { media: { loadingPosters: '__PP_SPIN__' } },
+      { listPosters: () => pending },
+    );
+    await w.setProps({ modelValue: true });
+    await flushPromises();
+    expect(document.body.querySelector('.poster-picker__loading .phlix-spinner')?.getAttribute('aria-label')).toBe('__PP_SPIN__');
+    resolveList(okResponse([]));
+    await flushPromises();
+    expect(document.body.textContent).not.toContain('__PP_SPIN__');
+    w.unmount();
+
+    const wEmpty = mountLocalized(
+      { media: { noPosters: '__PP_EMPTY__', noPostersHint: '__PP_EMPTYHINT__' } },
+      { listPosters: () => Promise.resolve(okResponse([])) },
+    );
+    await wEmpty.setProps({ modelValue: true });
+    await flushPromises();
+    expect(document.body.querySelector('.poster-picker__state-title')?.textContent).toBe('__PP_EMPTY__');
+    expect(document.body.querySelector('.poster-picker__state-hint')?.textContent).toBe('__PP_EMPTYHINT__');
+    expect(document.body.textContent).not.toContain('No posters available');
+    wEmpty.unmount();
+
+    const wUnconf = mountLocalized(
+      { media: { tmdbNotConfigured: '__PP_UNCONF__', tmdbPosterHint: '__PP_UNCONFHINT__' } },
+      {
+        listPosters: () => Promise.reject(new ApiError('TMDB not configured', 422, { code: TMDB_UNCONFIGURED_CODE })),
+      },
+    );
+    await wUnconf.setProps({ modelValue: true });
+    await flushPromises();
+    expect(document.body.querySelector('.poster-picker__state-title')?.textContent).toBe('__PP_UNCONF__');
+    expect(document.body.querySelector('.poster-picker__state-hint')?.textContent).toBe('__PP_UNCONFHINT__');
+    expect(document.body.textContent).not.toContain('TMDB is not configured');
+    wUnconf.unmount();
+  });
+});

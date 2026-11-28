@@ -412,6 +412,8 @@ export const ES_MESSAGES = {
     postersAlt: 'Pósteres de {provider}',
     posterAlt: 'Póster de {provider}',
     posterAltCurrent: 'Póster de {provider} (actual)',
+    noPosters: 'No hay pósteres disponibles',
+    noPostersHint: 'No se encontraron pósteres alternativos para este elemento.',
   },
   reader: {
     decreaseFont: 'Reducir el tamaño de la fuente',

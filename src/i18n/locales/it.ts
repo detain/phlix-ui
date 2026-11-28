@@ -410,6 +410,8 @@ export const IT_MESSAGES = {
     postersAlt: 'Poster di {provider}',
     posterAlt: 'Poster di {provider}',
     posterAltCurrent: 'Poster di {provider} (attuale)',
+    noPosters: 'Nessun poster disponibile',
+    noPostersHint: 'Nessun poster alternativo trovato per questo elemento.',
   },
   reader: {
     decreaseFont: 'Riduci dimensione del testo',

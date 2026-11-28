@@ -414,6 +414,8 @@ export const FR_MESSAGES = {
     postersAlt: 'Affiches {provider}',
     posterAlt: 'Affiche {provider}',
     posterAltCurrent: 'Affiche {provider} (actuelle)',
+    noPosters: 'Aucune affiche disponible',
+    noPostersHint: 'Aucune affiche alternative a été trouvée pour cet élément.',
   },
   reader: {
     decreaseFont: 'Réduire la taille du texte',

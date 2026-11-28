@@ -256,3 +256,142 @@ describe('MetadataMatchModal — result-year weight contract (S-ui-design-26)', 
     expect(rule![1]).toMatch(/font-weight:\s*var\(--fw-regular\);/);
   });
 });
+
+/**
+ * S-ui-design-22 (phlix-ui-design-026) — catalog-backed copy.
+ * Sentinel phlixConfig overrides prove each user-facing string is routed
+ * through t(): a baked-in literal ignores overrides entirely, and an
+ * un-routed site would leak the English default into the DOM — both
+ * directions are asserted (sentinel present, English absent).
+ */
+describe('MetadataMatchModal — catalog-backed copy (S-ui-design-22)', () => {
+  function mountLocalized(
+    messages: Record<string, Record<string, string>>,
+    opts: {
+      search?: () => Promise<MatchSearchResult>;
+      apply?: () => Promise<MatchApplyResult<MediaItem>>;
+    } = {},
+  ) {
+    const auth = useAuthStore();
+    vi.spyOn(auth.client, 'matchSearch').mockImplementation(
+      opts.search ?? (() => Promise.resolve(okSearch([candidate()]))),
+    );
+    vi.spyOn(auth.client, 'matchApply').mockImplementation(
+      (opts.apply ?? (() => Promise.resolve({
+        item: media(),
+        applied: { item_id: 'm1', mode: 'movie', tmdb_id: 42, matched: true, children_enriched: 0 },
+      }))) as never,
+    );
+    const w = mount(MetadataMatchModal, {
+      props: { modelValue: false, item: media() },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages } } },
+    });
+    return w;
+  }
+
+  it('routes title, subject, form labels, source details and result actions through the catalog', async () => {
+    const w = mountLocalized(
+      {
+        itemActions: { matchMetadata: '__MM_TITLE__' },
+        match: {
+          subjectWithYear: '__MM_SUBJECT__',
+          search: '__MM_SEARCH__',
+          titlePlaceholder: '__MM_TITLEPH__',
+          yearPlaceholder: '__MM_YEARPH__',
+          sourceInfo: '__MM_SRCINFO__',
+          fileLabel: '__MM_FILE__',
+          pathLabel: '__MM_PATH__',
+          useThis: '__MM_USETHIS__',
+        },
+        filter: { year: '__MM_YEARLABEL__' },
+      },
+      {
+        search: () => Promise.resolve({
+          ...okSearch([candidate()]),
+          context: { original_filename: 'dune.2021.mkv', path: '/movies/dune.2021.mkv' },
+        }),
+      },
+    );
+    await w.setProps({ modelValue: true });
+    await flushPromises();
+
+    expect(document.body.textContent).toContain('__MM_TITLE__');
+    expect(document.body.textContent).toContain('__MM_SUBJECT__');
+    expect(document.querySelector('.match-modal__label[for="match-query"]')?.textContent).toBe('__MM_SEARCH__');
+    expect(document.querySelector('#match-query')?.getAttribute('placeholder')).toBe('__MM_TITLEPH__');
+    expect(document.querySelector('.match-modal__label[for="match-year"]')?.textContent).toBe('__MM_YEARLABEL__');
+    expect(document.querySelector('#match-year')?.getAttribute('placeholder')).toBe('__MM_YEARPH__');
+    expect(document.body.querySelector('.match-modal__source-summary')?.textContent).toBe('__MM_SRCINFO__');
+    expect(document.body.textContent).toContain('__MM_FILE__');
+    expect(document.body.textContent).toContain('__MM_PATH__');
+    expect(
+      Array.from(document.body.querySelectorAll('button')).some((b) => b.textContent?.includes('__MM_USETHIS__')),
+    ).toBe(true);
+    // The English defaults must NOT leak alongside the sentinels.
+    expect(document.body.textContent).not.toContain('Match metadata');
+    expect(document.body.textContent).not.toContain('No match details');
+    w.unmount();
+  });
+
+  it('routes the searching spinner, empty pair, unconfigured pair and retry through the catalog', async () => {
+    let resolveSearch!: (r: MatchSearchResult) => void;
+    const pending = new Promise<MatchSearchResult>((r) => { resolveSearch = r; });
+    const w = mountLocalized(
+      {
+        match: { searching: '__MM_SPIN__', noResults: '__MM_EMPTY__', noResultsHint: '__MM_EMPTYHINT__' },
+      },
+      { search: () => pending },
+    );
+    await w.setProps({ modelValue: true });
+    await flushPromises();
+    expect(document.body.querySelector('.match-modal__loading .phlix-spinner')?.getAttribute('aria-label')).toBe('__MM_SPIN__');
+    resolveSearch(okSearch([]));
+    await flushPromises();
+    expect(document.body.textContent).toContain('__MM_EMPTY__');
+    expect(document.body.textContent).toContain('__MM_EMPTYHINT__');
+    expect(document.body.textContent).not.toContain('No results found');
+    w.unmount();
+
+    const w2 = mountLocalized(
+      {
+        media: { tmdbNotConfigured: '__MM_UNCONF__', tmdbMetadataHint: '__MM_UNCONFHINT__' },
+      },
+      { search: () => Promise.reject(new ApiError('TMDB not configured', 422, { code: 'metadata.tmdb_unconfigured' })) },
+    );
+    await w2.setProps({ modelValue: true });
+    await flushPromises();
+    expect(document.body.textContent).toContain('__MM_UNCONF__');
+    expect(document.body.textContent).toContain('__MM_UNCONFHINT__');
+    expect(document.body.textContent).not.toContain('TMDB is not configured');
+    w2.unmount();
+
+    const w3 = mountLocalized(
+      {
+        match: { tryAgain: '__MM_RETRY__' },
+      },
+      { search: () => Promise.reject(new Error('search down')) },
+    );
+    await w3.setProps({ modelValue: true });
+    await flushPromises();
+    expect(
+      Array.from(document.body.querySelectorAll('button')).some((b) => b.textContent?.includes('__MM_RETRY__')),
+    ).toBe(true);
+    expect(document.body.textContent).not.toContain('Try again');
+    w3.unmount();
+  });
+
+  it('routes the no-match apply error through the catalog', async () => {
+    const w = mountLocalized(
+      { match: { noDetails: '__MM_NODETAILS__' } },
+      { apply: () => Promise.reject(new ApiError('no match', 422, { code: 'metadata.no_match' })) },
+    );
+    await w.setProps({ modelValue: true });
+    await flushPromises();
+    const useBtn = Array.from(document.body.querySelectorAll('button')).find((b) => b.textContent?.includes('Use this'))!;
+    useBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await flushPromises();
+    expect(document.body.querySelector('.match-modal__apply-error')?.textContent).toContain('__MM_NODETAILS__');
+    w.unmount();
+  });
+});

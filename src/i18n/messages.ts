@@ -501,6 +501,8 @@ export const DEFAULT_MESSAGES = {
     postersAlt: '{provider} posters',
     posterAlt: '{provider} poster',
     posterAltCurrent: '{provider} poster (current)',
+    noPosters: 'No posters available',
+    noPostersHint: 'No poster alternatives were found for this item.',
   },
   /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
   reader: {

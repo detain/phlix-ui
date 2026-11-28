@@ -411,6 +411,8 @@ export const JA_MESSAGES = {
     postersAlt: '{provider} のポスター',
     posterAlt: '{provider} のポスター',
     posterAltCurrent: '{provider} のポスター (現在)',
+    noPosters: 'ポスターを利用できません',
+    noPostersHint: 'この項目の利用可能なポスターが見つかりませんでした。',
   },
   reader: {
     decreaseFont: 'フォントサイズを小さくする',

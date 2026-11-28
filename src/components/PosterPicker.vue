@@ -26,6 +26,7 @@ import Modal from './ui/Modal.vue';
 import Icon from './Icon.vue';
 import Spinner from './ui/Spinner.vue';
 import { useImageSrc } from '../composables/useImageSrc';
+import { useMessages } from '../composables/useMessages';
 
 /** S241: image URLs in a media payload are ROOT-RELATIVE server paths (`/api/v1/artwork/…`),
  *  so bound verbatim they resolve against the HUB origin instead of the selected server's
@@ -44,6 +45,7 @@ const emit = defineEmits<{
 }>();
 
 const auth = useAuthStore();
+const { t } = useMessages();
 
 const COLS = 4;
 
@@ -334,27 +336,24 @@ onBeforeUnmount(abortLoad);
 </script>
 
 <template>
-  <Modal v-model="open" title="Choose poster" size="lg" @keydown="onGridKeydown">
+  <Modal v-model="open" :title="t('media.choosePoster')" size="lg" @keydown="onGridKeydown">
     <div class="poster-picker">
 
       <p v-if="item" class="poster-picker__subject">
-        Select a poster for
-        <strong>{{ item.name }}</strong>
+        {{ t('media.posterSubject', { name: item.name }) }}
       </p>
 
       <div v-if="loading" class="poster-picker__loading" role="status" aria-busy="true">
-        <Spinner label="Loading posters" />
+        <Spinner :label="t('media.loadingPosters')" />
       </div>
 
       <div v-else-if="unconfigured" class="poster-picker__state" role="status">
         <Icon name="alert" class="poster-picker__state-icon" />
-        <p class="poster-picker__state-title">TMDB is not configured</p>
+        <p class="poster-picker__state-title">{{ t('media.tmdbNotConfigured') }}</p>
         <p class="poster-picker__state-hint">
-          Configure a TMDB API key in admin settings to search for poster alternatives.
+          {{ t('media.tmdbPosterHint') }}
         </p>
-      </div>
-
-      <div v-else-if="error" class="poster-picker__state" role="alert">
+      </div>      <div v-else-if="error" class="poster-picker__state" role="alert">
         <Icon name="error" class="poster-picker__state-icon" />
         <p class="poster-picker__state-title">{{ error }}</p>
       </div>
@@ -371,7 +370,7 @@ onBeforeUnmount(abortLoad);
           <ul
             class="poster-picker__grid"
             role="listbox"
-            :aria-label="`${provider} posters`"
+            :aria-label="t('media.postersAlt', { provider })"
           >
             <li
               v-for="(c, cIdx) in cs"
@@ -388,7 +387,7 @@ onBeforeUnmount(abortLoad);
                   'is-active': flatIndex(sIdx, cIdx) === activeIndex,
                   'is-applying': applyingId === c.poster_url,
                 }"
-                :aria-label="`${provider} poster${c.poster_url === selectedUrl ? ' (current)' : ''}`"
+                :aria-label="c.poster_url === selectedUrl ? t('media.posterAltCurrent', { provider }) : t('media.posterAlt', { provider })"
                 :disabled="applyingId !== null && applyingId !== c.poster_url"
                 @click="void selectPoster(c)"
                 @pointermove="activeIndex = flatIndex(sIdx, cIdx)"
@@ -396,7 +395,7 @@ onBeforeUnmount(abortLoad);
                 <img
                   v-if="c.poster_url"
                   :src="imgSrc(c.poster_url)"
-                  :alt="`${provider} poster`"
+                  :alt="t('media.posterAlt', { provider })"
                   loading="lazy"
                   decoding="async"
                 />
@@ -414,8 +413,8 @@ onBeforeUnmount(abortLoad);
 
       <div v-else-if="searched && !loading && grouped.length === 0" class="poster-picker__state" role="status">
         <Icon name="image" class="poster-picker__state-icon" />
-        <p class="poster-picker__state-title">No posters available</p>
-        <p class="poster-picker__state-hint">No poster alternatives were found for this item.</p>
+        <p class="poster-picker__state-title">{{ t('media.noPosters') }}</p>
+        <p class="poster-picker__state-hint">{{ t('media.noPostersHint') }}</p>
       </div>
 
     </div>
