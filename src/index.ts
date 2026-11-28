@@ -148,10 +148,13 @@ export { default as ThumbRating } from './components/ThumbRating.vue';
 // times in dist/phlix-ui.js, dist/player.css (then `ui.css`) and dist/style.css. No consumer could
 // reach them even by deep path, because `files: ["dist"]` ships no SFC source.
 // They are kept, not deleted: `phlix-docs/docs/libraries.md` documents
-// `<RatingBadge>` as a public @phlix/ui component, and four native clients have
-// each hand-rolled a clone (phlix-tizen-client/src/components/RatingBadge.vue +
-// UserRatingPicker.vue, phlix-mobile-client/src/components/*.tsx,
-// phlix-roku-client/components/RatingBadge.brs, phlix-console-client/src/Ui/*.php).
+// `<RatingBadge>` as a public @phlix/ui component, and three native clients
+// still hand-roll clones (phlix-mobile-client/src/components/RatingBadge.tsx,
+// phlix-roku-client/components/RatingBadge.brs + .xml, phlix-console-client
+// src/Ui/RatingBadge.php + UserRatingPicker.php). The phlix-tizen-client
+// clones (src/components/RatingBadge.vue + UserRatingPicker.vue) were deleted
+// in its cfe63c7 without switching to this barrel — the pair is now simply
+// available to every client, and no consumer has switched to it yet.
 // Exporting is purely ADDITIVE — nothing could have been importing them.
 // Pinned by `src/index.test.ts` → "S263 — the newly exported components".
 export { default as RatingBadge } from './components/RatingBadge.vue';
