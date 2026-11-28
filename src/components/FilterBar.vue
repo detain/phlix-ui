@@ -14,8 +14,9 @@
  * **active-filter pills** with a live **result count** and "clear all", and
  * **saved presets** persisted through `usePreferencesStore`. Native `<select>`s
  * are gone — everything is the a11y primitive layer. Filters live in
- * `useMediaStore`; URL-sync is handled app-side by `bindMediaStoreToRouter`.
- * Reduced-motion safe; keyboard-operable throughout.
+ * `useMediaStore`; URL-sync is a host seam — hosts may wire
+ * `bindMediaStoreToRouter` from their own browse-page setup; this component
+ * never calls it. Reduced-motion safe; keyboard-operable throughout.
  */
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useMediaStore, type SortField, type SortOrder } from '../stores/useMediaStore';
