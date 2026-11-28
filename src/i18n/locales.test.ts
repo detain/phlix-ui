@@ -132,6 +132,8 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'palette.groupNavigation',
     'player.audio',
     'player.audioOriginal',
+    'player.captionBackgroundSemi',
+    'player.captionColorCyan',
     'player.directStream',
     'player.pause',
     'player.qualityAuto',

@@ -11,6 +11,7 @@
  * @license MIT
  */
 import type { SelectOption } from '../ui/listbox';
+import { type MessageKey, type Translate } from '../../i18n/messages';
 import type { CaptionStyle, CaptionSize, CaptionEdge } from '../../stores/usePreferencesStore';
 /** A subtitle / audio track surfaced to the menu. */
 export interface TextTrackInfo {
@@ -20,8 +21,26 @@ export interface TextTrackInfo {
     language: string;
     /** Human label (track label → language display name → "Track N"). */
     label: string;
+    /**
+     * How `label` was derived (finding phlix-ui-player-018). Render-time
+     * consumers re-localize 'language'/'generated' labels via
+     * {@link trackDisplayLabel}; 'title' labels are author-provided and pass
+     * through verbatim.
+     */
+    labelKind?: CaptionLabelSource;
     kind: string;
 }
+/**
+ * Provenance of a track's display label (finding phlix-ui-player-018):
+ * 'title' = author-provided (never translated), 'language' = derived from a
+ * language code, 'generated' = numbered fallback resolved via the catalog.
+ */
+export type CaptionLabelSource = 'title' | 'language' | 'generated';
+/** Best-effort human language name (e.g. 'en' → "English", or "Englisch" when
+ *  the active message locale is German), guarded for envs without
+ *  `Intl.DisplayNames` (finding phlix-ui-player-018: names must follow the UI
+ *  locale, not hardcoded English). */
+export declare function languageLabel(code: string | undefined, locale?: string | null): string;
 /** Subtitle/caption tracks on a `<video>` (empty under jsdom/SSR). */
 export declare function listSubtitleTracks(video: HTMLVideoElement | null | undefined): TextTrackInfo[];
 /** Audio tracks on a `<video>` — only meaningful where the browser exposes
@@ -64,11 +83,35 @@ export declare function captionRenderTime(mediaTime: number, delaySeconds: numbe
 export declare function readCueLinesAt(track: TextTrack | null | undefined, positionSeconds: number): string[];
 /** Multiplier applied to the overlay's responsive base font-size. */
 export declare const CAPTION_SIZE_SCALE: Record<CaptionSize, number>;
+/**
+ * Option entry for the caption-style menus (finding phlix-ui-player-018).
+ * `label` carries the English catalog default so out-of-catalog consumers
+ * (e.g. AppearanceSettings, the public `player.ts` re-exports) keep rendering
+ * a sane value, while `key` names the message-catalog entry menus resolve
+ * through at RENDER time via {@link localizeCaptionOptions}.
+ */
+export interface CaptionOption extends SelectOption {
+    /** Message-catalog key the option label resolves through at render time. */
+    readonly key: MessageKey;
+}
 /** Menu option lists (used by CaptionsMenu's `Select`s). */
-export declare const CAPTION_SIZE_OPTIONS: readonly SelectOption[];
-export declare const CAPTION_COLOR_OPTIONS: readonly SelectOption[];
-export declare const CAPTION_BACKGROUND_OPTIONS: readonly SelectOption[];
-export declare const CAPTION_EDGE_OPTIONS: readonly SelectOption[];
+export declare const CAPTION_SIZE_OPTIONS: readonly CaptionOption[];
+export declare const CAPTION_COLOR_OPTIONS: readonly CaptionOption[];
+export declare const CAPTION_BACKGROUND_OPTIONS: readonly CaptionOption[];
+export declare const CAPTION_EDGE_OPTIONS: readonly CaptionOption[];
+/**
+ * Resolve catalog-keyed option labels through the active translator so menus
+ * localize on locale switch instead of at module load (finding
+ * phlix-ui-player-018). Returns plain SelectOption rows.
+ */
+export declare function localizeCaptionOptions(options: readonly CaptionOption[], translate: Translate): SelectOption[];
+/**
+ * Display label for a track entry, localized at render time (finding
+ * phlix-ui-player-018): 'generated' → numbered catalog fallback with a
+ * {number} placeholder, 'language' → language name resolved in the active
+ * message locale, otherwise the stored label verbatim ('title' / unmarked).
+ */
+export declare function trackDisplayLabel(track: TextTrackInfo, translate: Translate, locale?: string | null): string;
 /** The CSS `text-shadow` for each edge treatment. */
 export declare function edgeShadow(edge: CaptionEdge): string;
 /** Map a CaptionStyle to the CSS custom properties the overlay consumes. */

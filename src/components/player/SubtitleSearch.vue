@@ -21,7 +21,7 @@
  * guards. It renders inside the shared focus-trapped, Esc/backdrop-dismissible
  * Modal, so the candidate list is keyboard-navigable out of the box.
  */
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, inject } from 'vue';
 import Modal from '../ui/Modal.vue';
 import Button from '../ui/Button.vue';
 import Chip from '../ui/Chip.vue';
@@ -33,6 +33,8 @@ import { useMessages } from '../../composables/useMessages';
 import { useToastStore } from '../../stores/useToastStore';
 import { ApiClient, ApiError, type SubtitleCandidate } from '../../api/client';
 import { parseSubtitleTracks, type SubtitleTrack } from './transcode';
+import { languageLabel } from './captions';
+import type { PhlixAppConfig } from '../../app/types';
 
 const props = withDefaults(
   defineProps<{
@@ -58,22 +60,13 @@ const emit = defineEmits<{
 
 const { t } = useMessages();
 const toasts = useToastStore();
+// Language names follow the active message locale at render time (finding
+// phlix-ui-player-018) — the old local Intl.DisplayNames copy hardcoded ['en'].
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
+const messageLocale = computed(() => config?.locale ?? null);
 
 /** Common subtitle languages offered in the picker (BCP-47 short codes). */
 const COMMON_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'ru', 'ja', 'ko', 'zh', 'ar'] as const;
-
-/** Best-effort human language name (e.g. 'en' → "English"), guarded for envs
- *  without `Intl.DisplayNames`. */
-function languageLabel(code: string): string {
-  if (!code) return code;
-  try {
-    const DN = (Intl as { DisplayNames?: typeof Intl.DisplayNames }).DisplayNames;
-    if (DN) return new DN(['en'], { type: 'language' }).of(code) ?? code;
-  } catch {
-    /* unsupported code / no ICU — fall through */
-  }
-  return code;
-}
 
 /** The full picker option set: the common list plus any preferred code not in it. */
 const languageOptions = computed<string[]>(() => {
@@ -207,7 +200,7 @@ async function add(c: SubtitleCandidate): Promise<void> {
     const doneKeys = new Set(added.value);
     doneKeys.add(key);
     added.value = doneKeys;
-    const lang = languageLabel(c.language);
+    const lang = languageLabel(c.language, messageLocale.value);
     toasts.success(lang ? t('player.subtitleAdded', { language: lang }) : t('player.subtitleAddedGeneric'));
     if (track) emit('added', track);
   } catch (e) {
@@ -251,10 +244,10 @@ watch(
             :key="code"
             :selected="selected.has(code)"
             size="md"
-            :aria-label="languageLabel(code)"
+            :aria-label="languageLabel(code, messageLocale)"
             @update:selected="toggleLang(code)"
           >
-            {{ languageLabel(code) }}
+            {{ languageLabel(code, messageLocale) }}
           </Chip>
         </div>
       </fieldset>
@@ -294,7 +287,7 @@ watch(
           <div class="subsearch__meta">
             <p class="subsearch__release">{{ c.releaseName || c.provider }}</p>
             <div class="subsearch__signals">
-              <Badge tone="neutral" size="sm">{{ languageLabel(c.language) }}</Badge>
+              <Badge tone="neutral" size="sm">{{ languageLabel(c.language, messageLocale) }}</Badge>
               <Badge v-if="c.hearingImpaired" tone="info" size="sm" :label="t('player.subtitleHearingImpairedFull')">
                 {{ t('player.subtitleHearingImpaired') }}
               </Badge>

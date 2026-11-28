@@ -11,6 +11,7 @@
  * @license MIT
  */
 import type { SelectOption } from '../ui/listbox';
+import { DEFAULT_MESSAGES, type MessageKey, type Translate } from '../../i18n/messages';
 import type {
   CaptionStyle,
   CaptionSize,
@@ -26,6 +27,13 @@ export interface TextTrackInfo {
   language: string;
   /** Human label (track label → language display name → "Track N"). */
   label: string;
+  /**
+   * How `label` was derived (finding phlix-ui-player-018). Render-time
+   * consumers re-localize 'language'/'generated' labels via
+   * {@link trackDisplayLabel}; 'title' labels are author-provided and pass
+   * through verbatim.
+   */
+  labelKind?: CaptionLabelSource;
   kind: string;
 }
 
@@ -56,17 +64,32 @@ function subtitleKey(t: TextTrack, i: number): string {
   return t.language || t.label || `track-${i}`;
 }
 
-/** Best-effort human language name (e.g. 'en' → "English"), guarded for envs
- *  without `Intl.DisplayNames`. */
-function languageLabel(code: string | undefined): string {
+/**
+ * Provenance of a track's display label (finding phlix-ui-player-018):
+ * 'title' = author-provided (never translated), 'language' = derived from a
+ * language code, 'generated' = numbered fallback resolved via the catalog.
+ */
+export type CaptionLabelSource = 'title' | 'language' | 'generated';
+
+/** Best-effort human language name (e.g. 'en' → "English", or "Englisch" when
+ *  the active message locale is German), guarded for envs without
+ *  `Intl.DisplayNames` (finding phlix-ui-player-018: names must follow the UI
+ *  locale, not hardcoded English). */
+export function languageLabel(code: string | undefined, locale?: string | null): string {
   if (!code) return '';
+  const DN = (Intl as { DisplayNames?: typeof Intl.DisplayNames }).DisplayNames;
+  if (!DN) return code;
+  const names = locale ? [locale.replace(/_/g, '-'), 'en'] : ['en'];
   try {
-    const DN = (Intl as { DisplayNames?: typeof Intl.DisplayNames }).DisplayNames;
-    if (DN) return new DN(['en'], { type: 'language' }).of(code) ?? code;
+    return new DN(names, { type: 'language' }).of(code) ?? code;
   } catch {
-    /* unsupported code / no ICU — fall through */
+    /* invalid locale tag / unsupported code — retry English, then raw code */
   }
-  return code;
+  try {
+    return new DN(['en'], { type: 'language' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
 }
 
 /** Subtitle/caption tracks on a `<video>` (empty under jsdom/SSR). */
@@ -78,6 +101,7 @@ export function listSubtitleTracks(video: HTMLVideoElement | null | undefined): 
     language: subtitleKey(t, i),
     label: t.label || languageLabel(t.language) || `Track ${i + 1}`,
     kind: t.kind,
+    labelKind: t.label ? 'title' : t.language ? 'language' : 'generated',
   }));
 }
 
@@ -90,6 +114,7 @@ export function listAudioTracks(video: HTMLVideoElement | null | undefined): Tex
     language: t.language || t.id || `audio-${i}`,
     label: t.label || languageLabel(t.language) || `Audio ${i + 1}`,
     kind: 'audio',
+    labelKind: t.label ? 'title' : t.language ? 'language' : 'generated',
   }));
 }
 
@@ -250,30 +275,82 @@ export const CAPTION_SIZE_SCALE: Record<CaptionSize, number> = {
   xl: 1.75,
 };
 
+/**
+ * Option entry for the caption-style menus (finding phlix-ui-player-018).
+ * `label` carries the English catalog default so out-of-catalog consumers
+ * (e.g. AppearanceSettings, the public `player.ts` re-exports) keep rendering
+ * a sane value, while `key` names the message-catalog entry menus resolve
+ * through at RENDER time via {@link localizeCaptionOptions}.
+ */
+export interface CaptionOption extends SelectOption {
+  /** Message-catalog key the option label resolves through at render time. */
+  readonly key: MessageKey;
+}
+
+/** Build one option straight from the English catalog — zero raw literals. */
+function captionOption(value: string, name: keyof typeof DEFAULT_MESSAGES.player): CaptionOption {
+  return { value, label: DEFAULT_MESSAGES.player[name] as string, key: `player.${name}` as MessageKey };
+}
+
 /** Menu option lists (used by CaptionsMenu's `Select`s). */
-export const CAPTION_SIZE_OPTIONS: readonly SelectOption[] = [
-  { value: 'sm', label: 'Small' },
-  { value: 'md', label: 'Medium' },
-  { value: 'lg', label: 'Large' },
-  { value: 'xl', label: 'Extra large' },
+export const CAPTION_SIZE_OPTIONS: readonly CaptionOption[] = [
+  captionOption('sm', 'captionSizeSmall'),
+  captionOption('md', 'captionSizeMedium'),
+  captionOption('lg', 'captionSizeLarge'),
+  captionOption('xl', 'captionSizeExtraLarge'),
 ];
-export const CAPTION_COLOR_OPTIONS: readonly SelectOption[] = [
-  { value: '#ffffff', label: 'White' },
-  { value: '#ffd400', label: 'Yellow' },
-  { value: '#66e0ff', label: 'Cyan' },
-  { value: '#7cff7c', label: 'Green' },
+export const CAPTION_COLOR_OPTIONS: readonly CaptionOption[] = [
+  captionOption('#ffffff', 'captionColorWhite'),
+  captionOption('#ffd400', 'captionColorYellow'),
+  captionOption('#66e0ff', 'captionColorCyan'),
+  captionOption('#7cff7c', 'captionColorGreen'),
 ];
-export const CAPTION_BACKGROUND_OPTIONS: readonly SelectOption[] = [
-  { value: 'none', label: 'Off' },
-  { value: 'semi', label: 'Semi-transparent' },
-  { value: 'solid', label: 'Solid' },
+export const CAPTION_BACKGROUND_OPTIONS: readonly CaptionOption[] = [
+  // REUSES the existing player.off entry ('Off') — no re-mint (mint law).
+  { value: 'none', label: DEFAULT_MESSAGES.player.off, key: 'player.off' },
+  captionOption('semi', 'captionBackgroundSemi'),
+  captionOption('solid', 'captionBackgroundSolid'),
 ];
-export const CAPTION_EDGE_OPTIONS: readonly SelectOption[] = [
-  { value: 'none', label: 'None' },
-  { value: 'drop-shadow', label: 'Drop shadow' },
-  { value: 'outline', label: 'Outline' },
-  { value: 'raised', label: 'Raised' },
+export const CAPTION_EDGE_OPTIONS: readonly CaptionOption[] = [
+  captionOption('none', 'captionEdgeNone'),
+  captionOption('drop-shadow', 'captionEdgeDropShadow'),
+  captionOption('outline', 'captionEdgeOutline'),
+  captionOption('raised', 'captionEdgeRaised'),
 ];
+
+/**
+ * Resolve catalog-keyed option labels through the active translator so menus
+ * localize on locale switch instead of at module load (finding
+ * phlix-ui-player-018). Returns plain SelectOption rows.
+ */
+export function localizeCaptionOptions(
+  options: readonly CaptionOption[],
+  translate: Translate,
+): SelectOption[] {
+  return options.map((option) => ({ value: option.value, label: translate(option.key) }));
+}
+
+/**
+ * Display label for a track entry, localized at render time (finding
+ * phlix-ui-player-018): 'generated' → numbered catalog fallback with a
+ * {number} placeholder, 'language' → language name resolved in the active
+ * message locale, otherwise the stored label verbatim ('title' / unmarked).
+ */
+export function trackDisplayLabel(
+  track: TextTrackInfo,
+  translate: Translate,
+  locale?: string | null,
+): string {
+  if (track.labelKind === 'generated') {
+    return translate(track.kind === 'audio' ? 'player.audioTrackNumbered' : 'player.trackNumbered', {
+      number: track.index + 1,
+    });
+  }
+  if (track.labelKind === 'language') {
+    return languageLabel(track.language, locale) || track.label;
+  }
+  return track.label;
+}
 
 function backgroundCss(bg: CaptionBackground): string {
   switch (bg) {

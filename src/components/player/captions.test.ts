@@ -23,7 +23,14 @@ import {
   CAPTION_COLOR_OPTIONS,
   CAPTION_BACKGROUND_OPTIONS,
   CAPTION_EDGE_OPTIONS,
+  languageLabel,
+  localizeCaptionOptions,
+  trackDisplayLabel,
 } from './captions';
+import type { TextTrackInfo } from './captions';
+import { parsePlaybackAudioTracks } from './playback';
+import { DEFAULT_MESSAGES, createTranslator } from '../../i18n/messages';
+import { DE_MESSAGES } from '../../i18n/locales/de';
 import type { CaptionStyle } from '../../stores/usePreferencesStore';
 
 /** array-like factory (mirrors a live TextTrackList / AudioTrackList). */
@@ -224,8 +231,149 @@ describe('captions — styling', () => {
 
   it('exposes the menu option lists', () => {
     expect(CAPTION_SIZE_OPTIONS.map((o) => o.value)).toEqual(['sm', 'md', 'lg', 'xl']);
-    expect(CAPTION_COLOR_OPTIONS[0]).toEqual({ value: '#ffffff', label: 'White' });
+    expect(CAPTION_COLOR_OPTIONS[0]).toEqual({ value: '#ffffff', label: 'White', key: 'player.captionColorWhite' });
     expect(CAPTION_BACKGROUND_OPTIONS.map((o) => o.value)).toEqual(['none', 'semi', 'solid']);
     expect(CAPTION_EDGE_OPTIONS.map((o) => o.value)).toEqual(['none', 'drop-shadow', 'outline', 'raised']);
+  });
+});
+
+// ---- catalog-keyed option labels (S-ui-player-07 / phlix-ui-player-018) ------
+
+describe('captions — catalog-keyed option labels (S-ui-player-07)', () => {
+  const en = createTranslator();
+
+  it('every menu option carries a catalog key that resolves to its label', () => {
+    const all = [
+      ...CAPTION_SIZE_OPTIONS,
+      ...CAPTION_COLOR_OPTIONS,
+      ...CAPTION_BACKGROUND_OPTIONS,
+      ...CAPTION_EDGE_OPTIONS,
+    ];
+    for (const option of all) {
+      expect(typeof option.key).toBe('string');
+      expect(option.key.startsWith('player.')).toBe(true);
+      expect(en(option.key)).toBe(option.label);
+    }
+  });
+
+  it('option labels come from the English catalog defaults (no raw literals)', () => {
+    expect(CAPTION_SIZE_OPTIONS.map((o) => o.label)).toEqual([
+      DEFAULT_MESSAGES.player.captionSizeSmall,
+      DEFAULT_MESSAGES.player.captionSizeMedium,
+      DEFAULT_MESSAGES.player.captionSizeLarge,
+      DEFAULT_MESSAGES.player.captionSizeExtraLarge,
+    ]);
+    expect(CAPTION_COLOR_OPTIONS.map((o) => o.label)).toEqual([
+      DEFAULT_MESSAGES.player.captionColorWhite,
+      DEFAULT_MESSAGES.player.captionColorYellow,
+      DEFAULT_MESSAGES.player.captionColorCyan,
+      DEFAULT_MESSAGES.player.captionColorGreen,
+    ]);
+    expect(CAPTION_EDGE_OPTIONS.map((o) => o.label)).toEqual([
+      DEFAULT_MESSAGES.player.captionEdgeNone,
+      DEFAULT_MESSAGES.player.captionEdgeDropShadow,
+      DEFAULT_MESSAGES.player.captionEdgeOutline,
+      DEFAULT_MESSAGES.player.captionEdgeRaised,
+    ]);
+    expect(CAPTION_BACKGROUND_OPTIONS[0].key).toBe('player.off');
+  });
+
+  it('localizeCaptionOptions re-labels options through the active translator', () => {
+    const de = createTranslator(DE_MESSAGES);
+    expect(localizeCaptionOptions(CAPTION_COLOR_OPTIONS, de).map((o) => o.label)).toEqual(['Weiß', 'Gelb', 'Zyan', 'Grün']);
+    expect(localizeCaptionOptions(CAPTION_SIZE_OPTIONS, de).map((o) => o.label)).toEqual(['Klein', 'Mittel', 'Groß', 'Sehr groß']);
+  });
+
+  it('localizeCaptionOptions output stays plain SelectOption shape', () => {
+    for (const o of localizeCaptionOptions(CAPTION_EDGE_OPTIONS, en)) {
+      expect(Object.keys(o).sort()).toEqual(['label', 'value']);
+    }
+  });
+});
+
+describe('captions — language names follow the message locale (S-ui-player-07)', () => {
+  it('defaults to English names when no locale is given', () => {
+    expect(languageLabel('de')).toBe('German');
+    expect(languageLabel('en')).toBe('English');
+    expect(languageLabel('')).toBe('');
+    expect(languageLabel(undefined)).toBe('');
+  });
+
+  it('renders names in the requested message locale (was hardcoded English)', () => {
+    expect(languageLabel('de', 'de')).toBe('Deutsch');
+    expect(languageLabel('de', 'ja')).toBe('ドイツ語');
+    expect(languageLabel('pt', 'pt_BR')).toBe('português');
+    expect(languageLabel('en', 'de')).toBe('Englisch');
+  });
+
+  it('falls back to English for an unknown locale tag', () => {
+    expect(languageLabel('de', 'zz')).toBe('German');
+  });
+
+  it('invalid language codes fall back to the raw code', () => {
+    expect(languageLabel('xx-!@#', 'de')).toBe('xx-!@#');
+  });
+});
+
+describe('captions — track label provenance + display-time resolution (S-ui-player-07)', () => {
+  const en = createTranslator();
+  const de = createTranslator(DE_MESSAGES);
+
+  it('enumeration marks how each label was derived (labelKind)', () => {
+    const v = videoWith({
+      text: [
+        fakeTrack({ kind: 'subtitles', language: 'de', label: '' }),
+        fakeTrack({ kind: 'captions', language: '', label: '' }),
+        fakeTrack({ kind: 'subtitles', language: 'en', label: 'Forced EN' }),
+      ],
+      audio: [{ language: 'fr', label: '', id: 'a0' }, { language: '', label: '', id: 'a1' }],
+    });
+    const subs = listSubtitleTracks(v);
+    expect(subs[0]).toMatchObject({ label: 'German', labelKind: 'language' });
+    expect(subs[1]).toMatchObject({ label: 'Track 2', labelKind: 'generated' });
+    expect(subs[2]).toMatchObject({ label: 'Forced EN', labelKind: 'title' });
+    const auds = listAudioTracks(v);
+    expect(auds[0]).toMatchObject({ label: 'French', labelKind: 'language' });
+    expect(auds[1]).toMatchObject({ label: 'Audio 2', labelKind: 'generated' });
+  });
+
+  it('generated fallbacks resolve through the catalog with {number}', () => {
+    const sub = { index: 1, language: 'track-1', label: 'Track 2', kind: 'subtitles', labelKind: 'generated' } as TextTrackInfo;
+    expect(trackDisplayLabel(sub, de)).toBe('Spur 2');
+    expect(trackDisplayLabel(sub, en)).toBe('Track 2');
+    const aud = { index: 0, language: 'audio-0', label: 'Audio 1', kind: 'audio', labelKind: 'generated' } as TextTrackInfo;
+    expect(trackDisplayLabel(aud, de)).toBe('Tonspur 1');
+    expect(trackDisplayLabel(aud, en)).toBe('Audio 1');
+  });
+
+  it('language-derived labels re-resolve in the active locale at display time', () => {
+    const t = { index: 0, language: 'de', label: 'German', kind: 'subtitles', labelKind: 'language' } as TextTrackInfo;
+    expect(trackDisplayLabel(t, en, 'de')).toBe('Deutsch');
+    expect(trackDisplayLabel(t, en, 'ja')).toBe('ドイツ語');
+    expect(trackDisplayLabel(t, en, null)).toBe('German');
+  });
+
+  it('author-provided titles pass through verbatim; unmarked labels too', () => {
+    const t = { index: 0, language: 'en', label: 'Director commentary', kind: 'subtitles', labelKind: 'title' } as TextTrackInfo;
+    expect(trackDisplayLabel(t, de, 'de')).toBe('Director commentary');
+    const plain = { index: 0, language: 'en', label: 'English', kind: 'subtitles' } as TextTrackInfo;
+    expect(trackDisplayLabel(plain, de, 'de')).toBe('English');
+  });
+});
+
+describe('playback — parsed audio tracks mark label provenance (S-ui-player-07)', () => {
+  it('title → "title", no title and no language → "generated"', () => {
+    const [commentary] = parsePlaybackAudioTracks([{ index: 0, title: 'Commentary', language: 'en' }]);
+    expect(commentary.label).toBe('Commentary');
+    expect(commentary.labelKind).toBe('title');
+    const [orphan] = parsePlaybackAudioTracks([{ index: 1, title: '', language: '' }]);
+    expect(orphan.label).toBe('Audio 2');
+    expect(orphan.labelKind).toBe('generated');
+  });
+
+  it('language-only entries keep the raw code display and no marker', () => {
+    const [t] = parsePlaybackAudioTracks([{ index: 0, title: '', language: 'de' }]);
+    expect(t.label).toBe('de');
+    expect(t.labelKind).toBeUndefined();
   });
 });

@@ -21,7 +21,7 @@
  * suppresses the global key map while it is open so the inner `Select` arrow/Esc
  * keys don't double-fire transport shortcuts. The `c` key is the quick on/off.
  */
-import { computed, ref, toRef, onBeforeUnmount, watch } from 'vue';
+import { computed, ref, toRef, inject, onBeforeUnmount, watch } from 'vue';
 import Icon from '../Icon.vue';
 import IconButton from '../ui/IconButton.vue';
 import Select from '../ui/Select.vue';
@@ -30,12 +30,15 @@ import { usePlayerStore, MEDIA_OFFSET_STEP_SECONDS } from '../../stores/usePlaye
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
 import { useMessages } from '../../composables/useMessages';
 import type { CaptionSize, CaptionBackground, CaptionEdge } from '../../stores/usePreferencesStore';
+import type { PhlixAppConfig } from '../../app/types';
 import {
   type TextTrackInfo,
   CAPTION_SIZE_OPTIONS,
   CAPTION_COLOR_OPTIONS,
   CAPTION_BACKGROUND_OPTIONS,
   CAPTION_EDGE_OPTIONS,
+  localizeCaptionOptions,
+  trackDisplayLabel,
 } from './captions';
 
 const props = withDefaults(
@@ -65,6 +68,14 @@ const player = usePlayerStore();
 const prefs = usePreferencesStore();
 // Aliased to avoid colliding with the `t` track loop variables in the template.
 const { t: translate } = useMessages();
+// Locale plumbing (finding phlix-ui-player-018): option + language labels are
+// resolved at RENDER time against the app's message locale, never baked in.
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
+const messageLocale = computed(() => config?.locale ?? null);
+const sizeOptions = computed(() => localizeCaptionOptions(CAPTION_SIZE_OPTIONS, translate));
+const colorOptions = computed(() => localizeCaptionOptions(CAPTION_COLOR_OPTIONS, translate));
+const backgroundOptions = computed(() => localizeCaptionOptions(CAPTION_BACKGROUND_OPTIONS, translate));
+const edgeOptions = computed(() => localizeCaptionOptions(CAPTION_EDGE_OPTIONS, translate));
 
 const rootEl = ref<HTMLElement | null>(null);
 const panelEl = ref<HTMLElement | null>(null);
@@ -260,7 +271,7 @@ onBeforeUnmount(() => {
           @click="selectSubtitle(t.language)"
         >
           <span class="capmenu__check"><Icon v-if="activeLang === t.language" name="check" /></span>
-          <span class="capmenu__optlabel">{{ t.label }}</span>
+          <span class="capmenu__optlabel">{{ trackDisplayLabel(t, translate, messageLocale) }}</span>
         </button>
       </div>
 
@@ -283,7 +294,7 @@ onBeforeUnmount(() => {
             @click="selectAudio(t.index)"
           >
             <span class="capmenu__check"><Icon v-if="activeAudio === t.index" name="check" /></span>
-            <span class="capmenu__optlabel">{{ t.label }}</span>
+            <span class="capmenu__optlabel">{{ trackDisplayLabel(t, translate, messageLocale) }}</span>
           </button>
         </div>
       </template>
@@ -314,7 +325,7 @@ onBeforeUnmount(() => {
           <span class="capmenu__fieldlabel">{{ translate('player.size') }}</span>
           <Select
             :model-value="prefs.captionStyle.size"
-            :options="CAPTION_SIZE_OPTIONS"
+            :options="sizeOptions"
             :label="translate('player.captionSize')"
             @update:model-value="setSize"
           />
@@ -323,7 +334,7 @@ onBeforeUnmount(() => {
           <span class="capmenu__fieldlabel">{{ translate('player.color') }}</span>
           <Select
             :model-value="prefs.captionStyle.textColor"
-            :options="CAPTION_COLOR_OPTIONS"
+            :options="colorOptions"
             :label="translate('player.captionColor')"
             @update:model-value="setColor"
           />
@@ -332,7 +343,7 @@ onBeforeUnmount(() => {
           <span class="capmenu__fieldlabel">{{ translate('player.background') }}</span>
           <Select
             :model-value="prefs.captionStyle.background"
-            :options="CAPTION_BACKGROUND_OPTIONS"
+            :options="backgroundOptions"
             :label="translate('player.captionBackground')"
             @update:model-value="setBackground"
           />
@@ -341,7 +352,7 @@ onBeforeUnmount(() => {
           <span class="capmenu__fieldlabel">{{ translate('player.edge') }}</span>
           <Select
             :model-value="prefs.captionStyle.edge"
-            :options="CAPTION_EDGE_OPTIONS"
+            :options="edgeOptions"
             :label="translate('player.captionEdge')"
             @update:model-value="setEdge"
           />

@@ -13,16 +13,22 @@ import CaptionsMenu from './CaptionsMenu.vue';
 import Select from '../ui/Select.vue';
 import { usePlayerStore } from '../../stores/usePlayerStore';
 import { usePreferencesStore } from '../../stores/usePreferencesStore';
+import { listSubtitleTracks } from './captions';
 import type { TextTrackInfo } from './captions';
+import { DE_MESSAGES } from '../../i18n/locales/de';
 
 function track(language: string, label: string, index = 0): TextTrackInfo {
   return { index, language, label, kind: 'subtitles' };
 }
 
 const mounted: ReturnType<typeof mount>[] = [];
-function mountMenu(props: Partial<{ tracks: TextTrackInfo[]; audioTracks: TextTrackInfo[]; activeAudio: number; open: boolean }> = {}) {
+function mountMenu(
+  props: Partial<{ tracks: TextTrackInfo[]; audioTracks: TextTrackInfo[]; activeAudio: number; open: boolean }> = {},
+  config: unknown = null,
+) {
   const w = mount(CaptionsMenu, {
     props: { tracks: [], audioTracks: [], activeAudio: -1, open: false, ...props },
+    global: { provide: { phlixConfig: config } },
     attachTo: document.body,
   });
   mounted.push(w);
@@ -328,5 +334,48 @@ describe('CaptionsMenu — delay steppers (S-ui-once-16)', () => {
     const w2 = mountMenu({ tracks: [EN], open: true });
     expect(buttons(w2, 'Subtitle delay').value.text()).toBe('+0.3s'); // hydrated display
     expect(usePlayerStore().subtitleOffset).toBe(0.3); // session mirror re-seeded from prefs
+  });
+});
+
+// ---- localized render (S-ui-player-07 / phlix-ui-player-018) ------------------
+
+describe('CaptionsMenu — option + track labels localize at render (S-ui-player-07)', () => {
+  it('caption style Selects render overridden option labels', async () => {
+    const w = mountMenu(
+      { tracks: [EN], open: true },
+      { messages: { player: { captionColorWhite: 'Weiß', captionEdgeOutline: 'Kontur' } } },
+    );
+    await nextTick();
+    const selects = w.findAllComponents(Select);
+    expect(selects[1].props('options').map((o) => (typeof o === 'object' ? o.label : String(o)))).toEqual(['Weiß', 'Yellow', 'Cyan', 'Green']);
+    expect(selects[3].props('options').map((o) => (typeof o === 'object' ? o.label : String(o)))).toContain('Kontur');
+  });
+
+  it('language-derived track labels resolve in the mounted message locale', async () => {
+    const video = {
+      textTracks: [
+        { kind: 'subtitles', label: '', language: 'de', mode: 'disabled', activeCues: null, addEventListener() {}, removeEventListener() {} },
+      ],
+    } as unknown as HTMLVideoElement;
+    const w = mountMenu({ tracks: listSubtitleTracks(video), open: true }, { locale: 'de', messages: DE_MESSAGES });
+    await nextTick();
+    const labels = w.findAll('.capmenu__optlabel').map((n) => n.text());
+    expect(labels).toContain('Deutsch');
+    expect(labels).not.toContain('German');
+  });
+
+  it('generated Track/Audio fallbacks resolve through the catalog', async () => {
+    const w = mountMenu(
+      {
+        tracks: [{ index: 0, language: '', label: 'Track 1', kind: 'subtitles', labelKind: 'generated' } as TextTrackInfo],
+        audioTracks: [{ index: 0, language: '', label: 'Audio 1', kind: 'audio', labelKind: 'generated' } as TextTrackInfo],
+        open: true,
+      },
+      { locale: 'de', messages: DE_MESSAGES },
+    );
+    await nextTick();
+    const labels = w.findAll('.capmenu__optlabel').map((n) => n.text());
+    expect(labels).toContain('Spur 1');
+    expect(labels).toContain('Tonspur 1');
   });
 });

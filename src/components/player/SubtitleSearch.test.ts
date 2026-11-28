@@ -13,6 +13,7 @@ import SubtitleSearch from './SubtitleSearch.vue';
 import { ApiClient, type SubtitleCandidate } from '../../api/client';
 import { MemoryTokenStore, makeFetch } from '../../api/test/memoryTokenStore';
 import { useToastStore } from '../../stores/useToastStore';
+import { DE_MESSAGES } from '../../i18n/locales/de';
 
 function candidate(over: Partial<SubtitleCandidate> = {}): SubtitleCandidate {
   return {
@@ -200,5 +201,24 @@ describe('SubtitleSearch — download', () => {
     const err = toasts.toasts.find((t) => t.tone === 'error');
     expect(err).toBeTruthy();
     expect(err!.message).toContain('no longer available');
+  });
+});
+
+// ---- language names follow the message locale (S-ui-player-07) ---------------
+
+describe('SubtitleSearch — locale-driven language names (S-ui-player-07)', () => {
+  it('renders picker language names in the active message locale, not hardcoded English', async () => {
+    const client = new ApiClient({ baseUrl: '', tokenStore: new MemoryTokenStore({ access: 't' }), fetchImpl: makeFetch([]).fetch });
+    const w = mount(SubtitleSearch, {
+      props: { open: true, mediaId: 'm-1', apiBase: '', preferredLangs: ['de'], client },
+      global: { provide: { phlixConfig: { locale: 'de', messages: DE_MESSAGES } } },
+      attachTo: document.body,
+    });
+    mounted.push(w);
+    await nextTick();
+    // The modal content teleports to <body> (house assertion pattern).
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('Deutsch');
+    expect(text).not.toContain('German');
   });
 });

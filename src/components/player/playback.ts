@@ -16,6 +16,8 @@
  * @license MIT
  */
 
+import type { CaptionLabelSource } from './captions';
+
 /** Containers a browser <video> can generally play directly (no transcode). */
 export const DIRECT_PLAY_EXTENSIONS = ['mp4', 'm4v', 'webm', 'ogg', 'ogv', 'mov'] as const;
 
@@ -183,6 +185,13 @@ export interface PlaybackAudioTrack {
   language: string;
   /** Human label (stream title → language → "Audio N"). */
   label: string;
+  /**
+   * How `label` was derived (finding phlix-ui-player-018): 'title' when the
+   * source provided a stream title, 'generated' for the numbered fallback
+   * (menus re-localize via the catalog); undefined when the label is a raw
+   * language code.
+   */
+  labelKind?: CaptionLabelSource;
   /** True for the source's default audio stream. */
   default: boolean;
   /** Audio codec identifier from the server (e.g. 'aac', 'ac3', 'ec-3', 'dts').
@@ -211,6 +220,7 @@ export function parsePlaybackAudioTracks(value: unknown): PlaybackAudioTrack[] {
       streamIndex: typeof streamIndexRaw === 'number' ? streamIndexRaw : index,
       language,
       label: title || language || `Audio ${index + 1}`,
+      labelKind: title ? 'title' : language ? undefined : 'generated',
       default: o.default === true,
       codec,
     });

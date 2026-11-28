@@ -11,6 +11,9 @@ import Spinner from '../components/ui/Spinner.vue';
 import ResumePrompt from '../components/player/ResumePrompt.vue';
 import RatingBadge from '../components/RatingBadge.vue';
 import SourcePriorityEditor from '../components/SourcePriorityEditor.vue';
+import CaptionsMenu from '../components/player/CaptionsMenu.vue';
+import Select from '../components/ui/Select.vue';
+import { createPinia, setActivePinia } from 'pinia';
 import { formatTime } from '../components/player/format-time';
 import type { PhlixAppConfig } from '../app/types';
 
@@ -119,5 +122,30 @@ describe('i18n adoption (design-026 remainder surfaces)', () => {
   it('SourcePriorityEditor: omitting messages renders the English default exactly', () => {
     const w = mountWith(SourcePriorityEditor, { modelValue: [], available: [], label: 'Movie sources' }, null);
     expect(w.text()).toContain('No sources — add one below.');
+  });
+});
+
+// ---- player chrome reaches the override seam (S-ui-player-07) ----------------
+
+describe('i18n adoption (S-ui-player-07)', () => {
+  it('CaptionsMenu: caption option labels + generated track fallbacks resolve through overrides', () => {
+    setActivePinia(createPinia());
+    const w = mount(CaptionsMenu, {
+      props: {
+        open: true,
+        tracks: [{ index: 0, language: '', label: 'Track 1', kind: 'subtitles', labelKind: 'generated' }],
+        audioTracks: [],
+        activeAudio: -1,
+      },
+      global: {
+        provide: {
+          phlixConfig: { messages: { player: { trackNumbered: 'Pista {number}', captionColorYellow: 'Gelb' } } },
+        },
+      },
+    });
+    wrappers.push(w);
+    expect(w.text()).toContain('Pista 1');
+    const colorSelect = w.findAllComponents(Select)[1];
+    expect(colorSelect.props('options').map((o) => (typeof o === 'object' ? o.label : String(o)))).toContain('Gelb');
   });
 });
