@@ -41,6 +41,12 @@ export const IT_MESSAGES = {
     searchPlaceholder: 'Cerca…',
     selectPlaceholder: 'Seleziona…',
     breadcrumb: 'Percorso di navigazione',
+    help: 'Guida',
+    helpFor: 'Guida per {field}',
+    learnMore: 'Scopri di più',
+    scrollLeft: 'Scorri a sinistra',
+    scrollRight: 'Scorri a destra',
+    toggle: 'Attiva o disattiva',
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
@@ -383,6 +389,9 @@ export const IT_MESSAGES = {
     shuffleNothing: 'Ancora nulla da riprodurre in ordine casuale.',
     shuffleQueued: 'Riproduzione casuale in coda.',
     shuffleFailed: 'Impossibile avviare la riproduzione casuale.',
+  },
+  media: {
+    new: 'Nuovo',
   },
   reader: {
     decreaseFont: 'Riduci dimensione del testo',

@@ -42,6 +42,12 @@ export const JA_MESSAGES = {
     searchPlaceholder: '検索…',
     selectPlaceholder: '選択…',
     breadcrumb: 'パンくずリスト',
+    help: 'ヘルプ',
+    helpFor: '{field} のヘルプ',
+    learnMore: '詳細を見る',
+    scrollLeft: '左にスクロール',
+    scrollRight: '右にスクロール',
+    toggle: 'トグル',
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
@@ -384,6 +390,9 @@ export const JA_MESSAGES = {
     shuffleNothing: 'シャッフル再生できるものがまだありません。',
     shuffleQueued: 'シャッフル再生を待機列に追加しました。',
     shuffleFailed: 'シャッフル再生を開始できませんでした。',
+  },
+  media: {
+    new: '新着',
   },
   reader: {
     decreaseFont: 'フォントサイズを小さくする',

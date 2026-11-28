@@ -57,6 +57,14 @@ export const DEFAULT_MESSAGES = {
     searchPlaceholder: 'Search…',
     selectPlaceholder: 'Select…',
     breadcrumb: 'Breadcrumb',
+    // S-ui-design-23 (design-027/028/050/051/052/054): one-liner chrome copy in
+    // HelpPopover/PageHint/Switch/MediaRow/Sheet now routes through the catalog.
+    help: 'Help',
+    helpFor: 'Help for {field}',
+    learnMore: 'Learn more',
+    scrollLeft: 'Scroll left',
+    scrollRight: 'Scroll right',
+    toggle: 'Toggle',
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
@@ -462,6 +470,10 @@ export const DEFAULT_MESSAGES = {
     shuffleNothing: 'Nothing to shuffle yet.',
     shuffleQueued: 'Shuffle queued.',
     shuffleFailed: 'Couldn’t start shuffle play.',
+  },
+  /** S-ui-design-23 (design-053): library-card badge vocabulary. */
+  media: {
+    new: 'New',
   },
   /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
   reader: {

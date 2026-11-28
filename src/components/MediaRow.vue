@@ -25,6 +25,9 @@ import Icon from './Icon.vue';
 import MediaCard from './MediaCard.vue';
 import EmptyState from './ui/EmptyState.vue';
 import Skeleton from './ui/Skeleton.vue';
+import { useMessages } from '../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -225,7 +228,7 @@ watch(
 
     <div v-if="error" class="media-row__error" role="alert">
       <span>{{ error }}</span>
-      <button type="button" class="media-row__retry" @click="emit('retry')">Retry</button>
+      <button type="button" class="media-row__retry" @click="emit('retry')">{{ t('common.retry') }}</button>
     </div>
 
     <div
@@ -233,7 +236,7 @@ watch(
       class="media-row__rail"
       role="status"
       aria-busy="true"
-      aria-label="Loading"
+      :aria-label="t('common.loading')"
     >
       <div v-for="n in skeletonCount" :key="n" class="media-row__cell" aria-hidden="true">
         <div class="media-row__skel-poster"><Skeleton variant="rect" radius="var(--radius-lg)" height="100%" /></div>
@@ -253,7 +256,7 @@ watch(
         v-show="showPrev"
         type="button"
         class="media-row__arrow media-row__arrow--prev"
-        aria-label="Scroll left"
+        :aria-label="t('common.scrollLeft')"
         @click="scrollByPage(-1)"
       >
         <Icon name="chevron-left" :size="24" />
@@ -284,7 +287,7 @@ watch(
         v-show="showNext"
         type="button"
         class="media-row__arrow media-row__arrow--next"
-        aria-label="Scroll right"
+        :aria-label="t('common.scrollRight')"
         @click="scrollByPage(1)"
       >
         <Icon name="chevron-right" :size="24" />

@@ -19,6 +19,9 @@
  */
 import Icon from '../Icon.vue';
 import { safeHref } from '../../utils/safeHref';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 withDefaults(
   defineProps<{
@@ -54,7 +57,7 @@ withDefaults(
         </a>
       </div>
       <details v-if="details" class="phlix-page-hint__details">
-        <summary>Learn more</summary>
+        <summary>{{ t('common.learnMore') }}</summary>
         <p>{{ details }}</p>
       </details>
     </div>

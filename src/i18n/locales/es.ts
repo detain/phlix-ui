@@ -43,6 +43,12 @@ export const ES_MESSAGES = {
     searchPlaceholder: 'Buscar…',
     selectPlaceholder: 'Seleccionar…',
     breadcrumb: 'Miga de pan',
+    help: 'Ayuda',
+    helpFor: 'Ayuda para {field}',
+    learnMore: 'Más información',
+    scrollLeft: 'Desplazar a la izquierda',
+    scrollRight: 'Desplazar a la derecha',
+    toggle: 'Alternar',
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
@@ -385,6 +391,9 @@ export const ES_MESSAGES = {
     shuffleNothing: 'Aún no hay nada que reproducir al azar.',
     shuffleQueued: 'Reproducción aleatoria en cola.',
     shuffleFailed: 'No se pudo iniciar la reproducción aleatoria.',
+  },
+  media: {
+    new: 'Nuevo',
   },
   reader: {
     decreaseFont: 'Reducir el tamaño de la fuente',

@@ -71,3 +71,44 @@ describe('Chip — disabled guard (S320)', () => {
     expect(w.emitted('click')).toBeUndefined();
   });
 });
+
+describe('Chip — remove-button label through the catalog (S-ui-design-23 / design-051)', () => {
+  function mountChip(props: Record<string, unknown> = {}, messages: Record<string, unknown> | null = null) {
+    return mount(Chip, {
+      props: { removable: true, ...props },
+      slots: { default: 'Sci-Fi' },
+      global: { provide: { phlixConfig: messages ? { messages } : null } },
+    });
+  }
+
+  it('default label renders the English catalog value byte-identically', () => {
+    expect(mountChip().find('.phlix-chip__remove').attributes('aria-label')).toBe('Remove');
+  });
+
+  it('the default is resolved through the catalog at render time, not a frozen prop default', () => {
+    // design-051: an eager withDefaults removeLabel:'Remove' outranks the
+    // consumer catalog (prop default wins before t() is consulted); with the
+    // default undefined the template's `removeLabel ?? t('itemActions.remove')`
+    // resolves per render, so a consumer override reaches the aria-label.
+    const w = mountChip({}, { itemActions: { remove: 'Entfernen' } });
+    expect(w.find('.phlix-chip__remove').attributes('aria-label')).toBe('Entfernen');
+  });
+
+  it('a locale-switched catalog still names the button (fresh mount reads the live catalog)', () => {
+    // The translator snapshots config at setup; "runtime" here means every
+    // render re-evaluates `removeLabel ?? t(...)` instead of freezing a string
+    // at module/prop-default time — a mount made after the consumer swaps
+    // locales must never carry the previous locale's label.
+    const first = mountChip();
+    expect(first.find('.phlix-chip__remove').attributes('aria-label')).toBe('Remove');
+    first.unmount();
+    const after = mountChip({}, { itemActions: { remove: 'Excluir' } });
+    expect(after.find('.phlix-chip__remove').attributes('aria-label')).toBe('Excluir');
+    after.unmount();
+  });
+
+  it('an explicit removeLabel prop still wins over the catalog', () => {
+    const w = mountChip({ removeLabel: 'Delete tag' }, { itemActions: { remove: 'Entfernen' } });
+    expect(w.find('.phlix-chip__remove').attributes('aria-label')).toBe('Delete tag');
+  });
+});

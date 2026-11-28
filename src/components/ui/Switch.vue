@@ -15,6 +15,9 @@
  * names the control via aria-labelledby. Reduced-motion aware.
  */
 import { useId } from 'vue';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -54,7 +57,7 @@ function toggle() {
       class="phlix-switch__control"
       :class="{ 'is-on': modelValue }"
       :aria-checked="modelValue"
-      :aria-label="label ? undefined : 'Toggle'"
+      :aria-label="label ? undefined : t('common.toggle')"
       :aria-labelledby="label ? id : undefined"
       :disabled="disabled"
       @click="toggle"

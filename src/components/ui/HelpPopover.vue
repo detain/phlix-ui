@@ -44,7 +44,7 @@ const id = `phlix-help-popover-${useId()}`;
 
 /** Accessible name for the (?) trigger — names its field whenever we know it. */
 const triggerLabel = computed(() =>
-  props.fieldLabel ? `Help for ${props.fieldLabel}` : 'Help',
+  props.fieldLabel ? t('common.helpFor', { field: props.fieldLabel }) : t('common.help'),
 );
 
 const open = ref(false);

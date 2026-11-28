@@ -16,7 +16,7 @@ type __VLS_Props = {
     icon?: IconName;
     size?: 'sm' | 'md';
     disabled?: boolean;
-    /** aria-label for the remove button; defaults to "Remove". */
+    /** aria-label for the remove button; defaults to the catalog's itemActions.remove. */
     removeLabel?: string;
     /** Overrides the main button's accessible name; defaults to the slot content. */
     ariaLabel?: string;
@@ -40,7 +40,6 @@ declare const __VLS_base: import("vue").DefineComponent<__VLS_Props, {}, {}, {},
     disabled: boolean;
     selected: boolean;
     removable: boolean;
-    removeLabel: string;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const __VLS_export: __VLS_WithSlots<typeof __VLS_base, __VLS_Slots>;
 declare const _default: typeof __VLS_export;

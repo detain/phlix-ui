@@ -3210,7 +3210,13 @@ var gn = {
 		missingSeasonId: "No season was selected. Choose one from the series page.",
 		searchPlaceholder: "Search…",
 		selectPlaceholder: "Select…",
-		breadcrumb: "Breadcrumb"
+		breadcrumb: "Breadcrumb",
+		help: "Help",
+		helpFor: "Help for {field}",
+		learnMore: "Learn more",
+		scrollLeft: "Scroll left",
+		scrollRight: "Scroll right",
+		toggle: "Toggle"
 	},
 	confirm: {
 		title: "Are you sure?",
@@ -3545,6 +3551,7 @@ var gn = {
 		shuffleQueued: "Shuffle queued.",
 		shuffleFailed: "Couldn’t start shuffle play."
 	},
+	media: { new: "New" },
 	reader: {
 		decreaseFont: "Decrease font size",
 		increaseFont: "Increase font size",
@@ -8269,7 +8276,7 @@ var xl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 			type: Boolean,
 			default: !1
 		},
-		removeLabel: { default: "Remove" },
+		removeLabel: {},
 		ariaLabel: {}
 	},
 	emits: [
@@ -8278,11 +8285,11 @@ var xl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 		"remove"
 	],
 	setup(e, { emit: t }) {
-		let n = e, r = t;
-		function c() {
-			n.disabled || (n.selected !== void 0 && r("update:selected", !n.selected), r("click"));
+		let { t: n } = J(), r = e, c = t;
+		function l() {
+			r.disabled || (r.selected !== void 0 && c("update:selected", !r.selected), c("click"));
 		}
-		return (t, n) => (x(), o("span", { class: g(["phlix-chip", [`phlix-chip--${e.size}`, {
+		return (t, r) => (x(), o("span", { class: g(["phlix-chip", [`phlix-chip--${e.size}`, {
 			"is-selected": e.selected,
 			"is-disabled": e.disabled
 		}]]) }, [s("button", {
@@ -8291,7 +8298,7 @@ var xl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 			disabled: e.disabled,
 			"aria-label": e.ariaLabel,
 			"aria-pressed": e.selected === void 0 ? void 0 : e.selected,
-			onClick: c
+			onClick: l
 		}, [e.icon ? (x(), i(Y, {
 			key: 0,
 			name: e.icon,
@@ -8301,11 +8308,11 @@ var xl = /*#__PURE__*/ X(/* @__PURE__ */ d({
 			type: "button",
 			class: "phlix-chip__remove",
 			disabled: e.disabled,
-			"aria-label": e.removeLabel,
-			onClick: n[0] ||= (e) => r("remove")
+			"aria-label": e.removeLabel ?? O(n)("itemActions.remove"),
+			onClick: r[0] ||= (e) => c("remove")
 		}, [u(Y, { name: "x" })], 8, lu)) : a("", !0)], 2));
 	}
-}), [["__scopeId", "data-v-6addaaaa"]]), du = ["aria-label"], fu = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-23521325"]]), du = ["aria-label"], fu = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "Spinner",
 	props: {
 		size: {},

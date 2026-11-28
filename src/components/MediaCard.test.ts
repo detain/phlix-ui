@@ -1553,3 +1553,22 @@ describe('MediaCard — coarsePointer follows the (hover: none) change event (UI
     expect(mq.removeEventListener).toHaveBeenCalled();
   });
 });
+
+describe('MediaCard — NEW badge through the catalog (S-ui-design-23 / design-053)', () => {
+  const recent = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+  function mountNew(messages: Record<string, unknown> | null = null) {
+    return mount(MediaCard, {
+      props: { item: media({ created_at: recent }) },
+      global: { provide: { phlixConfig: messages ? { messages } : null } },
+    });
+  }
+
+  it('badge renders the English catalog value byte-identically', () => {
+    expect(mountNew().find('.media-card__badge--new').text()).toBe('New');
+  });
+
+  it('a consumer catalog renames the badge (renders through the catalog, not a literal)', () => {
+    expect(mountNew({ media: { new: 'Neu' } }).find('.media-card__badge--new').text()).toBe('Neu');
+  });
+});

@@ -71,3 +71,22 @@ describe('PageHint — hostile link sanitization (M-UI-11)', () => {
     expect(links[3].attributes('href')).toBeUndefined();
   });
 });
+
+describe('PageHint — details disclosure name through the catalog (S-ui-design-23 / design-050)', () => {
+  function mountHint(messages: Record<string, unknown> | null = null) {
+    return mount(PageHint, {
+      props: { details: 'Longer explanation' },
+      slots: { default: 'Body' },
+      global: { provide: { phlixConfig: messages ? { messages } : null } },
+    });
+  }
+
+  it('summary renders the English catalog value byte-identically', () => {
+    expect(mountHint().find('.phlix-page-hint__details summary').text()).toBe('Learn more');
+  });
+
+  it('a consumer catalog renames the disclosure (renders through the catalog, not a literal)', () => {
+    const w = mountHint({ common: { learnMore: 'Mehr erfahren' } });
+    expect(w.find('.phlix-page-hint__details summary').text()).toBe('Mehr erfahren');
+  });
+});

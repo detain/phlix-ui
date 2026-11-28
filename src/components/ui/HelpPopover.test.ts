@@ -455,3 +455,28 @@ describe('HelpPopover — positioning', () => {
     expect((panel() as HTMLElement).style.left).toBe('696px');
   });
 });
+
+describe('HelpPopover — trigger names through the catalog (S-ui-design-23 / design-027)', () => {
+  function mountNamed(props: Record<string, unknown>, messages: Record<string, unknown>) {
+    return mount(HelpPopover, {
+      props: { helpText: 'Choose a strong password', ...props },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages } } },
+    });
+  }
+
+  it('both trigger names render from the consumer catalog: bare key and the {field} interpolation', () => {
+    const bare = mountNamed({}, { common: { help: 'Hilfe', helpFor: 'Hilfe zu {field}' } });
+    expect(bare.find('button').attributes('aria-label')).toBe('Hilfe');
+    const named = mountNamed({ fieldLabel: 'Discovery port' }, { common: { help: 'Hilfe', helpFor: 'Hilfe zu {field}' } });
+    expect(named.find('button').attributes('aria-label')).toBe('Hilfe zu Discovery port');
+    bare.unmount();
+    named.unmount();
+  });
+
+  it('the collapsed popover carries exactly one button (the bare find above is load-bearing)', () => {
+    const w = mountNamed({}, { common: { help: 'Hilfe', helpFor: 'Hilfe zu {field}' } });
+    expect(w.findAll('button')).toHaveLength(1);
+    w.unmount();
+  });
+});

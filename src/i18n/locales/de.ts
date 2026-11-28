@@ -41,6 +41,12 @@ export const DE_MESSAGES = {
     searchPlaceholder: 'Suchen…',
     selectPlaceholder: 'Auswählen…',
     breadcrumb: 'Brotkrumenavigation',
+    help: 'Hilfe',
+    helpFor: 'Hilfe zu {field}',
+    learnMore: 'Mehr erfahren',
+    scrollLeft: 'Nach links scrollen',
+    scrollRight: 'Nach rechts scrollen',
+    toggle: 'Umschalten',
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
@@ -383,6 +389,9 @@ export const DE_MESSAGES = {
     shuffleNothing: 'Noch nichts zum Mischen vorhanden.',
     shuffleQueued: 'Zufallswiedergabe vorgemerkt.',
     shuffleFailed: 'Die Zufallswiedergabe konnte nicht gestartet werden.',
+  },
+  media: {
+    new: 'Neu',
   },
   reader: {
     decreaseFont: 'Schriftgröße verringern',

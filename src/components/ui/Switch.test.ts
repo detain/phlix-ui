@@ -68,3 +68,26 @@ describe('Switch — disabled guard (S320)', () => {
     expect(w.emitted('update:modelValue')).toBeUndefined();
   });
 });
+
+describe('Switch — generic accessible name through the catalog (S-ui-design-23 / design-052)', () => {
+  function mountSwitch(props: Record<string, unknown> = {}, messages: Record<string, unknown> | null = null) {
+    return mount(Switch, {
+      props: { modelValue: false, ...props },
+      global: { provide: { phlixConfig: messages ? { messages } : null } },
+    });
+  }
+
+  it('label-less switch takes the English toggle name byte-identically', () => {
+    expect(mountSwitch().find('.phlix-switch__control').attributes('aria-label')).toBe('Toggle');
+  });
+
+  it('a consumer catalog names the fallback (renders through the catalog, not a literal)', () => {
+    const w = mountSwitch({}, { common: { toggle: 'Umschalten' } });
+    expect(w.find('.phlix-switch__control').attributes('aria-label')).toBe('Umschalten');
+  });
+
+  it('a visible label still suppresses the catalog name (aria-labelledby path unchanged)', () => {
+    const w = mountSwitch({ label: 'Autoplay' }, { common: { toggle: 'Umschalten' } });
+    expect(w.find('.phlix-switch__control').attributes('aria-label')).toBeUndefined();
+  });
+});

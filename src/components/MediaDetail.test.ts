@@ -1414,3 +1414,35 @@ describe('MediaDetail — hostile wire urls (M-UI-11)', () => {
     w.unmount();
   });
 });
+
+describe('MediaDetail — action chrome through the catalog (S-ui-design-23 / design-027)', () => {
+  function mountDetail(messages: Record<string, unknown>, props: Record<string, unknown> = {}) {
+    return mount(MediaDetail, {
+      props: { item: media(), showBack: true, canMatch: true, ...props },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages } } },
+    });
+  }
+
+  it('Back/Play/Match metadata render from consumer catalog values', () => {
+    const w = mountDetail({
+      player: { back: 'Zurück', play: 'Wiedergeben' },
+      itemActions: { matchMetadata: 'Metadaten abgleichen' },
+    });
+    const texts = w.findAllComponents(Button).map((b) => b.text().trim());
+    expect(texts).toContain('Zurück');
+    expect(texts).toContain('Wiedergeben');
+    expect(texts).toContain('Metadaten abgleichen');
+    expect(texts).not.toContain('Match metadata');
+    w.unmount();
+  });
+
+  it('the English defaults still render byte-identically through the same catalog calls', () => {
+    const w = mountDetail({});
+    const texts = w.findAllComponents(Button).map((b) => b.text().trim());
+    expect(texts).toContain('Back');
+    expect(texts).toContain('Play');
+    expect(texts).toContain('Match metadata');
+    w.unmount();
+  });
+});

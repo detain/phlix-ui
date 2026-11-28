@@ -584,3 +584,37 @@ describe('MediaRow — hover-lift headroom in the rail scroll box, built stylesh
     expect(css.match(/translateY\(-8px\)scale\(1\.025\)/g) ?? []).toHaveLength(2);
   });
 });
+
+describe('MediaRow — chrome labels through the catalog (S-ui-design-23 / design-029)', () => {
+  const three = [media({ id: 'a' }), media({ id: 'b' }), media({ id: 'c' })];
+
+  function mountRow(props: Record<string, unknown> = {}, messages: Record<string, unknown> | null = null) {
+    return mount(MediaRow, {
+      props: { title: 'X', items: three, ...props },
+      global: { provide: { phlixConfig: messages ? { messages } : null } },
+    });
+  }
+
+  it('retry, loading rail and both scroller arrows take their English names byte-identically', () => {
+    const err = mountRow({ items: [], error: 'Boom' });
+    expect(err.find('.media-row__retry').text()).toBe('Retry');
+    const load = mountRow({ items: [], loading: true });
+    expect(load.find('.media-row__rail').attributes('aria-label')).toBe('Loading');
+    const w = mountRow();
+    expect(w.find('.media-row__arrow--prev').attributes('aria-label')).toBe('Scroll left');
+    expect(w.find('.media-row__arrow--next').attributes('aria-label')).toBe('Scroll right');
+  });
+
+  it('a consumer catalog reaches all four affordances (renders through the catalog, not literals)', () => {
+    const messages = {
+      common: { retry: 'Wiederholen', loading: 'Lädt', scrollLeft: 'Nach links scrollen', scrollRight: 'Nach rechts scrollen' },
+    };
+    const err = mountRow({ items: [], error: 'Boom' }, messages);
+    expect(err.find('.media-row__retry').text()).toBe('Wiederholen');
+    const load = mountRow({ items: [], loading: true }, messages);
+    expect(load.find('.media-row__rail').attributes('aria-label')).toBe('Lädt');
+    const w = mountRow({}, messages);
+    expect(w.find('.media-row__arrow--prev').attributes('aria-label')).toBe('Nach links scrollen');
+    expect(w.find('.media-row__arrow--next').attributes('aria-label')).toBe('Nach rechts scrollen');
+  });
+});

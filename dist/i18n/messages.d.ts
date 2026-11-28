@@ -52,6 +52,12 @@ export declare const DEFAULT_MESSAGES: {
         searchPlaceholder: string;
         selectPlaceholder: string;
         breadcrumb: string;
+        help: string;
+        helpFor: string;
+        learnMore: string;
+        scrollLeft: string;
+        scrollRight: string;
+        toggle: string;
     };
     /** Generic chrome for the shared ConfirmDialog (R13-05). */
     confirm: {
@@ -397,6 +403,10 @@ export declare const DEFAULT_MESSAGES: {
         shuffleNothing: string;
         shuffleQueued: string;
         shuffleFailed: string;
+    };
+    /** S-ui-design-23 (design-053): library-card badge vocabulary. */
+    media: {
+        new: string;
     };
     /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
     reader: {

@@ -15,6 +15,9 @@
  * Optional leading icon. Keyboard-operable, :focus-visible, reduced-motion aware.
  */
 import Icon, { type IconName } from '../Icon.vue';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -24,12 +27,12 @@ const props = withDefaults(
     icon?: IconName;
     size?: 'sm' | 'md';
     disabled?: boolean;
-    /** aria-label for the remove button; defaults to "Remove". */
+    /** aria-label for the remove button; defaults to the catalog's itemActions.remove. */
     removeLabel?: string;
     /** Overrides the main button's accessible name; defaults to the slot content. */
     ariaLabel?: string;
   }>(),
-  { selected: undefined, removable: false, size: 'sm', disabled: false, removeLabel: 'Remove' },
+  { selected: undefined, removable: false, size: 'sm', disabled: false },
 );
 
 const emit = defineEmits<{
@@ -63,7 +66,7 @@ function onMain() {
       type="button"
       class="phlix-chip__remove"
       :disabled="disabled"
-      :aria-label="removeLabel"
+      :aria-label="removeLabel ?? t('itemActions.remove')"
       @click="emit('remove')"
     >
       <Icon name="x" />

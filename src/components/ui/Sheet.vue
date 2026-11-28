@@ -15,6 +15,9 @@
 import { ref, useId, watch } from 'vue';
 import IconButton from './IconButton.vue';
 import { useFocusTrap } from './useFocusTrap';
+import { useMessages } from '../../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -66,7 +69,7 @@ useFocusTrap(panelEl, open, {
         >
           <header v-if="title || !hideClose" class="phlix-sheet__header">
             <h2 v-if="title" :id="titleId" class="phlix-sheet__title">{{ title }}</h2>
-            <IconButton v-if="!hideClose" name="x" label="Close" size="sm" @click="close" />
+            <IconButton v-if="!hideClose" name="x" :label="t('common.close')" size="sm" @click="close" />
           </header>
           <div class="phlix-sheet__body"><slot /></div>
           <footer v-if="$slots.footer" class="phlix-sheet__footer"><slot name="footer" /></footer>

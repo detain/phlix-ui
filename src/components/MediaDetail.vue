@@ -683,7 +683,7 @@ onBeforeUnmount(() => {
     </template>
 
     <div class="media-detail__bar">
-      <Button v-if="showBack" variant="ghost" size="sm" left-icon="arrow-left" @click="emit('back')">Back</Button>
+      <Button v-if="showBack" variant="ghost" size="sm" left-icon="arrow-left" @click="emit('back')">{{ t('player.back') }}</Button>
     </div>
 
     <div class="media-detail__hero">
@@ -767,7 +767,7 @@ onBeforeUnmount(() => {
         <p class="media-detail__overview">{{ item.overview || 'No overview available.' }}</p>
 
         <div class="media-detail__actions">
-          <Button variant="solid" left-icon="play" @click="emit('play', item)">Play</Button>
+          <Button variant="solid" left-icon="play" @click="emit('play', item)">{{ t('player.play') }}</Button>
           <Button v-if="resumeLabel" variant="outline" left-icon="rewind" @click="emit('resume', item)">
             Resume <span class="media-detail__resume-at numeric">{{ resumeLabel }}</span>
           </Button>
@@ -847,7 +847,7 @@ onBeforeUnmount(() => {
             </template>
           </Menu>
 
-          <Button v-if="canMatch" variant="outline" left-icon="search" @click="emit('match', item)">Match metadata</Button>
+          <Button v-if="canMatch" variant="outline" left-icon="search" @click="emit('match', item)">{{ t('itemActions.matchMetadata') }}</Button>
         </div>
 
         <div v-if="providerLinks.length" class="media-detail__links">

@@ -561,7 +561,7 @@ const genres = computed(() => props.item.genres?.slice(0, 3) ?? []);
       </div>
 
       <div class="media-card__badges">
-        <span v-if="isNew" class="media-card__badge media-card__badge--new">New</span>
+        <span v-if="isNew" class="media-card__badge media-card__badge--new">{{ t('media.new') }}</span>
         <slot name="badges" :item="item" />
         <span v-if="quality" class="media-card__badge media-card__badge--quality">{{ quality }}</span>
       </div>

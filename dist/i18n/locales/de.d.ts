@@ -38,6 +38,12 @@ export declare const DE_MESSAGES: {
         searchPlaceholder: string;
         selectPlaceholder: string;
         breadcrumb: string;
+        help: string;
+        helpFor: string;
+        learnMore: string;
+        scrollLeft: string;
+        scrollRight: string;
+        toggle: string;
     };
     /** Generic chrome for the shared ConfirmDialog (R13-05). */
     confirm: {
@@ -374,6 +380,9 @@ export declare const DE_MESSAGES: {
         shuffleNothing: string;
         shuffleQueued: string;
         shuffleFailed: string;
+    };
+    media: {
+        new: string;
     };
     reader: {
         decreaseFont: string;

@@ -45,6 +45,12 @@ export const FR_MESSAGES = {
     searchPlaceholder: 'Rechercher…',
     selectPlaceholder: 'Sélectionner…',
     breadcrumb: 'Fil d’Ariane',
+    help: 'Aide',
+    helpFor: 'Aide pour {field}',
+    learnMore: 'En savoir plus',
+    scrollLeft: 'Faire défiler vers la gauche',
+    scrollRight: 'Faire défiler vers la droite',
+    toggle: 'Basculer',
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
@@ -387,6 +393,9 @@ export const FR_MESSAGES = {
     shuffleNothing: 'Rien à lire en aléatoire pour l’instant.',
     shuffleQueued: 'Lecture aléatoire mise en file d’attente.',
     shuffleFailed: 'Impossible de lancer la lecture aléatoire.',
+  },
+  media: {
+    new: 'Nouveau',
   },
   reader: {
     decreaseFont: 'Réduire la taille du texte',
