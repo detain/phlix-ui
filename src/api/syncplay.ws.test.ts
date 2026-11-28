@@ -886,13 +886,18 @@ describe('sendSyncPlayCommand', () => {
         expect(s.sent).toEqual([]);
     });
 
-    it('sync → a playback_sync position report marked playing', () => {
+    it('sync with no rate → a playback_sync report reflects the DERIVED playing state', () => {
+        // phlix-ui-player-038 (authorized contract flip, r1 MINOR-2): the old pin
+        // encoded the fabricated `is_playing: true`. The builder now derives it —
+        // this fixture's ack carries no `playback_state`, which the vendored client
+        // normalizes to 'stopped', so the honest frame says false. Absence of
+        // evidence is never evidence of playing (client's own :2685 precedent).
         const s = connected();
         expect(sendSyncPlayCommand({ type: 'sync', position: 77, ...base })).toBe(true);
         expect(sentTypes(s)).toEqual(['syncplay_playback_sync']);
         const frame = JSON.parse(s.sent[0]!) as { position: number; is_playing: boolean };
         expect(frame.position).toBe(77);
-        expect(frame.is_playing).toBe(true);
+        expect(frame.is_playing).toBe(false);
     });
 
     it('sync with NO position sends nothing at all — and REPORTS non-delivery', () => {

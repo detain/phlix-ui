@@ -336,9 +336,14 @@ describe('phlix-ui-player-039 — reconnect rungs are tracked and owned by their
         openSyncPlayConnection('sp_room_a', undefined, 'm1', 'Ada');
         socket().deliver(roomAck('sp_room_a'));
         socket().onclose?.(); // arms rung #1 at +1000 (fresh budget)
+        expect(vi.getTimerCount()).toBe(1); // the control half: exactly one rung is queued
 
         vi.advanceTimersByTime(100);
         openSyncPlayConnection('sp_room_b', undefined, 'm1', 'Ada'); // caller join: rung #1 must die
+        // The kill must be a REAL clearTimeout. A helper that only forgets the id
+        // leaves an untracked ghost in the queue — falsifiable here, where the join
+        // is the only reason a timer would be gone.
+        expect(vi.getTimerCount()).toBe(0);
 
         vi.advanceTimersByTime(100); // t=200
         socket().onclose?.(); // B drops: ITS rung at +1000 (openSyncPlayConnection reset the budget)
@@ -364,6 +369,11 @@ describe('phlix-ui-player-039 — reconnect rungs are tracked and owned by their
 
         vi.advanceTimersByTime(500);
         socket().onclose?.(); // a second close must NOT arm a parallel rung
+        // Never-stack law, timer-count leg: exactly the one rung from t=0 remains
+        // queued. (Under a null-only clear helper the t=0 rung is still pending
+        // here, so this arm is the ghost mutation's; the join leg in the case above
+        // and the close→re-join-same-room case below carry the cancel conviction.)
+        expect(vi.getTimerCount()).toBe(1);
 
         vi.advanceTimersByTime(500); // t=1000 — rung #1 dials, ON TIME, exactly once
         expect(FakeWebSocket.instances).toHaveLength(2);
@@ -400,5 +410,25 @@ describe('phlix-ui-player-039 — reconnect rungs are tracked and owned by their
             .find((frame) => frame['type'] === 'syncplay_group_join');
         expect(join).toBeDefined();
         expect(join!['group_id']).toBe('sp_room_a');
+    });
+
+    it('close→re-join of the SAME room leaves NO ghost rung in the timer queue', () => {
+        // phlix-ui-player-039 (reviewer r1 MINOR-1): the join-cancel must actually
+        // CANCEL. A `clearSyncPlayReconnectTimer` reduced to forgetting the id
+        // keeps the old setTimeout queued; on a close→re-join of the SAME room the
+        // ghost passes its own schedule-time room guard (the room is back) and only
+        // the dedupe mask hides the dial. The TIMER COUNT is the falsifiable leg —
+        // zero pending rungs after the re-join.
+        openSyncPlayConnection('sp_room_a', undefined, 'm1', 'Ada');
+        socket().deliver(roomAck('sp_room_a'));
+        socket().onclose?.(); // arms rung #1 at +1000
+        expect(vi.getTimerCount()).toBe(1);
+
+        openSyncPlayConnection('sp_room_a', undefined, 'm1', 'Ada'); // re-join SAME room
+        expect(vi.getTimerCount()).toBe(0); // the rung must be CANCELLED, not forgotten
+        expect(FakeWebSocket.instances).toHaveLength(2);
+
+        vi.advanceTimersByTime(5_000); // no ghost may ring at the old tick — or ever
+        expect(FakeWebSocket.instances).toHaveLength(2);
     });
 });

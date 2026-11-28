@@ -1363,7 +1363,7 @@ function bo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-Bo17MUhi.js")
+			component: () => import("./PlayerPage-CJD1yzXm.js")
 		},
 		{
 			path: `${t}/login`,
@@ -1411,7 +1411,7 @@ function bo(e) {
 			path: `${t}/syncplay`,
 			name: "syncplay",
 			meta: { title: "syncplay.syncPlay" },
-			component: () => import("./SyncPlayPage-DD3RPR5c.js")
+			component: () => import("./SyncPlayPage-D1wmWFu7.js")
 		},
 		{
 			path: `${t}/music`,

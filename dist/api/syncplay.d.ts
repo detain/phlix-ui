@@ -293,6 +293,11 @@ export declare function setSyncPlayLogger(logger: SyncPlayLogger | null | undefi
 export type SyncPlayWireErrorListener = (code: string, message: string) => void;
 /** Install (or, with `null`, remove) the `syncplay_error` consumer. */
 export declare function setSyncPlayWireErrorListener(listener: SyncPlayWireErrorListener | null): void;
+/**
+ * Parse failures observed since the last caller-initiated connect.
+ * Test/diagnostic seam for phlix-ui-player-040.
+ */
+export declare function getSyncPlayParseErrorCount(): number;
 /** Fires on every transition of the parked state (give-up ⇒ `true`, any
  *  re-arm / re-join / explicit close ⇒ `false`). Injectable-slot law: same
  *  shape as {@link setSyncPlayLogger} — this module does not know what a
@@ -371,7 +376,8 @@ export declare function sendSyncPlayStateUpdate(state: SyncPlayStateUpdate): voi
  * dropped one. It now REPORTS delivery honestly:
  *
  * - `false` — no frame reached the wire (no client, no socket, socket not
- *   OPEN, or a seek/sync with no position to put in the frame). The exact
+ *   OPEN, a seek/sync with no position to put in the frame, or a seek whose
+ *   origin position is not nameable from the cached group). The exact
  *   conditions the old guards covered, unchanged behavior, now observable.
  * - `true` — the protocol client handed a serialized frame to an OPEN socket.
  *   A `WebSocket.send()` that THROWS (the `InvalidStateError` race) still
