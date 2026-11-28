@@ -18,6 +18,6 @@
 // pipeline that knows nothing about the define.
 declare const __PHLIX_UI_VERSION__: string | undefined;
 
-/** The exact package.json version this bundle was built from, e.g. '0.99.11'. */
+/** The exact version this bundle was built from — matches package.json version. */
 export const phlixUiVersion: string =
     typeof __PHLIX_UI_VERSION__ === 'string' ? __PHLIX_UI_VERSION__ : '0.0.0-dev';
