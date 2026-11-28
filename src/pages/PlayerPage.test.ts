@@ -1060,7 +1060,10 @@ describe('PlayerPage — edge cases', () => {
     const fetchMock = vi.fn().mockRejectedValue('network gone'); // non-Error throw
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
-    expect(w.text()).toContain('Failed to load media');
+    // [phlix-ui-player-015] the generic copy is now the localized catalog
+    // sentence; the old English 'Failed to load media' literal is retired.
+    expect(w.text()).toContain('Something went wrong.');
+    expect(w.text()).not.toContain('network gone');
   });
 
   it('shows an error and skips fetching when the route has no media id', async () => {
@@ -1649,7 +1652,11 @@ describe('PlayerPage — a superseded applyItem() must not write the new item’
     failGate.resolve(errorResponse(500, { error: 'A exploded' }));
     await flushPromises();
     await flushPromises();
-    expect(w1.text()).toContain('A exploded');
+    // [phlix-ui-player-015] non-inertness still holds — the SAME held failure
+    // produces a visible error state — but the visible copy is now the
+    // localized generic sentence, not the raw 'A exploded' server text.
+    expect(w1.text()).toContain('Something went wrong.');
+    expect(w1.text()).not.toContain('A exploded');
     expect(w1.findComponent(Player).exists()).toBe(false);
 
     const emptyGate = deferred<Response>();

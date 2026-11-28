@@ -500,6 +500,9 @@ export declare const DEFAULT_MESSAGES: {
         errorCreate: string;
         errorJoin: string;
         errorLeave: string;
+        errorLoadRooms: string;
+        errorRefreshState: string;
+        errorRefreshMembers: string;
         commandNotDelivered: string;
         yourRole: string;
         roleOwner: string;

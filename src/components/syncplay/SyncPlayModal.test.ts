@@ -197,7 +197,7 @@ describe('SyncPlayModal — opening', () => {
         expect(server!.requests).toHaveLength(2);
     });
 
-    it('survives a room listing that 404s — the modal opens with no rooms', async () => {
+    it('a room listing that 404s surfaces an error + retry row, not the empty-list disguise [phlix-ui-player-036]', async () => {
         server = makeSyncPlayServer(API_BASE, { omit: ['GET /api/v1/syncplay/groups'] });
         await openModal();
 
@@ -205,6 +205,40 @@ describe('SyncPlayModal — opening', () => {
         expect(exists('.syncplay-modal__rooms')).toBe(false);
         // The catch must not leave the spinner up forever.
         expect(exists('.syncplay-modal__loading')).toBe(false);
+        // Create mode never shows the rooms list, so the failure row is not
+        // owed there yet — the join tab is where the empty list would lie.
+        expect(exists('.syncplay-modal__rooms-error')).toBe(false);
+        await tab('Join room').trigger('click');
+        await flushPromises();
+
+        const row = q('.syncplay-modal__rooms-error');
+        expect(row.attributes('role')).toBe('alert');
+        expect(row.text()).toContain('Couldn’t load the rooms.');
+        expect(row.text()).not.toContain('Not found'); // raw server text stays dev-side
+        // A retry control rides the row; clicking it re-issues the listing.
+        expect(row.find('button').exists()).toBe(true);
+        await row.find('button').trigger('click');
+        await flushPromises();
+        expect(server.requests.map((r) => `${r.method} ${r.path} → ${r.status}`)).toEqual([
+            'GET /api/v1/syncplay/groups → 404',
+            'GET /api/v1/syncplay/groups → 404',
+        ]);
+    });
+
+    it('a successful re-load clears the rooms error row [phlix-ui-player-036]', async () => {
+        server = makeSyncPlayServer(API_BASE, { omit: ['GET /api/v1/syncplay/groups'] });
+        await openModal();
+        await tab('Join room').trigger('click');
+        await flushPromises();
+        expect(exists('.syncplay-modal__rooms-error')).toBe(true);
+
+        // The route comes back between attempts (the server seam is per-test,
+        // so swap in a registering server before clicking retry).
+        server = makeSyncPlayServer(API_BASE);
+        await q('.syncplay-modal__rooms-error button').trigger('click');
+        await flushPromises();
+        expect(exists('.syncplay-modal__rooms-error')).toBe(false);
+        expect(exists('.syncplay-modal__rooms')).toBe(true);
     });
 });
 
@@ -826,5 +860,55 @@ describe('SyncPlayModal — apiBase', () => {
         expect(server!.requests.map((r) => `${r.path} → ${r.status}`)).toEqual([
             '/api/v1/syncplay/groups → 200',
         ]);
+    });
+});
+
+// ── phlix-ui-player-015 — the submit error rail is localized, raw text is console-only ──
+
+describe('SyncPlayModal — localized submit error rail', () => {
+    it('a failed create shows the localized copy, never the server debug text [phlix-ui-player-015]', async () => {
+        const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+        server = makeSyncPlayServer(API_BASE, { omit: ['POST /api/v1/syncplay/groups'] });
+        const w = await openModal();
+        await nameInput().setValue('Movie Night');
+        await submitBtn(w).trigger('click');
+        await flushPromises();
+
+        expect(q('.syncplay-modal__error').text()).toBe('Couldn’t create the room.');
+        expect(q('.syncplay-modal__error').text()).not.toContain('Not found');
+        // The raw 'Not found' from the fake 404 rode e.message into the DOM
+        // before the inversion; it is now developer-channel only.
+        expect(noise.mock.calls.flat().join(' ')).toContain('Not found');
+    });
+
+    it('a failed join shows the localized copy and keeps the debug text out of the DOM [phlix-ui-player-015]', async () => {
+        const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+        server = makeSyncPlayServer(API_BASE, { omit: ['POST /api/v1/syncplay/groups/{id}/join'] });
+        const w = await openModal({ prefilledRoomId: GROUP_ID });
+        await submitBtn(w).trigger('click');
+        await flushPromises();
+
+        expect(q('.syncplay-modal__error').text()).toBe('Couldn’t join the room.');
+        expect(noise.mock.calls.flat().join(' ')).toContain('Not found');
+    });
+
+    it('a registered wire code on a submit failure localizes through the catalog [phlix-ui-player-015]', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        server = {
+            requests: [],
+            fetch: () =>
+                Promise.resolve(
+                    new Response(JSON.stringify({ error: 'GROUP FULL DEBUG', code: 'syncplay.group_full' }), {
+                        status: 409,
+                        headers: { 'content-type': 'application/json' },
+                    }),
+                ),
+        } as unknown as FakeSyncPlayServer;
+        const w = await openModal({ prefilledRoomId: GROUP_ID });
+        await submitBtn(w).trigger('click');
+        await flushPromises();
+
+        expect(q('.syncplay-modal__error').text()).toBe('That watch group is full.');
+        expect(q('.syncplay-modal__error').text()).not.toContain('GROUP FULL DEBUG');
     });
 });

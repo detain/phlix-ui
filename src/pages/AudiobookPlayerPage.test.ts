@@ -182,10 +182,11 @@ describe('AudiobookPlayerPage — i18n adoption and error rail (phlix-ui-player-
     const w = await mountAt(makeRouter());
     await flushPromises();
     // playbackBlockingMessage returns null (unknown code, no legacy text match);
-    // mediaLoadErrorMessage surfaces the ApiError's own message — PlayerPage's
-    // documented server-text posture. What must NOT appear is the base page's
-    // swallow-everything 'Could not load audiobook'.
-    expect(w.find('.player-error').text()).toBe('mystery-text');
+    // [phlix-ui-player-015] the rail now shows the localized generic copy —
+    // the raw server-side 'mystery-text' is developer-channel only. What must
+    // NOT appear is the base page's swallow-everything 'Could not load audiobook'.
+    expect(w.find('.player-error').text()).toBe('Something went wrong.');
+    expect(w.find('.player-error').text()).not.toContain('mystery-text');
     w.unmount();
   });
 

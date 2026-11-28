@@ -8,17 +8,20 @@
  * @license MIT
  */
 
-import { describe, expect, it } from 'vitest';
-import { playbackBlockingMessage, mediaLoadErrorMessage } from './playerErrors';
+import { describe, expect, it, vi } from 'vitest';
+import { playbackBlockingMessage, mediaLoadErrorMessage, localizedFailureMessage } from './playerErrors';
 import { ApiError } from '../api/errors';
-import { ERROR_MESSAGES } from '../i18n/errors';
+import { ERROR_MESSAGES, GENERIC_ERROR_MESSAGE } from '../i18n/errors';
 
 describe('playbackBlockingMessage', () => {
-  it('matches the legacy AccessScheduled pseudo-code in the error TEXT (pre-W2 era)', () => {
+  it('matches the legacy AccessScheduled pseudo-code in the error TEXT (pre-W2 era) [phlix-ui-player-029]', () => {
     // Phlix-server has always emitted exactly 'AccessScheduled' (with the d) in
-    // the error text — AccessScheduleMiddleware pre- and post-W2 alike.
+    // the error text — AccessScheduleMiddleware pre- and post-W2 alike. The
+    // legacy match still identifies the block, but the USER-VISIBLE copy now
+    // routes through the localized catalog (phlix-ui-player-029): the English
+    // literal embedded in the source never reaches a member.
     expect(playbackBlockingMessage({ error: 'AccessScheduled' })).toBe(
-      'Playback blocked by access schedule. Try again during allowed hours.',
+      ERROR_MESSAGES.en['access.scheduled'],
     );
   });
 
@@ -28,9 +31,9 @@ describe('playbackBlockingMessage', () => {
     );
   });
 
-  it('matches the legacy StreamLimitExceeded pseudo-code in the error TEXT (pre-W2 era)', () => {
+  it('matches the legacy StreamLimitExceeded pseudo-code in the error TEXT (pre-W2 era) [phlix-ui-player-029]', () => {
     expect(playbackBlockingMessage({ error: 'StreamLimitExceeded' })).toBe(
-      'Stream limit reached. Stop another stream to continue watching.',
+      ERROR_MESSAGES.en['stream.limit_exceeded'],
     );
   });
 
@@ -51,10 +54,12 @@ describe('playbackBlockingMessage', () => {
 
   it('falls through to the legacy text match when `code` is present but unregistered', () => {
     // Hub SCREAMING words ride `code` today; they must not block via this rail,
-    // and a legacy `error` text on the same body still matches (transition safety).
+    // and a legacy `error` text on the same body still matches (transition
+    // safety) — but the matched copy is now the localized catalog sentence
+    // [phlix-ui-player-029], not the embedded English literal.
     expect(
       playbackBlockingMessage({ code: 'AUTHORIZATION_FAILED', error: 'StreamLimitExceeded' }),
-    ).toBe('Stream limit reached. Stop another stream to continue watching.');
+    ).toBe(ERROR_MESSAGES.en['stream.limit_exceeded']);
     expect(playbackBlockingMessage({ code: 'AUTHORIZATION_FAILED', error: 'Other' })).toBeNull();
   });
 
@@ -85,7 +90,13 @@ describe('playbackBlockingMessage', () => {
     const coded: unknown[] = [];
     Object.defineProperty(coded, 'code', { value: 'stream.limit_exceeded', enumerable: true, writable: true });
     expect(playbackBlockingMessage(coded)).toBeNull();
-    expect(mediaLoadErrorMessage(coded)).toBe('Failed to load media');
+    // [phlix-ui-player-015] the refused throw is neither an Error nor a coded
+    // ApiError, so the inverted rail lands on the localized generic copy —
+    // and a non-Error value is never echoed to the console either.
+    const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(mediaLoadErrorMessage(coded)).toBe(GENERIC_ERROR_MESSAGE.en);
+    expect(noise).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
 
     const legacy: unknown[] = [];
     Object.defineProperty(legacy, 'error', { value: 'AccessScheduled', enumerable: true, writable: true });
@@ -114,17 +125,74 @@ describe('mediaLoadErrorMessage', () => {
     expect(mediaLoadErrorMessage(e)).toBe(ERROR_MESSAGES.en['server.relay_unavailable']);
   });
 
-  it('keeps the Error message for an unregistered code (unknowns behave as before)', () => {
+  it('routes an unregistered-code error’s raw text to the console, NOT to the member [phlix-ui-player-015]', () => {
+    // The old rail echoed the server/proxy debug string straight into the DOM.
+    // Inverted: the member-facing string is the localized generic copy and the
+    // raw detail is console-only (developer channel).
+    const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
     const e = new ApiError('Weird proxy text', 502, { error: 'Weird proxy text', code: 'proxy.nope' });
-    expect(mediaLoadErrorMessage(e)).toBe('Weird proxy text');
+    expect(mediaLoadErrorMessage(e)).toBe(GENERIC_ERROR_MESSAGE.en);
+    expect(noise).toHaveBeenCalledTimes(1);
+    expect(noise.mock.calls[0]?.join(' ')).toContain('Weird proxy text');
+    vi.restoreAllMocks();
   });
 
-  it('passes a network TypeError message through (blips stay as informative as before)', () => {
-    expect(mediaLoadErrorMessage(new TypeError('fetch failed'))).toBe('fetch failed');
+  it('routes a network TypeError message to the console, not the member [phlix-ui-player-015]', () => {
+    const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(mediaLoadErrorMessage(new TypeError('fetch failed'))).toBe(GENERIC_ERROR_MESSAGE.en);
+    expect(noise).toHaveBeenCalledTimes(1);
+    expect(noise.mock.calls[0]?.join(' ')).toContain('fetch failed');
+    vi.restoreAllMocks();
   });
 
-  it('falls back to the page string for non-Error throws and message-less Errors', () => {
-    expect(mediaLoadErrorMessage({})).toBe('Failed to load media');
-    expect(mediaLoadErrorMessage(new Error(''))).toBe('Failed to load media');
+  it('falls back to the localized generic copy for non-Error throws and message-less Errors [phlix-ui-player-015]', () => {
+    const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(mediaLoadErrorMessage({})).toBe(GENERIC_ERROR_MESSAGE.en);
+    expect(mediaLoadErrorMessage(new Error(''))).toBe(GENERIC_ERROR_MESSAGE.en);
+    // A message-less Error and a non-Error throw carry nothing dev-useful —
+    // the inverted rail must NOT cry console wolf for them.
+    expect(noise).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+});
+
+/**
+ * [phlix-ui-player-015] the shared inversion helper: a registered wire code
+ * localizes through the catalog untouched; everything else surfaces the
+ * CALLER's localized fallback string while the raw detail is console-only.
+ */
+describe('localizedFailureMessage', () => {
+  it('resolves a registered wire code through the catalog and stays silent', () => {
+    const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const e = new ApiError('DEBUG', 503, { error: 'DEBUG', code: 'server.relay_unavailable' });
+    expect(localizedFailureMessage(e, 'en', 'Fallback copy')).toBe(
+      ERROR_MESSAGES.en['server.relay_unavailable'],
+    );
+    expect(noise).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it('returns the caller fallback for an unregistered raw Error and logs the raw text', () => {
+    const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(localizedFailureMessage(new Error('socket hang up'), 'de', 'Lokaler Text')).toBe(
+      'Lokaler Text',
+    );
+    expect(noise).toHaveBeenCalledTimes(1);
+    expect(noise.mock.calls[0]?.join(' ')).toContain('socket hang up');
+    vi.restoreAllMocks();
+  });
+
+  it('returns the caller fallback for a non-Error throw WITHOUT a console line', () => {
+    const noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(localizedFailureMessage('a bare string', undefined, 'Plain copy')).toBe('Plain copy');
+    expect(noise).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it('honours the locale for a registered code', () => {
+    const e = new ApiError('X', 503, { code: 'server.relay_unavailable' });
+    expect(localizedFailureMessage(e, 'ja', 'Ignored')).toBe(
+      ERROR_MESSAGES.ja['server.relay_unavailable'],
+    );
   });
 });

@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Error rails speak the member's language and a failed room listing admits it 2026-11-28 (S-ui-player-14)
+
+### Fixed
+
+* Raw server and network debug text no longer reaches member-facing copy (findings phlix-ui-player-015, phlix-ui-player-029, phlix-ui-player-036). Every player/SyncPlay failure rail is INVERTED: a registered wire code still localizes through the contracts catalog, but anything the catalog does not name now shows the caller's localized fallback while the raw `Error` message is echoed to the developer console instead of the DOM. This covers the SyncPlay store's five failure rails (create, join, leave, and the two refresh paths, the last pair newly minted as `syncplay.errorRefreshState` and `syncplay.errorRefreshMembers`), the modal's submit fallback (replacing the hardcoded English "Operation failed"), and `mediaLoadErrorMessage`'s generic card (whose English 'Failed to load media' literal is replaced by the catalog's localized generic label). The legacy `AccessScheduled`/`StreamLimitExceeded` pseudo-code arms of `playbackBlockingMessage` now resolve their copy through the catalog codes they stand for (`access.scheduled`, `stream.limit_exceeded`) in the configured locale instead of embedded English sentences. And a SyncPlay room listing that fails no longer disguises itself as an empty list: `SyncPlayModal` shows a localized error row with a Retry action (reusing `common.retry` plus the new `syncplay.errorLoadRooms`) that re-issues the request. Three catalog keys are minted across all seven locale bundles and the prose trio rotates 826 to 829 in the same commit; the S-ui-player-05 liveness pins, the S-ui-player-19 rollback leg and the S-ui-player-33 error-decoding exports all stand unchanged.
+
 ## Unreleased — Transcode poll survives transient HTTP blips, the failure notice gains Retry, and the transcode path resumes where it stopped 2026-11-28 (S-ui-player-13)
 
 ### Fixed

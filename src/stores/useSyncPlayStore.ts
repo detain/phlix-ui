@@ -9,10 +9,11 @@
  */
 
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import type { SyncPlayRoom, SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
 import type { JoinedGroup } from '../api/syncplay';
 import type { PendingPlayMediaCommand } from '../api/hubRelay';
+import type { PhlixAppConfig } from '../app/types';
 import { hashGroupPassword } from '../utils/syncplaySha256';
 import {
   getSyncPlayApi,
@@ -24,6 +25,7 @@ import {
   sendSyncPlayStateUpdate,
 } from '../api/syncplay';
 import { useMessages } from '../composables/useMessages';
+import { localizedFailureMessage } from '../pages/playerErrors';
 import { useAuthStore } from './useAuthStore';
 
 /** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
@@ -231,6 +233,10 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   // source for these status lines — they carry the periods the old literals
   // lacked (status-sentence law, review writer m6).
   const { t } = useMessages();
+  // phlix-ui-player-015: the catalog locale seam, same key the modal/controls
+  // use (M-UI-12) — `inject` with a default is safe outside a component app
+  // context (bare Pinia tests), where it degrades to `null` → 'en'.
+  const config = inject<PhlixAppConfig | null>('phlixConfig', null);
   // ---- state --------------------------------------------------------------
   const currentRoom = ref<SyncPlayRoom | null>(null);
   const currentSession = ref<SyncPlaySession | null>(null);
@@ -515,7 +521,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
         passwordHash,
       );
     } catch (e) {
-      error.value = e instanceof Error ? e.message : t('syncplay.errorCreate');
+      error.value = localizedFailureMessage(e, config?.locale, t('syncplay.errorCreate'));
       // phlix-ui-player-023: the room was created but we are not in it — leave
       // it best-effort so no orphan group survives this failed attempt. The
       // rollback runs AFTER `error.value` is set and its own failure is
@@ -575,7 +581,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
         passwordHash,
       );
     } catch (e) {
-      error.value = e instanceof Error ? e.message : t('syncplay.errorJoin');
+      error.value = localizedFailureMessage(e, config?.locale, t('syncplay.errorJoin'));
       throw e;
     } finally {
       isLoading.value = false;
@@ -600,7 +606,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
         // through `error` (the surfaces read it) and tear down regardless;
         // rethrowing here was the trap: no local state was cleared and the
         // two callers have no catch.
-        error.value = e instanceof Error ? e.message : t('syncplay.errorLeave');
+        error.value = localizedFailureMessage(e, config?.locale, t('syncplay.errorLeave'));
       }
     } finally {
       // S287: stop reporting BEFORE the socket goes, so a tick cannot land on a
@@ -761,7 +767,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       currentSession.value = session;
       _lastDriftCaptureMs = Date.now(); // anchor for drift computation
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to refresh state.';
+      error.value = localizedFailureMessage(e, config?.locale, t('syncplay.errorRefreshState'));
       throw e;
     }
   }
@@ -776,7 +782,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
       const membersList = await api.getMembers(currentRoom.value.id);
       members.value = membersList;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to refresh members.';
+      error.value = localizedFailureMessage(e, config?.locale, t('syncplay.errorRefreshMembers'));
       throw e;
     }
   }

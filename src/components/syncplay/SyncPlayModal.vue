@@ -46,6 +46,7 @@ import Icon from '../Icon.vue';
 import { useMessages } from '../../composables/useMessages';
 import { useSyncPlayStore } from '../../stores/useSyncPlayStore';
 import { SyncPlayApi, isSyncPlayInvalidPassword } from '../../api/syncplay';
+import { localizedFailureMessage } from '../../pages/playerErrors';
 import type { PhlixAppConfig } from '../../app/types';
 import { errorCodeMessage } from '../../i18n/errors';
 import type { SyncPlayRoom } from '../../types/syncplay';
@@ -116,6 +117,8 @@ const passwordInputEl = ref<HTMLInputElement | null>(null);
 const config = inject<PhlixAppConfig | null>('phlixConfig', null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+/** phlix-ui-player-036: a failed room listing is an ERROR, not an empty list. */
+const roomsLoadError = ref(false);
 // M-UI-14: the join listing shows EVERY visible room — locked ones carry a
 // lock icon and pre-require the field. The old `publicRooms` filter hid the
 // locked rooms this modal can now enter.
@@ -137,6 +140,7 @@ watch(
   async (open) => {
     if (open) {
       error.value = null;
+      roomsLoadError.value = false;
       roomName.value = '';
       // M-UI-14: every open is a fresh form — the credential and the "locked"
       // escalation never bleed into the next attempt.
@@ -160,6 +164,7 @@ watch(
 // ---- methods ------------------------------------------------------------
 async function loadRooms(): Promise<void> {
   isLoadingRooms.value = true;
+  roomsLoadError.value = false;
   try {
     const api = new SyncPlayApi(effectiveApiBase.value);
     // M-UI-14: unfiltered listing; the server's members-or-admin scoping is
@@ -167,8 +172,13 @@ async function loadRooms(): Promise<void> {
     // is required. (Outsiders never see other people's rooms anyway — a
     // locked room reached by raw id/join-link still prompts via the 400.)
     rooms.value = await api.listGroups();
-  } catch {
+  } catch (e) {
+    // phlix-ui-player-036: the old bare `catch { rooms.value = []; }` disguised
+    // a failed listing as "no rooms exist". The failure now owns an error +
+    // retry row; the raw detail goes to the developer console only.
     rooms.value = [];
+    roomsLoadError.value = true;
+    console.error('[phlix-ui] SyncPlay room listing failed:', e instanceof Error ? e.message : e);
   } finally {
     isLoadingRooms.value = false;
   }
@@ -208,7 +218,14 @@ async function submit(): Promise<void> {
       error.value = errorCodeMessage('syncplay.invalid_password', config?.locale, null);
       void nextTick(() => passwordInputEl.value?.focus());
     } else {
-      error.value = e instanceof Error ? e.message : 'Operation failed';
+      // phlix-ui-player-015: the raw `e.message` (server/proxy debug text)
+      // used to go straight into the DOM. Members read the localized catalog
+      // /copy fallback; the raw detail is console-only now.
+      error.value = localizedFailureMessage(
+        e,
+        config?.locale,
+        mode.value === 'create' ? t('syncplay.errorCreate') : t('syncplay.errorJoin'),
+      );
     }
   } finally {
     isLoading.value = false;
@@ -357,6 +374,16 @@ function close(): void {
 
       <!-- Error message -->
       <p v-if="error" class="syncplay-modal__error" role="alert">{{ error }}</p>
+
+      <!-- phlix-ui-player-036: a failed room listing renders an error + retry
+           row instead of disguising itself as the empty list. Plain button:
+           the footer's Button pair is index-pinned in tests/consumers. -->
+      <div v-if="mode === 'join' && roomsLoadError" class="syncplay-modal__rooms-error" role="alert">
+        <span>{{ t('syncplay.errorLoadRooms') }}</span>
+        <button class="syncplay-modal__rooms-retry" type="button" @click="loadRooms">
+          {{ t('common.retry') }}
+        </button>
+      </div>
 
       <!-- Rooms list (M-UI-14: locked rooms are listed with a lock, not hidden) -->
       <div v-if="mode === 'join' && rooms.length > 0" class="syncplay-modal__rooms">
@@ -544,6 +571,31 @@ function close(): void {
   border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
   color: var(--error);
   font-size: var(--text-sm);
+}
+
+/* phlix-ui-player-036 — same error treatment as the submit rail, plus an
+   inline retry affordance so the failure is recoverable without re-opening. */
+.syncplay-modal__rooms-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--error) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  color: var(--error);
+  font-size: var(--text-sm);
+}
+
+.syncplay-modal__rooms-retry {
+  border: 1px solid currentColor;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
 }
 
 .syncplay-modal__rooms {

@@ -169,3 +169,112 @@ describe('SYNC_DRIFT_THRESHOLD_SECONDS', () => {
     expect(SYNC_DRIFT_THRESHOLD_SECONDS).toBe(2);
   });
 });
+
+// ── phlix-ui-player-015 — the store error rails are localized ─────────────────
+//
+// The old rails wrote `e.message` (server debug text, English wire strings)
+// straight into `store.error`, which pages render verbatim to members. The
+// inverted rails (S-ui-player-14) keep the member-facing string localized and
+// route raw detail to console.error only. These pins drive the REAL client
+// through the route-manifest fake server (S276 law: no vi.mock of the API).
+
+import { makeSyncPlayServer, type FakeSyncPlayServer } from '../api/test/syncplayServer';
+import type { SyncPlayRoom } from '../types/syncplay';
+
+const RAIL_BASE = 'https://media.example.com';
+
+// Stable delegating fetch: `ApiClient` binds globalThis.fetch at CONSTRUCTION
+// and the SyncPlayApi memo survives files, exactly like the actions suite.
+let railServer: FakeSyncPlayServer | null = null;
+globalThis.fetch = ((url: string, init?: RequestInit): Promise<Response> => {
+  if (!railServer) return Promise.reject(new Error('no fake SyncPlay server installed'));
+  return railServer.fetch(url, init);
+}) as unknown as typeof fetch;
+
+describe('useSyncPlayStore — localized error rails [phlix-ui-player-015]', () => {
+  let noise: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    noise = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  const rawSeen = (): string => noise.mock.calls.flat().map(String).join(' ');
+
+  const failFetch = (response: () => Promise<Response> | Promise<never>) =>
+    ({ requests: [], fetch: response } as unknown as FakeSyncPlayServer);
+
+  it('a failed create records the localized copy, raw text console-only', async () => {
+    railServer = makeSyncPlayServer(RAIL_BASE, { omit: ['POST /api/v1/syncplay/groups'] });
+    const store = useSyncPlayStore();
+    await expect(store.createAndJoinRoom(RAIL_BASE, { name: 'x' })).rejects.toThrow();
+    expect(store.error).toBe('Couldn’t create the room.');
+    expect(store.error).not.toContain('Not found');
+    expect(rawSeen()).toContain('Not found'); // e instanceof Error arm
+  });
+
+  it('a failed join records the localized copy', async () => {
+    railServer = makeSyncPlayServer(RAIL_BASE, { omit: ['POST /api/v1/syncplay/groups/{id}/join'] });
+    const store = useSyncPlayStore();
+    await expect(store.joinRoom(RAIL_BASE, 'sp_abc123')).rejects.toThrow();
+    expect(store.error).toBe('Couldn’t join the room.');
+    expect(rawSeen()).toContain('Not found');
+  });
+
+  it('a failed leave records the localized copy and still resolves', async () => {
+    railServer = makeSyncPlayServer(RAIL_BASE, { omit: ['POST /api/v1/syncplay/groups/{id}/leave'] });
+    const store = useSyncPlayStore();
+    store.currentRoom = { id: 'sp_abc123', name: 'Movie Night', isPublic: true, memberCount: 2 };
+    await expect(store.leaveRoom(RAIL_BASE)).resolves.toBeUndefined();
+    expect(store.error).toBe('Couldn’t leave the room.');
+  });
+
+  it('a plain Error rejection keeps its text OFF the member rail', async () => {
+    railServer = failFetch(() => Promise.reject(new Error('RAIL-RAW-DETAIL')));
+    const store = useSyncPlayStore();
+    await expect(store.joinRoom(RAIL_BASE, 'sp_abc123')).rejects.toThrow();
+    expect(store.error).toBe('Couldn’t join the room.');
+    expect(rawSeen()).toContain('RAIL-RAW-DETAIL');
+  });
+
+  it('a non-Error rejection is localized and console-silent', async () => {
+    railServer = failFetch(() => Promise.reject('a bare string, not an Error'));
+    const store = useSyncPlayStore();
+    await expect(store.joinRoom(RAIL_BASE, 'sp_abc123')).rejects.toBeTruthy();
+    expect(store.error).toBe('Couldn’t join the room.');
+    expect(noise).not.toHaveBeenCalled();
+  });
+
+  it('a registered wire code localizes through the catalog, debug text console-only', async () => {
+    railServer = failFetch(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ error: 'GROUP FULL DEBUG', code: 'syncplay.group_full' }), {
+          status: 409,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    );
+    const store = useSyncPlayStore();
+    await expect(store.joinRoom(RAIL_BASE, 'sp_abc123')).rejects.toThrow();
+    expect(store.error).toBe('That watch group is full.');
+    expect(noise).not.toHaveBeenCalled(); // catalog arm never cries to console
+  });
+
+  it('refreshState records the NEW localized key, not the raw 404 text', async () => {
+    railServer = makeSyncPlayServer(RAIL_BASE, { omit: ['GET /api/v1/syncplay/groups/{id}'] });
+    const store = useSyncPlayStore();
+    store.currentSession = makeSession();
+    await expect(store.refreshState(RAIL_BASE)).rejects.toThrow();
+    expect(store.error).toBe('Couldn’t refresh the room state.');
+    expect(rawSeen()).toContain('Not found');
+  });
+
+  it('refreshMembers records the NEW localized key, not the raw 404 text', async () => {
+    railServer = makeSyncPlayServer(RAIL_BASE, { omit: ['GET /api/v1/syncplay/groups/{id}'] });
+    const store = useSyncPlayStore();
+    const room: SyncPlayRoom = { id: 'sp_abc123', name: 'Movie Night', isPublic: true, memberCount: 2 };
+    store.currentRoom = room;
+    await expect(store.refreshMembers(RAIL_BASE)).rejects.toThrow();
+    expect(store.error).toBe('Couldn’t refresh the member list.');
+    expect(rawSeen()).toContain('Not found');
+  });
+});

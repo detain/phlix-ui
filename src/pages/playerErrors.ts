@@ -17,7 +17,9 @@
  * `null` and the caller keeps its existing SWR/generic error path, matching
  * pre-W4 behavior for every non-matching 403/429 body.
  *
- * Pure + side-effect free so it is unit-testable without mounting PlayerPage.
+ * Pure + side-effect free (apart from the developer console echo documented on
+ * {@link localizedFailureMessage}) so the rails are unit-testable without
+ * mounting PlayerPage.
  * @copyright 2026 Joe Huss <detain@interserver.net>
  * @license MIT
  */
@@ -48,6 +50,10 @@ function readWireString(body: unknown, key: 'code' | 'error'): string | null {
 /**
  * Resolve a hard playback block from an `ApiError` body, or `null` when the
  * body carries neither a registered code nor a legacy pseudo-code text.
+ *
+ * phlix-ui-player-029: when only the legacy SCREAMING text matches, the copy
+ * is no longer an English literal embedded here — it routes through the
+ * localized catalog for the canonical code that text stands for.
  */
 export function playbackBlockingMessage(
   body: unknown,
@@ -62,28 +68,35 @@ export function playbackBlockingMessage(
   }
   const legacyText = readWireString(body, 'error');
   if (legacyText === LEGACY_ACCESS_SCHEDULE_TEXT) {
-    return 'Playback blocked by access schedule. Try again during allowed hours.';
+    return errorCodeMessage('access.scheduled', locale);
   }
   if (legacyText === LEGACY_STREAM_LIMIT_TEXT) {
-    return 'Stream limit reached. Stop another stream to continue watching.';
+    return errorCodeMessage('stream.limit_exceeded', locale);
   }
   return null;
 }
 
 /**
- * Copy for the GENERIC media-load failure card (the non-403/429 arm of
- * PlayerPage's by-id catch). Error-code doctrine (W4): a REGISTERED wire
- * `code` localizes through the contracts catalog — the server's English
- * debug text is never what a member reads. Anything the catalog doesn't
- * name (unregistered code, plain network `TypeError`, or a non-Error throw)
- * keeps the page's pre-existing behavior verbatim: the Error's own message
- * when it has one, else the page's own 'Failed to load media' string.
- * Pure, like {@link playbackBlockingMessage}, so the rail is unit-testable
- * without mounting the heavy SFC.
+ * The shared error-rail inversion (phlix-ui-player-015): members read
+ * localized text, developers read the raw detail — never the other way round.
+ *
+ * Order:
+ *   1. An `ApiError` whose body carries a REGISTERED wire `code` resolves
+ *      through the contracts catalog for `locale` (server English debug text
+ *      is doctrine-ineligible for member-facing copy) and logs nothing.
+ *   2. Anything else returns the CALLER's `localized` fallback string. When
+ *      the throw is an Error with a real message, that raw text is echoed to
+ *      `console.error` (the developer channel) instead of into the DOM;
+ *      non-Error throws and message-less Errors carry nothing dev-useful, so
+ *      they stay silent.
+ *
+ * Pure of behavior beyond the console echo; side-effect-testable without
+ * mounting any page.
  */
-export function mediaLoadErrorMessage(
+export function localizedFailureMessage(
   e: unknown,
-  locale?: PhlixErrorLocale | null,
+  locale: PhlixErrorLocale | null | undefined,
+  localized: string,
 ): string {
   if (e instanceof ApiError) {
     const wireCode = readWireString(e.body, 'code');
@@ -91,6 +104,28 @@ export function mediaLoadErrorMessage(
       return errorCodeMessage(wireCode, locale);
     }
   }
-  const message = e instanceof Error ? e.message : '';
-  return message !== '' ? message : 'Failed to load media';
+  if (e instanceof Error && e.message !== '') {
+    console.error('[phlix-ui] unlocalized error detail:', e.message);
+  }
+  return localized;
+}
+
+/**
+ * Copy for the GENERIC media-load failure card (the non-403/429 arm of
+ * PlayerPage's by-id catch). Error-code doctrine (W4 + phlix-ui-player-015):
+ * a REGISTERED wire `code` localizes through the contracts catalog — the
+ * server's English debug text is never what a member reads — and every other
+ * shape now rides the inverted rail: the member gets the localized generic
+ * label from the catalog, while any raw Error message (unregistered proxy
+ * debug strings, `TypeError('fetch failed')`, …) is console-only instead of
+ * leaking into the DOM. The pre-inversion fallback was the page's own
+ * 'Failed to load media' string; the catalog generic ('Something went
+ * wrong.') replaces it so the copy follows the locale.
+ * Like {@link playbackBlockingMessage}, pure apart from the developer echo.
+ */
+export function mediaLoadErrorMessage(
+  e: unknown,
+  locale?: PhlixErrorLocale | null,
+): string {
+  return localizedFailureMessage(e, locale, errorCodeMessage(null, locale));
 }
