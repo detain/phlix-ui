@@ -164,7 +164,9 @@ describe('usePlayerStore — command bus (external transport seam)', () => {
     const p = usePlayerStore();
     p.setQueue([media('q1'), media('q2')]);
     p.playLocalFile('file:///movies/My%20Film.mkv');
-    expect(p.current?.id).toBe('local');
+    // S-ui-player-18: the synthetic id is per-file unique, no longer the shared 'local'
+    expect(p.current?.id).not.toBe('local');
+    expect(p.current?.id.startsWith('local-')).toBe(true);
     expect(p.current?.name).toBe('My Film.mkv'); // url basename, decoded
     expect(p.current?.type).toBe('movie');
     expect(p.streamUrl).toBe('file:///movies/My%20Film.mkv');
@@ -713,5 +715,72 @@ describe('usePlayerStore — autoplay-forced vs user mute (per-source law)', () 
     p.muteForAutoplay(); // this source rejected too → forced again, correctly
     expect(p.muted).toBe(true);
     expect(p.autoplayMuted).toBe(true);
+  });
+});
+
+// S-ui-player-18 (phlix-ui-player-022): local files used to share the synthetic
+// id 'local', so resumeMap/lastTouched bled across different files — pausing
+// Alpha silenced B's fresh start and made B's progress overwrite A's. Each file
+// now gets a deterministic unique id derived from its URL path.
+describe('usePlayerStore — S-ui-player-18 unique local-file ids', () => {
+  it('two different local files yield two DIFFERENT non-\'local\' synthetic ids', () => {
+    const p = usePlayerStore();
+    p.playLocalFile('file:///movies/Alpha.mkv');
+    const idA = p.current!.id;
+    p.playLocalFile('file:///movies/Beta.mkv');
+    const idB = p.current!.id;
+    expect(idA).not.toBe('local');
+    expect(idB).not.toBe('local');
+    expect(idA).not.toBe(idB);
+  });
+
+  it('two files sharing a basename but different paths never collide', () => {
+    const p = usePlayerStore();
+    p.playLocalFile('file:///movies/one/movie.mkv');
+    const idOne = p.current!.id;
+    p.playLocalFile('file:///movies/two/movie.mkv');
+    expect(p.current!.id).not.toBe(idOne);
+  });
+
+  it('resume state saved for file A is NOT read back for file B', () => {
+    const p = usePlayerStore();
+    p.playLocalFile('file:///movies/Alpha.mkv');
+    const idA = p.current!.id;
+    p.updateProgress(60, 120); // in band → saved under A's id
+    expect(p.resumePositionFor(idA)).toBe(60);
+    p.playLocalFile('file:///movies/Beta.mkv');
+    const idB = p.current!.id;
+    expect(p.resumePositionFor(idB)).toBeNull(); // B starts fresh, no bleed from A
+    p.updateProgress(90, 120); // B's own progress…
+    expect(p.resumePositionFor(idB)).toBe(90);
+    expect(p.resumePositionFor(idA)).toBe(60); // …never clobbers A's
+  });
+
+  it('the same file re-loaded yields the SAME id (stable across reloads)', () => {
+    const p = usePlayerStore();
+    p.playLocalFile('file:///movies/Alpha.mkv');
+    const idA = p.current!.id;
+    p.playLocalFile('file:///movies/Beta.mkv'); // interleave another file
+    p.playLocalFile('file:///movies/Alpha.mkv'); // back to A → same id
+    expect(p.current!.id).toBe(idA);
+    // a fresh store instance (page reload) derives the same id for the same file
+    setActivePinia(createPinia());
+    const p2 = usePlayerStore();
+    p2.playLocalFile('file:///movies/Alpha.mkv');
+    expect(p2.current!.id).toBe(idA);
+  });
+
+  it('query/hash noise on the same path does not fork the id', () => {
+    const p = usePlayerStore();
+    p.playLocalFile('file:///movies/Alpha.mkv?ts=1');
+    const idQ1 = p.current!.id;
+    p.playLocalFile('file:///movies/Alpha.mkv?ts=2#frag');
+    expect(p.current!.id).toBe(idQ1); // cache-buster ≠ a different file
+  });
+
+  it('a host-supplied meta.id still overrides the derived id (law preserved)', () => {
+    const p = usePlayerStore();
+    p.playLocalFile('file:///movies/Alpha.mkv', { id: 'host-given' });
+    expect(p.current!.id).toBe('host-given');
   });
 });

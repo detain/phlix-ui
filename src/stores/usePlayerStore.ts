@@ -83,6 +83,47 @@ function readTouchedMap(): Record<string, number> {
   }
 }
 
+/** Deterministic 32-bit FNV-1a over UTF-16 code units; Math.imul keeps every
+ *  step in the exact-integer 32-bit lane, `>>> 0` normalises to unsigned. */
+function fnv1a32(input: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h = Math.imul(h ^ input.charCodeAt(i), 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+/** Deterministic 32-bit djb2 (h*33 + c) — an independent second stream so the
+ *  composed id carries ~64 bits of discrimination, not 32. */
+function djb2(input: string): number {
+  let h = 5381;
+  for (let i = 0; i < input.length; i++) {
+    h = (Math.imul(h, 33) + input.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+/**
+ * Synthetic media id for a LOCAL file (S-ui-player-18): a per-file-unique,
+ * deterministic key derived from the URL path — query/hash stripped and
+ * percent-decoded, so the same file keeps the same id across reloads even
+ * when the host adds cache-buster noise. Replaces the old shared constant
+ * 'local', under which every local file collided in resumeMap/lastTouched
+ * and paused positions bled across different videos. Two pure integer hash
+ * streams (FNV-1a + djb2, base-36) keep this dependency-free, stable across
+ * engines, and free of any crypto/secure-context requirement.
+ */
+function localMediaId(url: string): string {
+  const path = url.split(/[?#]/)[0];
+  let key = path;
+  try {
+    key = decodeURIComponent(path);
+  } catch {
+    /* malformed percent-escape — hash the raw path (deterministic either way) */
+  }
+  return `local-${fnv1a32(key).toString(36)}-${djb2(key).toString(36)}`;
+}
+
 /**
  * Parse a requested volume onto the store's 0–1 scale — the single channel
  * every volume write flows through. Non-finite input is refused (null):
@@ -331,15 +372,16 @@ export const usePlayerStore = defineStore('phlix-player', () => {
 
   /**
    * Play an arbitrary local file (Windows host "Open File…"). Builds a minimal
-   * synthetic MediaItem (stable id `'local'`, title from `meta` or the URL
-   * basename) and routes it through the EXISTING setCurrent so all the usual
-   * media-session + transport seeding runs, then clears the queue (a local file
-   * has no up-next). `url` becomes the stream URL with a fresh position.
+   * synthetic MediaItem (per-file-unique id derived from the URL — see
+   * `localMediaId`; title from `meta` or the URL basename) and routes it
+   * through the EXISTING setCurrent so all the usual media-session + transport
+   * seeding runs, then clears the queue (a local file has no up-next). `url`
+   * becomes the stream URL with a fresh position.
    */
   function playLocalFile(url: string, meta: Partial<MediaItem> = {}): void {
     const basename = decodeURIComponent(url.split(/[?#]/)[0].split('/').pop() ?? '') || url;
     const item: MediaItem = {
-      id: 'local',
+      id: localMediaId(url),
       name: basename,
       type: 'movie',
       poster_url: null,

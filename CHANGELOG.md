@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Unique local-file resume id 2026-11-28 (S-ui-player-18)
+
+### Fixed
+
+- Player: `playLocalFile` now gives each local file a per-file-unique synthetic media id — a deterministic `local-<fnv1a32>-<djb2>` digest of the URL path (query/hash stripped, percent-decoded) — instead of the shared constant `'local'`, so `resumeMap`/`lastTouched` can no longer bleed a paused position from one opened file into another or let one file clobber the other's resume state (finding phlix-ui-player-022; S-ui-player-18). Real media-id items are untouched; a host-supplied `meta.id` still overrides the derived id, and the same file re-loaded yields the same id (no crypto/secure-context dependency).
+
+
 ## Unreleased — person/actor detail accepted gap 2026-11-27 (S-ui-once-39)
 
 ### Added
