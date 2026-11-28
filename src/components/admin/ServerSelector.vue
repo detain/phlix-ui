@@ -34,6 +34,10 @@ const emit = defineEmits<{
 function relativeTime(ts: number | null): string {
   if (!ts || !Number.isFinite(ts)) return 'Never';
   const s = Math.floor((Date.now() / 1000) - ts);
+  // Clock skew (a hub timestamp ahead of the browser clock) or a timestamp
+  // written in the current tick makes the elapsed value negative; it must
+  // never render as '-4s ago'. A future timestamp is simply 'just now'.
+  if (s < 0) return 'just now';
   if (s < 60) return `${s}s ago`;
   const m = Math.floor(s / 60);
   if (m < 60) return `${m}m ago`;
