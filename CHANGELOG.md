@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Audiobook player copy localized and error rail + Scrubber adoption 2026-11-28 (S-ui-player-08)
+
+### Changed
+
+- AudiobookPlayerPage: every user-facing string now resolves through the `useMessages` catalog — nine new `player.*` keys (`backToAudiobook` sentence-cased from the hardcoded 'Back to Audiobook', `byAuthor`/`chapterNumber` parameterized out of template concatenation, `skipBack30`/`skipForward30`/`playbackSpeedValue`, and `audiobookInvalidId`/`audiobookNotFound`/`audiobookLoadFailed` error copy) with all six locale bundles carried per the exact-key-identity law; load failures route through the `playerErrors` rail (`playbackBlockingMessage` decodes 403/429 hard blocks, `mediaLoadErrorMessage` localizes registered wire codes via `errorCodeMessage`) so a bare thrown string can never reach the screen; and the hand-rolled fill + hidden-range seek bar is replaced by the shared `Scrubber` primitive (chapter ticks included). VolumeControl is not adopted: it is store-bound (props-less, reads `usePlayerStore`/preferences), while the audiobook page keeps its local volume state — a redesign, not a reuse (finding phlix-ui-player-019).
+
+
 ## Unreleased — Sleep fade keeps user volume: resume re-mirrors store onto element 2026-11-28 (S-ui-player-31)
 
 ### Fixed

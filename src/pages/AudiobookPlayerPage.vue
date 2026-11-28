@@ -13,13 +13,17 @@
  * Data: `GET /api/v1/audiobooks/{id}/read` via {@link ApiClient}.
  * Progress: `POST /api/v1/audiobooks/{id}/progress` via {@link ApiClient}.
  */
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, inject, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMediaApiBase, useMediaDirectBase } from '../composables/useApiBase';
 import { useImageSrc } from '../composables/useImageSrc';
-import { ApiClient } from '../api/client';
+import { useMessages } from '../composables/useMessages';
+import { ApiClient, ApiError } from '../api/client';
 import type { AudiobookDetail, AudiobookChapter, AudiobookProgress, SaveAudiobookProgressInput } from '../types/audiobook';
+import { playbackBlockingMessage, mediaLoadErrorMessage } from './playerErrors';
+import type { PhlixAppConfig } from '../app/types';
 import Icon from '../components/Icon.vue';
+import Scrubber, { type Chapter as ScrubberChapter } from '../components/player/Scrubber.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
 import { usePageTitle } from '../composables/usePageTitle';
 
@@ -30,6 +34,10 @@ const apiBase = useMediaApiBase();
  *  them against the same (possibly relay-proxied) base the payload came from. */
 const { imgSrc } = useImageSrc();
 const directBase = useMediaDirectBase();
+// phlix-ui-player-019: locale for the playerErrors wire-code rail (mirrors PlayerPage).
+const config = inject<PhlixAppConfig | null>('phlixConfig', null);
+// All user-facing copy resolves through the catalog (useMessages) — no hardcoded strings.
+const { t } = useMessages();
 
 const currentId = computed(() => String(route.params.id ?? ''));
 
@@ -73,7 +81,7 @@ function getStreamUrl(): string {
 
 async function loadAudiobook(): Promise<void> {
     if (!currentId.value) {
-        error.value = 'Invalid audiobook ID';
+        error.value = t('player.audiobookInvalidId');
         loading.value = false;
         return;
     }
@@ -90,7 +98,7 @@ async function loadAudiobook(): Promise<void> {
         progress.value = res.progress ?? null;
 
         if (!audiobook.value) {
-            error.value = 'Audiobook not found';
+            error.value = t('player.audiobookNotFound');
             return;
         }
 
@@ -99,8 +107,21 @@ async function loadAudiobook(): Promise<void> {
             currentChapterIndex.value = progress.value.current_chapter_index ?? 0;
             // Position will be set once audio loads
         }
-    } catch {
-        error.value = 'Could not load audiobook';
+    } catch (e) {
+        // phlix-ui-player-019 (error rail, mirrors PlayerPage.vue W4): a 403/429 hard
+        // block decodes through playerErrors — a registered wire code localizes via
+        // the contracts catalog (errorCodeMessage), legacy texts keep matching. What
+        // NEVER reaches the screen from this page is a bare thrown string rendered
+        // raw by an unmapped {{ error }}: anything the rail does not name falls back
+        // to the catalog's curated, localized page copy.
+        let message: string | null = null;
+        if (e instanceof ApiError) {
+            if (e.status === 403 || e.status === 429) {
+                message = playbackBlockingMessage(e.body, config?.locale);
+            }
+            message = message ?? mediaLoadErrorMessage(e, config?.locale);
+        }
+        error.value = message ?? t('player.audiobookLoadFailed');
         audiobook.value = null;
     } finally {
         loading.value = false;
@@ -233,11 +254,10 @@ function skip(seconds: number): void {
     audioRef.value.currentTime = Math.max(0, Math.min(duration.value, audioRef.value.currentTime + seconds));
 }
 
-function seek(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
+function seekTo(seconds: number): void {
     if (!audioRef.value) return;
-    audioRef.value.currentTime = value;
-    currentTime.value = value;
+    audioRef.value.currentTime = seconds;
+    currentTime.value = seconds;
 }
 
 function onVolumeChange(event: Event): void {
@@ -297,12 +317,16 @@ const currentChapter = computed((): AudiobookChapter | null => {
 });
 
 /**
- * Calculate progress percentage.
+ * Chapter markers for the shared Scrubber primitive — the page's chapters are
+ * millisecond-based (server wire), the primitive's contract is seconds.
  */
-const progressPercent = computed(() => {
-    if (duration.value <= 0) return 0;
-    return (currentTime.value / duration.value) * 100;
-});
+const chapterMarkers = computed<ScrubberChapter[]>(() =>
+    (audiobook.value?.chapters ?? []).map((chapter) => ({
+        start: chapter.start_ms / 1000,
+        end: chapter.end_ms / 1000,
+        title: chapter.title || undefined,
+    })),
+);
 </script>
 
 <template>
@@ -322,7 +346,7 @@ const progressPercent = computed(() => {
         <header class="player-header">
             <button type="button" class="player-header__back" @click="goToDetail">
                 <Icon name="arrow-left" />
-                <span>Back to Audiobook</span>
+                <span>{{ t('player.backToAudiobook') }}</span>
             </button>
             <div class="player-header__title">
                 {{ audiobook?.name ?? '' }}
@@ -338,7 +362,9 @@ const progressPercent = computed(() => {
             </div>
         </div>
 
-        <!-- Error state -->
+        <!-- Error state: `error` is ALWAYS a resolved, localized string by the time it
+             renders (loadAudiobook routes through the playerErrors rail / catalog keys)
+             — never a raw thrown message (phlix-ui-player-019). -->
         <div v-else-if="error" class="player-error" role="alert">
             <Icon name="alert-circle" class="player-error__icon" />
             <p>{{ error }}</p>
@@ -366,30 +392,25 @@ const progressPercent = computed(() => {
                     <div class="player-info">
                         <h1 class="player-title">{{ audiobook.name }}</h1>
                         <p v-if="audiobook.metadata?.author" class="player-author">
-                            by {{ audiobook.metadata.author }}
+                            {{ t('player.byAuthor', { author: audiobook.metadata.author }) }}
                         </p>
                         <p v-if="currentChapter" class="player-chapter">
-                            {{ currentChapter.title || `Chapter ${currentChapterIndex + 1}` }}
+                            {{ currentChapter.title || t('player.chapterNumber', { number: currentChapterIndex + 1 }) }}
                         </p>
                     </div>
 
-                    <!-- Progress bar -->
+                    <!-- Progress bar: the shared Scrubber primitive replaces the page's
+                         hand-rolled fill + hidden range (finding phlix-ui-player-019:
+                         duplicated control primitives). Seconds in, seconds out; chapter
+                         ticks render from the same markers. -->
                     <div class="player-progress">
-                        <div class="progress-bar">
-                            <div
-                                class="progress-fill"
-                                :style="{ width: `${progressPercent}%` }"
-                            />
-                            <input
-                                type="range"
-                                class="progress-seek"
-                                min="0"
-                                :max="duration || 0"
-                                :value="currentTime"
-                                aria-label="Seek"
-                                @input="seek"
-                            >
-                        </div>
+                        <Scrubber
+                            class="player-progress__scrubber"
+                            :position="currentTime"
+                            :duration="duration"
+                            :chapters="chapterMarkers"
+                            @seek="seekTo"
+                        />
                         <div class="progress-times">
                             <span>{{ formatTime(currentTime) }}</span>
                             <span>{{ formatTime(duration) }}</span>
@@ -401,7 +422,7 @@ const progressPercent = computed(() => {
                         <button
                             type="button"
                             class="control-btn"
-                            title="Skip back 30 seconds"
+                            :title="t('player.skipBack30')"
                             @click="skip(-30)"
                         >
                             <Icon name="rewind" class="control-btn__icon" />
@@ -411,7 +432,7 @@ const progressPercent = computed(() => {
                         <button
                             type="button"
                             class="control-btn control-btn--play"
-                            :aria-label="playing ? 'Pause' : 'Play'"
+                            :aria-label="playing ? t('player.pause') : t('player.play')"
                             @click="togglePlay"
                         >
                             <Icon :name="playing ? 'pause' : 'play'" class="control-btn__icon control-btn__icon--lg" />
@@ -420,7 +441,7 @@ const progressPercent = computed(() => {
                         <button
                             type="button"
                             class="control-btn"
-                            title="Skip forward 30 seconds"
+                            :title="t('player.skipForward30')"
                             @click="skip(30)"
                         >
                             <Icon name="forward" class="control-btn__icon" />
@@ -434,7 +455,7 @@ const progressPercent = computed(() => {
                         <button
                             type="button"
                             class="extra-btn"
-                            :aria-label="`Playback speed: ${playbackSpeed}x`"
+                            :aria-label="t('player.playbackSpeedValue', { speed: playbackSpeed })"
                             @click="cyclePlaybackSpeed"
                         >
                             {{ playbackSpeed }}x
@@ -449,7 +470,7 @@ const progressPercent = computed(() => {
                                 min="0"
                                 max="100"
                                 :value="volume * 100"
-                                aria-label="Volume"
+                                :aria-label="t('player.volume')"
                                 @input="onVolumeChange"
                             >
                         </div>
@@ -458,7 +479,7 @@ const progressPercent = computed(() => {
 
                 <!-- Chapter sidebar -->
                 <aside class="player-chapters">
-                    <h3 class="player-chapters__title">Chapters</h3>
+                    <h3 class="player-chapters__title">{{ t('player.chapters') }}</h3>
                     <div class="chapter-list">
                         <button
                             v-for="(chapter, index) in audiobook.chapters"
@@ -469,7 +490,7 @@ const progressPercent = computed(() => {
                             @click="selectChapter(index)"
                         >
                             <span class="chapter-index">{{ index + 1 }}</span>
-                            <span class="chapter-title">{{ chapter.title || `Chapter ${index + 1}` }}</span>
+                            <span class="chapter-title">{{ chapter.title || t('player.chapterNumber', { number: index + 1 }) }}</span>
                             <span class="chapter-duration">
                                 {{ formatTime((chapter.end_ms - chapter.start_ms) / 1000) }}
                             </span>
@@ -670,32 +691,10 @@ const progressPercent = computed(() => {
     width: 100%;
     max-width: 400px;
 }
-.progress-bar {
-    position: relative;
-    height: 4px;
-    background: var(--surface-4, #52525b);
-    border-radius: 2px;
-}
-.progress-fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    background: var(--accent, #f5a524);
-    border-radius: 2px;
-    pointer-events: none;
-}
-.progress-seek {
-    position: absolute;
-    top: -8px;
-    left: 0;
+/* The scrub rail itself is the shared Scrubber primitive; the page only sizes it. */
+.player-progress__scrubber {
+    display: block;
     width: 100%;
-    height: 20px;
-    opacity: 0;
-    cursor: pointer;
-    margin: 0;
-    padding: 8px 0;
-    box-sizing: border-box;
 }
 .progress-times {
     display: flex;

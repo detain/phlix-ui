@@ -10,6 +10,9 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import { createRouter, createMemoryHistory, type Router } from 'vue-router';
 import AudiobookPlayerPage from './AudiobookPlayerPage.vue';
 import { isRoute } from '../test/route-match';
+import { ApiError } from '../api/client';
+import { playbackBlockingMessage } from './playerErrors';
+import { errorCodeMessage } from '../i18n/errors';
 import type { AudiobookDetail, AudiobookProgress } from '../types/audiobook';
 
 /**
@@ -52,12 +55,13 @@ function detail(over: Partial<AudiobookDetail> = {}): AudiobookDetail {
   };
 }
 
-function stubFetch(opts: { audiobook?: AudiobookDetail | null; progress?: AudiobookProgress | null; error?: boolean } = {}) {
+function stubFetch(opts: { audiobook?: AudiobookDetail | null; progress?: AudiobookProgress | null; error?: boolean; rejectWith?: unknown } = {}) {
   const post = vi.fn((_url: unknown, _init: RequestInit) => Promise.resolve(jsonResponse({ ok: true })));
   const fn = vi.fn((url: unknown, init?: RequestInit) => {
     const u = typeof url === 'string' ? url : '';
     if (init && init.method === 'POST') return post(url, init);
     if (isRoute(u, READ_PATH)) {
+      if (opts.rejectWith !== undefined) return Promise.reject(opts.rejectWith);
       if (opts.error) return Promise.reject(new Error('read down'));
       return Promise.resolve(jsonResponse({
         audiobook: opts.audiobook === undefined ? detail() : opts.audiobook,
@@ -135,7 +139,106 @@ describe('AudiobookPlayerPage — load', () => {
     stubFetch({ error: true });
     const w = await mountAt(makeRouter());
     await flushPromises();
-    expect(w.find('.player-error').text()).toContain('Could not load audiobook');
+    // phlix-ui-player-019: a plain (non-ApiError) rejection must land on the
+    // catalog's curated copy — never the thrown string, never a hardcoded literal.
+    expect(w.find('.player-error').text()).toBe("Couldn’t load the audiobook. Please try again.");
+    expect(w.find('.player-error').text()).not.toContain('read down');
+    w.unmount();
+  });
+
+  it('renders the back link in sentence case', async () => {
+    stubFetch();
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    expect(w.find('.player-header__back').text()).toBe('Back to audiobook');
+    w.unmount();
+  });
+});
+
+describe('AudiobookPlayerPage — i18n adoption and error rail (phlix-ui-player-019)', () => {
+  it('routes a 403 hard block through playerErrors (access schedule)', async () => {
+    // Legacy pseudo-code text body (pre-W2 server shape): ONLY the
+    // playbackBlockingMessage rail turns this into the access-schedule sentence —
+    // the generic ApiError arm would surface the thrown 'gone' debug text instead.
+    stubFetch({ rejectWith: new ApiError('gone', 403, { error: 'AccessScheduled' }) });
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    expect(w.find('.player-error').text()).toBe(
+      playbackBlockingMessage({ error: 'AccessScheduled' }, undefined),
+    );
+    w.unmount();
+  });
+
+  it("localizes an ApiError carrying a registered wire code (errorCodeMessage rail)", async () => {
+    stubFetch({ rejectWith: new ApiError('gone', 503, { code: 'server.offline' }) });
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    expect(w.find('.player-error').text()).toBe(errorCodeMessage('server.offline', undefined));
+    w.unmount();
+  });
+
+  it('keeps an unregistered-403 ApiError on the rail, not on raw thrown text', async () => {
+    stubFetch({ rejectWith: new ApiError('mystery-text', 403, { code: 'not.a.registered.code' }) });
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    // playbackBlockingMessage returns null (unknown code, no legacy text match);
+    // mediaLoadErrorMessage surfaces the ApiError's own message — PlayerPage's
+    // documented server-text posture. What must NOT appear is the base page's
+    // swallow-everything 'Could not load audiobook'.
+    expect(w.find('.player-error').text()).toBe('mystery-text');
+    w.unmount();
+  });
+
+  it('renders the author line through the byAuthor catalog key', async () => {
+    stubFetch();
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    expect(w.find('.player-author').text()).toBe('by Adrian Tchaikovsky');
+    w.unmount();
+  });
+
+  it('falls back to the numbered-chapter key when a chapter title is empty', async () => {
+    stubFetch({ audiobook: detail({ chapters: [{ index: 0, title: '', start_ms: 0, end_ms: 600_000, duration_ms: 600_000 }] }) });
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    expect(w.find('.player-chapter').text()).toBe('Chapter 1');
+    expect(w.findAll('.chapter-item')[0].find('.chapter-title').text()).toBe('Chapter 1');
+    w.unmount();
+  });
+
+  it('labels the play control and skip buttons from the catalog', async () => {
+    stubFetch();
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+    expect(w.find('.control-btn--play').attributes('aria-label')).toBe('Play');
+    const titles = w.findAll('.control-btn').map((b) => b.attributes('title'));
+    expect(titles).toContain('Skip back 30 seconds');
+    expect(titles).toContain('Skip forward 30 seconds');
+    expect(w.find('.extra-btn').attributes('aria-label')).toBe('Playback speed: 1x');
+    expect(w.find('.volume-slider').attributes('aria-label')).toBe('Volume');
+    expect(w.find('.player-chapters__title').text()).toBe('Chapters');
+    w.unmount();
+  });
+
+  it('reuses the Scrubber primitive for the seek rail (phlix-ui-player-019)', async () => {
+    stubFetch();
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+
+    // The hand-rolled bar is gone; the shared player primitive owns the rail.
+    expect(w.find('.progress-bar').exists()).toBe(false);
+    expect(w.find('.progress-seek').exists()).toBe(false);
+    const scrub = w.find('.scrubber');
+    expect(scrub.exists()).toBe(true);
+    expect(scrub.attributes('role')).toBe('slider');
+    expect(scrub.attributes('aria-label')).toBe('Seek');
+
+    // The primitive's keyboard contract (ArrowRight = +step) seeks the audio.
+    const audioEl = w.find('audio').element as HTMLMediaElement;
+    Object.defineProperty(audioEl, 'duration', { configurable: true, value: 3600 });
+    await w.find('audio').trigger('loadedmetadata'); // duration ref -> 3600
+    await scrub.trigger('keydown', { key: 'ArrowRight' });
+    expect(audioEl.currentTime).toBe(5);
     w.unmount();
   });
 });

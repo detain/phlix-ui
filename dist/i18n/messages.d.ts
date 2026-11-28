@@ -308,6 +308,15 @@ export declare const DEFAULT_MESSAGES: {
         themeUnmute: string;
         themeStop: string;
         skipControls: string;
+        backToAudiobook: string;
+        byAuthor: string;
+        chapterNumber: string;
+        skipBack30: string;
+        skipForward30: string;
+        playbackSpeedValue: string;
+        audiobookInvalidId: string;
+        audiobookNotFound: string;
+        audiobookLoadFailed: string;
     };
     /**
      * Per-item user-data actions shared by every surface that offers favorite /

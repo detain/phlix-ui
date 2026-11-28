@@ -302,6 +302,16 @@ export const PT_BR_MESSAGES = {
     themeUnmute: 'Reativar música de abertura',
     themeStop: 'Parar música de abertura',
     skipControls: 'Controles para pular',
+    // Audiobook player page (finding phlix-ui-player-019)
+    backToAudiobook: 'Voltar ao audiolivro',
+    byAuthor: 'por {author}',
+    chapterNumber: 'Capítulo {number}',
+    skipBack30: 'Retroceder 30 segundos',
+    skipForward30: 'Avançar 30 segundos',
+    playbackSpeedValue: 'Velocidade de reprodução: {speed}x',
+    audiobookInvalidId: 'ID do audiolivro inválido',
+    audiobookNotFound: 'Audiolivro não encontrado',
+    audiobookLoadFailed: 'Não foi possível carregar o audiolivro. Tente novamente.',
   },
   invite: {
     title: 'Aceitar convite',

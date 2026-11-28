@@ -306,6 +306,16 @@ export const FR_MESSAGES = {
     themeUnmute: 'Réactiver la musique du générique',
     themeStop: 'Arrêter la musique du générique',
     skipControls: 'Contrôles de saut',
+    // Audiobook player page (finding phlix-ui-player-019)
+    backToAudiobook: 'Retour au livre audio',
+    byAuthor: 'par {author}',
+    chapterNumber: 'Chapitre {number}',
+    skipBack30: 'Reculer de 30 secondes',
+    skipForward30: 'Avancer de 30 secondes',
+    playbackSpeedValue: 'Vitesse de lecture : {speed}x',
+    audiobookInvalidId: 'ID de livre audio non valide',
+    audiobookNotFound: 'Livre audio introuvable',
+    audiobookLoadFailed: 'Le livre audio n’a pas pu être chargé. Veuillez réessayer.',
   },
   invite: {
     title: 'Accepter l’invitation',

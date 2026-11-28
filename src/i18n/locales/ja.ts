@@ -303,6 +303,16 @@ export const JA_MESSAGES = {
     themeUnmute: 'テーマ曲のミュートを解除',
     themeStop: 'テーマ曲を停止',
     skipControls: 'スキップ操作',
+    // Audiobook player page (finding phlix-ui-player-019)
+    backToAudiobook: 'オーディオブックに戻る',
+    byAuthor: '著者：{author}',
+    chapterNumber: '第{number}章',
+    skipBack30: '30秒巻き戻す',
+    skipForward30: '30秒早送り',
+    playbackSpeedValue: '再生速度：{speed}倍',
+    audiobookInvalidId: 'オーディオブックIDが無効です',
+    audiobookNotFound: 'オーディオブックが見つかりません',
+    audiobookLoadFailed: 'オーディオブックを読み込めませんでした。もう一度お試しください。',
   },
   invite: {
     title: '招待を受け入れる',

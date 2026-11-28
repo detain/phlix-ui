@@ -294,6 +294,15 @@ export declare const DE_MESSAGES: {
         themeUnmute: string;
         themeStop: string;
         skipControls: string;
+        backToAudiobook: string;
+        byAuthor: string;
+        chapterNumber: string;
+        skipBack30: string;
+        skipForward30: string;
+        playbackSpeedValue: string;
+        audiobookInvalidId: string;
+        audiobookNotFound: string;
+        audiobookLoadFailed: string;
     };
     invite: {
         title: string;

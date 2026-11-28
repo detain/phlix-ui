@@ -302,6 +302,16 @@ export const DE_MESSAGES = {
     themeUnmute: 'Titelmusik aktivieren',
     themeStop: 'Titelmusik stoppen',
     skipControls: 'Skip-Steuerung',
+    // Audiobook player page (finding phlix-ui-player-019)
+    backToAudiobook: 'Zurück zum Hörbuch',
+    byAuthor: 'von {author}',
+    chapterNumber: 'Kapitel {number}',
+    skipBack30: '30 Sekunden zurückspulen',
+    skipForward30: '30 Sekunden vorspulen',
+    playbackSpeedValue: 'Wiedergabegeschwindigkeit: {speed}x',
+    audiobookInvalidId: 'Ungültige Hörbuch-ID',
+    audiobookNotFound: 'Hörbuch nicht gefunden',
+    audiobookLoadFailed: 'Hörbuch konnte nicht geladen werden. Bitte erneut versuchen.',
   },
   invite: {
     title: 'Einladung annehmen',

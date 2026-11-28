@@ -3464,7 +3464,16 @@ var gn = {
 		themeMute: "Mute theme music",
 		themeUnmute: "Unmute theme music",
 		themeStop: "Stop theme music",
-		skipControls: "Skip controls"
+		skipControls: "Skip controls",
+		backToAudiobook: "Back to audiobook",
+		byAuthor: "by {author}",
+		chapterNumber: "Chapter {number}",
+		skipBack30: "Skip back 30 seconds",
+		skipForward30: "Skip forward 30 seconds",
+		playbackSpeedValue: "Playback speed: {speed}x",
+		audiobookInvalidId: "Invalid audiobook ID",
+		audiobookNotFound: "Audiobook not found",
+		audiobookLoadFailed: "Couldn’t load the audiobook. Please try again."
 	},
 	invite: {
 		title: "Accept invite",
