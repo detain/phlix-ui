@@ -99,7 +99,12 @@ const CLASSIFIED_EXCEPTIONS: Record<string, string> = {
   // routing them through the image seam would apply the wrong base-resolution
   // rule to a stream URL.
   'components/Player.vue::videoSrc': 'video byte stream (props.streamUrl), host-resolved',
-  'components/MiniPlayer.vue::player.hlsMasterUrl ? \'\' : player.streamUrl':
+  // Key follows the template byte-for-byte: S-ui-player-02 replaced the
+  // `hlsMasterUrl ? '' : streamUrl` ternary (which blanked the element under a
+  // live master) with the raw direct-URL binding; hls.js takes over the element
+  // itself when a master is present. Classification (byte stream, host-resolved)
+  // is unchanged.
+  'components/MiniPlayer.vue::player.streamUrl':
     'video byte stream from the player store, host-resolved',
   'pages/AudiobookPlayerPage.vue::getStreamUrl()':
     'audiobook byte stream; the function already joins mediaDirectBase || mediaApiBase',

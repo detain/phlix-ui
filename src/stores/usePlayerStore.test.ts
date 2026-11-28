@@ -271,6 +271,44 @@ describe('usePlayerStore — queue + mini-player', () => {
     expect(p.streamUrl).toBe('');
   });
 
+  it('setCurrent on a DIFFERENT media id clears the stale streamUrl + hlsMasterUrl (phlix-ui-player-002/003)', () => {
+    // Red-first (003): an advance to a new item through the failed/absent
+    // resolver path used to leave the PREVIOUS item's URLs on the store —
+    // next() then handed current forward with a stale hlsMasterUrl (and, on
+    // the bare setCurrent path, a stale streamUrl) bleeding into the next
+    // session. The single-src-owner law: media-id change invalidates both.
+    const p = usePlayerStore();
+    p.setCurrent(media('e1'), { streamUrl: 'http://x/e1/stream' });
+    p.hlsMasterUrl = 'http://h:8096/hls/job-1/master.m3u8';
+    p.setCurrent(media('e2')); // no opts at all — the retention hazard
+    expect(p.current?.id).toBe('e2');
+    expect(p.streamUrl).toBe(''); // not the stale e1 URL
+    expect(p.hlsMasterUrl).toBe(''); // not the previous item's master
+  });
+
+  it('setCurrent on the SAME media id preserves streamUrl + hlsMasterUrl (in-place re-set)', () => {
+    // The other half of the law: an in-place re-set (Player.vue keeps the
+    // dock/live-session state warm across props churn for the same item) must
+    // NOT blank a URL the host deliberately omitted from opts.
+    const p = usePlayerStore();
+    p.setCurrent(media('e1'), { streamUrl: 'http://x/e1/stream' });
+    p.hlsMasterUrl = 'http://h:8096/hls/job-1/master.m3u8';
+    p.setCurrent(media('e1'), { resetPosition: false });
+    expect(p.streamUrl).toBe('http://x/e1/stream');
+    expect(p.hlsMasterUrl).toBe('http://h:8096/hls/job-1/master.m3u8');
+  });
+
+  it('an explicit streamUrl on an id change still wins (applied after the clear)', () => {
+    // Order of operations: clear-first, opts-second — so next(resolver) keeps
+    // threading the fresh URL (its pin above) while the master never survives.
+    const p = usePlayerStore();
+    p.setCurrent(media('e1'), { streamUrl: 'http://x/e1/stream' });
+    p.hlsMasterUrl = 'http://h:8096/hls/job-1/master.m3u8';
+    p.setCurrent(media('e2'), { streamUrl: 'http://x/e2/stream' });
+    expect(p.streamUrl).toBe('http://x/e2/stream');
+    expect(p.hlsMasterUrl).toBe('');
+  });
+
   it('next(resolver) threads a fresh stream URL for the advanced item and resets position', () => {
     const p = usePlayerStore();
     p.setCurrent(media('q1'), { streamUrl: 'http://x/q1/stream' });

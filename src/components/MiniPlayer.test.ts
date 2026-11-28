@@ -321,12 +321,25 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
   }
 
   /**
-   * Activate the dock with an hlsMasterUrl (transcoded session) but no streamUrl.
-   * Spies on attachHls so tests can assert it was called with the right URL.
+   * Activate the dock the way PRODUCTION does for a transcoded session
+   * (phlix-ui-player-002 rewrite of a hand-fabricated fixture).
+   *
+   * Production truth: PlayerPage.setCurrent ALWAYS carries a direct streamUrl
+   * (its streamUrlFor yields one for every playable item), and
+   * useHlsTranscode.start PERSISTS the master URL over the store afterwards
+   * (useHlsTranscode.ts:451 `playerStore.hlsMasterUrl = masterUrl.value!;`)
+   * WITHOUT touching streamUrl — so a live HLS dock has BOTH set. The old
+   * fixture fabricated `store.setCurrent(media(), { streamUrl: '' })` next to a
+   * master: a state no production path can reach. That fiction is exactly what
+   * let the broken `hlsMasterUrl && !streamUrl` attach-gate pass every test —
+   * in production the gate could never fire and the `:src` ternary blanked the
+   * element to a black frame for every HLS session. The fixture now mirrors the
+   * real pair (direct URL + persisted master); every law in this block stays.
+   * attachHls is spied so tests can assert it was called with the right URL.
    */
   function mountTranscoded(attachHlsSpy: ReturnType<typeof vi.spyOn>, masterUrl = 'http://h:8096/hls/job-1/master.m3u8') {
     const store = usePlayerStore();
-    store.setCurrent(media(), { streamUrl: '' });
+    store.setCurrent(media(), { streamUrl: 'http://x/stream' });
     store.hlsMasterUrl = masterUrl;
     store.showMiniPlayer();
     const w = mount(MiniPlayer, {
@@ -354,7 +367,10 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
     return { w, store };
   }
 
-  it('visible shows the dock when hlsMasterUrl is set even if streamUrl is empty', async () => {
+  it('visible shows the dock for the production transcoded state (master persisted over a direct URL)', async () => {
+    // Title re-honesty (002): the old name recited the fabricated state
+    // ('even if streamUrl is empty'); the production shape this fixture now
+    // mounts carries BOTH — `visible`'s master alternative stays a live law.
     const attachHls = vi.fn(async () => mockHlsHandle());
     vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
     const { w } = mountTranscoded(attachHls);
@@ -504,6 +520,46 @@ describe('MiniPlayer — HLS support (UI-1.8)', () => {
       window.removeEventListener('unhandledrejection', onWindowRejection);
       process.off('unhandledRejection', onNodeRejection);
     }
+  });
+
+  it('the raw video binding KEEPS the direct URL while HLS attaches — never forced to src="" (phlix-ui-player-002)', async () => {
+    // Red-first (002): the old ternary `:src="player.hlsMasterUrl ? '' :
+    // player.streamUrl"` blanked the element the instant a master existed — a
+    // dead black dock even had the gate ever fired, and no fallback when the
+    // attach is rejected or degraded. Single-src-owner law: the raw binding
+    // stays the honest direct URL; hls.js takes over the element itself.
+    const attachHls = vi.fn(async () => mockHlsHandle());
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { w } = mountTranscoded(attachHls);
+    await nextTick();
+    expect(attachHls).toHaveBeenCalledTimes(1); // attach really happened (002 gate)
+    expect(w.find('video').attributes('src')).toBe('http://x/stream'); // src never blanked
+  });
+
+  it('queue advance tears the live handle down and does NOT re-attach the previous item master (phlix-ui-player-003)', async () => {
+    // Red-first compound (003 only became observable once 002 makes the dock
+    // genuinely attach on the production pair): next() with a failed/absent
+    // resolver changes the media id with no fresh URL. The store now clears the
+    // stale master (setCurrent id-change law), and the dock watcher — keyed on
+    // the master ITSELF, not just `visible` — must destroy the live handle and
+    // spawn no new attach. Old code: watcher never re-fired (visible unchanged),
+    // so a stale segment-fetcher bled across the queue advance.
+    const destroy = vi.fn();
+    const attachHls = vi.fn(async () => mockHlsHandle(destroy));
+    vi.spyOn(await import('../components/player/hls-playback'), 'attachHls').mockImplementation(attachHls);
+    const { store } = mountTranscoded(attachHls);
+    await nextTick();
+    expect(attachHls).toHaveBeenCalledTimes(1);
+    expect(destroy).not.toHaveBeenCalled();
+
+    store.setQueue([media({ id: 'm2', name: 'Interstellar' })]);
+    store.next(); // no resolver — the 003 stale-master bleed path
+    await nextTick();
+
+    expect(store.hlsMasterUrl).toBe(''); // store leg: the id change cleared the bleed
+    expect(store.streamUrl).toBe(''); //  no fresh URL resolved for m2
+    expect(destroy).toHaveBeenCalledTimes(1); // dock leg: the live handle is gone
+    expect(attachHls).toHaveBeenCalledTimes(1); // and nothing re-attached the old master
   });
 });
 

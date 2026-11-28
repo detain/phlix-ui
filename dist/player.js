@@ -251,7 +251,7 @@ var pe = z("phlix-player", () => {
 		t && (T(200), O(!0));
 	}
 	function P(e, r = {}) {
-		H(), t.value = e, r.streamUrl !== void 0 && (n.value = r.streamUrl), r.resetPosition !== !1 && (o.value = 0, s.value = typeof e.duration == "number" && isFinite(e.duration) && e.duration > 0 ? e.duration : 0, c.value = 0), _e(e);
+		H(), t.value && t.value.id !== e.id && (n.value = "", h.value = ""), t.value = e, r.streamUrl !== void 0 && (n.value = r.streamUrl), r.resetPosition !== !1 && (o.value = 0, s.value = typeof e.duration == "number" && isFinite(e.duration) && e.duration > 0 ? e.duration : 0, c.value = 0), _e(e);
 	}
 	function F(e, n, r) {
 		o.value = e, n !== void 0 && (s.value > 0 ? isFinite(n) && n > s.value && (s.value = n) : s.value = n), r !== void 0 && (c.value = r);
@@ -12541,10 +12541,10 @@ var lh = { class: "player__stage" }, uh = ["src", "poster"], dh = [
 				return;
 			}
 		}
-		return P(() => A.value, async (e) => {
-			e ? d.hlsMasterUrl && !d.streamUrl && await W() : (h.value?.destroy(), h.value = null);
+		return P(() => [A.value, d.hlsMasterUrl], async ([e, t]) => {
+			!e || !t ? (h.value?.destroy(), h.value = null) : await W();
 		}, { flush: "post" }), y(async () => {
-			A.value && d.hlsMasterUrl && !d.streamUrl && await W();
+			A.value && d.hlsMasterUrl && await W();
 		}), P(() => d.current?.id, () => {
 			C = !1;
 		}), P(() => d.playing, (e) => {
@@ -12569,7 +12569,7 @@ var lh = { class: "player__stage" }, uh = ["src", "poster"], dh = [
 					ref_key: "videoRef",
 					ref: m,
 					class: "mini__video",
-					src: O(d).hlsMasterUrl ? "" : O(d).streamUrl,
+					src: O(d).streamUrl,
 					poster: O(c)(O(d).current?.poster_url) ?? void 0,
 					preload: "metadata",
 					playsinline: "",
@@ -12616,7 +12616,7 @@ var lh = { class: "player__stage" }, uh = ["src", "poster"], dh = [
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-4d0d8cf7"]]);
+}), [["__scopeId", "data-v-68afee23"]]);
 export { Ku as AMBIENT_SAMPLE_H, qu as AMBIENT_SAMPLE_INTERVAL_MS, Gu as AMBIENT_SAMPLE_W, bc as ARROW_ICONS, xc as ARROW_LABELS, id as AmbientCanvas, wl as CAPTION_BACKGROUND_OPTIONS, Cl as CAPTION_COLOR_OPTIONS, Tl as CAPTION_EDGE_OPTIONS, Sl as CAPTION_SIZE_OPTIONS, xl as CAPTION_SIZE_SCALE, kl as CaptionOverlay, iu as CaptionsMenu, ud as DIRECT_PLAY_EXTENSIONS, cg as MiniPlayer, yc as PLAYER_SHORTCUTS, Xh as Player, il as QualityMenu, re as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, ld as ResumePrompt, xs as Scrubber, Pc as ShortcutsHelp, uf as SkipButton, qc as SpeedMenu, Wu as SubtitleSearch, dd as TRANSCODE_EXTENSIONS, nf as TranscodeNotice, lf as TranscodePreparing, xd as UPNEXT_COUNTDOWN_SECONDS, Cd as UPNEXT_RING_CIRCUMFERENCE, Sd as UPNEXT_RING_RADIUS, Zd as UpNext, Rc as VolumeControl, hl as activeAudioIndex, ed as ambientGradient, ml as applyAudioTrack, pl as applyTrackModes, js as attachHls, Yu as averageRegion, Ol as captionStyleVars, yl as cleanCueText, Dl as edgeShadow, pd as extensionOf, cs as formatTime, wc as handleShortcut, fl as hasActiveCaptions, rd as isBatterySaving, Zs as isFailedStatus, hd as isFatalMediaError, Es as isNativeHlsSupported, Xs as isPlayable, Cc as isTypingTarget, ul as listAudioTracks, ll as listSubtitleTracks, md as needsTranscode, Rs as parseSubtitleTracks, Js as parseTranscodeStart, Ys as parseTranscodeStatus, Zh as phlixUiVersion, bl as readActiveCueLines, Qs as resolveStreamUrl, dl as resolveTextTrack, Zu as rgbString, Qu as rgbaString, wd as ringDashoffset, Xu as sampleAmbient, Bs as transcodeStartPath, qs as transcodeStatusPath, ec as useHlsTranscode, Tc as useKeyboardShortcuts, pe as usePlayerStore };
 
 //# sourceMappingURL=player.js.map

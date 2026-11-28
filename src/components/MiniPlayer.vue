@@ -9,7 +9,8 @@
  *
  * Mounted ONCE at the app shell (sibling of <RouterView>) so it survives route
  * changes. Driven entirely by the singleton `usePlayerStore`: it shows only when
- * `miniPlayer` is on and there is a current media + streamUrl, plays its OWN
+ * `miniPlayer` is on and there is a current media + a playable source (direct
+ * `streamUrl` and/or a transcoded `hlsMasterUrl`), plays its OWN
  * <video> from the stored position (so playback continues across navigation),
  * mirrors play/pause with the store both ways, and offers play/pause · expand ·
  * close. Expand emits the media id for the host to navigate to the full player;
@@ -182,32 +183,45 @@ async function setupHls(): Promise<void> {
   }
 }
 
-/** Watch visible to attach HLS when the dock becomes active with a transcoded session.
+/** Watch [visible, hlsMasterUrl] to attach/tear down HLS.
  *  flush:'post' — the dock's <video> lives inside `v-if="visible"`: the default
  *  pre-flush would run this callback BEFORE the re-show render remounts the element,
  *  so `setupHls` would read a null `videoRef` and silently drop the attach (the
  *  hide→show overlap the generation guard above owns could then never even spawn
  *  the second run). After the render the element is there, and the generation
- *  token keeps the newest run the sole owner of `hlsHandle`. */
+ *  token keeps the newest run the sole owner of `hlsHandle`.
+ *
+ *  phlix-ui-player-002/003 rewrite of the trigger + gate:
+ *  - The gate is the MASTER alone. The old `hlsMasterUrl && !streamUrl`
+ *    condition encoded a state production never yields (PlayerPage.setCurrent
+ *    always carries a direct URL; useHlsTranscode.start:451 persists the master
+ *    beside it), so the dock never attached a real session. A master means
+ *    "play this via hls.js" — hls.attachMedia owns the element from there.
+ *  - Keyed on the master itself, not just `visible`: a queue advance that
+ *    clears a stale master while the dock stays open (003) must tear the live
+ *    handle down — `visible` alone never changed, so the old watcher left a
+ *    previous item's segment-fetcher bleeding into the next session. In-flight
+ *    runs self-destroy via setupHls's own post-await equality guard. */
 watch(
-  () => visible.value,
-  async (v) => {
-    if (!v) {
-      // Tear down HLS when hiding — the handle keeps fetching segments if left alive.
+  () => [visible.value, player.hlsMasterUrl] as const,
+  async ([vis, master]) => {
+    if (!vis || !master) {
+      // Tear down HLS when hiding OR when the master goes away — the handle
+      // keeps fetching segments if left alive.
       hlsHandle.value?.destroy();
       hlsHandle.value = null;
       return;
     }
-    // Only use HLS when streamUrl is absent but hlsMasterUrl is present (transcoded session).
-    if (!player.hlsMasterUrl || !!player.streamUrl) return;
     await setupHls();
   },
   { flush: 'post' },
 );
 
-// Also try to attach HLS on mount in case visible was already true (e.g. store state restored).
+// Also try to attach on mount in case visible + master were already true
+// (e.g. store state restored, or the dock mounts mid-transcode-session).
+// No `!streamUrl` condition (phlix-ui-player-002): the production pair has both.
 onMounted(async () => {
-  if (visible.value && player.hlsMasterUrl && !player.streamUrl) {
+  if (visible.value && player.hlsMasterUrl) {
     await setupHls();
   }
 });
@@ -272,7 +286,7 @@ onBeforeUnmount(() => {
       <video
         ref="videoRef"
         class="mini__video"
-        :src="player.hlsMasterUrl ? '' : player.streamUrl"
+        :src="player.streamUrl"
         :poster="imgSrc(player.current?.poster_url) ?? undefined"
         preload="metadata"
         playsinline

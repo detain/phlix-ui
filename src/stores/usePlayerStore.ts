@@ -351,6 +351,22 @@ export const usePlayerStore = defineStore('phlix-player', () => {
     // user mute); if this source's play() is rejected again, Player.vue forces
     // the fallback once more — the browser's law per attempt, not per session.
     releaseAutoplayMute();
+    // Single-src-owner law (phlix-ui-player-002/003): changing the media id
+    // invalidates every previously advertised source. The old code only ever
+    // OVERWROTE streamUrl when opts carried one and never touched
+    // hlsMasterUrl — so an advance through a failed/absent resolver (next()
+    // with no fresh URL) left the PREVIOUS item's streamUrl and master on the
+    // store, and the MiniPlayer dock would attach the stale master to the new
+    // item. Clear-first, opts-second: an explicit opts.streamUrl still wins
+    // (next(resolver) threads the fresh URL), and a same-id in-place re-set
+    // (Player.vue keeps the live session warm across props churn) preserves
+    // both URLs exactly as before. useHlsTranscode.start intentionally does
+    // NOT route through here for the master (it persists over the same-id
+    // store state) — that same-id path is what keeps this law coherent.
+    if (current.value && current.value.id !== media.id) {
+      streamUrl.value = '';
+      hlsMasterUrl.value = '';
+    }
     current.value = media;
     if (opts.streamUrl !== undefined) streamUrl.value = opts.streamUrl;
     if (opts.resetPosition !== false) {
