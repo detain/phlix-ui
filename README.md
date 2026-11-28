@@ -910,6 +910,19 @@ most consequential currency defect when it silently lags (it did: `v0.99.10` sat
   packages (widget bundle / Electron `package/`). A release is not shipped until every consumer
   re-pins. They always track the same MAJOR.
 
+### Known gaps (accepted)
+
+Deliberate absences recorded rather than silently omitted — each names what must ship elsewhere
+before it could land here.
+
+- **Person/actor detail** — `MediaDetail`'s cast/crew chips navigate to a listing filtered by the
+  person's name; that is the component's full contract (the `actor` emit note in
+  `src/components/MediaDetail.vue`). No per-person page (bio, filmography, deep-linked credits)
+  exists in this package because the wire has nothing to back it: the people family ships its
+  photo endpoint only and filmography/bio routes are unshipped — matching server reality. Accepted
+  as a gap, not absentism — if the server later adds person pages, surfacing them here is a
+  one-route extension. (Finding `phlix-ui-once-048`.)
+
 ---
 
 ## License

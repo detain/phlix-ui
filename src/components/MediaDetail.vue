@@ -70,7 +70,9 @@ const emit = defineEmits<{
   (e: 'watchlist', item: MediaItem): void;
   (e: 'info', item: MediaItem): void;
   (e: 'match', item: MediaItem): void;
-  /** A cast/crew member was clicked — host navigates to the person-filtered listing. */
+  /** A cast/crew member was clicked — host navigates to the person-filtered listing.
+   *  There is no per-person detail page — recorded as an accepted gap; see
+   *  "Known gaps (accepted)" in README.md. */
   (e: 'actor', name: string): void;
   /** A genre chip was clicked — host navigates to the genre-filtered listing. */
   (e: 'genre', name: string): void;

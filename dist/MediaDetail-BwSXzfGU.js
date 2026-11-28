@@ -693,7 +693,7 @@ var ye = { class: "media-detail" }, be = {
 			}, null, 8, ["item"])) : m("", !0)
 		]));
 	}
-}), k = /* @__PURE__ */ e({ default: () => A }), A = /*#__PURE__*/ re(O, [["__scopeId", "data-v-466a7905"]]);
+}), k = /* @__PURE__ */ e({ default: () => A }), A = /*#__PURE__*/ re(O, [["__scopeId", "data-v-edbd32e0"]]);
 export { k as n, A as t };
 
-//# sourceMappingURL=MediaDetail-B7metom1.js.map
+//# sourceMappingURL=MediaDetail-BwSXzfGU.js.map

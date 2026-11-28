@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — person/actor detail accepted gap 2026-11-27 (S-ui-once-39)
+
+### Added
+
+- README: a new "Known gaps (accepted)" section under Compatibility & notes records that `MediaDetail`'s cast/crew clicks navigate to a person-filtered listing by contract and that no per-person detail page ships here — the people wire carries its photo endpoint only, so the absence is named with its extension path (a one-route addition once the server ships person pages) instead of left silently absent (finding phlix-ui-once-048; S-ui-once-39). `MediaDetail.vue`'s `actor` emit note gains a pointer to the section; docs-only, no behavior change.
+
+
 ## Unreleased — Button danger @supports fallbacks 2026-11-27 (ui-cssfloor-cure)
 
 ### Fixed

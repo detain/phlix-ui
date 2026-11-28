@@ -6,7 +6,7 @@ import { i } from "./usePlayerStore-DWLuFZi5.js";
 import { t as a } from "./useToastStore-CxO_ppM8.js";
 import { t as o } from "./useAuthStore-umb3Xeps.js";
 import { n as s } from "./ThumbRating-CPrtMc-8.js";
-import { t as c } from "./MediaDetail-B7metom1.js";
+import { t as c } from "./MediaDetail-BwSXzfGU.js";
 import { s as ee } from "./episode-order-DBEVgrOE.js";
 import { t as l } from "./MediaCard-CsEiLmJ4.js";
 import { a as te } from "./usePreferencesStore-CQ3hN8jz.js";
@@ -452,4 +452,4 @@ var E = { class: "series-detail" }, D = {
 }), [["__scopeId", "data-v-48df87fc"]]);
 export { A as default };
 
-//# sourceMappingURL=MediaDetailPage-DNWGJzOk.js.map
+//# sourceMappingURL=MediaDetailPage-DtzAVYyZ.js.map
