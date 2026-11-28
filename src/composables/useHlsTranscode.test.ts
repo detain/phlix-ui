@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, type Mock } from 'vitest';
 import { defaultProbeRungPlaylist, useHlsTranscode, type RungPlaylistProbe, type TranscodeHttpClient } from './useHlsTranscode';
-import type { HlsHandle, HlsLevel } from '../components/player/hls-playback';
+import type { AttachHlsOptions, HlsHandle, HlsLevel } from '../components/player/hls-playback';
 
 function fakeVideo(): HTMLVideoElement {
   return {} as HTMLVideoElement;
@@ -25,6 +25,9 @@ interface Harness {
   /** Records every `handle.loadSource(url)` call the composable makes (pinned
    *  quality rungs load their per-rung mini-master through this seam). */
   loadSource: Mock<(url: string) => void>;
+  /** Records every inter-poll sleep the composable takes (phlix-ui-player-013:
+   *  transient-failure backoff is observable through this). */
+  sleeps: number[];
   /** Records every rung mini-master availability probe (L1 fallback seam). */
   probe: Mock<(url: string) => Promise<RungPlaylistProbe>>;
 }
@@ -79,6 +82,9 @@ function harness(opts: {
   probeOutcome?: RungPlaylistProbe | 'throws';
   /** L2: what the mocked handle's hasAudio() reports (muxed-audio signal). */
   hasAudioValue?: boolean;
+  /** phlix-ui-player-013: 0-based indices of GET status polls that reject
+   *  (an HTTP blip at the request layer — the transient-failure path). */
+  getRejects?: number[];
 } = {}): Harness {
   const destroy = vi.fn();
   const loadSource = vi.fn<(url: string) => void>();
@@ -181,7 +187,13 @@ function harness(opts: {
   });
   const statuses = opts.statuses ?? [{ status: 'running', playlist_ready: true, progress: 50 }];
   let i = 0;
-  const get = vi.fn(async () => statuses[Math.min(i++, statuses.length - 1)]);
+  const get = vi.fn(async () => {
+    const idx = i++;
+    // phlix-ui-player-013: a rejecting index simulates the transient HTTP blip
+    // the poll loop must ride out instead of ending the job.
+    if (opts.getRejects?.includes(idx)) throw new Error('status poll network blip');
+    return statuses[Math.min(idx, statuses.length - 1)];
+  });
   // L1 seam: records each probed URL; answers `probeOutcome` (default the
   // shipped-server 'available'). Tests override per-call with mockResolvedValueOnce
   // or park the verdict with mockImplementationOnce + a manual resolver.
@@ -192,6 +204,7 @@ function harness(opts: {
   );
 
   const client = { post, get } as unknown as TranscodeHttpClient;
+  const sleeps: number[] = [];
   const controller = useHlsTranscode({
     apiBase: () => 'http://h:8096',
     client,
@@ -199,11 +212,13 @@ function harness(opts: {
     getToken: () => 'tok',
     pollIntervalMs: 1,
     maxWaitMs: 50,
-    sleep: async () => {},
+    sleep: async (ms: number) => {
+      sleeps.push(ms);
+    },
     hlsConfig: opts.hlsConfig as never,
     probeRungPlaylist: probe,
   });
-  return { controller, attach, destroy, post, get, hls, loadSource, probe };
+  return { controller, attach, destroy, post, get, hls, loadSource, probe, sleeps };
 }
 
 describe('useHlsTranscode', () => {
@@ -405,6 +420,106 @@ describe('useHlsTranscode', () => {
     expect(h.controller.state.value).toBe('error');
     // bounded by maxWaitMs/pollIntervalMs (50 attempts here), never infinite
     expect(h.get.mock.calls.length).toBeLessThanOrEqual(50);
+  });
+
+  // phlix-ui-player-013: ONE HTTP blip during polling must not end a live job.
+  // The poll loop now rides out transient request failures: it backs off and
+  // re-polls, and only goes terminal after N CONSECUTIVE failed polls. The
+  // harness's injected sleep records the backoff schedule through h.sleeps.
+  describe('transient poll tolerance (phlix-ui-player-013)', () => {
+    it('a single failed status poll keeps the job alive: back off, re-poll, reach ready', async () => {
+      const h = harness({
+        statuses: [{ status: 'running', playlist_ready: true, progress: 70 }],
+        getRejects: [0],
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.get.mock.calls.length).toBe(2); // the blip + the re-poll
+      expect(h.controller.state.value).toBe('ready');
+      expect(h.attach).toHaveBeenCalledTimes(1);
+      // Exactly one backoff sleep before the re-poll (default base 500 ms).
+      expect(h.sleeps).toEqual([500]);
+    });
+
+    it('a good answer clears the streak — alternating blips never reach the terminal threshold', async () => {
+      const h = harness({
+        statuses: [
+          { status: 'running', playlist_ready: false, progress: 10 },
+          { status: 'running', playlist_ready: false, progress: 20 },
+          { status: 'running', playlist_ready: false, progress: 30 },
+          { status: 'running', playlist_ready: true, progress: 90 },
+        ],
+        // Fails at polls 0,1 then succeeds at 2; fails again at 3,4 then
+        // succeeds at 5. Cumulative failures (4) EXCEED the threshold (3);
+        // no CONSECUTIVE run does — the job must survive.
+        getRejects: [0, 1, 3, 4],
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.state.value).toBe('ready');
+      expect(h.get.mock.calls.length).toBe(6);
+      // Backoff restarts from the base after each cleared streak.
+      expect(h.sleeps).toEqual([500, 1000, 1, 500, 1000]);
+    });
+
+    it('consecutive failures go terminal EXACTLY at the threshold (not one earlier, not one later)', async () => {
+      const h = harness({ statuses: [], getRejects: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.state.value).toBe('error');
+      // Default terminal threshold = 3 consecutive poll failures: the THIRD
+      // throw ends the job — an off-by-one on either side moves this count.
+      expect(h.get.mock.calls.length).toBe(3);
+      expect(h.attach).not.toHaveBeenCalled();
+      // Backoff before retries 2 and 3; the terminal failure does not sleep.
+      expect(h.sleeps).toEqual([500, 1000]);
+    });
+
+    it('the failure backoff rides the DEFAULT sleep (real timers), proven under fake timers', async () => {
+      vi.useFakeTimers();
+      try {
+        const destroy = vi.fn();
+        const attach = vi.fn(async () => ({
+          destroy,
+          levels: [],
+          getCurrentLevel: () => -1,
+          setCurrentLevel: () => {},
+          setNextLevel: () => {},
+          autoLevelEnabled: true,
+          bandwidthEstimate: 0,
+          onLevelSwitched: () => () => {},
+          audioTracks: [],
+          getCurrentAudioTrack: () => -1,
+          setAudioTrack: () => {},
+          onAudioTrackSwitched: () => () => {},
+          onLevelLoaded: () => () => {},
+          hasAudio: () => false,
+          loadSource: () => {},
+        })) as unknown as (video: HTMLVideoElement, url: string, opts?: AttachHlsOptions) => Promise<HlsHandle>;
+        const post = vi.fn(async () => ({ job_id: 'j', master_url: '/hls/j/master.m3u8', status: 'running' }));
+        let calls = 0;
+        const get = vi.fn(async () => {
+          calls += 1;
+          if (calls === 1) throw new Error('network blip');
+          return { status: 'running', playlist_ready: true, progress: 80 };
+        });
+        const controller = useHlsTranscode({
+          apiBase: () => 'http://h:8096',
+          client: { post, get } as unknown as TranscodeHttpClient,
+          attach,
+          pollIntervalMs: 1,
+          maxWaitMs: 50,
+          // NO injected sleep → the shipped setTimeout-backed default is under test.
+        });
+        const running = controller.start(fakeVideo(), 'm');
+        await vi.advanceTimersByTimeAsync(0); // let the rejected poll settle
+        expect(get.mock.calls.length).toBe(1); // already re-scheduled behind a backoff timer
+        expect(controller.state.value).toBe('preparing'); // a blip is NOT terminal
+        await vi.advanceTimersByTimeAsync(500); // the default 500 ms backoff elapses
+        await running;
+        expect(controller.state.value).toBe('ready');
+        expect(get.mock.calls.length).toBe(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   it('cleanup destroys the hls handle and reset returns to idle', async () => {

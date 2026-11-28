@@ -23,6 +23,25 @@ import type { MediaItem } from '../types/media-item';
 import { isRoute, hasQuery, pathnameOf } from '../test/route-match';
 import { ERROR_MESSAGES } from '../i18n/errors';
 
+// phlix-ui-player-014 (S-ui-player-13): recording double for the hls attach
+// seam ONLY, so the resume position that beginTranscode threads through
+// tc.start can be observed at its point of use. Every other export of the
+// module keeps its real implementation (inert for all other tests here —
+// attachHls is reached only by the threading pin below).
+const { attachCalls } = vi.hoisted(() => ({
+  attachCalls: [] as { url: string; opts: Record<string, unknown> }[],
+}));
+vi.mock('../components/player/hls-playback', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../components/player/hls-playback')>();
+  return {
+    ...actual,
+    attachHls: async (_video: unknown, url: string, opts?: Record<string, unknown>) => {
+      attachCalls.push({ url, opts: { ...(opts ?? {}) } });
+      throw new Error('no MSE in jsdom');
+    },
+  };
+});
+
 /** Server playback-info shape (markers + chapters; NO stream url). */
 interface PlaybackInfo {
   intro_marker: { start_seconds: number; end_seconds: number } | null;
@@ -1897,5 +1916,112 @@ describe('phlix-ui-player-025 — player copy resolves through the catalog', () 
     await flushPromises();
     expect(document.body.querySelector('.phlix-modal__title')?.textContent).toBe('OV-HEADING');
     expect(document.body.querySelector('.phlix-modal__footer')?.textContent).toContain('OV-GOBACK');
+  });
+});
+
+// phlix-ui-player-013 / phlix-ui-player-014 (S-ui-player-13): the transcode
+// failure notice is no longer a dead end, and the transcode path no longer
+// silently discards the resolved resume point. The pins below ride the REAL
+// useHlsTranscode composable inside the REAL Player mounted by the page: the
+// `@retry` wiring is asserted BEHAVIORALLY (a click re-issues the start
+// request and visibly moves the overlay preparing → notice, not markup-only),
+// and the resume-aware auto-start context is asserted at the page level.
+// The value-level 4th-arg threading (start → attach) stays pinned in
+// useHlsTranscode.test.ts ('forwards the startPosition (4th arg) into attach
+// opts'); the Player.vue call-site threading is pinned end-to-end below by
+// observing `startPosition` at the (recording) attach seam.
+describe('phlix-ui-player-013/014 — transcode retry wiring on the page', () => {
+  /** mkv-flagged item: every `POST .../transcode` answers with a job-less 200,
+   *  so the real composable's 'transcode start returned no job' guard drives
+   *  the state to `error` and the notice shows — the Retry affordance's home. */
+  function failingTranscodeFetch() {
+    const calls = { transcode: 0 };
+    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+      const u = String(url);
+      if (u.includes('/transcode')) {
+        calls.transcode += 1;
+        return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+      }
+      if (isById(u, 'm1')) {
+        return Promise.resolve(jsonResponse({ item: media({ path: '/movies/Dune.mkv', stream_url: '/media/m1/stream' }) }));
+      }
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    return { fetchMock, calls };
+  }
+
+  it('Retry restarts the transcode flow — an observable state transition, not markup (phlix-ui-player-013)', async () => {
+    const { fetchMock, calls } = failingTranscodeFetch();
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    // Mount auto-started the transcode (extension-flagged), which failed: the
+    // notice is up, carrying the Retry action alongside 'Go back'.
+    expect(calls.transcode).toBe(1);
+    expect(w.find('.transcode').exists()).toBe(true);
+    const retry = w.find('.transcode__retry');
+    expect(retry.exists()).toBe(true);
+
+    // Clicking Retry RE-KICKS the flow: a fresh start request fires and the
+    // overlay visibly transitions notice → preparing (the composable sets
+    // 'preparing' synchronously in start()).
+    await retry.trigger('click');
+    await w.vm.$nextTick();
+    expect(calls.transcode).toBe(2);
+    expect(w.find('.transcode').exists()).toBe(false);
+    expect(w.find('.prep').exists()).toBe(true);
+
+    // The second start fails too — the notice returns with its Retry action,
+    // proving the affordance is repeatable, not a one-shot patch.
+    await flushPromises();
+    expect(w.find('.transcode').exists()).toBe(true);
+    expect(w.find('.transcode__retry').exists()).toBe(true);
+  });
+
+  it('an extension-flagged file with stored resume auto-starts the transcode without the click-prompt (phlix-ui-player-014 page context)', async () => {
+    const { fetchMock, calls } = failingTranscodeFetch();
+    // Seed an in-band resume BEFORE mount: the direct path would surface the
+    // click-prompt, but the transcode path must start its job immediately and
+    // carry the position through beginTranscode instead.
+    usePlayerStore().saveResume('m1', 60, 200);
+    const { w } = await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    expect(calls.transcode).toBe(1); // started without any user action
+    expect(w.find('.resume').exists()).toBe(false); // prompt stays suppressed behind the overlays
+    expect(w.find('.transcode').exists() || w.find('.prep').exists()).toBe(true);
+  });
+
+  it('the transcode start hands the RESOLVED resume position to the attach seam (phlix-ui-player-014)', async () => {
+    // End-to-end value pin for the call-site threading: the position leaves
+    // beginTranscode as tc.start's 4th argument and arrives at the hls attach
+    // seam as `startPosition` — riding the REAL composable inside the REAL
+    // Player mounted by the page (the attach itself is a recording double
+    // because jsdom has no MSE; every other export stays real, so the
+    // substitution is inert for the rest of this file).
+    attachCalls.length = 0;
+    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+      const u = String(url);
+      if (u.includes('/transcode')) {
+        return Promise.resolve(jsonResponse({ job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' }));
+      }
+      if (isById(u, 'm1')) {
+        return Promise.resolve(jsonResponse({ item: media({ path: '/movies/Dune.mkv', stream_url: '/media/m1/stream' }) }));
+      }
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    usePlayerStore().saveResume('m1', 60, 200);
+    await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    expect(attachCalls.length).toBe(1); // the completed-job start attached once
+    expect(attachCalls[0].url).toContain('/hls/job-1/master.m3u8');
+    expect(attachCalls[0].opts.startPosition).toBe(60); // the STORED resume, not 0
   });
 });

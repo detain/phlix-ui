@@ -74,6 +74,16 @@ export interface UseHlsTranscodeOptions {
   pollIntervalMs?: number;
   /** Give up after this long (ms). */
   maxWaitMs?: number;
+  /** phlix-ui-player-013: how many CONSECUTIVE status-poll request failures
+   *  end the job. One HTTP blip is never fatal — the loop re-polls with
+   *  backoff and only goes terminal at this streak length (a good answer
+   *  clears the streak). A server-VERDICT failure status is immediately
+   *  terminal regardless; this covers the transport layer. Default 3. */
+  maxConsecutivePollFailures?: number;
+  /** phlix-ui-player-013: base backoff (ms) before re-polling after a failed
+   *  status request; doubles with each consecutive failure (base, 2×base,
+   *  …) and restarts from base once the streak clears. Default 500. */
+  pollRetryBackoffMs?: number;
   /** Injectable delay (defaults to setTimeout) — overridden in tests. */
   sleep?: (ms: number) => Promise<void>;
   /** Optional per-app hls.js config overrides threaded down to {@link attachHls}
@@ -303,6 +313,10 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
   const maxWaitMs = opts.maxWaitMs ?? 120000;
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const maxAttempts = Math.max(1, Math.ceil(maxWaitMs / Math.max(1, pollIntervalMs)));
+  // phlix-ui-player-013: transient tolerance for the status poll (below 1 is
+  // meaningless — a zero-length streak could never even be reached).
+  const maxConsecutivePollFailures = Math.max(1, opts.maxConsecutivePollFailures ?? 3);
+  const pollRetryBackoffMs = Math.max(1, opts.pollRetryBackoffMs ?? 500);
 
   // R-UI-10: the bearer comes from the boot-registered custody store, resolved
   // at every use (segment xhrSetup fires long after boot), never a hardcoded
@@ -369,9 +383,35 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
       masterUrl.value = resolveStreamUrl(opts.apiBase(), startRes.masterUrl);
 
       let ready = startRes.status === 'completed';
+      // phlix-ui-player-013: the request itself rides a per-poll retry with
+      // exponential backoff. Before this, ANY throw inside the loop (a blip,
+      // a stalled socket) hit the outer catch and marked the job dead — one
+      // transient failure ended a perfectly live transcode. Now consecutive
+      // REQUEST failures accumulate into a streak that must reach
+      // `maxConsecutivePollFailures` before it is terminal; every good
+      // response clears the streak. The server's own verdict (a failed
+      // status below) stays immediately terminal — tolerance is for the
+      // transport, never for the job's answer.
+      let consecutivePollFailures = 0;
       for (let attempt = 0; !ready && attempt < maxAttempts; attempt++) {
-        const status = parseTranscodeStatus(await client.get(transcodeStatusPath(startRes.jobId), undefined, abortController.signal));
+        let payload: unknown;
+        try {
+          payload = await client.get(transcodeStatusPath(startRes.jobId), undefined, abortController.signal);
+        } catch {
+          if (isStale()) return;
+          consecutivePollFailures += 1;
+          if (consecutivePollFailures >= maxConsecutivePollFailures) {
+            throw new Error(`transcode status poll failed ${consecutivePollFailures} times in a row`);
+          }
+          await sleep(pollRetryBackoffMs * 2 ** (consecutivePollFailures - 1));
+          if (isStale()) return;
+          continue;
+        }
         if (isStale()) return;
+        // Payload parsing stays OUTSIDE the transport retry: a malformed
+        // answer is not a blip — it falls to the outer catch and ends the run.
+        const status = parseTranscodeStatus(payload);
+        consecutivePollFailures = 0;
         progress.value = status.progress;
         // Late-arriving tracks (extraction completes after the playlist is ready)
         // update the exposed list reactively → the Player adds the <track>s.

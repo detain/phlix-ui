@@ -348,7 +348,11 @@ async function evaluateTranscodeWithCapabilities(): Promise<void> {
   // flipped it meanwhile, and the transcode must be started exactly once.
   if (!needsTc || transcodeNeeded.value) return;
   transcodeNeeded.value = true;
-  beginTranscode(videoRef.value?.currentTime ?? 0);
+  // phlix-ui-player-014: the probe can flip AFTER direct playback already
+  // established a position (or a resolved resume point is pending) — keep any
+  // real progress, otherwise hand the resolved resume to the transcode path.
+  const played = videoRef.value?.currentTime ?? 0;
+  beginTranscode(played > 0 ? played : resumeSeconds.value);
 }
 
 // Probe codec support and flip transcodeNeeded if the browser can't decode the
@@ -478,6 +482,18 @@ function beginTranscode(startPosition = 0): void {
   const downlinkMax = (navigator as Navigator & { connection?: { downlinkMax?: number } }).connection?.downlinkMax;
   const profile = profileForDownlinkCap(downlinkMax);
   if (v) void tc.start(v, props.media.id, profile, startPosition);
+}
+
+/** phlix-ui-player-013: the failure notice's Retry action. Re-kicks the whole
+ *  transcode flow (fresh start request → poll → attach) instead of leaving a
+ *  dead-end overlay: transient server hiccups, a saturated worker, or the
+ *  poll's new consecutive-failure ceiling all become recoverable with one
+ *  click. Position discipline: anything already played on this element wins,
+ *  then the RESOLVED resume point — so retrying never silently restarts a
+ *  mid-film title from zero (the phlix-ui-player-014 threading, reused). */
+function retryTranscode(): void {
+  const played = videoRef.value?.currentTime ?? 0;
+  beginTranscode(played > 0 ? played : resumeSeconds.value);
 }
 
 /** A quality rung was picked in the menu — pin it (or hand back to ABR) on the
@@ -716,10 +732,12 @@ function evaluateForCurrentMedia(): void {
   // path `videoSrc` stays undefined (hls.js drives the element via MSE), so the
   // browser never resets it and hls.js re-attaches at the PREVIOUS episode's
   // position (watch 75% of one, hit Next → the next starts 75% in). Zero it so a
-  // new item starts at the beginning; a genuine resume is applied afterwards via
-  // `pendingSeek` / the resume prompt (which the transcode path suppresses).
+  // new item starts at the beginning; a genuine resume rides the transcode
+  // directly now (phlix-ui-player-014 threads the RESOLVED position into
+  // beginTranscode — resumeSeconds was just recomputed for the new item above),
+  // while the click-prompt stays suppressed behind the transcode overlays.
   if (videoRef.value) videoRef.value.currentTime = 0;
-  if (transcodeNeeded.value) beginTranscode();
+  if (transcodeNeeded.value) beginTranscode(resumeSeconds.value);
   // Fetch trickplay sprite/timeline for the scrubber preview (deferred off the
   // media-change critical path — see prefetchTrickplay).
   prefetchTrickplay(props.media.id);
@@ -1789,8 +1807,10 @@ onMounted(() => {
   trackList?.addEventListener?.('addtrack', refreshTracks);
   trackList?.addEventListener?.('removetrack', refreshTracks);
   refreshTracks();
-  // A file flagged as non-direct-playable by extension transcodes from the start.
-  if (transcodeNeeded.value) beginTranscode();
+  // A file flagged as non-direct-playable by extension starts its transcode at
+  // the RESOLVED resume position (phlix-ui-player-014) — no stored progress,
+  // 0, and the mount path computes resumeSeconds from the store up front.
+  if (transcodeNeeded.value) beginTranscode(resumeSeconds.value);
   // Fetch trickplay sprite/timeline for the scrubber preview on first mount,
   // deferred off the mount critical path (see prefetchTrickplay).
   prefetchTrickplay(props.media.id);
@@ -2327,7 +2347,7 @@ onBeforeUnmount(() => {
       <TranscodePreparing v-if="showPreparing" :title="media.name" :progress="tc.progress.value" @back="emit('back')" />
 
       <!-- direct-play guard: opaque notice shown only when the transcode itself failed -->
-      <TranscodeNotice v-if="showTranscodeNotice" :title="media.name" @back="emit('back')" />
+      <TranscodeNotice v-if="showTranscodeNotice" :title="media.name" @back="emit('back')" @retry="retryTranscode" />
 
       <!-- SyncPlay controls: synced transport buttons when in a SyncPlay room -->
       <SyncPlayControls

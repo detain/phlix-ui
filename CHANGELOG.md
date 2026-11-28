@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Transcode poll survives transient HTTP blips, the failure notice gains Retry, and the transcode path resumes where it stopped 2026-11-28 (S-ui-player-13)
+
+### Fixed
+
+* A single failed status request no longer kills a live transcode job (finding phlix-ui-player-013). The poll loop in `useHlsTranscode.ts` wrapped every await in one try, so any network blip dropped the state machine straight into `error`, and `TranscodeNotice.vue` offered only Go back. Each status request now carries its own retry with exponential backoff (`pollRetryBackoffMs`, doubling per blip, injectable alongside `maxConsecutivePollFailures` default 3); a good answer clears the streak, only N consecutive failures go terminal, and a server verdict or malformed payload stays immediately terminal. The notice now leads with a Retry button (catalog key `common.retry`, zero new keys) that restarts the whole transcode flow; `Player.vue` wires it to a fresh start carrying the current position when the element already played, else the resolved resume. Transcode-path playback also resumes instead of silently restarting (finding phlix-ui-player-014): the cold-start and media-change call sites now thread the store-resolved `resumeSeconds` into `beginTranscode`, so the position rides `tc.start`'s 4th argument into the attach `startPosition` seam the direct path already uses.
+
 ## Unreleased — SyncPlay survives the Player unmount: the dock feeds and obeys the room, and local transport broadcasts echo-suppressed 2026-11-28 (S-ui-player-05)
 
 ### Fixed

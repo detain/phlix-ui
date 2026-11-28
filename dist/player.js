@@ -6893,19 +6893,19 @@ var ec = "_master.m3u8";
 function tc(e) {
 	let t = S("idle"), n = S(0), r = S([]), i = S([]), a = S(-1), o = S(!0), s = S(null), c = S(null), l = S([]), u = S(-1), d = S(!1), f = S(null), p = S(null);
 	function m(e) {
-		if (!k) return;
-		i.value = k.levels, a.value = k.getCurrentLevel(), o.value = k.autoLevelEnabled;
-		let t = e ?? k.getCurrentLevel(), n = t >= 0 ? i.value.find((e) => e.index === t) : void 0;
+		if (!j) return;
+		i.value = j.levels, a.value = j.getCurrentLevel(), o.value = j.autoLevelEnabled;
+		let t = e ?? j.getCurrentLevel(), n = t >= 0 ? i.value.find((e) => e.index === t) : void 0;
 		s.value = n ? n.height : null;
 	}
 	function h() {
 		i.value = [], a.value = -1, o.value = !0, s.value = null, c.value = null;
 	}
 	function g(e) {
-		k && (l.value = k.audioTracks, u.value = e ?? k.getCurrentAudioTrack());
+		j && (l.value = j.audioTracks, u.value = e ?? j.getCurrentAudioTrack());
 	}
 	function _() {
-		k && (d.value = k.hasAudio());
+		j && (d.value = j.hasAudio());
 	}
 	function v() {
 		l.value = [], u.value = -1, d.value = !1;
@@ -6917,7 +6917,7 @@ function tc(e) {
 			...e.url ? { url: $s(n, e.url) } : {},
 			...e.playlistUrl ? { playlistUrl: $s(n, e.playlistUrl) } : {}
 		}));
-		P = r, c.value = r;
+		I = r, c.value = r;
 	}
 	function b(t) {
 		if (t.length === 0) return;
@@ -6927,36 +6927,45 @@ function tc(e) {
 			url: $s(n, e.url)
 		}));
 	}
-	let x = e.attach ?? Ms, C = e.pollIntervalMs ?? 1e3, w = e.maxWaitMs ?? 12e4, T = e.sleep ?? ((e) => new Promise((t) => setTimeout(t, e))), E = Math.max(1, Math.ceil(w / Math.max(1, C))), D = e.getToken ?? nc, O = e.probeRungPlaylist ?? ((e) => oc(e, D)), k = null, A = null, j = null, M = null, N = !1, P = [], F = 0, I = null, L = 0;
-	function R() {
+	let x = e.attach ?? Ms, C = e.pollIntervalMs ?? 1e3, w = e.maxWaitMs ?? 12e4, T = e.sleep ?? ((e) => new Promise((t) => setTimeout(t, e))), E = Math.max(1, Math.ceil(w / Math.max(1, C))), D = Math.max(1, e.maxConsecutivePollFailures ?? 3), O = Math.max(1, e.pollRetryBackoffMs ?? 500), k = e.getToken ?? nc, A = e.probeRungPlaylist ?? ((e) => oc(e, k)), j = null, M = null, N = null, P = null, F = !1, I = [], L = 0, R = null, z = 0;
+	function B() {
 		return e.client ?? new en({
 			baseUrl: e.apiBase(),
 			timeoutMs: 6e4
 		});
 	}
-	async function z(i, a, o, s) {
-		W(), N = !1;
-		let c = ++L, l = () => N || c !== L;
-		I = new AbortController(), t.value = "preparing", n.value = 0, r.value = [], h();
+	async function V(i, a, o, s) {
+		te(), F = !1;
+		let c = ++z, l = () => F || c !== z;
+		R = new AbortController(), t.value = "preparing", n.value = 0, r.value = [], h();
 		try {
-			let r = R(), c = Ys(await r.post(Vs(a, o), void 0, I.signal));
+			let r = B(), c = Ys(await r.post(Vs(a, o), void 0, R.signal));
 			if (l()) return;
 			if (!c.jobId || !c.masterUrl) throw Error("transcode start returned no job");
 			b(c.subtitles), y(c.variants), f.value = c.jobId, p.value = $s(e.apiBase(), c.masterUrl);
-			let u = c.status === "completed";
+			let u = c.status === "completed", d = 0;
 			for (let e = 0; !u && e < E; e++) {
-				let e = Xs(await r.get(Js(c.jobId), void 0, I.signal));
+				let e;
+				try {
+					e = await r.get(Js(c.jobId), void 0, R.signal);
+				} catch {
+					if (l()) return;
+					if (d += 1, d >= D) throw Error(`transcode status poll failed ${d} times in a row`);
+					if (await T(O * 2 ** (d - 1)), l()) return;
+					continue;
+				}
 				if (l()) return;
-				if (n.value = e.progress, b(e.subtitles), y(e.variants), Qs(e.status)) throw Error(`transcode ${e.status}`);
-				if (Zs(e)) {
+				let t = Xs(e);
+				if (d = 0, n.value = t.progress, b(t.subtitles), y(t.variants), Qs(t.status)) throw Error(`transcode ${t.status}`);
+				if (Zs(t)) {
 					u = !0;
 					break;
 				}
 				if (await T(C), l()) return;
 			}
 			if (!u) throw Error("transcode timed out");
-			let d = await x(i, p.value, {
-				getToken: D,
+			let h = await x(i, p.value, {
+				getToken: k,
 				hlsConfig: e.hlsConfig,
 				startPosition: s,
 				onReady: () => {
@@ -6968,11 +6977,11 @@ function tc(e) {
 			});
 			if (l()) {
 				try {
-					d.destroy();
+					h.destroy();
 				} catch {}
 				return;
 			}
-			k = d, A = k.onLevelSwitched((e) => m(e)), j = k.onAudioTrackSwitched((e) => g(e)), M = k.onLevelLoaded(() => {
+			j = h, M = j.onLevelSwitched((e) => m(e)), N = j.onAudioTrackSwitched((e) => g(e)), P = j.onLevelLoaded(() => {
 				g(), _();
 			}), m(), g(), _();
 			try {
@@ -6984,57 +6993,57 @@ function tc(e) {
 			l() || (t.value = "error");
 		}
 	}
-	function B(e) {
-		k && (k.setCurrentLevel(e === "auto" ? -1 : e), m());
-	}
-	function V(e) {
-		k && (k.setNextLevel(e === "auto" ? -1 : e), m());
-	}
 	function H(e) {
-		k && (k.setAudioTrack(e), g());
+		j && (j.setCurrentLevel(e === "auto" ? -1 : e), m());
 	}
 	function U(e) {
-		if (!k || !p.value) return;
-		let t = P.find((t) => t.id === e), n = t?.playlistUrl ?? ic(p.value, e), r = t?.url ?? ac(p.value, e), i = ++F;
+		j && (j.setNextLevel(e === "auto" ? -1 : e), m());
+	}
+	function W(e) {
+		j && (j.setAudioTrack(e), g());
+	}
+	function ee(e) {
+		if (!j || !p.value) return;
+		let t = I.find((t) => t.id === e), n = t?.playlistUrl ?? ic(p.value, e), r = t?.url ?? ac(p.value, e), i = ++L;
 		(async () => {
 			let e;
 			try {
-				e = await O(n);
+				e = await A(n);
 			} catch {
 				e = "unknown";
 			}
-			!N && i === F && k && (e === "absent" ? (console.warn(`[phlix-ui] rung mini-master unavailable (${n}) — this server has no per-rung index files; falling back to the legacy bare rung playlist (${r}). Multi-audio titles play silent on the video-only bare rung and the audio menu stays hidden (never a stale rendition list); muxed-audio titles play correctly. The menu returns once the server ships the index.`), k.loadSource(r)) : k.loadSource(n), h());
+			!F && i === L && j && (e === "absent" ? (console.warn(`[phlix-ui] rung mini-master unavailable (${n}) — this server has no per-rung index files; falling back to the legacy bare rung playlist (${r}). Multi-audio titles play silent on the video-only bare rung and the audio menu stays hidden (never a stale rendition list); muxed-audio titles play correctly. The menu returns once the server ships the index.`), j.loadSource(r)) : j.loadSource(n), h());
 		})();
 	}
-	function W() {
-		if (N = !0, F++, I &&= (I.abort(), null), A) {
-			try {
-				A();
-			} catch {}
-			A = null;
-		}
-		if (j) {
-			try {
-				j();
-			} catch {}
-			j = null;
-		}
-		if (M) {
+	function te() {
+		if (F = !0, L++, R &&= (R.abort(), null), M) {
 			try {
 				M();
 			} catch {}
 			M = null;
 		}
-		if (k) {
+		if (N) {
 			try {
-				k.destroy();
+				N();
 			} catch {}
-			k = null;
+			N = null;
 		}
-		P = [], f.value = null, p.value = null;
+		if (P) {
+			try {
+				P();
+			} catch {}
+			P = null;
+		}
+		if (j) {
+			try {
+				j.destroy();
+			} catch {}
+			j = null;
+		}
+		I = [], f.value = null, p.value = null;
 	}
-	function ee() {
-		W(), t.value = "idle", n.value = 0, r.value = [], h(), v();
+	function ne() {
+		te(), t.value = "idle", n.value = 0, r.value = [], h(), v();
 		try {
 			he().hlsMasterUrl = "";
 		} catch {}
@@ -7051,15 +7060,15 @@ function tc(e) {
 		audioTracks: l,
 		currentAudioTrack: u,
 		hasAudio: d,
-		setLevel: B,
-		setNextLevel: V,
-		setAudioTrack: H,
+		setLevel: H,
+		setNextLevel: U,
+		setAudioTrack: W,
 		jobId: f,
 		masterUrl: p,
-		loadVariantPlaylist: U,
-		start: z,
-		cleanup: W,
-		reset: ee
+		loadVariantPlaylist: ee,
+		start: V,
+		cleanup: te,
+		reset: ne
 	};
 }
 function nc() {
@@ -9549,10 +9558,10 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 }), [["__scopeId", "data-v-3fc667d0"]]), Sf = {
 	class: "transcode",
 	role: "alert"
-}, Cf = { class: "transcode__card" }, wf = { class: "transcode__heading" }, Tf = { class: "transcode__body" }, Ef = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, Cf = { class: "transcode__card" }, wf = { class: "transcode__heading" }, Tf = { class: "transcode__body" }, Ef = { class: "transcode__actions" }, Df = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "TranscodeNotice",
 	props: { title: {} },
-	emits: ["back"],
+	emits: ["back", "retry"],
 	setup(e, { emit: t }) {
 		let n = t, { t: r } = J();
 		return (t, i) => (x(), o("div", Sf, [s("div", Cf, [
@@ -9562,18 +9571,22 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			}),
 			s("h3", wf, E(O(r)("player.transcodeHeading")), 1),
 			s("p", Tf, E(e.title ? O(r)("player.transcodeBodyTitled", { title: e.title }) : O(r)("player.transcodeBodyUntitled")), 1),
-			s("button", {
+			s("div", Ef, [s("button", {
+				type: "button",
+				class: "transcode__retry",
+				onClick: i[0] ||= (e) => n("retry")
+			}, [u(Y, { name: "refresh" }), s("span", null, E(O(r)("common.retry")), 1)]), s("button", {
 				type: "button",
 				class: "transcode__back",
-				onClick: i[0] ||= (e) => n("back")
-			}, [u(Y, { name: "arrow-left" }), s("span", null, E(O(r)("player.goBack")), 1)])
+				onClick: i[1] ||= (e) => n("back")
+			}, [u(Y, { name: "arrow-left" }), s("span", null, E(O(r)("player.goBack")), 1)])])
 		])]));
 	}
-}), [["__scopeId", "data-v-8a5efb50"]]), Df = {
+}), [["__scopeId", "data-v-e7de5c54"]]), Of = {
 	class: "prep",
 	role: "status",
 	"aria-live": "polite"
-}, Of = { class: "prep__card" }, kf = { class: "prep__heading" }, Af = { class: "prep__body" }, jf = ["aria-label", "aria-valuenow"], Mf = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, kf = { class: "prep__card" }, Af = { class: "prep__heading" }, jf = { class: "prep__body" }, Mf = ["aria-label", "aria-valuenow"], Nf = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "TranscodePreparing",
 	props: {
 		title: {},
@@ -9582,13 +9595,13 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 	emits: ["back"],
 	setup(e) {
 		let t = e, { t: n } = J(), r = () => Math.max(0, Math.min(100, Math.round(t.progress ?? 0)));
-		return (t, i) => (x(), o("div", Df, [s("div", Of, [
+		return (t, i) => (x(), o("div", Of, [s("div", kf, [
 			u(Y, {
 				name: "spinner",
 				class: "prep__spinner"
 			}),
-			s("h3", kf, E(O(n)("player.transcodePreparingHeading")), 1),
-			s("p", Af, E(e.title ? O(n)("player.transcodePreparingTitled", { title: e.title }) : O(n)("player.transcodePreparingUntitled")), 1),
+			s("h3", Af, E(O(n)("player.transcodePreparingHeading")), 1),
+			s("p", jf, E(e.title ? O(n)("player.transcodePreparingTitled", { title: e.title }) : O(n)("player.transcodePreparingUntitled")), 1),
 			s("div", {
 				class: "prep__bar",
 				role: "progressbar",
@@ -9599,7 +9612,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			}, [s("div", {
 				class: "prep__bar-fill",
 				style: _({ width: r() + "%" })
-			}, null, 4)], 8, jf),
+			}, null, 4)], 8, Mf),
 			s("button", {
 				type: "button",
 				class: "prep__back",
@@ -9607,7 +9620,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			}, [u(Y, { name: "arrow-left" }), s("span", null, E(O(n)("player.goBack")), 1)])
 		])]));
 	}
-}), [["__scopeId", "data-v-11136fef"]]), Nf = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-11136fef"]]), Pf = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SkipButton",
 	props: {
 		position: {},
@@ -9640,7 +9653,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			_: 1
 		}));
 	}
-}), [["__scopeId", "data-v-d3fc1b53"]]), Pf = ["aria-label"], Ff = ["onClick"], If = { class: "skip-controls__label" }, Lf = 5, Rf = 30, zf = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-d3fc1b53"]]), Ff = ["aria-label"], If = ["onClick"], Lf = { class: "skip-controls__label" }, Rf = 5, zf = 30, Bf = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SkipControls",
 	props: {
 		position: {},
@@ -9657,7 +9670,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 		}
 		function p(e, t) {
 			if (f(e, t)) return !1;
-			let n = d(e.startMs), r = n - Lf, i = n + Rf;
+			let n = d(e.startMs), r = n - Rf, i = n + zf;
 			return t >= r && t < i;
 		}
 		let m = [
@@ -9691,15 +9704,15 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			type: "button",
 			class: "skip-controls__btn",
 			onClick: R((t) => y(e), ["stop"])
-		}, [s("span", If, E(_(e.type)), 1), u(Y, { name: "skip-forward" })], 8, Ff))), 128))], 8, Pf)) : a("", !0);
+		}, [s("span", Lf, E(_(e.type)), 1), u(Y, { name: "skip-forward" })], 8, If))), 128))], 8, Ff)) : a("", !0);
 	}
-}), [["__scopeId", "data-v-29a255de"]]), Bf = ["aria-label", "aria-expanded"], Vf = ["aria-label"], Hf = { class: "chapterlist__head" }, Uf = { class: "chapterlist__title" }, Wf = ["aria-label"], Gf = ["onClick"], Kf = { class: "chapterlist__index" }, qf = { class: "chapterlist__name" }, Jf = { class: "chapterlist__meta" }, Yf = { class: "chapterlist__time" }, Xf = {
+}), [["__scopeId", "data-v-29a255de"]]), Vf = ["aria-label", "aria-expanded"], Hf = ["aria-label"], Uf = { class: "chapterlist__head" }, Wf = { class: "chapterlist__title" }, Gf = ["aria-label"], Kf = ["onClick"], qf = { class: "chapterlist__index" }, Jf = { class: "chapterlist__name" }, Yf = { class: "chapterlist__meta" }, Xf = { class: "chapterlist__time" }, Zf = {
 	key: 0,
 	class: "chapterlist__duration"
-}, Zf = {
+}, Qf = {
 	key: 1,
 	class: "chapterlist__empty"
-}, Qf = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, $f = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "ChapterList",
 	props: {
 		chapters: { default: () => [] },
@@ -9753,7 +9766,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			"aria-haspopup": "dialog",
 			"aria-expanded": t.open,
 			onClick: f
-		}, [u(Y, { name: "list" })], 10, Bf), t.open ? (x(), o("div", {
+		}, [u(Y, { name: "list" })], 10, Vf), t.open ? (x(), o("div", {
 			key: 0,
 			ref_key: "panelEl",
 			ref: h,
@@ -9762,7 +9775,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			"aria-modal": "true",
 			"aria-label": O(l)("player.chapterList"),
 			tabindex: "-1"
-		}, [s("div", Hf, [s("h3", Uf, E(O(l)("player.chapters")), 1), u(cc, {
+		}, [s("div", Uf, [s("h3", Wf, E(O(l)("player.chapters")), 1), u(cc, {
 			name: "x",
 			label: O(l)("common.close"),
 			size: "sm",
@@ -9782,20 +9795,20 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			class: "chapterlist__row",
 			onClick: (t) => y(e.chapter)
 		}, [
-			s("span", Kf, E(e.index), 1),
-			s("span", qf, E(e.label), 1),
-			s("span", Jf, [s("span", Yf, E(e.startLabel), 1), e.durationLabel ? (x(), o("span", Xf, "· " + E(e.durationLabel), 1)) : a("", !0)])
-		], 8, Gf)]))), 128))], 8, Wf)) : (x(), o("p", Zf, E(O(l)("player.noChapters")), 1))], 8, Vf)) : a("", !0)], 512));
+			s("span", qf, E(e.index), 1),
+			s("span", Jf, E(e.label), 1),
+			s("span", Yf, [s("span", Xf, E(e.startLabel), 1), e.durationLabel ? (x(), o("span", Zf, "· " + E(e.durationLabel), 1)) : a("", !0)])
+		], 8, Kf)]))), 128))], 8, Gf)) : (x(), o("p", Qf, E(O(l)("player.noChapters")), 1))], 8, Hf)) : a("", !0)], 512));
 	}
-}), [["__scopeId", "data-v-177e91a7"]]), $f = {
+}), [["__scopeId", "data-v-177e91a7"]]), ep = {
 	key: 0,
 	class: "marker-timeline__ad-badge",
 	"aria-live": "polite"
-}, ep = { class: "marker-timeline__ticks" }, tp = [
+}, tp = { class: "marker-timeline__ticks" }, np = [
 	"title",
 	"aria-label",
 	"onClick"
-], np = { class: "marker-timeline__tooltip" }, rp = { class: "marker-timeline__tooltip-label" }, ip = { class: "marker-timeline__tooltip-time numeric" }, ap = ["onClick"], op = /*#__PURE__*/ X(/* @__PURE__ */ d({
+], rp = { class: "marker-timeline__tooltip" }, ip = { class: "marker-timeline__tooltip-label" }, ap = { class: "marker-timeline__tooltip-time numeric" }, op = ["onClick"], sp = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "MarkerTimeline",
 	props: {
 		position: {},
@@ -9838,7 +9851,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			key: 0,
 			class: g(["marker-timeline", { "is-ad-active": h.value }]),
 			"aria-label": "Marker timeline"
-		}, [h.value ? (x(), o("div", $f, [n[0] ||= s("svg", {
+		}, [h.value ? (x(), o("div", ep, [n[0] ||= s("svg", {
 			width: "12",
 			height: "12",
 			viewBox: "0 0 24 24",
@@ -9846,7 +9859,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			stroke: "currentColor",
 			"stroke-width": "2.5",
 			"aria-hidden": "true"
-		}, [s("polygon", { points: "5,3 19,12 5,21" })], -1), l(" " + E(v.value), 1)])) : a("", !0), s("div", ep, [(x(!0), o(e, null, C(p.value, (e) => (x(), o("button", {
+		}, [s("polygon", { points: "5,3 19,12 5,21" })], -1), l(" " + E(v.value), 1)])) : a("", !0), s("div", tp, [(x(!0), o(e, null, C(p.value, (e) => (x(), o("button", {
 			key: e.id,
 			type: "button",
 			class: g(["marker-timeline__tick", { "is-ad": e.isAd }]),
@@ -9857,30 +9870,30 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			title: `${e.label} — ${O(us)(e.startSec)}`,
 			"aria-label": `${e.label} at ${O(us)(e.startSec)}`,
 			onClick: R((t) => y(e), ["stop"])
-		}, [s("span", np, [
-			s("span", rp, E(e.label), 1),
-			s("span", ip, E(O(us)(e.startSec)), 1),
+		}, [s("span", rp, [
+			s("span", ip, E(e.label), 1),
+			s("span", ap, E(O(us)(e.startSec)), 1),
 			s("button", {
 				type: "button",
 				class: "marker-timeline__similar-btn",
 				onClick: R((t) => b(e), ["stop"])
-			}, " Find similar ", 8, ap)
-		])], 14, tp))), 128))])], 2)) : a("", !0);
+			}, " Find similar ", 8, op)
+		])], 14, np))), 128))])], 2)) : a("", !0);
 	}
-}), [["__scopeId", "data-v-52c56b64"]]), sp = [
+}), [["__scopeId", "data-v-52c56b64"]]), cp = [
 	"aria-label",
 	"aria-expanded",
 	"aria-controls",
 	"onKeydown"
-], cp = {
+], lp = {
 	key: 0,
 	class: "sleep-timer__remaining numeric"
-}, lp = ["aria-label"], up = [
+}, up = ["aria-label"], dp = [
 	"aria-selected",
 	"tabindex",
 	"onFocus",
 	"onClick"
-], dp = /*#__PURE__*/ X(/* @__PURE__ */ d({
+], fp = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SleepTimer",
 	props: { onExpire: { type: Function } },
 	setup(t, { expose: i }) {
@@ -9983,7 +9996,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			"aria-controls": k.value ? "sleep-timer-menu" : void 0,
 			onClick: I,
 			onKeydown: [L(R(V, ["prevent"]), ["down"]), L(R(V, ["prevent"]), ["up"])]
-		}, [u(Y, { name: "moon" }), _.value ? (x(), o("span", cp, E(D(m.value)), 1)) : a("", !0)], 42, sp), u(n, { name: "dropdown" }, {
+		}, [u(Y, { name: "moon" }), _.value ? (x(), o("span", lp, E(D(m.value)), 1)) : a("", !0)], 42, cp), u(n, { name: "dropdown" }, {
 			default: F(() => [k.value ? (x(), o("ul", {
 				key: 0,
 				ref_key: "menuEl",
@@ -10001,11 +10014,11 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 				tabindex: N.value === t ? 0 : -1,
 				onFocus: (e) => ee(t),
 				onClick: (t) => U(e.value)
-			}, E(e.label), 43, up))), 128))], 40, lp)) : a("", !0)]),
+			}, E(e.label), 43, dp))), 128))], 40, up)) : a("", !0)]),
 			_: 1
 		})], 2));
 	}
-}), [["__scopeId", "data-v-8fd9146b"]]), fp = [
+}), [["__scopeId", "data-v-8fd9146b"]]), pp = [
 	1116352408,
 	1899447441,
 	3049323471,
@@ -10071,10 +10084,10 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 	3204031479,
 	3329325298
 ];
-function pp(e, t) {
+function mp(e, t) {
 	return (e >>> t | e << 32 - t) >>> 0;
 }
-function mp(e) {
+function hp(e) {
 	let t = [];
 	for (let n = 0; n < e.length; n += 1) {
 		let r = e.codePointAt(n);
@@ -10082,8 +10095,8 @@ function mp(e) {
 	}
 	return t;
 }
-function hp(e) {
-	let t = mp(e), n = t.length * 8;
+function gp(e) {
+	let t = hp(e), n = t.length * 8;
 	for (t.push(128); t.length % 64 != 56;) t.push(0);
 	let r = Math.floor(n / 4294967296), i = n % 4294967296;
 	t.push(r >>> 24 & 255, r >>> 16 & 255, r >>> 8 & 255, r & 255, i >>> 24 & 255, i >>> 16 & 255, i >>> 8 & 255, i & 255);
@@ -10094,12 +10107,12 @@ function hp(e) {
 			p[n] = (t[r] << 24 | t[r + 1] << 16 | t[r + 2] << 8 | t[r + 3]) >>> 0;
 		}
 		for (let e = 16; e < 64; e += 1) {
-			let t = (pp(p[e - 15], 7) ^ pp(p[e - 15], 18) ^ p[e - 15] >>> 3) >>> 0, n = (pp(p[e - 2], 17) ^ pp(p[e - 2], 19) ^ p[e - 2] >>> 10) >>> 0;
+			let t = (mp(p[e - 15], 7) ^ mp(p[e - 15], 18) ^ p[e - 15] >>> 3) >>> 0, n = (mp(p[e - 2], 17) ^ mp(p[e - 2], 19) ^ p[e - 2] >>> 10) >>> 0;
 			p[e] = p[e - 16] + t + p[e - 7] + n >>> 0;
 		}
 		let n = a, r = o, i = s, m = c, h = l, g = u, _ = d, v = f;
 		for (let e = 0; e < 64; e += 1) {
-			let t = (pp(h, 6) ^ pp(h, 11) ^ pp(h, 25)) >>> 0, a = (h & g ^ ~h & _) >>> 0, o = v + t + a + fp[e] + p[e] >>> 0, s = ((pp(n, 2) ^ pp(n, 13) ^ pp(n, 22)) >>> 0) + ((n & r ^ n & i ^ r & i) >>> 0) >>> 0;
+			let t = (mp(h, 6) ^ mp(h, 11) ^ mp(h, 25)) >>> 0, a = (h & g ^ ~h & _) >>> 0, o = v + t + a + pp[e] + p[e] >>> 0, s = ((mp(n, 2) ^ mp(n, 13) ^ mp(n, 22)) >>> 0) + ((n & r ^ n & i ^ r & i) >>> 0) >>> 0;
 			v = _, _ = g, g = h, h = m + o >>> 0, m = i, i = r, r = n, n = o + s >>> 0;
 		}
 		a = a + n >>> 0, o = o + r >>> 0, s = s + i >>> 0, c = c + m >>> 0, l = l + h >>> 0, u = u + g >>> 0, d = d + _ >>> 0, f = f + v >>> 0;
@@ -10115,27 +10128,27 @@ function hp(e) {
 		f
 	].map((e) => (e >>> 0).toString(16).padStart(8, "0")).join("");
 }
-function gp(e) {
+function _p(e) {
 	if (e === "") throw Error("hashGroupPassword: refusing to hash an empty password — omit the password_hash field instead");
-	return hp(e);
+	return gp(e);
 }
 // src/api/socketHint.ts
-var _p = {
+var vp = {
 	wsUrl: null,
 	wsPath: null
-}, vp = /^wss?:\/\/[^/?#@]+$/i, yp = /^\/[^?#]*$/;
-function bp(e) {
-	if (typeof e != "object" || !e) return _p;
+}, yp = /^wss?:\/\/[^/?#@]+$/i, bp = /^\/[^?#]*$/;
+function xp(e) {
+	if (typeof e != "object" || !e) return vp;
 	let t = e;
-	if (typeof t.wsUrl != "string" || !vp.test(t.wsUrl)) return _p;
-	let n = typeof t.wsPath == "string" && yp.test(t.wsPath) ? t.wsPath.replace(/\/+$/, "") : null;
+	if (typeof t.wsUrl != "string" || !yp.test(t.wsUrl)) return vp;
+	let n = typeof t.wsPath == "string" && bp.test(t.wsPath) ? t.wsPath.replace(/\/+$/, "") : null;
 	return {
 		wsUrl: t.wsUrl,
 		wsPath: n
 	};
 }
-function xp() {
-	return typeof window > "u" ? _p : bp(window.__PHLIX__);
+function Sp() {
+	return typeof window > "u" ? vp : xp(window.__PHLIX__);
 }
 // node_modules/@phlix/syncplay/dist/phlix-syncplay.js
 var Z = {
@@ -10158,7 +10171,7 @@ var Z = {
 	TIME_SYNC: "syncplay_time_sync",
 	ERROR: "syncplay_error",
 	INFO: "syncplay_info"
-}, Sp = [
+}, Cp = [
 	Z.GROUP_CREATE,
 	Z.GROUP_JOIN,
 	Z.GROUP_LEAVE,
@@ -10179,40 +10192,40 @@ var Z = {
 	Z.ERROR,
 	Z.INFO
 ];
-function Cp(e) {
-	return Sp.includes(e);
-}
 function wp(e) {
+	return Cp.includes(e);
+}
+function Tp(e) {
 	"@babel/helpers - typeof";
-	return wp = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+	return Tp = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
 		return typeof e;
 	} : function(e) {
 		return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-	}, wp(e);
+	}, Tp(e);
 }
-function Tp(e, t) {
-	if (wp(e) != "object" || !e) return e;
+function Ep(e, t) {
+	if (Tp(e) != "object" || !e) return e;
 	var n = e[Symbol.toPrimitive];
 	if (n !== void 0) {
 		var r = n.call(e, t || "default");
-		if (wp(r) != "object") return r;
+		if (Tp(r) != "object") return r;
 		throw TypeError("@@toPrimitive must return a primitive value.");
 	}
 	return (t === "string" ? String : Number)(e);
 }
-function Ep(e) {
-	var t = Tp(e, "string");
-	return wp(t) == "symbol" ? t : t + "";
+function Dp(e) {
+	var t = Ep(e, "string");
+	return Tp(t) == "symbol" ? t : t + "";
 }
 function Q(e, t, n) {
-	return (t = Ep(t)) in e ? Object.defineProperty(e, t, {
+	return (t = Dp(t)) in e ? Object.defineProperty(e, t, {
 		value: n,
 		enumerable: !0,
 		configurable: !0,
 		writable: !0
 	}) : e[t] = n, e;
 }
-function Dp(e, t) {
+function Op(e, t) {
 	var n = Object.keys(e);
 	if (Object.getOwnPropertySymbols) {
 		var r = Object.getOwnPropertySymbols(e);
@@ -10222,25 +10235,25 @@ function Dp(e, t) {
 	}
 	return n;
 }
-function Op(e) {
+function kp(e) {
 	for (var t = 1; t < arguments.length; t++) {
 		var n = arguments[t] == null ? {} : arguments[t];
-		t % 2 ? Dp(Object(n), !0).forEach(function(t) {
+		t % 2 ? Op(Object(n), !0).forEach(function(t) {
 			Q(e, t, n[t]);
-		}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(n)) : Dp(Object(n)).forEach(function(t) {
+		}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(n)) : Op(Object(n)).forEach(function(t) {
 			Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(n, t));
 		});
 	}
 	return e;
 }
-function kp(e, t, n) {
-	return Op(Op({}, t), {}, {
+function Ap(e, t, n) {
+	return kp(kp({}, t), {}, {
 		type: e,
 		protocol_version: 1,
 		timestamp: n()
 	});
 }
-function Ap(e) {
+function jp(e) {
 	let t = e;
 	if (typeof e == "string") try {
 		t = JSON.parse(e);
@@ -10253,14 +10266,14 @@ function Ap(e) {
 	let r = n.data, i = !("protocol_version" in n) && typeof r == "object" && r && !Array.isArray(r) ? (() => {
 		let e = {};
 		for (let t of Object.keys(n)) t !== "data" && (e[t] = n[t]);
-		return Op(Op({}, r), e);
+		return kp(kp({}, r), e);
 	})() : n;
-	return Cp(n.type), i;
+	return wp(n.type), i;
 }
-function jp(e) {
+function Mp(e) {
 	return JSON.stringify(e);
 }
-var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
+var Np = .1, Pp = .99, Fp = 1.01, Ip = class {
 	constructor(e) {
 		Q(this, "samples", []), Q(this, "driftRate", 1), Q(this, "now", void 0), Q(this, "samplesVersion", 0), Q(this, "cacheVersion", -1), Q(this, "cachedOffset", 0), Q(this, "cachedLatency", 0), Q(this, "cachedIsStable", !1), this.now = e;
 	}
@@ -10317,7 +10330,7 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 		let t = e[0], n = e[e.length - 1], r = n.timestamp - t.timestamp;
 		if (r <= 0) return;
 		let i = (n.offset - t.offset) / r;
-		this.driftRate = 1 + Mp * i / 1e3, this.driftRate = Math.min(Pp, Math.max(Np, this.driftRate));
+		this.driftRate = 1 + Np * i / 1e3, this.driftRate = Math.min(Fp, Math.max(Pp, this.driftRate));
 	}
 	getDriftRate() {
 		return this.driftRate;
@@ -10347,12 +10360,12 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 			sampleCount: this.samples.length
 		};
 	}
-}, Ip = 250, Lp = class e {
+}, Lp = 250, Rp = class e {
 	constructor(t) {
-		Q(this, "send", void 0), Q(this, "now", void 0), Q(this, "memberId", void 0), Q(this, "memberName", void 0), Q(this, "options", void 0), Q(this, "timeSync", void 0), Q(this, "seekThrottleMs", void 0), Q(this, "seekWindowOpen", !1), Q(this, "pendingSeek", null), Q(this, "seekFlushTimer", null), Q(this, "group", null), Q(this, "destroyed", !1), Q(this, "lastPingSendTime", null), Q(this, "consecutiveSyncRejections", 0), this.options = t, this.send = t.send, this.now = t.now, this.memberId = t.memberId, this.memberName = t.memberName ?? "User", this.timeSync = new Fp(t.now), this.seekThrottleMs = e.parseSeekThrottleMs(t.seekThrottleMs);
+		Q(this, "send", void 0), Q(this, "now", void 0), Q(this, "memberId", void 0), Q(this, "memberName", void 0), Q(this, "options", void 0), Q(this, "timeSync", void 0), Q(this, "seekThrottleMs", void 0), Q(this, "seekWindowOpen", !1), Q(this, "pendingSeek", null), Q(this, "seekFlushTimer", null), Q(this, "group", null), Q(this, "destroyed", !1), Q(this, "lastPingSendTime", null), Q(this, "consecutiveSyncRejections", 0), this.options = t, this.send = t.send, this.now = t.now, this.memberId = t.memberId, this.memberName = t.memberName ?? "User", this.timeSync = new Ip(t.now), this.seekThrottleMs = e.parseSeekThrottleMs(t.seekThrottleMs);
 	}
 	static parseSeekThrottleMs(e) {
-		if (e === void 0) return Ip;
+		if (e === void 0) return Lp;
 		if (typeof e != "number" || !Number.isFinite(e) || e < 0) throw TypeError(`SyncPlayClient: seekThrottleMs must be a finite number >= 0 (0 disables the seek coalescing throttle), got ${String(e)}`);
 		return e;
 	}
@@ -10496,13 +10509,13 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 	}
 	handleIncoming(e) {
 		if (this.destroyed) return;
-		let t = Ap(e);
+		let t = jp(e);
 		if (t === null) {
 			var n, r;
 			(n = (r = this.options).onFrameDropped) == null || n.call(r, "undecodable", e);
 			return;
 		}
-		if (!Cp(t.type)) {
+		if (!wp(t.type)) {
 			var i, a;
 			(i = (a = this.options).onUnknownFrame) == null || i.call(a, t);
 			return;
@@ -10592,7 +10605,7 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 	}
 	static normalizeMembers(e, t) {
 		let n;
-		return n = Array.isArray(e) ? e.filter((e) => typeof e == "object" && !!e) : e && typeof e == "object" ? Object.entries(e).filter(([, e]) => typeof e == "object" && !!e).map(([e, t]) => Op(Op({}, t), {}, { id: e })) : [], n.map((e) => ({
+		return n = Array.isArray(e) ? e.filter((e) => typeof e == "object" && !!e) : e && typeof e == "object" ? Object.entries(e).filter(([, e]) => typeof e == "object" && !!e).map(([e, t]) => kp(kp({}, t), {}, { id: e })) : [], n.map((e) => ({
 			id: typeof e.id == "string" ? e.id : "",
 			name: typeof e.name == "string" ? e.name : "",
 			is_host: e.id === t,
@@ -10600,9 +10613,9 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 		}));
 	}
 	static foldHostId(e, t) {
-		return Op(Op({}, e), {}, {
+		return kp(kp({}, e), {}, {
 			host_id: t,
-			members: e.members.map((e) => Op(Op({}, e), {}, { is_host: e.id === t }))
+			members: e.members.map((e) => kp(kp({}, e), {}, { is_host: e.id === t }))
 		});
 	}
 	static serverTimeToMs(e) {
@@ -10754,7 +10767,7 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 			if (r.length !== n.members.length) {
 				var o, s;
 				let i = n.members.find((e) => e.id === t);
-				if (n = Op(Op({}, n), {}, { members: r }), this.group = e.foldHostId(n, a), i !== void 0) {
+				if (n = kp(kp({}, n), {}, { members: r }), this.group = e.foldHostId(n, a), i !== void 0) {
 					var c, l;
 					(c = (l = this.options).onMemberLeft) == null || c.call(l, {
 						id: i.id,
@@ -10821,7 +10834,7 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 		if (c === void 0) {
 			var l, u;
 			(l = (u = this.options).onFrameDropped) == null || l.call(u, "malformed", t);
-		} else this.group = Op(Op({}, i), {}, { queue: c }), (n = (r = this.options).onQueueChanged) == null || n.call(r, c);
+		} else this.group = kp(kp({}, i), {}, { queue: c }), (n = (r = this.options).onQueueChanged) == null || n.call(r, c);
 	}
 	handleHostTransfer(t) {
 		var n, r;
@@ -10887,24 +10900,24 @@ var Mp = .1, Np = .99, Pp = 1.01, Fp = class {
 		(n = (r = this.options).onGroupList) == null || n.call(r, s);
 	}
 	dispatch(e, t) {
-		this.send(kp(e, t, this.now));
+		this.send(Ap(e, t, this.now));
 	}
 };
 // src/api/syncplay.ts
-function Rp(e, t = 0) {
+function zp(e, t = 0) {
 	return typeof e == "number" && Number.isFinite(e) ? e : typeof e == "string" && e.trim() !== "" && Number.isFinite(Number(e)) ? Number(e) : t;
 }
-function zp(e) {
+function Bp(e) {
 	return e / 1e3;
 }
-function Bp(e) {
-	let t = Rp(e, 0);
+function Vp(e) {
+	let t = zp(e, 0);
 	return (/* @__PURE__ */ new Date((t > 0 ? t : Date.now() / 1e3) * 1e3)).toISOString();
 }
-function Vp(e) {
+function Hp(e) {
 	return e.group_id ?? e.id ?? "";
 }
-function Hp(e) {
+function Up(e) {
 	let t = e?.members;
 	return t ? (Array.isArray(t) ? t : Object.entries(t).map(([e, t]) => ({
 		id: e,
@@ -10914,228 +10927,228 @@ function Hp(e) {
 		name: e.name ?? "Unknown",
 		role: e.is_host === !0 ? "owner" : "contributor",
 		isOnline: !0,
-		lastSeen: Bp(e.joined_at)
+		lastSeen: Vp(e.joined_at)
 	})) : [];
 }
-function Up(e) {
+function Wp(e) {
 	switch (e.playback_state) {
 		case "playing": return "playing";
 		case "paused": return "paused";
 		default: return e.is_playing === !0 ? "playing" : "waiting";
 	}
 }
-function Wp(e) {
-	let t = e ?? {}, n = Vp(t);
+function Gp(e) {
+	let t = e ?? {}, n = Hp(t);
 	return {
 		id: n,
 		name: t.group_name ?? t.name ?? "",
 		isPublic: t.has_password !== !0,
-		memberCount: Rp(t.member_count, Hp(t).length),
+		memberCount: zp(t.member_count, Up(t).length),
 		roomId: n,
 		hostUserId: t.host_id ?? void 0,
-		createdAt: Bp(t.created_at)
+		createdAt: Vp(t.created_at)
 	};
 }
-function Gp(e) {
-	let t = e ?? {}, n = Vp(t), r = Up(t);
+function Kp(e) {
+	let t = e ?? {}, n = Hp(t), r = Wp(t);
 	return {
 		id: n,
 		roomId: n,
 		createdBy: t.host_id ?? "",
-		createdAt: Bp(t.created_at),
+		createdAt: Vp(t.created_at),
 		state: r,
 		currentMediaId: t.current_media_id ?? null,
-		playbackPosition: zp(Rp(t.playback_position)),
+		playbackPosition: Bp(zp(t.playback_position)),
 		playbackRate: +(r === "playing"),
-		serverTime: Rp(t.last_activity_at, Math.floor(Date.now() / 1e3)),
-		lastSync: Bp(t.last_activity_at),
-		activeUsers: Hp(t),
-		roles: Object.fromEntries(Hp(t).map((e) => [e.id, e.role]))
+		serverTime: zp(t.last_activity_at, Math.floor(Date.now() / 1e3)),
+		lastSync: Vp(t.last_activity_at),
+		activeUsers: Up(t),
+		roles: Object.fromEntries(Up(t).map((e) => [e.id, e.role]))
 	};
 }
-var Kp = class {
+var qp = class {
 	constructor(e) {
 		ye(this, "client", void 0), this.client = new en({ baseUrl: e });
 	}
 	async createRoom(e) {
-		return Wp((await this.client.post("/api/v1/syncplay/groups", e)).group);
+		return Gp((await this.client.post("/api/v1/syncplay/groups", e)).group);
 	}
 	async joinRoom(e, t, n) {
 		let r = {};
 		t !== void 0 && t !== "" && (r.memberName = t), n !== void 0 && n !== "" && (r.password = n);
 		let i = await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/join`, Object.keys(r).length > 0 ? r : void 0);
 		return {
-			room: Wp(i.group),
-			session: Gp(i.group)
+			room: Gp(i.group),
+			session: Kp(i.group)
 		};
 	}
 	async leaveRoom(e) {
 		await this.client.post(`/api/v1/syncplay/groups/${encodeURIComponent(e)}/leave`);
 	}
 	async getState(e) {
-		return Gp((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
+		return Kp((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
 	}
 	async getMembers(e) {
-		return Hp((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
+		return Up((await this.client.get(`/api/v1/syncplay/groups/${encodeURIComponent(e)}`)).group);
 	}
 	async listGroups() {
 		let e = await this.client.get("/api/v1/syncplay/groups");
-		return Array.isArray(e.groups) ? e.groups.map(Wp) : [];
+		return Array.isArray(e.groups) ? e.groups.map(Gp) : [];
 	}
 	async listPublicRooms() {
 		return (await this.listGroups()).filter((e) => e.isPublic);
 	}
 };
-function qp(e) {
+function Jp(e) {
 	if (!(e instanceof K) || e.status !== 400) return !1;
 	let t = e.body;
 	return typeof t == "object" && !!t && t.error === "Invalid password";
 }
-var Jp = null, Yp = null;
-function Xp(e) {
-	return Jp && Yp === e || (Jp = new Kp(e), Yp = e), Jp;
+var Yp = null, Xp = null;
+function Zp(e) {
+	return Yp && Xp === e || (Yp = new qp(e), Xp = e), Yp;
 }
-var Zp = {
+var Qp = {
 	log: () => {},
 	warn: () => {},
 	error: () => {}
-}, Qp = null;
-function $p(e) {
-	Qp = e;
+}, $p = null;
+function em(e) {
+	$p = e;
 }
-var em = null, tm = null, nm = 0, rm = 5, im = 1e3, am = null;
-function om() {
-	am !== null && (clearTimeout(am), am = null);
+var tm = null, nm = null, rm = 0, im = 5, am = 1e3, om = null;
+function sm() {
+	om !== null && (clearTimeout(om), om = null);
 }
-var sm = 0, cm = !1, lm = !1, um = null;
-function dm(e) {
-	um = e;
+var cm = 0, lm = !1, um = !1, dm = null;
+function fm(e) {
+	dm = e;
 }
-var fm = () => {
-	lm && (Zp.log("[SyncPlay] online wake — retrying the remembered room with a fresh budget"), _m());
-}, pm = () => {
-	typeof document < "u" && document.visibilityState === "visible" && fm();
-}, mm = !1;
-function hm(e) {
-	mm !== e && (typeof window < "u" && (e ? (window.addEventListener("online", fm), document.addEventListener("visibilitychange", pm)) : (window.removeEventListener("online", fm), document.removeEventListener("visibilitychange", pm))), mm = e);
-}
+var pm = () => {
+	um && (Qp.log("[SyncPlay] online wake — retrying the remembered room with a fresh budget"), vm());
+}, mm = () => {
+	typeof document < "u" && document.visibilityState === "visible" && pm();
+}, hm = !1;
 function gm(e) {
-	lm !== e && (lm = e, hm(e), um?.(e));
+	hm !== e && (typeof window < "u" && (e ? (window.addEventListener("online", pm), document.addEventListener("visibilitychange", mm)) : (window.removeEventListener("online", pm), document.removeEventListener("visibilitychange", mm))), hm = e);
 }
-function _m() {
-	return !lm || !tm ? !1 : (gm(!1), nm = 0, Om(tm), !0);
+function _m(e) {
+	um !== e && (um = e, gm(e), dm?.(e));
 }
-var $ = null, vm = null, ym = null, bm = null, xm = null;
-function Sm() {
+function vm() {
+	return !um || !nm ? !1 : (_m(!1), rm = 0, km(nm), !0);
+}
+var $ = null, ym = null, bm = null, xm = null, Sm = null;
+function Cm() {
 	try {
 		return Mt().getAccessToken();
 	} catch {
 		return null;
 	}
 }
-function Cm(e) {
-	let t = xp();
+function wm(e) {
+	let t = Sp();
 	if (t.wsUrl !== null) return `${t.wsUrl}${t.wsPath ?? ""}?room=${encodeURIComponent(e)}`;
 	let n = typeof window < "u" ? window.location : null, r = n?.hostname ?? "localhost";
 	return `${n?.protocol === "https:" ? "wss:" : "ws:"}//${r}:8097?room=${encodeURIComponent(e)}`;
 }
-function wm() {
-	let e = Sm();
+function Tm() {
+	let e = Cm();
 	return e ? ["bearer", e] : void 0;
 }
-function Tm(e) {
+function Em(e) {
 	if ($) try {
 		let t = JSON.parse(e.data);
 		$.handleIncoming(t);
 	} catch {
-		sm++, cm || (cm = !0, Zp.warn("[SyncPlay] Dropping malformed WebSocket frame (JSON parse failed); further parse failures this session are counted silently"));
+		cm++, lm || (lm = !0, Qp.warn("[SyncPlay] Dropping malformed WebSocket frame (JSON parse failed); further parse failures this session are counted silently"));
 	}
 }
-function Em(e) {
-	if (!(e && e.target !== em) && !lm) {
-		if (em = null, $ && $.onDisconnect(), tm && am === null && nm < rm) {
-			let e = im * 2 ** nm;
-			nm++;
-			let t = tm;
-			Zp.log(`[SyncPlay] WebSocket closed, reconnecting in ${e}ms (attempt ${nm})`), am = setTimeout(() => {
-				am = null, lm || tm === t && Om(t);
+function Dm(e) {
+	if (!(e && e.target !== tm) && !um) {
+		if (tm = null, $ && $.onDisconnect(), nm && om === null && rm < im) {
+			let e = am * 2 ** rm;
+			rm++;
+			let t = nm;
+			Qp.log(`[SyncPlay] WebSocket closed, reconnecting in ${e}ms (attempt ${rm})`), om = setTimeout(() => {
+				om = null, um || nm === t && km(t);
 			}, e);
-		} else nm >= rm && (Zp.warn("[SyncPlay] Max reconnect attempts reached, giving up"), nm = 0, $ = null, om(), gm(!0));
+		} else rm >= im && (Qp.warn("[SyncPlay] Max reconnect attempts reached, giving up"), rm = 0, $ = null, sm(), _m(!0));
 	}
 }
-function Dm(e, t, n, r, i) {
-	nm = 0, gm(!1), bm = i ?? null, om(), sm = 0, cm = !1, Om(e, t, n, r);
+function Om(e, t, n, r, i) {
+	rm = 0, _m(!1), xm = i ?? null, sm(), cm = 0, lm = !1, km(e, t, n, r);
 }
-function Om(e, t, n, r) {
-	if (t && (xm = t), em && tm !== e) {
-		let e = em;
-		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), em = null, tm = null, $ = null;
+function km(e, t, n, r) {
+	if (t && (Sm = t), tm && nm !== e) {
+		let e = tm;
+		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), tm = null, nm = null, $ = null;
 	}
-	if (em && tm === e) return;
-	tm = e;
-	let i = n ?? vm ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, a = r ?? ym ?? "Anonymous";
-	vm = i, ym = a, $ = new Lp({
+	if (tm && nm === e) return;
+	nm = e;
+	let i = n ?? ym ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, a = r ?? bm ?? "Anonymous";
+	ym = i, bm = a, $ = new Rp({
 		send: (e) => {
-			em && em.readyState === WebSocket.OPEN && em.send(jp(e));
+			tm && tm.readyState === WebSocket.OPEN && tm.send(Mp(e));
 		},
 		now: () => Date.now(),
 		memberId: i,
 		memberName: a,
 		onPlaybackCommand: (e) => {
-			xm && xm({
+			Sm && Sm({
 				type: e.type,
-				position: zp(e.position),
-				roomId: tm ?? void 0
+				position: Bp(e.position),
+				roomId: nm ?? void 0
 			});
 		},
 		onPlaybackSync: (e, t, n, r) => {
-			xm && xm({
+			Sm && Sm({
 				type: n ? "play" : "pause",
-				position: zp(t),
-				roomId: tm ?? void 0
+				position: Bp(t),
+				roomId: nm ?? void 0
 			});
 		},
 		onDisconnect: () => {},
 		onError: (e, t) => {
-			Zp.error(`[SyncPlay] Error: ${e} - ${t}`), Qp?.(e, t);
+			Qp.error(`[SyncPlay] Error: ${e} - ${t}`), $p?.(e, t);
 		},
 		onInfo: (e) => {
-			Zp.log(`[SyncPlay] Info: ${e}`);
+			Qp.log(`[SyncPlay] Info: ${e}`);
 		}
 	});
-	let o = Cm(e);
-	Zp.log(`[SyncPlay] Opening WebSocket to ${o}`);
+	let o = wm(e);
+	Qp.log(`[SyncPlay] Opening WebSocket to ${o}`);
 	let s;
 	try {
-		s = new WebSocket(o, wm());
+		s = new WebSocket(o, Tm());
 	} catch (e) {
-		Zp.error("[SyncPlay] WebSocket constructor refused the handshake", e), Em();
+		Qp.error("[SyncPlay] WebSocket constructor refused the handshake", e), Dm();
 		return;
 	}
-	em = s, s.onopen = () => {
-		Zp.log("[SyncPlay] WebSocket connected"), nm = 0, $ && tm && $.joinGroup(tm, bm ?? void 0);
-	}, s.onmessage = Tm, s.onclose = Em, s.onerror = (e) => {
-		Zp.error("[SyncPlay] WebSocket error", e);
+	tm = s, s.onopen = () => {
+		Qp.log("[SyncPlay] WebSocket connected"), rm = 0, $ && nm && $.joinGroup(nm, xm ?? void 0);
+	}, s.onmessage = Em, s.onclose = Dm, s.onerror = (e) => {
+		Qp.error("[SyncPlay] WebSocket error", e);
 	};
 }
-function km() {
+function Am() {
 	if ($) {
 		try {
 			$.leaveGroup();
 		} catch {}
 		$.onDisconnect(), $ = null;
 	}
-	if (em) {
-		let e = em;
-		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), em = null;
+	if (tm) {
+		let e = tm;
+		e.onopen = null, e.onmessage = null, e.onclose = null, e.onerror = null, e.close(), tm = null;
 	}
-	tm = null, nm = 0, om(), gm(!1), bm = null;
-}
-function Am(e) {
-	$ && em && em.readyState === WebSocket.OPEN && $.reportPosition(e.playbackPosition, e.playbackRate > 0);
+	nm = null, rm = 0, sm(), _m(!1), xm = null;
 }
 function jm(e) {
-	if (!$ || !em || em.readyState !== WebSocket.OPEN) return !1;
+	$ && tm && tm.readyState === WebSocket.OPEN && $.reportPosition(e.playbackPosition, e.playbackRate > 0);
+}
+function Mm(e) {
+	if (!$ || !tm || tm.readyState !== WebSocket.OPEN) return !1;
 	switch (e.type) {
 		case "play": return $.sendPlay(e.position ?? 0), !0;
 		case "pause": return $.sendPause(e.position ?? 0), !0;
@@ -11153,7 +11166,7 @@ function jm(e) {
 			return !1;
 	}
 }
-function Mm(e, t) {
+function Nm(e, t) {
 	let n = t.position === void 0 ? {} : { playbackPosition: t.position };
 	switch (t.type) {
 		case "play": return {
@@ -11194,18 +11207,18 @@ function Mm(e, t) {
 		};
 	}
 }
-var Nm = .5;
-function Pm(e, t, n) {
+var Pm = .5;
+function Fm(e, t, n) {
 	if (!e) return !0;
 	switch (t) {
 		case "play": return e.state !== "playing";
 		case "pause": return e.state !== "paused";
-		case "seek": return n === void 0 || Math.abs(e.playbackPosition - n) > Nm;
+		case "seek": return n === void 0 || Math.abs(e.playbackPosition - n) > Pm;
 		default: return !1;
 	}
 }
-var Fm = 5e3;
-function Im() {
+var Im = 5e3;
+function Lm() {
 	let e = Dn().user;
 	if (e) {
 		for (let t of [
@@ -11215,13 +11228,13 @@ function Im() {
 		]) if (typeof t == "string" && t.trim() !== "") return t.trim();
 	}
 }
-var Lm = class extends Error {
+var Rm = class extends Error {
 	constructor(e) {
 		super(`SyncPlay '${e}' command was not delivered to the group`), ye(this, "commandType", void 0), this.commandType = e, this.name = "SyncPlayCommandNotDeliveredError";
 	}
-}, Rm = z("phlix-syncplay", () => {
+}, zm = z("phlix-syncplay", () => {
 	let { t: e } = J(), t = S(null), n = S(null), i = S(null), a = S([]), o = S(null), s = S(!1), c = S(!1);
-	dm((e) => {
+	fm((e) => {
 		c.value = e;
 	});
 	let l = S(0), u = 0, d = null, f = r(() => n.value !== null), p = r(() => n.value ? n.value.state === "playing" || n.value.state === "paused" : !1), m = r(() => a.value.filter((e) => e.isOnline)), h = r(() => {
@@ -11232,7 +11245,7 @@ var Lm = class extends Error {
 	}), g = r(() => n.value ? n.value.state === "waiting" ? "re-syncing" : Math.abs(h.value) > 2 ? "outOfSync" : "synced" : "outOfSync");
 	function _() {
 		let e = n.value;
-		e ? e.state === "playing" && Am({
+		e ? e.state === "playing" && jm({
 			sessionId: e.id,
 			playbackPosition: l.value * 1e3,
 			playbackRate: e.playbackRate > 0 ? e.playbackRate : 1,
@@ -11241,7 +11254,7 @@ var Lm = class extends Error {
 		}) : y();
 	}
 	function v() {
-		y(), d = setInterval(_, Fm);
+		y(), d = setInterval(_, Im);
 	}
 	function y() {
 		d !== null && (clearInterval(d), d = null);
@@ -11261,7 +11274,7 @@ var Lm = class extends Error {
 			...t.value ?? {},
 			...s,
 			currentSession: c
-		}, a.value = c.activeUsers, Dm(e, (e) => {
+		}, a.value = c.activeUsers, Om(e, (e) => {
 			D(e);
 		}, void 0, i, o), v();
 	}
@@ -11269,7 +11282,7 @@ var Lm = class extends Error {
 		s.value = !0, o.value = null;
 		let i = null;
 		try {
-			let e = Xp(n), a = Im(), o = r.password !== void 0 && r.password.trim() !== "" ? r.password : void 0, s = o === void 0 ? void 0 : gp(o), c = await e.createRoom({
+			let e = Zp(n), a = Lm(), o = r.password !== void 0 && r.password.trim() !== "" ? r.password : void 0, s = o === void 0 ? void 0 : _p(o), c = await e.createRoom({
 				name: r.name,
 				...o === void 0 ? {} : { password: o },
 				memberName: a
@@ -11277,7 +11290,7 @@ var Lm = class extends Error {
 			t.value = c, i = c.id, C(c.id, await e.joinRoom(c.id, a, o), a, s);
 		} catch (t) {
 			if (o.value = t instanceof Error ? t.message : e("syncplay.errorCreate"), i !== null) try {
-				await Xp(n).leaveRoom(i);
+				await Zp(n).leaveRoom(i);
 			} catch {}
 			throw t;
 		} finally {
@@ -11287,7 +11300,7 @@ var Lm = class extends Error {
 	async function T(t, n, r) {
 		s.value = !0, o.value = null;
 		try {
-			let e = Xp(t), i = Im(), a = r !== void 0 && r !== "" ? r : void 0, o = a === void 0 ? void 0 : gp(a);
+			let e = Zp(t), i = Lm(), a = r !== void 0 && r !== "" ? r : void 0, o = a === void 0 ? void 0 : _p(a);
 			C(n, await e.joinRoom(n, i, a), i, o);
 		} catch (t) {
 			throw o.value = t instanceof Error ? t.message : e("syncplay.errorJoin"), t;
@@ -11299,33 +11312,33 @@ var Lm = class extends Error {
 		if (t.value) {
 			s.value = !0, o.value = null;
 			try {
-				let n = Xp(r);
+				let n = Zp(r);
 				try {
 					await n.leaveRoom(t.value.id);
 				} catch (t) {
 					o.value = t instanceof Error ? t.message : e("syncplay.errorLeave");
 				}
 			} finally {
-				y(), km(), t.value = null, n.value = null, a.value = [], l.value = 0, i.value = null, s.value = !1;
+				y(), Am(), t.value = null, n.value = null, a.value = [], l.value = 0, i.value = null, s.value = !1;
 			}
 		}
 	}
 	function D(e) {
 		if (!n.value) return;
-		let t = Mm(n.value, e);
+		let t = Nm(n.value, e);
 		t.reanchor && (u = Date.now()), n.value = t.session;
 	}
 	function O(t, r, i) {
 		if (n.value) {
-			if (!jm({
+			if (!Mm({
 				type: r,
 				position: i?.position === void 0 ? void 0 : i.position * 1e3,
 				rate: i?.rate,
 				issuedBy: n.value.createdBy,
 				issuedAt: (/* @__PURE__ */ new Date()).toISOString()
-			})) throw o.value = e("syncplay.commandNotDelivered"), new Lm(r);
+			})) throw o.value = e("syncplay.commandNotDelivered"), new Rm(r);
 			if (n.value) {
-				let e = Mm(n.value, {
+				let e = Nm(n.value, {
 					type: r,
 					position: i?.position,
 					rate: i?.rate
@@ -11336,13 +11349,13 @@ var Lm = class extends Error {
 	}
 	function k(e, t, r) {
 		let i = n.value;
-		if (i && Pm(i, t, r?.position)) try {
+		if (i && Fm(i, t, r?.position)) try {
 			O(e, t, r);
 		} catch {}
 	}
 	async function A(e) {
 		if (n.value) try {
-			let t = await Xp(e).getState(n.value.id);
+			let t = await Zp(e).getState(n.value.id);
 			n.value = t, u = Date.now();
 		} catch (e) {
 			throw o.value = e instanceof Error ? e.message : "Failed to refresh state.", e;
@@ -11350,7 +11363,7 @@ var Lm = class extends Error {
 	}
 	async function j(e) {
 		if (t.value) try {
-			let n = await Xp(e).getMembers(t.value.id);
+			let n = await Zp(e).getMembers(t.value.id);
 			a.value = n;
 		} catch (e) {
 			throw o.value = e instanceof Error ? e.message : "Failed to refresh members.", e;
@@ -11360,7 +11373,7 @@ var Lm = class extends Error {
 		o.value = null;
 	}
 	function N() {
-		return _m();
+		return vm();
 	}
 	function P(e) {
 		l.value = e;
@@ -11393,17 +11406,17 @@ var Lm = class extends Error {
 		applyPendingPlayMedia: b,
 		consumePendingPlayMedia: x
 	};
-}), zm = {
+}), Bm = {
 	key: 0,
 	class: "syncplay-overlay"
-}, Bm = { class: "syncplay-overlay__badge" }, Vm = { class: "syncplay-overlay__label" }, Hm = { class: "syncplay-overlay__status-label" }, Um = { class: "syncplay-overlay__members" }, Wm = { class: "syncplay-overlay__member-count" }, Gm = { class: "syncplay-overlay__member-list" }, Km = { class: "syncplay-overlay__member-name" }, qm = {
+}, Vm = { class: "syncplay-overlay__badge" }, Hm = { class: "syncplay-overlay__label" }, Um = { class: "syncplay-overlay__status-label" }, Wm = { class: "syncplay-overlay__members" }, Gm = { class: "syncplay-overlay__member-count" }, Km = { class: "syncplay-overlay__member-list" }, qm = { class: "syncplay-overlay__member-name" }, Jm = {
 	key: 0,
 	class: "syncplay-overlay__member syncplay-overlay__member--more"
-}, Jm = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, Ym = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SyncPlayOverlay",
 	props: { apiBase: {} },
 	setup(t) {
-		let n = t, { t: i } = J(), c = Rm(), d = ln(), f = r(() => n.apiBase ?? d.value), p = r(() => c.currentRoom?.name ?? "SyncPlay"), m = r(() => c.onlineMembers.length), h = r(() => c.syncStatus), _ = r(() => {
+		let n = t, { t: i } = J(), c = zm(), d = ln(), f = r(() => n.apiBase ?? d.value), p = r(() => c.currentRoom?.name ?? "SyncPlay"), m = r(() => c.onlineMembers.length), h = r(() => c.syncStatus), _ = r(() => {
 			switch (h.value) {
 				case "synced": return i("syncplay.synced");
 				case "outOfSync": return i("syncplay.outOfSync");
@@ -11421,19 +11434,19 @@ var Lm = class extends Error {
 		async function y() {
 			await c.leaveRoom(f.value);
 		}
-		return (t, n) => O(c).isInRoom ? (x(), o("div", zm, [
-			s("div", Bm, [u(Y, {
+		return (t, n) => O(c).isInRoom ? (x(), o("div", Bm, [
+			s("div", Vm, [u(Y, {
 				name: "user",
 				class: "syncplay-overlay__icon"
-			}), s("span", Vm, "SyncPlay: " + E(p.value), 1)]),
+			}), s("span", Hm, "SyncPlay: " + E(p.value), 1)]),
 			s("div", { class: g(["syncplay-overlay__status", `syncplay-overlay__status--${h.value}`]) }, [u(Y, {
 				name: v.value,
 				class: "syncplay-overlay__status-icon"
-			}, null, 8, ["name"]), s("span", Hm, E(_.value), 1)], 2),
-			s("div", Um, [s("span", Wm, [u(Y, { name: "user" }), l(" " + E(O(i)("syncplay.members", { count: m.value })), 1)]), s("ul", Gm, [(x(!0), o(e, null, C(O(c).onlineMembers.slice(0, 5), (e) => (x(), o("li", {
+			}, null, 8, ["name"]), s("span", Um, E(_.value), 1)], 2),
+			s("div", Wm, [s("span", Gm, [u(Y, { name: "user" }), l(" " + E(O(i)("syncplay.members", { count: m.value })), 1)]), s("ul", Km, [(x(!0), o(e, null, C(O(c).onlineMembers.slice(0, 5), (e) => (x(), o("li", {
 				key: e.id,
 				class: "syncplay-overlay__member"
-			}, [n[0] ||= s("span", { class: "syncplay-overlay__member-dot" }, null, -1), s("span", Km, E(e.name), 1)]))), 128)), O(c).onlineMembers.length > 5 ? (x(), o("li", qm, " +" + E(O(c).onlineMembers.length - 5) + " more ", 1)) : a("", !0)])]),
+			}, [n[0] ||= s("span", { class: "syncplay-overlay__member-dot" }, null, -1), s("span", qm, E(e.name), 1)]))), 128)), O(c).onlineMembers.length > 5 ? (x(), o("li", Jm, " +" + E(O(c).onlineMembers.length - 5) + " more ", 1)) : a("", !0)])]),
 			u(Lu, {
 				variant: "ghost",
 				size: "sm",
@@ -11444,47 +11457,47 @@ var Lm = class extends Error {
 			})
 		])) : a("", !0);
 	}
-}), [["__scopeId", "data-v-2dfa4284"]]), Ym = ["aria-label"], Xm = ["aria-checked", "tabindex"], Zm = ["aria-checked", "tabindex"], Qm = {
+}), [["__scopeId", "data-v-2dfa4284"]]), Xm = ["aria-label"], Zm = ["aria-checked", "tabindex"], Qm = ["aria-checked", "tabindex"], $m = {
 	key: 0,
 	class: "syncplay-modal__fields"
-}, $m = { class: "syncplay-modal__field" }, eh = {
+}, eh = { class: "syncplay-modal__field" }, th = {
 	class: "syncplay-modal__label",
 	for: "room-name"
-}, th = ["placeholder"], nh = { class: "syncplay-modal__field" }, rh = {
+}, nh = ["placeholder"], rh = { class: "syncplay-modal__field" }, ih = {
 	class: "syncplay-modal__label",
 	for: "room-password"
-}, ih = { class: "syncplay-modal__pw-wrap" }, ah = ["type"], oh = ["aria-label", "aria-pressed"], sh = {
+}, ah = { class: "syncplay-modal__pw-wrap" }, oh = ["type"], sh = ["aria-label", "aria-pressed"], ch = {
 	id: "room-password-optional",
 	class: "syncplay-modal__hint"
-}, ch = {
+}, lh = {
 	key: 1,
 	class: "syncplay-modal__fields"
-}, lh = { class: "syncplay-modal__field" }, uh = {
+}, uh = { class: "syncplay-modal__field" }, dh = {
 	class: "syncplay-modal__label",
 	for: "room-id"
-}, dh = ["placeholder"], fh = { class: "syncplay-modal__field" }, ph = {
+}, fh = ["placeholder"], ph = { class: "syncplay-modal__field" }, mh = {
 	class: "syncplay-modal__label",
 	for: "room-password"
-}, mh = { class: "syncplay-modal__pw-wrap" }, hh = [
+}, hh = { class: "syncplay-modal__pw-wrap" }, gh = [
 	"type",
 	"required",
 	"aria-describedby"
-], gh = ["aria-label", "aria-pressed"], _h = {
+], _h = ["aria-label", "aria-pressed"], vh = {
 	key: 0,
 	id: "room-password-hint",
 	class: "syncplay-modal__hint"
-}, vh = {
+}, yh = {
 	key: 2,
 	class: "syncplay-modal__error",
 	role: "alert"
-}, yh = {
+}, bh = {
 	key: 3,
 	class: "syncplay-modal__rooms"
-}, bh = { class: "syncplay-modal__rooms-title" }, xh = { class: "syncplay-modal__rooms-list" }, Sh = ["onClick"], Ch = { class: "syncplay-modal__room-name" }, wh = { class: "syncplay-modal__room-count" }, Th = {
+}, xh = { class: "syncplay-modal__rooms-title" }, Sh = { class: "syncplay-modal__rooms-list" }, Ch = ["onClick"], wh = { class: "syncplay-modal__room-name" }, Th = { class: "syncplay-modal__room-count" }, Eh = {
 	key: 4,
 	class: "syncplay-modal__loading",
 	role: "status"
-}, Eh = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, Dh = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SyncPlayModal",
 	props: {
 		modelValue: { type: Boolean },
@@ -11493,7 +11506,7 @@ var Lm = class extends Error {
 	},
 	emits: ["update:modelValue", "joined"],
 	setup(t, { emit: n }) {
-		let c = t, d = n, { t: p } = J(), m = Rm(), _ = ln(), v = r(() => c.apiBase ?? _.value), y = S("create"), b = S(null), w = S(null);
+		let c = t, d = n, { t: p } = J(), m = zm(), _ = ln(), v = r(() => c.apiBase ?? _.value), y = S("create"), b = S(null), w = S(null);
 		function T(e) {
 			switch (e.key) {
 				case "ArrowLeft":
@@ -11511,7 +11524,7 @@ var Lm = class extends Error {
 		async function re() {
 			W.value = !0;
 			try {
-				let e = new Kp(v.value);
+				let e = new qp(v.value);
 				U.value = await e.listGroups();
 			} catch {
 				U.value = [];
@@ -11528,7 +11541,7 @@ var Lm = class extends Error {
 						password: A.value
 					}) : await m.joinRoom(v.value, k.value.trim(), A.value), m.currentRoom && d("joined", m.currentRoom), d("update:modelValue", !1);
 				} catch (e) {
-					y.value === "join" && qp(e) ? (L.value = !0, H.value = Ct("syncplay.invalid_password", B?.locale, null), h(() => z.value?.focus())) : H.value = e instanceof Error ? e.message : "Operation failed";
+					y.value === "join" && Jp(e) ? (L.value = !0, H.value = Ct("syncplay.invalid_password", B?.locale, null), h(() => z.value?.focus())) : H.value = e instanceof Error ? e.message : "Operation failed";
 				} finally {
 					V.value = !1;
 				}
@@ -11582,7 +11595,7 @@ var Lm = class extends Error {
 					"aria-checked": y.value === "create",
 					tabindex: y.value === "create" ? 0 : -1,
 					onClick: r[0] ||= (e) => y.value = "create"
-				}, E(O(p)("syncplay.createRoom")), 11, Xm), s("button", {
+				}, E(O(p)("syncplay.createRoom")), 11, Zm), s("button", {
 					ref_key: "joinOptionEl",
 					ref: w,
 					type: "button",
@@ -11591,17 +11604,17 @@ var Lm = class extends Error {
 					"aria-checked": y.value === "join",
 					tabindex: y.value === "join" ? 0 : -1,
 					onClick: r[1] ||= (e) => y.value = "join"
-				}, E(O(p)("syncplay.joinRoom")), 11, Zm)], 40, Ym),
-				y.value === "create" ? (x(), o("div", Qm, [s("div", $m, [s("label", eh, E(O(p)("syncplay.roomName")), 1), I(s("input", {
+				}, E(O(p)("syncplay.joinRoom")), 11, Qm)], 40, Xm),
+				y.value === "create" ? (x(), o("div", $m, [s("div", eh, [s("label", th, E(O(p)("syncplay.roomName")), 1), I(s("input", {
 					id: "room-name",
 					"onUpdate:modelValue": r[2] ||= (e) => D.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
 					placeholder: O(p)("syncplay.roomNamePlaceholder"),
 					autocomplete: "off"
-				}, null, 8, th), [[M, D.value]])]), s("div", nh, [
-					s("label", rh, E(O(p)("syncplay.roomPassword")), 1),
-					s("div", ih, [I(s("input", {
+				}, null, 8, nh), [[M, D.value]])]), s("div", rh, [
+					s("label", ih, E(O(p)("syncplay.roomPassword")), 1),
+					s("div", ah, [I(s("input", {
 						id: "room-password",
 						"onUpdate:modelValue": r[3] ||= (e) => A.value = e,
 						type: N.value ? "text" : "password",
@@ -11609,24 +11622,24 @@ var Lm = class extends Error {
 						autocomplete: "off",
 						spellcheck: "false",
 						"aria-describedby": "room-password-optional"
-					}, null, 8, ah), [[j, A.value]]), s("button", {
+					}, null, 8, oh), [[j, A.value]]), s("button", {
 						type: "button",
 						class: "syncplay-modal__pw-toggle",
 						"aria-label": N.value ? O(p)("auth.hidePassword") : O(p)("auth.showPassword"),
 						"aria-pressed": N.value,
 						onClick: r[4] ||= (e) => N.value = !N.value
-					}, [u(Y, { name: N.value ? "eye-off" : "eye" }, null, 8, ["name"])], 8, oh)]),
-					s("p", sh, E(O(p)("syncplay.passwordOptional")), 1)
-				])])) : (x(), o("div", ch, [s("div", lh, [s("label", uh, E(O(p)("syncplay.roomId")), 1), I(s("input", {
+					}, [u(Y, { name: N.value ? "eye-off" : "eye" }, null, 8, ["name"])], 8, sh)]),
+					s("p", ch, E(O(p)("syncplay.passwordOptional")), 1)
+				])])) : (x(), o("div", lh, [s("div", uh, [s("label", dh, E(O(p)("syncplay.roomId")), 1), I(s("input", {
 					id: "room-id",
 					"onUpdate:modelValue": r[5] ||= (e) => k.value = e,
 					type: "text",
 					class: "syncplay-modal__input",
 					placeholder: O(p)("syncplay.roomIdPlaceholder"),
 					autocomplete: "off"
-				}, null, 8, dh), [[M, k.value]])]), s("div", fh, [
-					s("label", ph, E(O(p)("syncplay.roomPassword")), 1),
-					s("div", mh, [I(s("input", {
+				}, null, 8, fh), [[M, k.value]])]), s("div", ph, [
+					s("label", mh, E(O(p)("syncplay.roomPassword")), 1),
+					s("div", hh, [I(s("input", {
 						id: "room-password",
 						ref_key: "passwordInputEl",
 						ref: z,
@@ -11637,17 +11650,17 @@ var Lm = class extends Error {
 						autocomplete: "off",
 						spellcheck: "false",
 						"aria-describedby": L.value ? "room-password-hint" : void 0
-					}, null, 8, hh), [[j, A.value]]), s("button", {
+					}, null, 8, gh), [[j, A.value]]), s("button", {
 						type: "button",
 						class: "syncplay-modal__pw-toggle",
 						"aria-label": N.value ? O(p)("auth.hidePassword") : O(p)("auth.showPassword"),
 						"aria-pressed": N.value,
 						onClick: r[7] ||= (e) => N.value = !N.value
-					}, [u(Y, { name: N.value ? "eye-off" : "eye" }, null, 8, ["name"])], 8, gh)]),
-					L.value ? (x(), o("p", _h, E(O(p)("syncplay.lockedRoomHint")), 1)) : a("", !0)
+					}, [u(Y, { name: N.value ? "eye-off" : "eye" }, null, 8, ["name"])], 8, _h)]),
+					L.value ? (x(), o("p", vh, E(O(p)("syncplay.lockedRoomHint")), 1)) : a("", !0)
 				])])),
-				H.value ? (x(), o("p", vh, E(H.value), 1)) : a("", !0),
-				y.value === "join" && U.value.length > 0 ? (x(), o("div", yh, [s("h3", bh, E(O(p)("syncplay.availableRooms")), 1), s("ul", xh, [(x(!0), o(e, null, C(U.value, (e) => (x(), o("li", {
+				H.value ? (x(), o("p", yh, E(H.value), 1)) : a("", !0),
+				y.value === "join" && U.value.length > 0 ? (x(), o("div", bh, [s("h3", xh, E(O(p)("syncplay.availableRooms")), 1), s("ul", Sh, [(x(!0), o(e, null, C(U.value, (e) => (x(), o("li", {
 					key: e.id,
 					class: "syncplay-modal__room"
 				}, [s("button", {
@@ -11659,24 +11672,24 @@ var Lm = class extends Error {
 						name: "user",
 						class: "syncplay-modal__room-icon"
 					}),
-					s("span", Ch, E(e.name), 1),
+					s("span", wh, E(e.name), 1),
 					e.isPublic ? a("", !0) : (x(), i(Y, {
 						key: 0,
 						name: "lock",
 						label: O(p)("syncplay.lockedRoom"),
 						class: "syncplay-modal__room-lock"
 					}, null, 8, ["label"])),
-					s("span", wh, E(O(p)("syncplay.members", { count: e.memberCount })), 1)
-				], 8, Sh)]))), 128))])])) : a("", !0),
-				W.value ? (x(), o("div", Th, [u(Y, { name: "spinner" }), s("span", null, E(O(p)("common.loading")), 1)])) : a("", !0)
+					s("span", Th, E(O(p)("syncplay.members", { count: e.memberCount })), 1)
+				], 8, Ch)]))), 128))])])) : a("", !0),
+				W.value ? (x(), o("div", Eh, [u(Y, { name: "spinner" }), s("span", null, E(O(p)("common.loading")), 1)])) : a("", !0)
 			], 32)]),
 			_: 1
 		}, 8, ["model-value", "title"]));
 	}
-}), [["__scopeId", "data-v-66698f79"]]), Dh = {
+}), [["__scopeId", "data-v-66698f79"]]), Oh = {
 	key: 0,
 	class: "syncplay-controls"
-}, Oh = ["aria-label"], kh = { class: "syncplay-controls__wait-label" }, Ah = { class: "syncplay-controls__transport" }, jh = ["aria-label"], Mh = ["aria-label"], Nh = ["aria-label"], Ph = { class: "syncplay-controls__status-label" }, Fh = 10, Ih = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, kh = ["aria-label"], Ah = { class: "syncplay-controls__wait-label" }, jh = { class: "syncplay-controls__transport" }, Mh = ["aria-label"], Nh = ["aria-label"], Ph = ["aria-label"], Fh = { class: "syncplay-controls__status-label" }, Ih = 10, Lh = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SyncPlayControls",
 	props: {
 		position: {},
@@ -11691,10 +11704,10 @@ var Lm = class extends Error {
 		"pause"
 	],
 	setup(e, { emit: t }) {
-		let n = e, i = t, { t: c } = J(), l = Rm(), d = tn(), p = f("phlixConfig", null), m = ln(), h = r(() => n.apiBase ?? m.value);
-		$p((e) => {
+		let n = e, i = t, { t: c } = J(), l = zm(), d = tn(), p = f("phlixConfig", null), m = ln(), h = r(() => n.apiBase ?? m.value);
+		em((e) => {
 			d.error(Ct(e, p?.locale, c("syncplay.commandRejected")));
-		}), b(() => $p(null));
+		}), b(() => em(null));
 		let _ = S(!1), v = r(() => _.value || l.syncStatus === "re-syncing");
 		async function y() {
 			if (l.isInRoom) try {
@@ -11721,14 +11734,14 @@ var Lm = class extends Error {
 			}
 		}
 		async function D() {
-			await T(Math.max(0, n.position - Fh));
+			await T(Math.max(0, n.position - Ih));
 		}
 		async function k() {
-			await T(Math.min(n.duration, n.position + Fh));
+			await T(Math.min(n.duration, n.position + Ih));
 		}
 		return P(() => l.syncStatus, (e) => {
 			e === "re-syncing" ? _.value = !0 : e === "synced" && (_.value = !1);
-		}), (t, n) => O(l).isInRoom ? (x(), o("div", Dh, [
+		}), (t, n) => O(l).isInRoom ? (x(), o("div", Oh, [
 			v.value ? (x(), o("div", {
 				key: 0,
 				class: "syncplay-controls__wait",
@@ -11737,41 +11750,41 @@ var Lm = class extends Error {
 			}, [u(Y, {
 				name: "spinner",
 				class: "syncplay-controls__wait-icon"
-			}), s("span", kh, E(O(c)("syncplay.waitingForMembers")), 1)], 8, Oh)) : a("", !0),
-			s("div", Ah, [
+			}), s("span", Ah, E(O(c)("syncplay.waitingForMembers")), 1)], 8, kh)) : a("", !0),
+			s("div", jh, [
 				s("button", {
 					type: "button",
 					class: "syncplay-controls__btn",
 					"aria-label": O(c)("syncplay.rewind"),
 					onClick: D
-				}, [u(Y, { name: "rewind" })], 8, jh),
+				}, [u(Y, { name: "rewind" })], 8, Mh),
 				s("button", {
 					type: "button",
 					class: "syncplay-controls__btn syncplay-controls__btn--primary",
 					"aria-label": e.isPlaying ? O(c)("syncplay.pauseAll") : O(c)("syncplay.playAll"),
 					onClick: w
-				}, [u(Y, { name: e.isPlaying ? "pause" : "play" }, null, 8, ["name"])], 8, Mh),
+				}, [u(Y, { name: e.isPlaying ? "pause" : "play" }, null, 8, ["name"])], 8, Nh),
 				s("button", {
 					type: "button",
 					class: "syncplay-controls__btn",
 					"aria-label": O(c)("syncplay.fastForward"),
 					onClick: k
-				}, [u(Y, { name: "forward" })], 8, Nh)
+				}, [u(Y, { name: "forward" })], 8, Ph)
 			]),
 			s("div", { class: g(["syncplay-controls__status", `syncplay-controls__status--${O(l).syncStatus}`]) }, [u(Y, {
 				name: O(l).syncStatus === "synced" ? "check" : O(l).syncStatus === "outOfSync" ? "alert" : "spinner",
 				class: "syncplay-controls__status-icon"
-			}, null, 8, ["name"]), s("span", Ph, E(O(l).syncStatus === "synced" ? O(c)("syncplay.synced") : O(l).syncStatus === "outOfSync" ? O(c)("syncplay.outOfSync") : O(c)("syncplay.reSyncing")), 1)], 2)
+			}, null, 8, ["name"]), s("span", Fh, E(O(l).syncStatus === "synced" ? O(c)("syncplay.synced") : O(l).syncStatus === "outOfSync" ? O(c)("syncplay.outOfSync") : O(c)("syncplay.reSyncing")), 1)], 2)
 		])) : a("", !0);
 	}
 }), [["__scopeId", "data-v-276195ff"]]);
 // src/utils/subtitleSrc.ts
-function Lh(e, t) {
+function Rh(e, t) {
 	return String(cf(e, t));
 }
-function Rh(e, t) {
+function zh(e, t) {
 	let n = !1, r = t.map((t) => {
-		let r = Lh(e, t.url);
+		let r = Rh(e, t.url);
 		return r === t.url ? t : (n = !0, {
 			...t,
 			url: r
@@ -11780,47 +11793,47 @@ function Rh(e, t) {
 	return n ? r : t;
 }
 // src/components/Player.vue?vue&type=script&setup=true&lang.ts
-var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
+var Bh = { class: "player__stage" }, Vh = ["src", "poster"], Hh = [
 	"src",
 	"srclang",
 	"label"
-], Hh = {
+], Uh = {
 	key: 0,
 	class: "player__buffering"
-}, Uh = {
+}, Wh = {
 	class: "player__buffering-text",
 	"aria-hidden": "true"
-}, Wh = { class: "player__meta" }, Gh = ["aria-label"], Kh = { class: "player__meta-text" }, qh = { class: "player__eyebrow" }, Jh = { class: "player__title" }, Yh = { class: "player__sub numeric" }, Xh = {
+}, Gh = { class: "player__meta" }, Kh = ["aria-label"], qh = { class: "player__meta-text" }, Jh = { class: "player__eyebrow" }, Yh = { class: "player__title" }, Xh = { class: "player__sub numeric" }, Zh = {
 	key: 0,
 	class: "player__dot",
 	"aria-hidden": "true"
-}, Zh = {
+}, Qh = {
 	key: 1,
 	class: "player__center"
-}, Qh = ["aria-label"], $h = ["aria-label"], eg = ["aria-label"], tg = { class: "player__btnrow" }, ng = ["aria-label"], rg = ["aria-label"], ig = ["aria-label"], ag = { class: "player__time numeric" }, og = ["aria-label", "aria-pressed"], sg = ["title"], cg = ["aria-label"], lg = ["aria-label"], ug = ["aria-label", "aria-pressed"], dg = ["aria-label", "aria-pressed"], fg = ["aria-label"], pg = { class: "similar-modal" }, mg = {
+}, $h = ["aria-label"], eg = ["aria-label"], tg = ["aria-label"], ng = { class: "player__btnrow" }, rg = ["aria-label"], ig = ["aria-label"], ag = ["aria-label"], og = { class: "player__time numeric" }, sg = ["aria-label", "aria-pressed"], cg = ["title"], lg = ["aria-label"], ug = ["aria-label"], dg = ["aria-label", "aria-pressed"], fg = ["aria-label", "aria-pressed"], pg = ["aria-label"], mg = { class: "similar-modal" }, hg = {
 	key: 0,
 	class: "similar-modal__loading",
 	role: "status",
 	"aria-busy": "true"
-}, hg = {
+}, gg = {
 	key: 1,
 	class: "similar-modal__state",
 	role: "alert"
-}, gg = { class: "similar-modal__state-title" }, _g = {
+}, _g = { class: "similar-modal__state-title" }, vg = {
 	key: 2,
 	class: "similar-modal__state",
 	role: "status"
-}, vg = {
+}, yg = {
 	key: 3,
 	class: "similar-modal__results"
-}, yg = { class: "similar-modal__poster" }, bg = ["src", "alt"], xg = {
+}, bg = { class: "similar-modal__poster" }, xg = ["src", "alt"], Sg = {
 	key: 1,
 	class: "similar-modal__poster-fallback",
 	"aria-hidden": "true"
-}, Sg = { class: "similar-modal__result-body" }, Cg = { class: "similar-modal__result-title" }, wg = {
+}, Cg = { class: "similar-modal__result-body" }, wg = { class: "similar-modal__result-title" }, Tg = {
 	key: 0,
 	class: "similar-modal__result-meta numeric"
-}, Tg = { key: 0 }, Eg = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, Eg = { key: 0 }, Dg = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "Player",
 	props: {
 		media: {},
@@ -11850,7 +11863,7 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 		"pending-media"
 	],
 	setup(t, { emit: n }) {
-		let { imgSrc: c } = uf(), d = t, p = n, m = he(), _ = te(), { t: b } = J(), w = Rm(), T = In(), D = r(() => T.isFavorite(d.media.id)), k = r(() => T.likeLevel(d.media.id));
+		let { imgSrc: c } = uf(), d = t, p = n, m = he(), _ = te(), { t: b } = J(), w = zm(), T = In(), D = r(() => T.isFavorite(d.media.id)), k = r(() => T.likeLevel(d.media.id));
 		function A() {
 			T.toggleFavorite(d.media.id, ye());
 		}
@@ -11875,7 +11888,10 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 			let e = ++fe;
 			if (G.value) return;
 			let t = await of([d.streamUrl, d.media.path], d.playbackAudioTracks ?? [], de.value);
-			e === fe && t && !G.value && (G.value = !0, De(N.value?.currentTime ?? 0));
+			if (e !== fe || !t || G.value) return;
+			G.value = !0;
+			let n = N.value?.currentTime ?? 0;
+			De(n > 0 ? n : Ne.value);
 		}
 		P([() => d.playbackAudioTracks, de], () => {
 			pe();
@@ -11898,14 +11914,18 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 			let t = N.value, n = navigator.connection?.downlinkMax, r = qs(n);
 			t && K.start(t, d.media.id, r, e);
 		}
-		function Oe(e) {
+		function Oe() {
+			let e = N.value?.currentTime ?? 0;
+			De(e > 0 ? e : Ne.value);
+		}
+		function ke(e) {
 			m.quality === "original" && e !== "auto" ? K.loadVariantPlaylist(Xc) : typeof e == "string" && e !== "auto" ? K.loadVariantPlaylist(e) : K.setLevel(e);
 		}
-		let ke = !1;
-		function Ae() {
+		let Ae = !1;
+		function je() {
 			_.defaultQuality = Yc;
 		}
-		function je() {
+		function Me() {
 			let e = K.levels.value;
 			if (e.length === 0) return !1;
 			let t = _.defaultQuality;
@@ -11916,132 +11936,132 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				if (rl(e, t)) K.loadVariantPlaylist(Xc);
 				else {
 					let t = nl(e);
-					t >= 0 && K.setNextLevel(t), Ae();
+					t >= 0 && K.setNextLevel(t), je();
 				}
 				return !0;
 			}
 			let n = el(e, t);
-			return n >= 0 ? K.setNextLevel(n) : Ae(), !0;
+			return n >= 0 ? K.setNextLevel(n) : je(), !0;
 		}
 		P(() => K.levels.value, (e) => {
-			ke || e.length === 0 || je() && (ke = !0);
+			Ae || e.length === 0 || Me() && (Ae = !0);
 		}), P(() => K.variants.value, (e) => {
-			!ke && e?.length && h(() => {
-				ke || je() && (ke = !0);
+			!Ae && e?.length && h(() => {
+				Ae || Me() && (Ae = !0);
 			});
 		}, { deep: !0 });
-		let Me = S(m.resumePositionFor(d.media.id) ?? 0), Ne = S(!G.value && Me.value > 0), Pe = null, Fe = S(!1), Ie = S(8), Le, Re = S(null), ze = S(0), Be = S(!1), Ve = S([]), He = S(!1), Ue = S(null);
-		function We(e, t) {
-			Re.value = e, ze.value = t, Ve.value = [], Ue.value = null, Be.value = !0, Ye(e, t);
+		let Ne = S(m.resumePositionFor(d.media.id) ?? 0), Pe = S(!G.value && Ne.value > 0), Fe = null, Ie = S(!1), Le = S(8), Re, ze = S(null), Be = S(0), Ve = S(!1), He = S([]), Ue = S(!1), We = S(null);
+		function Ge(e, t) {
+			ze.value = e, Be.value = t, He.value = [], We.value = null, Ve.value = !0, Xe(e, t);
 		}
-		let Ge = null, Ke = null, qe = null;
-		function Je() {
+		let Ke = null, qe = null, Je = null;
+		function Ye() {
 			let e = d.apiBase ?? "";
-			return (Ke === null || qe !== e) && (Ke = new en({ baseUrl: e }), qe = e), Ke;
+			return (qe === null || Je !== e) && (qe = new en({ baseUrl: e }), Je = e), qe;
 		}
-		async function Ye(e, t) {
-			Ge?.abort(), Ge = new AbortController(), He.value = !0, Ue.value = null;
+		async function Xe(e, t) {
+			Ke?.abort(), Ke = new AbortController(), Ue.value = !0, We.value = null;
 			try {
-				let n = await Je().searchByMarker(e, t, 30, 20, Ge.signal);
-				Ve.value = Array.isArray(n.items) ? n.items : [];
+				let n = await Ye().searchByMarker(e, t, 30, 20, Ke.signal);
+				He.value = Array.isArray(n.items) ? n.items : [];
 			} catch (e) {
 				if (e instanceof Error && e.name === "AbortError") return;
-				Ue.value = "Couldn’t load similar titles. Please try again.", Ve.value = [];
+				We.value = "Couldn’t load similar titles. Please try again.", He.value = [];
 			} finally {
-				He.value = !1;
+				Ue.value = !1;
 			}
 		}
-		function Xe() {
-			Ge?.abort(), Be.value = !1, Ve.value = [], Ue.value = null, Re.value = null;
+		function Ze() {
+			Ke?.abort(), Ve.value = !1, He.value = [], We.value = null, ze.value = null;
 		}
-		let Ze = r(() => m.upNext);
-		function Qe() {
-			G.value = Ld(d.streamUrl, d.media.path), pe(), Me.value = m.resumePositionFor(d.media.id) ?? 0, Ne.value = !G.value && Me.value > 0, Pe = null, Kt = !1, Pt = !1, jt.value = [], At.value = !1, Ft = !1, St.value = -1, Vt = null, ke = !1, ve = !1, mt(), ct = !1, dt = 0, ut = 0, nt(), Fe.value = !1, K.reset(), N.value && (N.value.currentTime = 0), G.value && De(), Se(d.media.id);
+		let Qe = r(() => m.upNext);
+		function $e() {
+			G.value = Ld(d.streamUrl, d.media.path), pe(), Ne.value = m.resumePositionFor(d.media.id) ?? 0, Pe.value = !G.value && Ne.value > 0, Fe = null, qt = !1, Ft = !1, Mt.value = [], jt.value = !1, It = !1, Ct.value = -1, Ht = null, Ae = !1, ve = !1, ht(), lt = !1, ft = 0, dt = 0, rt(), Ie.value = !1, K.reset(), N.value && (N.value.currentTime = 0), G.value && De(Ne.value), Se(d.media.id);
 		}
-		function $e(e) {
+		function et(e) {
 			let t = N.value;
 			if (!t) return;
 			let n = t.duration && t.duration > 0 ? Math.min(t.duration, Math.max(0, e)) : Math.max(0, e);
-			t.duration && t.duration > 0 ? t.currentTime = n : Pe = n, w.notifyTransportCommand("", "seek", { position: n });
-		}
-		function et() {
-			$e(Me.value), Ne.value = !1, N.value?.play()?.catch(() => {});
+			t.duration && t.duration > 0 ? t.currentTime = n : Fe = n, w.notifyTransportCommand("", "seek", { position: n });
 		}
 		function tt() {
-			Pe = null, $e(0), m.clearResume(d.media.id), Ne.value = !1, N.value?.play()?.catch(() => {});
+			et(Ne.value), Pe.value = !1, N.value?.play()?.catch(() => {});
 		}
 		function nt() {
-			Le &&= (clearInterval(Le), void 0);
+			Fe = null, et(0), m.clearResume(d.media.id), Pe.value = !1, N.value?.play()?.catch(() => {});
 		}
 		function rt() {
-			Ie.value = 8, nt(), Le = setInterval(() => {
-				--Ie.value, Ie.value <= 0 && (nt(), at());
-			}, 1e3);
+			Re &&= (clearInterval(Re), void 0);
 		}
 		function it() {
-			ve || (ve = !0, _e?.finish()), Mn(), z.value = !0, m.upNext && (Fe.value = !0, _.autoplay && rt());
+			Le.value = 8, rt(), Re = setInterval(() => {
+				--Le.value, Le.value <= 0 && (rt(), ot());
+			}, 1e3);
 		}
 		function at() {
-			nt(), Fe.value = !1;
+			ve || (ve = !0, _e?.finish()), Nn(), z.value = !0, m.upNext && (Ie.value = !0, _.autoplay && it());
+		}
+		function ot() {
+			rt(), Ie.value = !1;
 			let e = m.next(d.streamUrlFor);
 			e && p("play-next", e);
 		}
-		function ot() {
-			nt(), Fe.value = !1;
-		}
 		function st() {
+			rt(), Ie.value = !1;
+		}
+		function ct() {
 			if (G.value) return;
 			let e = N.value, t = zd(e) && (e?.currentTime ?? 0) === 0;
-			(Rd(e) || t) && (ft(), mt(), G.value = !0, De(e?.currentTime ?? 0));
+			(Rd(e) || t) && (pt(), ht(), G.value = !0, De(e?.currentTime ?? 0));
 		}
-		let ct = !1, lt = null, ut = 0, dt = 0;
-		function ft() {
-			if (ct) return;
-			ct = !0;
-			let e = d.media?.id;
-			e != null && e !== "" && Je().get(`/api/v1/media/${encodeURIComponent(e)}/playback-info`, Hd({ videoCodec: de.value })).catch(() => {});
-		}
+		let lt = !1, ut = null, dt = 0, ft = 0;
 		function pt() {
-			if (lt !== null || ct || G.value) return;
-			let e = N.value;
-			e && (ut = Date.now(), dt = e.currentTime, lt = setTimeout(() => {
-				lt = null;
-				let e = N.value;
-				e && !G.value && Ud(Date.now(), ut, e.currentTime, dt) && (ft(), G.value = !0, De(e.currentTime));
-			}, Bd));
+			if (lt) return;
+			lt = !0;
+			let e = d.media?.id;
+			e != null && e !== "" && Ye().get(`/api/v1/media/${encodeURIComponent(e)}/playback-info`, Hd({ videoCodec: de.value })).catch(() => {});
 		}
 		function mt() {
-			lt !== null && (clearTimeout(lt), lt = null);
+			if (ut !== null || lt || G.value) return;
+			let e = N.value;
+			e && (dt = Date.now(), ft = e.currentTime, ut = setTimeout(() => {
+				ut = null;
+				let e = N.value;
+				e && !G.value && Ud(Date.now(), dt, e.currentTime, ft) && (pt(), G.value = !0, De(e.currentTime));
+			}, Bd));
 		}
-		let ht = S([]), gt = S([]), _t = S(-1), vt = S(!1), yt = r(() => K.state.value === "ready" && K.audioTracks.value.length > 0), bt = r(() => K.audioTracks.value.map((e) => ({
+		function ht() {
+			ut !== null && (clearTimeout(ut), ut = null);
+		}
+		let gt = S([]), _t = S([]), vt = S(-1), yt = S(!1), bt = r(() => K.state.value === "ready" && K.audioTracks.value.length > 0), xt = r(() => K.audioTracks.value.map((e) => ({
 			index: e.index,
 			language: e.lang || `audio-${e.index}`,
 			label: e.name || `Audio ${e.index + 1}`,
 			kind: "audio"
-		}))), xt = r(() => (d.playbackAudioTracks ?? []).map((e) => ({
+		}))), St = r(() => (d.playbackAudioTracks ?? []).map((e) => ({
 			index: e.index,
 			language: e.language || `audio-${e.index}`,
 			label: e.label,
 			kind: "audio"
-		}))), St = S(-1), Ct = r(() => !yt.value && !G.value && gt.value.length === 0 && xt.value.length > 1), wt = r(() => gt.value.length > 0 ? !1 : K.state.value === "ready" ? !yt.value && K.hasAudio.value : !G.value && !Ct.value && xt.value.length === 1), Tt = r(() => yt.value ? bt.value : Ct.value ? xt.value : gt.value.length > 0 ? gt.value : wt.value ? [{
+		}))), Ct = S(-1), wt = r(() => !bt.value && !G.value && _t.value.length === 0 && St.value.length > 1), Tt = r(() => _t.value.length > 0 ? !1 : K.state.value === "ready" ? !bt.value && K.hasAudio.value : !G.value && !wt.value && St.value.length === 1), Et = r(() => bt.value ? xt.value : wt.value ? St.value : _t.value.length > 0 ? _t.value : Tt.value ? [{
 			index: 0,
 			language: "",
 			label: b("player.audioOriginal"),
 			kind: "audio"
-		}] : gt.value), Et = r(() => {
-			if (yt.value) return K.currentAudioTrack.value;
-			if (Ct.value) {
-				if (St.value >= 0) return St.value;
+		}] : _t.value), Dt = r(() => {
+			if (bt.value) return K.currentAudioTrack.value;
+			if (wt.value) {
+				if (Ct.value >= 0) return Ct.value;
 				let e = (d.playbackAudioTracks ?? []).find((e) => e.default);
 				return e ? e.index : d.playbackAudioTracks?.[0]?.index ?? 0;
 			}
-			return gt.value.length === 0 && wt.value ? 0 : _t.value;
-		}), Dt = S(!1), Ot = m.subtitleLang, kt = r(() => {
-			let e = d.apiBase ?? "", t = G.value ? K.subtitleTracks.value : Rh(e, d.playbackSubtitleTracks ?? []);
-			if (jt.value.length === 0) return t;
-			let n = (e) => e.url.split("?")[0], r = Rh(e, jt.value), i = new Set(t.map(n)), a = r.filter((e) => !i.has(n(e)));
+			return _t.value.length === 0 && Tt.value ? 0 : vt.value;
+		}), Ot = S(!1), kt = m.subtitleLang, At = r(() => {
+			let e = d.apiBase ?? "", t = G.value ? K.subtitleTracks.value : zh(e, d.playbackSubtitleTracks ?? []);
+			if (Mt.value.length === 0) return t;
+			let n = (e) => e.url.split("?")[0], r = zh(e, Mt.value), i = new Set(t.map(n)), a = r.filter((e) => !i.has(n(e)));
 			return a.length === 0 ? t : [...t, ...a];
-		}), At = S(!1), jt = S([]), Mt = r(() => {
+		}), jt = S(!1), Mt = S([]), Nt = r(() => {
 			let e = [], t = (t) => {
 				if (!t) return;
 				let n = t.split("-")[0].toLowerCase();
@@ -12049,63 +12069,63 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 			};
 			return t(_.defaultSubtitleLang), t(_.defaultAudioLang), typeof navigator < "u" && t(navigator.language), t("en"), e;
 		});
-		function Nt(e) {
-			jt.value.some((t) => t.url === e.url) || (jt.value = [...jt.value, e]);
+		function Pt(e) {
+			Mt.value.some((t) => t.url === e.url) || (Mt.value = [...Mt.value, e]);
 		}
-		let Pt = !1, Ft = !1;
-		function It() {
-			if (Pt) return;
-			if (_.subtitlePreferenceSet) {
-				Pt = !0;
-				return;
-			}
-			let e = kt.value.find((e) => e.default);
-			if (!e) return;
-			let t = ht.value.find((t) => t.language === (e.language || e.label));
-			t && (m.setSubtitle(t.language), Ot = t.language, Pt = !0);
-		}
+		let Ft = !1, It = !1;
 		function Lt() {
 			if (Ft) return;
+			if (_.subtitlePreferenceSet) {
+				Ft = !0;
+				return;
+			}
+			let e = At.value.find((e) => e.default);
+			if (!e) return;
+			let t = gt.value.find((t) => t.language === (e.language || e.label));
+			t && (m.setSubtitle(t.language), kt = t.language, Ft = !0);
+		}
+		function Rt() {
+			if (It) return;
 			let e = _.defaultAudioLang;
 			if (!e) return;
-			let t = Tt.value;
+			let t = Et.value;
 			if (!t.length) return;
 			let n = t.findIndex((t) => t.language?.toLowerCase() === e.toLowerCase());
 			if (n < 0) return;
-			let r = Et.value;
-			r >= 0 && r < t.length || (Ht(n), Ft = !0);
+			let r = Dt.value;
+			r >= 0 && r < t.length || (Ut(n), It = !0);
 		}
-		let Rt = r(() => ht.value.some((e) => e.language === m.subtitleLang));
-		function zt() {
-			let e = N.value;
-			ht.value = pl(e), gt.value = ml(e), _t.value = yl(e), It(), Lt();
-		}
+		let zt = r(() => gt.value.some((e) => e.language === m.subtitleLang));
 		function Bt() {
-			if (Rt.value) Ot = m.subtitleLang, m.setSubtitle(null);
+			let e = N.value;
+			gt.value = pl(e), _t.value = ml(e), vt.value = yl(e), Lt(), Rt();
+		}
+		function Vt() {
+			if (zt.value) kt = m.subtitleLang, m.setSubtitle(null);
 			else {
-				let e = Ot && ht.value.some((e) => e.language === Ot) ? Ot : ht.value[0]?.language ?? null;
+				let e = kt && gt.value.some((e) => e.language === kt) ? kt : gt.value[0]?.language ?? null;
 				m.setSubtitle(e);
 			}
 			p("captions");
 		}
-		let Vt = null;
-		function Ht(e) {
-			if (!wt.value) {
-				if (yt.value) K.setAudioTrack(e);
-				else if (Ct.value) {
-					if (e === Et.value) return;
-					St.value = e, Vt = e, G.value = !0, De(N.value?.currentTime ?? 0);
-				} else vl(N.value, e), _t.value = e;
+		let Ht = null;
+		function Ut(e) {
+			if (!Tt.value) {
+				if (bt.value) K.setAudioTrack(e);
+				else if (wt.value) {
+					if (e === Dt.value) return;
+					Ct.value = e, Ht = e, G.value = !0, De(N.value?.currentTime ?? 0);
+				} else vl(N.value, e), vt.value = e;
 			}
 		}
-		P(yt, (e) => {
-			if (!e || Vt === null) return;
-			let t = Vt;
-			Vt = null, t >= 0 && t < K.audioTracks.value.length && K.setAudioTrack(t);
-		}), P(kt, () => {
-			h(() => zt());
+		P(bt, (e) => {
+			if (!e || Ht === null) return;
+			let t = Ht;
+			Ht = null, t >= 0 && t < K.audioTracks.value.length && K.setAudioTrack(t);
+		}), P(At, () => {
+			h(() => Bt());
 		}, { deep: !0 });
-		let Ut = null, Wt, Gt = r(() => {
+		let Wt = null, Gt, Kt = r(() => {
 			let e = [];
 			d.media.year && e.push({ text: String(d.media.year) }), d.media.rating && e.push({
 				text: d.media.rating,
@@ -12113,115 +12133,115 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 			}), d.media.runtime && e.push({ text: `${d.media.runtime}m` });
 			let t = d.media.genres?.[0];
 			return t && e.push({ text: t }), e;
-		}), Kt = !1;
-		function qt() {
-			if (!d.autoplay || Kt || Ne.value || q.value) return;
+		}), qt = !1;
+		function Jt() {
+			if (!d.autoplay || qt || Pe.value || q.value) return;
 			let e = N.value;
 			if (!e || !e.paused) return;
-			Kt = !0;
+			qt = !0;
 			let t = e.play();
 			t && typeof t.then == "function" && t.catch((t) => {
 				t instanceof DOMException && t.name === "NotAllowedError" && (m.muteForAutoplay(), e.muted = !0, e.play()?.catch(() => {}));
 			});
 		}
-		function Jt() {
-			qt();
-		}
 		function Yt() {
-			d.prevEpisode && p("play-episode", d.prevEpisode);
+			Jt();
 		}
 		function Xt() {
-			d.nextEpisode && p("play-episode", d.nextEpisode);
+			d.prevEpisode && p("play-episode", d.prevEpisode);
 		}
 		function Zt() {
+			d.nextEpisode && p("play-episode", d.nextEpisode);
+		}
+		function Qt() {
 			let e = N.value;
 			e && (e.paused ? e.play()?.catch(() => {}) : e.pause());
 		}
-		function Qt(e) {
+		function $t(e) {
 			try {
 				return e.buffered.length ? e.buffered.end(e.buffered.length - 1) : 0;
 			} catch {
 				return 0;
 			}
 		}
-		function $t() {
-			if (Sn !== null && (clearInterval(Sn), Sn = null), Cn) {
-				Cn = !1;
+		function nn() {
+			if (Cn !== null && (clearInterval(Cn), Cn = null), wn) {
+				wn = !1;
 				let e = N.value;
 				e && Math.abs(e.volume - m.volume) > .001 && (e.volume = m.volume);
 			}
-			m.play(), m.setMediaPositionState(), pt(), w.notifyTransportCommand("", "play");
-		}
-		function nn() {
-			m.pause(), m.setMediaPositionState(), B.value = !1, w.notifyTransportCommand("", "pause");
+			m.play(), m.setMediaPositionState(), mt(), w.notifyTransportCommand("", "play");
 		}
 		function rn() {
-			B.value = !0, Mn(), z.value = !0;
+			m.pause(), m.setMediaPositionState(), B.value = !1, w.notifyTransportCommand("", "pause");
 		}
 		function an() {
-			B.value = !1, Pn();
+			B.value = !0, Nn(), z.value = !0;
 		}
 		function on() {
-			let e = N.value;
-			e && (lt !== null && e.currentTime > dt && mt(), m.updateProgress(e.currentTime, e.duration, Qt(e)), w.isInRoom && w.updateLocalPosition(e.currentTime));
+			B.value = !1, Fn();
 		}
 		function sn() {
 			let e = N.value;
-			e && (e.volume = m.volume, e.muted = m.muted, e.playbackRate = m.rate, Pe !== null && (e.currentTime = e.duration ? Math.min(e.duration, Pe) : Pe, Pe = null), m.updateProgress(e.currentTime, e.duration, Qt(e)), m.setMediaPositionState(), zt());
+			e && (ut !== null && e.currentTime > ft && ht(), m.updateProgress(e.currentTime, e.duration, $t(e)), w.isInRoom && w.updateLocalPosition(e.currentTime));
 		}
 		function cn() {
 			let e = N.value;
-			e && m.updateProgress(e.currentTime, e.duration, Qt(e));
+			e && (e.volume = m.volume, e.muted = m.muted, e.playbackRate = m.rate, Fe !== null && (e.currentTime = e.duration ? Math.min(e.duration, Fe) : Fe, Fe = null), m.updateProgress(e.currentTime, e.duration, $t(e)), m.setMediaPositionState(), Bt());
 		}
 		function un() {
 			let e = N.value;
-			e && (!Cn && Math.abs(e.volume - m.volume) > .001 && m.setVolume(e.volume), e.muted !== m.muted && m.toggleMute());
+			e && m.updateProgress(e.currentTime, e.duration, $t(e));
 		}
 		function dn() {
 			let e = N.value;
-			e && e.playbackRate !== m.rate && m.setRate(e.playbackRate), m.setMediaPositionState();
+			e && (!wn && Math.abs(e.volume - m.volume) > .001 && m.setVolume(e.volume), e.muted !== m.muted && m.toggleMute());
 		}
 		function fn() {
-			m.setMediaPositionState();
+			let e = N.value;
+			e && e.playbackRate !== m.rate && m.setRate(e.playbackRate), m.setMediaPositionState();
 		}
 		function pn() {
 			m.setMediaPositionState();
 		}
-		function mn(e) {
+		function mn() {
+			m.setMediaPositionState();
+		}
+		function hn(e) {
 			let t = N.value;
 			if (t && m.duration > 0) {
 				let n = Math.min(m.duration, Math.max(0, e));
 				t.currentTime = n, w.notifyTransportCommand("", "seek", { position: n });
 			}
 		}
-		function hn(e) {
-			mn(m.position + e);
-		}
-		function gn() {
-			H.value = !0, Pn();
+		function gn(e) {
+			hn(m.position + e);
 		}
 		function _n() {
-			H.value = !1, Pn();
+			H.value = !0, Fn();
 		}
-		function vn(e) {
+		function vn() {
+			H.value = !1, Fn();
+		}
+		function yn(e) {
 			let t = M.reduce((e, t, n) => Math.abs(t - m.rate) < Math.abs(M[e] - m.rate) ? n : e, 0), n = M[Math.min(M.length - 1, Math.max(0, t + e))];
 			m.setRate(n);
 		}
-		function yn() {
-			if (!d.markers) return;
-			let e = m.position, t = d.markers.filter((t) => t.type === "intro" && t.startMs / 1e3 > e && t.startMs / 1e3 - e <= 60).sort((e, t) => e.startMs - t.startMs)[0];
-			t && mn(t.startMs / 1e3);
-		}
 		function bn() {
 			if (!d.markers) return;
-			let e = m.position, t = d.markers.filter((t) => (t.type === "outro" || t.type === "credits") && t.startMs / 1e3 > e && t.startMs / 1e3 - e <= 60).sort((e, t) => e.startMs - t.startMs)[0];
-			t && mn(t.startMs / 1e3);
+			let e = m.position, t = d.markers.filter((t) => t.type === "intro" && t.startMs / 1e3 > e && t.startMs / 1e3 - e <= 60).sort((e, t) => e.startMs - t.startMs)[0];
+			t && hn(t.startMs / 1e3);
 		}
 		function xn() {
+			if (!d.markers) return;
+			let e = m.position, t = d.markers.filter((t) => (t.type === "outro" || t.type === "credits") && t.startMs / 1e3 > e && t.startMs / 1e3 - e <= 60).sort((e, t) => e.startMs - t.startMs)[0];
+			t && hn(t.startMs / 1e3);
+		}
+		function Sn() {
 			ie.value?.toggleOpen();
 		}
-		let Sn = null, Cn = !1;
-		function wn() {
+		let Cn = null, wn = !1;
+		function Tn() {
 			let e = N.value;
 			if (!e) {
 				m.pause();
@@ -12231,29 +12251,29 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				e.pause(), m.pause();
 				return;
 			}
-			Sn !== null && (clearInterval(Sn), Sn = null), Cn = !0;
+			Cn !== null && (clearInterval(Cn), Cn = null), wn = !0;
 			let t = .05;
-			Sn = setInterval(() => {
-				e.volume > t ? e.volume = Math.max(0, e.volume - t) : (clearInterval(Sn), Sn = null, e.volume = 0, e.pause(), m.pause());
+			Cn = setInterval(() => {
+				e.volume > t ? e.volume = Math.max(0, e.volume - t) : (clearInterval(Cn), Cn = null, e.volume = 0, e.pause(), m.pause());
 			}, 50);
 		}
 		Ec({
-			playPause: Zt,
-			seekBy: hn,
+			playPause: Qt,
+			seekBy: gn,
 			frameStep: (e) => {
-				m.playing || mn(m.position + e / 30);
+				m.playing || hn(m.position + e / 30);
 			},
 			volumeBy: (e) => m.setVolume(m.volume + e),
-			toggleMute: Tn,
-			toggleFullscreen: Dn,
-			toggleCaptions: Bt,
-			toggleTheater: En,
-			togglePip: kn,
-			skipIntro: yn,
-			skipOutro: bn,
-			sleepTimer: xn,
-			seekToPercent: (e) => mn(e * m.duration),
-			speedStep: vn,
+			toggleMute: En,
+			toggleFullscreen: On,
+			toggleCaptions: Vt,
+			toggleTheater: Dn,
+			togglePip: An,
+			skipIntro: bn,
+			skipOutro: xn,
+			sleepTimer: Sn,
+			seekToPercent: (e) => hn(e * m.duration),
+			speedStep: yn,
 			toggleHelp: () => {
 				U.value = !U.value;
 			},
@@ -12264,11 +12284,11 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 					duration: 3e3
 				});
 			}
-		}, { enabled: () => !U.value && !vt.value && !Dt.value && !ce.value && !At.value && !Be.value });
-		function Tn() {
+		}, { enabled: () => !U.value && !yt.value && !Ot.value && !ce.value && !jt.value && !Ve.value });
+		function En() {
 			m.toggleMute();
 		}
-		function En() {
+		function Dn() {
 			W.value = !W.value, p("theater", W.value);
 		}
 		P(() => m.muted, (e) => {
@@ -12281,83 +12301,83 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 			let t = N.value;
 			t && t.playbackRate !== e && (t.playbackRate = e);
 		}), P(() => m.lastCommand, (e) => {
-			e && (e.type === "seekTo" ? $e(e.value) : e.type === "seekBy" && $e(m.position + e.value));
+			e && (e.type === "seekTo" ? et(e.value) : e.type === "seekBy" && et(m.position + e.value));
 		});
-		function Dn() {
+		function On() {
 			if (typeof document > "u") return;
 			if (!re.value) {
-				En();
+				Dn();
 				return;
 			}
 			let e = I.value;
 			e && (document.fullscreenElement ? document.exitFullscreen?.().catch(() => {}) : e.requestFullscreen?.().catch(() => {}));
 		}
-		function On() {
+		function kn() {
 			V.value = typeof document < "u" && !!document.fullscreenElement;
 		}
-		async function kn() {
+		async function An() {
 			let e = N.value;
 			if (typeof document < "u" && e) try {
 				document.pictureInPictureElement ? await document.exitPictureInPicture() : typeof e.requestPictureInPicture == "function" && await e.requestPictureInPicture();
 			} catch {}
 			p("pip");
 		}
-		function An() {
+		function jn() {
 			ee.value = !0;
 		}
-		function jn() {
+		function Mn() {
 			ee.value = !1;
 		}
-		function Mn() {
-			Wt &&= (clearTimeout(Wt), void 0);
-		}
 		function Nn() {
-			Mn(), !m.playing || H.value || B.value || (Wt = setTimeout(() => {
+			Gt &&= (clearTimeout(Gt), void 0);
+		}
+		function Pn() {
+			Nn(), !m.playing || H.value || B.value || (Gt = setTimeout(() => {
 				m.playing && !H.value && !B.value && (z.value = !1);
 			}, d.idleTimeout ?? 3e3));
 		}
-		function Pn() {
-			z.value = !0, Nn();
+		function Fn() {
+			z.value = !0, Pn();
 		}
-		let Fn = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]", Ln = "data-phlix-prev-tabindex", Rn = "__phlix_no_tabindex__";
-		function zn(e) {
+		let Ln = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]", Rn = "data-phlix-prev-tabindex", zn = "__phlix_no_tabindex__";
+		function Bn(e) {
 			let t = I.value;
 			if (t) for (let n of Array.from(t.querySelectorAll(".player__meta, .player__controls, .player__bigplay"))) {
-				let t = n.matches(Fn) ? [n] : Array.from(n.querySelectorAll(Fn));
+				let t = n.matches(Ln) ? [n] : Array.from(n.querySelectorAll(Ln));
 				for (let n of t) if (e) {
-					let e = n.getAttribute(Ln);
-					e === null || e === Rn ? n.removeAttribute("tabindex") : n.setAttribute("tabindex", e), n.removeAttribute(Ln);
-				} else n.getAttribute("tabindex") !== "-1" && (n.setAttribute(Ln, n.getAttribute("tabindex") ?? Rn), n.setAttribute("tabindex", "-1"));
+					let e = n.getAttribute(Rn);
+					e === null || e === zn ? n.removeAttribute("tabindex") : n.setAttribute("tabindex", e), n.removeAttribute(Rn);
+				} else n.getAttribute("tabindex") !== "-1" && (n.setAttribute(Rn, n.getAttribute("tabindex") ?? zn), n.setAttribute("tabindex", "-1"));
 			}
 		}
 		P(z, (e) => {
-			typeof document < "u" && (zn(e), !e && document.activeElement instanceof HTMLElement && I.value?.contains(document.activeElement) && document.activeElement.blur());
+			typeof document < "u" && (Bn(e), !e && document.activeElement instanceof HTMLElement && I.value?.contains(document.activeElement) && document.activeElement.blur());
 		}, { flush: "post" }), P(() => m.playing, (e) => {
-			e ? (Ne.value = !1, ot(), Nn()) : (Mn(), B.value = !1, z.value = !0);
+			e ? (Pe.value = !1, st(), Pn()) : (Nn(), B.value = !1, z.value = !0);
 		});
-		let Bn = null;
+		let Vn = null;
 		y(() => {
 			m.setCurrent(d.media, {
 				resetPosition: !1,
 				streamUrl: d.streamUrl
-			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", On), ne.value = document.pictureInPictureEnabled === !0, re.value = document.fullscreenEnabled === !0), Bn = m.bindMediaSession({
+			}), T.hydrate(d.media), typeof document < "u" && (document.addEventListener("fullscreenchange", kn), ne.value = document.pictureInPictureEnabled === !0, re.value = document.fullscreenEnabled === !0), Vn = m.bindMediaSession({
 				onPlay: () => void N.value?.play()?.catch(() => {}),
 				onPause: () => N.value?.pause(),
-				onSeek: (e) => mn(e),
-				onNext: () => at(),
-				onPrevious: () => Yt()
-			}), Ut = N.value?.textTracks ?? null, Ut?.addEventListener?.("addtrack", zt), Ut?.addEventListener?.("removetrack", zt), zt(), G.value && De(), Se(d.media.id);
+				onSeek: (e) => hn(e),
+				onNext: () => ot(),
+				onPrevious: () => Xt()
+			}), Wt = N.value?.textTracks ?? null, Wt?.addEventListener?.("addtrack", Bt), Wt?.addEventListener?.("removetrack", Bt), Bt(), G.value && De(Ne.value), Se(d.media.id);
 		}), P(() => d.media, (e) => {
 			m.setCurrent(e, {
 				resetPosition: !1,
 				streamUrl: d.streamUrl
-			}), Qe();
+			}), $e();
 		}), P(() => d.media?.id, () => {
 			T.hydrate(d.media);
 		}), P(() => w.currentSession, (e) => {
-			e && (e.state === "playing" ? (N.value?.play()?.catch(() => {}), m.play()) : e.state === "paused" && (N.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && $e(e.playbackPosition));
+			e && (e.state === "playing" ? (N.value?.play()?.catch(() => {}), m.play()) : e.state === "paused" && (N.value?.pause(), m.pause()), w.updateLocalPosition(m.position), Math.abs(w.driftAmount) > 2 && et(e.playbackPosition));
 		});
-		let Vn = null;
+		let Hn = null;
 		return P(() => w.pendingPlayMedia, async (e) => {
 			if (!e) return;
 			let t = null;
@@ -12376,13 +12396,13 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				m.setCurrent(t, {
 					resetPosition: !0,
 					streamUrl: d.streamUrlFor?.(t) ?? ""
-				}), N.value?.play()?.catch(() => {}), m.play(), w.consumePendingPlayMedia(), Vn = null;
+				}), N.value?.play()?.catch(() => {}), m.play(), w.consumePendingPlayMedia(), Hn = null;
 				return;
 			}
 			let n = `${e.mediaId}@${e.issuedAt}`;
-			Vn !== n && (Vn = n, p("pending-media", e.mediaId, e.title));
+			Hn !== n && (Hn = n, p("pending-media", e.mediaId, e.title));
 		}, { immediate: !0 }), v(() => {
-			_e?.reportFinal?.(), Mn(), nt(), K.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", On), Bn?.(), Ut?.removeEventListener?.("addtrack", zt), Ut?.removeEventListener?.("removetrack", zt), Sn !== null && (clearInterval(Sn), Sn = null), xe !== null && (clearTimeout(xe), xe = null), mt();
+			_e?.reportFinal?.(), Nn(), rt(), K.cleanup(), typeof document < "u" && document.removeEventListener("fullscreenchange", kn), Vn?.(), Wt?.removeEventListener?.("addtrack", Bt), Wt?.removeEventListener?.("removetrack", Bt), Cn !== null && (clearInterval(Cn), Cn = null), xe !== null && (clearTimeout(xe), xe = null), ht();
 		}), (n, r) => (x(), o("div", {
 			ref_key: "containerRef",
 			ref: I,
@@ -12391,9 +12411,9 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				"is-theater": W.value
 			}]),
 			"data-player-surface": "",
-			onPointermove: Pn,
-			onPointerdown: Pn,
-			onFocusin: Pn
+			onPointermove: Fn,
+			onPointerdown: Fn,
+			onFocusin: Fn
 		}, [u(Dd, {
 			video: N.value,
 			enabled: O(_).atmosphere,
@@ -12406,7 +12426,7 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 			"playing",
 			"reduced-motion",
 			"intensity"
-		]), s("div", zh, [
+		]), s("div", Bh, [
 			s("video", {
 				ref_key: "videoRef",
 				ref: N,
@@ -12415,31 +12435,31 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				poster: O(c)(t.media.poster_url) ?? void 0,
 				preload: "metadata",
 				playsinline: "",
-				onPlay: $t,
-				onPause: nn,
-				onTimeupdate: on,
-				onLoadedmetadata: sn,
-				onCanplay: Jt,
-				onWaiting: rn,
-				onStalled: rn,
-				onPlaying: an,
-				onProgress: cn,
-				onVolumechange: un,
-				onRatechange: dn,
-				onSeeked: fn,
-				onDurationchange: pn,
-				onEnded: it,
-				onError: st,
-				onEnterpictureinpicture: An,
-				onLeavepictureinpicture: jn,
-				onClick: Zt
-			}, [(x(!0), o(e, null, C(kt.value, (e) => (x(), o("track", {
+				onPlay: nn,
+				onPause: rn,
+				onTimeupdate: sn,
+				onLoadedmetadata: cn,
+				onCanplay: Yt,
+				onWaiting: an,
+				onStalled: an,
+				onPlaying: on,
+				onProgress: un,
+				onVolumechange: dn,
+				onRatechange: fn,
+				onSeeked: pn,
+				onDurationchange: mn,
+				onEnded: at,
+				onError: ct,
+				onEnterpictureinpicture: jn,
+				onLeavepictureinpicture: Mn,
+				onClick: Qt
+			}, [(x(!0), o(e, null, C(At.value, (e) => (x(), o("track", {
 				key: e.url,
 				kind: "subtitles",
 				src: e.url,
 				srclang: e.language || void 0,
 				label: e.label || void 0
-			}, null, 8, Vh))), 128))], 40, Bh),
+			}, null, 8, Hh))), 128))], 40, Vh),
 			r[22] ||= s("div", {
 				class: "player__scrim player__scrim--top",
 				"aria-hidden": "true"
@@ -12448,41 +12468,41 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				class: "player__scrim player__scrim--bottom",
 				"aria-hidden": "true"
 			}, null, -1),
-			B.value ? (x(), o("div", Hh, [u(Uu, {
+			B.value ? (x(), o("div", Uh, [u(Uu, {
 				size: 38,
 				label: O(b)("player.buffering")
-			}, null, 8, ["label"]), s("span", Uh, E(O(b)("player.buffering")), 1)])) : a("", !0),
-			s("div", Wh, [s("button", {
+			}, null, 8, ["label"]), s("span", Wh, E(O(b)("player.buffering")), 1)])) : a("", !0),
+			s("div", Gh, [s("button", {
 				type: "button",
 				class: "player__iconbtn player__back",
 				"aria-label": O(b)("player.back"),
 				onClick: r[0] ||= R((e) => p("back"), ["stop"])
-			}, [u(Y, { name: "arrow-left" })], 8, Gh), s("div", Kh, [
-				s("p", qh, E(O(b)("player.nowPlaying")), 1),
-				s("h2", Jh, E(t.media.name), 1),
-				s("div", Yh, [(x(!0), o(e, null, C(Gt.value, (t, n) => (x(), o(e, { key: n }, [n > 0 && !t.cert ? (x(), o("span", Xh, "·")) : a("", !0), s("span", { class: g({ player__cert: t.cert }) }, E(t.text), 3)], 64))), 128))])
+			}, [u(Y, { name: "arrow-left" })], 8, Kh), s("div", qh, [
+				s("p", Jh, E(O(b)("player.nowPlaying")), 1),
+				s("h2", Yh, E(t.media.name), 1),
+				s("div", Xh, [(x(!0), o(e, null, C(Kt.value, (t, n) => (x(), o(e, { key: n }, [n > 0 && !t.cert ? (x(), o("span", Zh, "·")) : a("", !0), s("span", { class: g({ player__cert: t.cert }) }, E(t.text), 3)], 64))), 128))])
 			])]),
-			q.value ? a("", !0) : (x(), o("div", Zh, [
+			q.value ? a("", !0) : (x(), o("div", Qh, [
 				z.value ? (x(), o("button", {
 					key: 0,
 					type: "button",
 					class: "player__center-skip",
 					"aria-label": O(b)("player.seekBackward"),
-					onClick: r[1] ||= R((e) => hn(-10), ["stop"])
-				}, [u(Y, { name: "rewind" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, Qh)) : a("", !0),
+					onClick: r[1] ||= R((e) => gn(-10), ["stop"])
+				}, [u(Y, { name: "rewind" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, $h)) : a("", !0),
 				s("button", {
 					type: "button",
 					class: g(["player__bigplay", { "is-playing": O(m).playing }]),
 					"aria-label": O(m).playing ? O(b)("player.pause") : O(b)("player.play"),
-					onClick: R(Zt, ["stop"])
-				}, [u(Y, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 10, $h),
+					onClick: R(Qt, ["stop"])
+				}, [u(Y, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 10, eg),
 				z.value ? (x(), o("button", {
 					key: 1,
 					type: "button",
 					class: "player__center-skip",
 					"aria-label": O(b)("player.seekForward"),
-					onClick: r[2] ||= R((e) => hn(10), ["stop"])
-				}, [u(Y, { name: "forward" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, eg)) : a("", !0)
+					onClick: r[2] ||= R((e) => gn(10), ["stop"])
+				}, [u(Y, { name: "forward" }), s("span", { class: "player__center-skip-count" }, E(10))], 8, tg)) : a("", !0)
 			])),
 			u(Rl, {
 				video: N.value,
@@ -12510,9 +12530,9 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 					buffered: O(m).buffered,
 					chapters: t.chapters,
 					"thumbnail-at": Ce.value,
-					onSeek: mn,
-					onScrubStart: gn,
-					onScrubEnd: _n
+					onSeek: hn,
+					onScrubStart: _n,
+					onScrubEnd: vn
 				}, null, 8, [
 					"position",
 					"duration",
@@ -12520,40 +12540,40 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 					"chapters",
 					"thumbnail-at"
 				]),
-				O(_).showMarkerTimeline && t.markers && t.markers.length > 0 ? (x(), i(op, {
+				O(_).showMarkerTimeline && t.markers && t.markers.length > 0 ? (x(), i(sp, {
 					key: 0,
 					position: O(m).position,
 					duration: O(m).duration,
 					markers: t.markers,
-					onSeek: mn,
-					onSimilar: We
+					onSeek: hn,
+					onSimilar: Ge
 				}, null, 8, [
 					"position",
 					"duration",
 					"markers"
 				])) : a("", !0),
-				s("div", tg, [
+				s("div", ng, [
 					t.prevEpisode ? (x(), o("button", {
 						key: 0,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.previousEpisode"),
-						onClick: Yt
-					}, [u(Y, { name: "skip-back" })], 8, ng)) : a("", !0),
+						onClick: Xt
+					}, [u(Y, { name: "skip-back" })], 8, rg)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn player__iconbtn--lg",
 						"aria-label": O(m).playing ? O(b)("player.pause") : O(b)("player.play"),
-						onClick: Zt
-					}, [u(Y, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 8, rg),
+						onClick: Qt
+					}, [u(Y, { name: O(m).playing ? "pause" : "play" }, null, 8, ["name"])], 8, ig),
 					t.nextEpisode ? (x(), o("button", {
 						key: 1,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.nextEpisode"),
-						onClick: Xt
-					}, [u(Y, { name: "skip-forward" })], 8, ig)) : a("", !0),
-					s("span", ag, [
+						onClick: Zt
+					}, [u(Y, { name: "skip-forward" })], 8, ag)) : a("", !0),
+					s("span", og, [
 						l(E(O(us)(O(m).position)), 1),
 						r[18] ||= s("span", { class: "player__sep" }, " / ", -1),
 						l(E(O(us)(O(m).duration)), 1)
@@ -12565,7 +12585,7 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 						"aria-label": D.value ? O(b)("itemActions.removeFavorite") : O(b)("itemActions.addFavorite"),
 						"aria-pressed": D.value ? "true" : "false",
 						onClick: A
-					}, [u(Y, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, og),
+					}, [u(Y, { name: D.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, sg),
 					u(ls, {
 						level: k.value,
 						onCycle: j
@@ -12582,7 +12602,7 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 						"current-level": O(K).currentLevel.value,
 						"auto-enabled": O(K).autoEnabled.value,
 						"active-height": O(K).activeLevelHeight.value,
-						onSelect: Oe
+						onSelect: ke
 					}, null, 8, [
 						"open",
 						"levels",
@@ -12595,31 +12615,31 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 						key: 2,
 						class: "player__direct-badge",
 						title: O(b)("player.qualityDirectStream")
-					}, E(O(b)("player.directStream")), 9, sg)),
+					}, E(O(b)("player.directStream")), 9, cg)),
 					u(Du, {
-						open: vt.value,
-						"onUpdate:open": r[4] ||= (e) => vt.value = e,
-						tracks: ht.value,
-						"audio-tracks": Tt.value,
-						"active-audio": Et.value,
-						onSelectAudio: Ht,
-						onAddSubtitles: r[5] ||= (e) => At.value = !0
+						open: yt.value,
+						"onUpdate:open": r[4] ||= (e) => yt.value = e,
+						tracks: gt.value,
+						"audio-tracks": Et.value,
+						"active-audio": Dt.value,
+						onSelectAudio: Ut,
+						onAddSubtitles: r[5] ||= (e) => jt.value = !0
 					}, null, 8, [
 						"open",
 						"tracks",
 						"audio-tracks",
 						"active-audio"
 					]),
-					u(Qf, {
-						open: Dt.value,
-						"onUpdate:open": r[6] ||= (e) => Dt.value = e,
+					u($f, {
+						open: Ot.value,
+						"onUpdate:open": r[6] ||= (e) => Ot.value = e,
 						chapters: t.chapters ?? [],
-						onSeek: mn
+						onSeek: hn
 					}, null, 8, ["open", "chapters"]),
-					u(dp, {
+					u(fp, {
 						ref_key: "sleepTimerRef",
 						ref: ie,
-						"on-expire": wn
+						"on-expire": Tn
 					}, null, 512),
 					s("button", {
 						type: "button",
@@ -12627,69 +12647,69 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 						"aria-label": O(w).isInRoom ? O(b)("syncplay.inRoom") : O(b)("syncplay.syncPlay"),
 						"aria-haspopup": "dialog",
 						onClick: r[7] ||= (e) => ce.value = !0
-					}, [u(Y, { name: "user" })], 10, cg),
+					}, [u(Y, { name: "user" })], 10, lg),
 					s("button", {
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": O(b)("player.keyboardShortcuts"),
 						"aria-haspopup": "dialog",
 						onClick: r[8] ||= (e) => U.value = !0
-					}, [u(Y, { name: "info" })], 8, lg),
+					}, [u(Y, { name: "info" })], 8, ug),
 					ne.value ? (x(), o("button", {
 						key: 3,
 						type: "button",
 						class: g(["player__iconbtn", { "is-on": ee.value }]),
 						"aria-label": ee.value ? O(b)("player.exitPip") : O(b)("player.pip"),
 						"aria-pressed": ee.value,
-						onClick: kn
-					}, [u(Y, { name: "pip" })], 10, ug)) : a("", !0),
+						onClick: An
+					}, [u(Y, { name: "pip" })], 10, dg)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: g(["player__iconbtn", { "is-on": W.value }]),
 						"aria-label": W.value ? O(b)("player.exitTheater") : O(b)("player.theater"),
 						"aria-pressed": W.value,
-						onClick: En
-					}, [u(Y, { name: "theater" })], 10, dg),
+						onClick: Dn
+					}, [u(Y, { name: "theater" })], 10, fg),
 					re.value ? (x(), o("button", {
 						key: 4,
 						type: "button",
 						class: "player__iconbtn",
 						"aria-label": V.value ? O(b)("player.exitFullscreen") : O(b)("player.fullscreen"),
-						onClick: Dn
-					}, [u(Y, { name: V.value ? "fullscreen-exit" : "fullscreen" }, null, 8, ["name"])], 8, fg)) : a("", !0)
+						onClick: On
+					}, [u(Y, { name: V.value ? "fullscreen-exit" : "fullscreen" }, null, 8, ["name"])], 8, pg)) : a("", !0)
 				])
 			], 512)),
-			q.value ? a("", !0) : (x(), i(Nf, {
+			q.value ? a("", !0) : (x(), i(Pf, {
 				key: 3,
 				position: O(m).position,
 				"intro-marker": t.introMarker,
 				"outro-marker": t.outroMarker,
-				onSkip: mn
+				onSkip: hn
 			}, null, 8, [
 				"position",
 				"intro-marker",
 				"outro-marker"
 			])),
-			q.value ? a("", !0) : (x(), i(zf, {
+			q.value ? a("", !0) : (x(), i(Bf, {
 				key: 4,
 				position: O(m).position,
 				markers: t.markers,
-				onSkip: mn
+				onSkip: hn
 			}, null, 8, ["position", "markers"])),
-			Ne.value && !q.value ? (x(), i(Md, {
+			Pe.value && !q.value ? (x(), i(Md, {
 				key: 5,
-				seconds: Me.value,
-				onResume: et,
-				onRestart: tt
+				seconds: Ne.value,
+				onResume: tt,
+				onRestart: nt
 			}, null, 8, ["seconds"])) : a("", !0),
-			Fe.value && Ze.value && !q.value ? (x(), i(xf, {
+			Ie.value && Qe.value && !q.value ? (x(), i(xf, {
 				key: 6,
-				media: Ze.value,
-				remaining: Ie.value,
+				media: Qe.value,
+				remaining: Le.value,
 				total: O(8),
 				counting: O(_).autoplay,
-				onPlayNow: at,
-				onCancel: ot
+				onPlayNow: ot,
+				onCancel: st
 			}, null, 8, [
 				"media",
 				"remaining",
@@ -12697,51 +12717,52 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				"counting"
 			])) : a("", !0),
 			u(Nu, {
-				modelValue: Be.value,
-				"onUpdate:modelValue": r[10] ||= (e) => Be.value = e,
-				title: `Similar ${Re.value ?? "marker"}s`,
+				modelValue: Ve.value,
+				"onUpdate:modelValue": r[10] ||= (e) => Ve.value = e,
+				title: `Similar ${ze.value ?? "marker"}s`,
 				size: "lg",
-				onClose: Xe
+				onClose: Ze
 			}, {
-				default: F(() => [s("div", pg, [He.value ? (x(), o("div", mg, [u(Uu, { label: "Finding similar media" })])) : Ue.value ? (x(), o("div", hg, [u(Y, {
+				default: F(() => [s("div", mg, [Ue.value ? (x(), o("div", hg, [u(Uu, { label: "Finding similar media" })])) : We.value ? (x(), o("div", gg, [u(Y, {
 					name: "error",
 					class: "similar-modal__state-icon"
-				}), s("p", gg, E(Ue.value), 1)])) : !He.value && Ve.value.length === 0 ? (x(), o("div", _g, [
+				}), s("p", _g, E(We.value), 1)])) : !Ue.value && He.value.length === 0 ? (x(), o("div", vg, [
 					u(Y, {
 						name: "search",
 						class: "similar-modal__state-icon"
 					}),
 					r[20] ||= s("p", { class: "similar-modal__state-title" }, "No similar media found", -1),
 					r[21] ||= s("p", { class: "similar-modal__state-hint" }, "Try a different marker or position.", -1)
-				])) : (x(), o("ul", vg, [(x(!0), o(e, null, C(Ve.value, (e) => (x(), o("li", {
+				])) : (x(), o("ul", yg, [(x(!0), o(e, null, C(He.value, (e) => (x(), o("li", {
 					key: e.id,
 					class: "similar-modal__result"
-				}, [s("div", yg, [e.poster_url ? (x(), o("img", {
+				}, [s("div", bg, [e.poster_url ? (x(), o("img", {
 					key: 0,
 					src: O(c)(e.poster_url),
 					alt: e.name,
 					loading: "lazy",
 					decoding: "async"
-				}, null, 8, bg)) : (x(), o("div", xg, [u(Y, { name: "film" })]))]), s("div", Sg, [s("p", Cg, E(e.name), 1), e.year ? (x(), o("p", wg, [l(E(e.year) + " ", 1), e.runtime ? (x(), o("span", Tg, " · " + E(e.runtime) + "m", 1)) : a("", !0)])) : a("", !0)])]))), 128))]))])]),
+				}, null, 8, xg)) : (x(), o("div", Sg, [u(Y, { name: "film" })]))]), s("div", Cg, [s("p", wg, E(e.name), 1), e.year ? (x(), o("p", Tg, [l(E(e.year) + " ", 1), e.runtime ? (x(), o("span", Eg, " · " + E(e.runtime) + "m", 1)) : a("", !0)])) : a("", !0)])]))), 128))]))])]),
 				_: 1
 			}, 8, ["modelValue", "title"]),
-			Te.value ? (x(), i(Mf, {
+			Te.value ? (x(), i(Nf, {
 				key: 7,
 				title: t.media.name,
 				progress: O(K).progress.value,
 				onBack: r[11] ||= (e) => p("back")
 			}, null, 8, ["title", "progress"])) : a("", !0),
-			Ee.value ? (x(), i(Ef, {
+			Ee.value ? (x(), i(Df, {
 				key: 8,
 				title: t.media.name,
-				onBack: r[12] ||= (e) => p("back")
+				onBack: r[12] ||= (e) => p("back"),
+				onRetry: Oe
 			}, null, 8, ["title"])) : a("", !0),
-			O(w).isInRoom ? (x(), i(Ih, {
+			O(w).isInRoom ? (x(), i(Lh, {
 				key: 9,
 				position: O(m).position,
 				duration: O(m).duration,
 				"is-playing": O(m).playing,
-				onSeek: mn,
+				onSeek: hn,
 				onPlay: r[13] ||= (e) => void N.value?.play()?.catch(() => {}),
 				onPause: r[14] ||= (e) => void N.value?.pause()
 			}, null, 8, [
@@ -12749,8 +12770,8 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				"duration",
 				"is-playing"
 			])) : a("", !0),
-			O(w).isInRoom ? (x(), i(Jm, { key: 10 })) : a("", !0),
-			u(Eh, {
+			O(w).isInRoom ? (x(), i(Ym, { key: 10 })) : a("", !0),
+			u(Dh, {
 				modelValue: ce.value,
 				"onUpdate:modelValue": r[15] ||= (e) => ce.value = e,
 				onJoined: le
@@ -12760,12 +12781,12 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 				onClose: r[16] ||= (e) => U.value = !1
 			}, null, 8, ["open"]),
 			u(pd, {
-				open: At.value,
-				"onUpdate:open": r[17] ||= (e) => At.value = e,
+				open: jt.value,
+				"onUpdate:open": r[17] ||= (e) => jt.value = e,
 				"media-id": t.media.id,
 				"api-base": t.apiBase ?? "",
-				"preferred-langs": Mt.value,
-				onAdded: Nt
+				"preferred-langs": Nt.value,
+				onAdded: Pt
 			}, null, 8, [
 				"open",
 				"media-id",
@@ -12774,14 +12795,14 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 			])
 		])], 34));
 	}
-}), [["__scopeId", "data-v-ab281f93"]]), Dg = "1.0.3", Og = ["aria-label"], kg = ["src", "poster"], Ag = { class: "mini__body" }, jg = { class: "mini__title" }, Mg = { class: "mini__controls" }, Ng = ["aria-label"], Pg = ["aria-label", "aria-pressed"], Fg = ["aria-label"], Ig = ["aria-label"], Lg = {
+}), [["__scopeId", "data-v-b1bc1abc"]]), Og = "1.0.3", kg = ["aria-label"], Ag = ["src", "poster"], jg = { class: "mini__body" }, Mg = { class: "mini__title" }, Ng = { class: "mini__controls" }, Pg = ["aria-label"], Fg = ["aria-label", "aria-pressed"], Ig = ["aria-label"], Lg = ["aria-label"], Rg = {
 	class: "mini__progress",
 	"aria-hidden": "true"
-}, Rg = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, zg = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "MiniPlayer",
 	emits: ["expand"],
 	setup(e, { emit: t }) {
-		let { imgSrc: c } = uf(), l = t, d = he(), p = Rm(), { t: m } = J(), h = S(null), b = S(null), C = f("resumeReporter", null), w = !1, T = In(), D = ln(), k = r(() => d.current ? T.isFavorite(d.current.id) : !1);
+		let { imgSrc: c } = uf(), l = t, d = he(), p = zm(), { t: m } = J(), h = S(null), b = S(null), C = f("resumeReporter", null), w = !1, T = In(), D = ln(), k = r(() => d.current ? T.isFavorite(d.current.id) : !1);
 		function A() {
 			let e = d.current?.id;
 			e && T.toggleFavorite(e, D.value);
@@ -12883,14 +12904,14 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 					onTimeupdate: z,
 					onEnded: B,
 					onClick: H
-				}, null, 40, kg),
-				s("div", Ag, [s("p", jg, E(M.value), 1), s("div", Mg, [
+				}, null, 40, Ag),
+				s("div", jg, [s("p", Mg, E(M.value), 1), s("div", Ng, [
 					s("button", {
 						type: "button",
 						class: "mini__btn",
 						"aria-label": O(d).playing ? O(m)("player.pause") : O(m)("player.play"),
 						onClick: V
-					}, [u(Y, { name: O(d).playing ? "pause" : "play" }, null, 8, ["name"])], 8, Ng),
+					}, [u(Y, { name: O(d).playing ? "pause" : "play" }, null, 8, ["name"])], 8, Pg),
 					O(d).current ? (x(), o("button", {
 						key: 0,
 						type: "button",
@@ -12898,29 +12919,29 @@ var zh = { class: "player__stage" }, Bh = ["src", "poster"], Vh = [
 						"aria-label": k.value ? O(m)("itemActions.removeFavorite") : O(m)("itemActions.addFavorite"),
 						"aria-pressed": k.value ? "true" : "false",
 						onClick: A
-					}, [u(Y, { name: k.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, Pg)) : a("", !0),
+					}, [u(Y, { name: k.value ? "bookmark" : "bookmark-plus" }, null, 8, ["name"])], 10, Fg)) : a("", !0),
 					s("button", {
 						type: "button",
 						class: "mini__btn",
 						"aria-label": O(m)("player.expand"),
 						onClick: H
-					}, [u(Y, { name: "expand" })], 8, Fg),
+					}, [u(Y, { name: "expand" })], 8, Ig),
 					s("button", {
 						type: "button",
 						class: "mini__btn mini__btn--close",
 						"aria-label": O(m)("player.closePlayer"),
 						onClick: U
-					}, [u(Y, { name: "x" })], 8, Ig)
+					}, [u(Y, { name: "x" })], 8, Lg)
 				])]),
-				s("div", Lg, [s("div", {
+				s("div", Rg, [s("div", {
 					class: "mini__progress-fill",
 					style: _({ transform: `scaleX(${N.value})` })
 				}, null, 4)])
-			], 8, Og)) : a("", !0)]),
+			], 8, kg)) : a("", !0)]),
 			_: 1
 		}));
 	}
 }), [["__scopeId", "data-v-59201f35"]]);
-export { hd as AMBIENT_SAMPLE_H, gd as AMBIENT_SAMPLE_INTERVAL_MS, md as AMBIENT_SAMPLE_W, xc as ARROW_ICONS, Sc as ARROW_LABELS, Dd as AmbientCanvas, jl as CAPTION_BACKGROUND_OPTIONS, Al as CAPTION_COLOR_OPTIONS, Ml as CAPTION_EDGE_OPTIONS, kl as CAPTION_SIZE_OPTIONS, Dl as CAPTION_SIZE_SCALE, Rl as CaptionOverlay, Du as CaptionsMenu, Nd as DIRECT_PLAY_EXTENSIONS, Rg as MiniPlayer, bc as PLAYER_SHORTCUTS, Eg as Player, al as QualityMenu, re as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, Md as ResumePrompt, Cs as Scrubber, Fc as ShortcutsHelp, Nf as SkipButton, Jc as SpeedMenu, pd as SubtitleSearch, Pd as TRANSCODE_EXTENSIONS, Ef as TranscodeNotice, Mf as TranscodePreparing, Wd as UPNEXT_COUNTDOWN_SECONDS, Kd as UPNEXT_RING_CIRCUMFERENCE, Gd as UPNEXT_RING_RADIUS, xf as UpNext, zc as VolumeControl, yl as activeAudioIndex, Cd as ambientGradient, vl as applyAudioTrack, _l as applyTrackModes, Ms as attachHls, vd as averageRegion, Ll as captionStyleVars, Cl as cleanCueText, Il as edgeShadow, Id as extensionOf, us as formatTime, Tc as handleShortcut, gl as hasActiveCaptions, Ed as isBatterySaving, Qs as isFailedStatus, Rd as isFatalMediaError, Os as isNativeHlsSupported, Zs as isPlayable, wc as isTypingTarget, ml as listAudioTracks, pl as listSubtitleTracks, Ld as needsTranscode, zs as parseSubtitleTracks, Ys as parseTranscodeStart, Xs as parseTranscodeStatus, Dg as phlixUiVersion, wl as readActiveCueLines, $s as resolveStreamUrl, hl as resolveTextTrack, bd as rgbString, xd as rgbaString, qd as ringDashoffset, yd as sampleAmbient, Vs as transcodeStartPath, Js as transcodeStatusPath, tc as useHlsTranscode, Ec as useKeyboardShortcuts, he as usePlayerStore };
+export { hd as AMBIENT_SAMPLE_H, gd as AMBIENT_SAMPLE_INTERVAL_MS, md as AMBIENT_SAMPLE_W, xc as ARROW_ICONS, Sc as ARROW_LABELS, Dd as AmbientCanvas, jl as CAPTION_BACKGROUND_OPTIONS, Al as CAPTION_COLOR_OPTIONS, Ml as CAPTION_EDGE_OPTIONS, kl as CAPTION_SIZE_OPTIONS, Dl as CAPTION_SIZE_SCALE, Rl as CaptionOverlay, Du as CaptionsMenu, Nd as DIRECT_PLAY_EXTENSIONS, zg as MiniPlayer, bc as PLAYER_SHORTCUTS, Dg as Player, al as QualityMenu, re as RESUME_MAX_RATIO, ne as RESUME_MIN_SECONDS, Md as ResumePrompt, Cs as Scrubber, Fc as ShortcutsHelp, Pf as SkipButton, Jc as SpeedMenu, pd as SubtitleSearch, Pd as TRANSCODE_EXTENSIONS, Df as TranscodeNotice, Nf as TranscodePreparing, Wd as UPNEXT_COUNTDOWN_SECONDS, Kd as UPNEXT_RING_CIRCUMFERENCE, Gd as UPNEXT_RING_RADIUS, xf as UpNext, zc as VolumeControl, yl as activeAudioIndex, Cd as ambientGradient, vl as applyAudioTrack, _l as applyTrackModes, Ms as attachHls, vd as averageRegion, Ll as captionStyleVars, Cl as cleanCueText, Il as edgeShadow, Id as extensionOf, us as formatTime, Tc as handleShortcut, gl as hasActiveCaptions, Ed as isBatterySaving, Qs as isFailedStatus, Rd as isFatalMediaError, Os as isNativeHlsSupported, Zs as isPlayable, wc as isTypingTarget, ml as listAudioTracks, pl as listSubtitleTracks, Ld as needsTranscode, zs as parseSubtitleTracks, Ys as parseTranscodeStart, Xs as parseTranscodeStatus, Og as phlixUiVersion, wl as readActiveCueLines, $s as resolveStreamUrl, hl as resolveTextTrack, bd as rgbString, xd as rgbaString, qd as ringDashoffset, yd as sampleAmbient, Vs as transcodeStartPath, Js as transcodeStatusPath, tc as useHlsTranscode, Ec as useKeyboardShortcuts, he as usePlayerStore };
 
 //# sourceMappingURL=player.js.map

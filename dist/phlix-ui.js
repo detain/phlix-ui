@@ -1380,7 +1380,7 @@ function So(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CnTuvC-_.js")
+			component: () => import("./PlayerPage-E0LZkjdU.js")
 		},
 		{
 			path: `${t}/login`,

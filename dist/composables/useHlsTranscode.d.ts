@@ -38,6 +38,16 @@ export interface UseHlsTranscodeOptions {
     pollIntervalMs?: number;
     /** Give up after this long (ms). */
     maxWaitMs?: number;
+    /** phlix-ui-player-013: how many CONSECUTIVE status-poll request failures
+     *  end the job. One HTTP blip is never fatal — the loop re-polls with
+     *  backoff and only goes terminal at this streak length (a good answer
+     *  clears the streak). A server-VERDICT failure status is immediately
+     *  terminal regardless; this covers the transport layer. Default 3. */
+    maxConsecutivePollFailures?: number;
+    /** phlix-ui-player-013: base backoff (ms) before re-polling after a failed
+     *  status request; doubles with each consecutive failure (base, 2×base,
+     *  …) and restarts from base once the streak clears. Default 500. */
+    pollRetryBackoffMs?: number;
     /** Injectable delay (defaults to setTimeout) — overridden in tests. */
     sleep?: (ms: number) => Promise<void>;
     /** Optional per-app hls.js config overrides threaded down to {@link attachHls}

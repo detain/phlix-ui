@@ -11,7 +11,9 @@
  * on-demand transcode (non-web container by extension, or a fatal <video>
  * decode/format error) and that transcode request itself failed. It's an OPAQUE
  * overlay so the user sees a clear explanation instead of a silent black frame;
- * the only action offered is to go back.
+ * the actions offered are to retry the transcode or go back (phlix-ui-player-013:
+ * a failure notice with no retry trapped viewers at a dead end even when the
+ * job was transiently broken and perfectly retryable).
  *
  * ⚠ The copy deliberately does NOT blame the file or its format. The transcode
  * request also fails when the SERVER refused it for a reason unrelated to the
@@ -26,7 +28,7 @@ defineProps<{
   title?: string;
 }>();
 
-const emit = defineEmits<{ (e: 'back'): void }>();
+const emit = defineEmits<{ (e: 'back'): void; (e: 'retry'): void }>();
 
 const { t } = useMessages();
 </script>
@@ -39,10 +41,16 @@ const { t } = useMessages();
       <p class="transcode__body">
         {{ title ? t('player.transcodeBodyTitled', { title }) : t('player.transcodeBodyUntitled') }}
       </p>
-      <button type="button" class="transcode__back" @click="emit('back')">
-        <Icon name="arrow-left" />
-        <span>{{ t('player.goBack') }}</span>
-      </button>
+      <div class="transcode__actions">
+        <button type="button" class="transcode__retry" @click="emit('retry')">
+          <Icon name="refresh" />
+          <span>{{ t('common.retry') }}</span>
+        </button>
+        <button type="button" class="transcode__back" @click="emit('back')">
+          <Icon name="arrow-left" />
+          <span>{{ t('player.goBack') }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -82,11 +90,19 @@ const { t } = useMessages();
   line-height: var(--leading-relaxed, 1.6);
   color: rgba(255, 255, 255, 0.72);
 }
-.transcode__back {
+.transcode__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+/* phlix-ui-player-013: Retry joined the card, so the two actions share one
+   button skin — the grouped selector keeps the original Go back pins valid. */
+.transcode__back,
+.transcode__retry {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  margin-top: var(--space-2);
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   padding: var(--space-2) var(--space-4);
@@ -95,20 +111,24 @@ const { t } = useMessages();
   color: #fff;
   transition: background var(--dur-fast) var(--ease-out);
 }
-.transcode__back :deep(svg) {
+.transcode__back :deep(svg),
+.transcode__retry :deep(svg) {
   width: 16px;
   height: 16px;
 }
-.transcode__back:hover {
+.transcode__back:hover,
+.transcode__retry:hover {
   background: rgba(255, 255, 255, 0.2);
 }
-.transcode__back:focus-visible {
+.transcode__back:focus-visible,
+.transcode__retry:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .transcode__back {
+  .transcode__back,
+  .transcode__retry {
     transition: none;
   }
 }
