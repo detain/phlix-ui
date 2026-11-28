@@ -85,6 +85,11 @@ function harness(opts: {
   /** phlix-ui-player-013: 0-based indices of GET status polls that reject
    *  (an HTTP blip at the request layer — the transient-failure path). */
   getRejects?: number[];
+  /** phlix-ui-player-013 (review i-1): thread CUSTOM values of the two
+   *  injectable resilience knobs so their injection path is pinned at a
+   *  non-default scale, not just the shipped defaults (3 / 500). */
+  maxConsecutivePollFailures?: number;
+  pollRetryBackoffMs?: number;
 } = {}): Harness {
   const destroy = vi.fn();
   const loadSource = vi.fn<(url: string) => void>();
@@ -212,6 +217,10 @@ function harness(opts: {
     getToken: () => 'tok',
     pollIntervalMs: 1,
     maxWaitMs: 50,
+    // phlix-ui-player-013 (review i-1): forwarded only when a test supplies a
+    // CUSTOM value — defaults stay the shipped ones for every other harness.
+    ...(opts.maxConsecutivePollFailures !== undefined ? { maxConsecutivePollFailures: opts.maxConsecutivePollFailures } : {}),
+    ...(opts.pollRetryBackoffMs !== undefined ? { pollRetryBackoffMs: opts.pollRetryBackoffMs } : {}),
     sleep: async (ms: number) => {
       sleeps.push(ms);
     },
@@ -470,6 +479,30 @@ describe('useHlsTranscode', () => {
       expect(h.attach).not.toHaveBeenCalled();
       // Backoff before retries 2 and 3; the terminal failure does not sleep.
       expect(h.sleeps).toEqual([500, 1000]);
+    });
+
+    it('CUSTOM maxConsecutivePollFailures is honored — threshold 2 ends the run at the SECOND blip (review i-1)', async () => {
+      const h = harness({
+        statuses: [],
+        getRejects: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        maxConsecutivePollFailures: 2,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.state.value).toBe('error');
+      expect(h.get.mock.calls.length).toBe(2); // custom threshold, not the shipped 3
+      expect(h.sleeps).toEqual([500]); // one backoff between the two blips
+    });
+
+    it('CUSTOM pollRetryBackoffMs is honored — the doubling law at a non-default base (review i-1)', async () => {
+      const h = harness({
+        statuses: [{ status: 'running', playlist_ready: true, progress: 70 }],
+        getRejects: [0, 1],
+        pollRetryBackoffMs: 10,
+      });
+      await h.controller.start(fakeVideo(), 'm');
+      expect(h.controller.state.value).toBe('ready');
+      expect(h.get.mock.calls.length).toBe(3); // blip, blip, answer
+      expect(h.sleeps).toEqual([10, 20]); // 10 * 2^0, 10 * 2^1 — base is INJECTED
     });
 
     it('the failure backoff rides the DEFAULT sleep (real timers), proven under fake timers', async () => {

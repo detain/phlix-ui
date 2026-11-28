@@ -18,7 +18,7 @@ import Player from '../components/Player.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import { usePlayerUiStore } from '../stores/usePlayerUiStore';
-import { clearMediaItemCache } from '../composables/useMediaItemCache';
+import { cacheMediaItem, clearMediaItemCache } from '../composables/useMediaItemCache';
 import type { MediaItem } from '../types/media-item';
 import { isRoute, hasQuery, pathnameOf } from '../test/route-match';
 import { ERROR_MESSAGES } from '../i18n/errors';
@@ -2023,5 +2023,87 @@ describe('phlix-ui-player-013/014 — transcode retry wiring on the page', () =>
     expect(attachCalls.length).toBe(1); // the completed-job start attached once
     expect(attachCalls[0].url).toContain('/hls/job-1/master.m3u8');
     expect(attachCalls[0].opts.startPosition).toBe(60); // the STORED resume, not 0
+  });
+
+  it('the capability-probe flip threads the RESOLVED resume (not 0) into the start (phlix-ui-player-014, Player.vue probe site)', async () => {
+    // The :355 site is the probe flip: an .mp4 (extension-gate CLEAN, so the
+    // onMounted start never runs) whose HEVC video stream the runtime probe
+    // judges undecodable mid-session. The element has played nothing
+    // (currentTime 0), so the flip must fall through to the RESOLVED resume —
+    // reverting this single site to the pre-fix `beginTranscode(currentTime)`
+    // arrives at the seam with 0 and reddens exactly this pin.
+    attachCalls.length = 0;
+    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+      const u = String(url);
+      if (u.includes('/transcode')) {
+        return Promise.resolve(jsonResponse({ job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' }));
+      }
+      if (isById(u, 'm1')) {
+        return Promise.resolve(jsonResponse({
+          item: media({
+            path: '/movies/Dune.mp4',
+            stream_url: '/media/m1/stream',
+            streams: [
+              { stream_index: '0', stream_type: 'video', codec: 'hevc', width: '1920', height: '1080' },
+              { stream_index: '1', stream_type: 'audio', codec: 'aac' },
+            ],
+          }),
+        }));
+      }
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    usePlayerStore().saveResume('m1', 60, 200);
+    await mountAt('m1', fetchMock);
+    await flushPromises();
+
+    expect(attachCalls.length).toBe(1); // the flip started the job (probe answered "cannot decode")
+    expect(attachCalls[0].opts.startPosition).toBe(60); // resume value, NOT the silent-0 the bug shipped
+  });
+
+  it('an in-page item change starts the next file transcode at ITS resolved resume (phlix-ui-player-014, Player.vue media-change site)', async () => {
+    // The :740 site lives in evaluateForCurrentMedia — reached by the media
+    // WATCH, never by mount. The fresh-cache SWR fast path swaps `item` with
+    // NO loading flush, so the same Player instance survives m1 → m2 (a
+    // remount would take the onMounted route and this pin would see 0 attaches
+    // fail loud — the flow itself is asserted below, not assumed).
+    attachCalls.length = 0;
+    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+      const u = String(url);
+      if (u.includes('/transcode')) {
+        return Promise.resolve(jsonResponse({ job_id: 'job-1', master_url: '/hls/job-1/master.m3u8', status: 'completed' }));
+      }
+      if (isById(u, 'm1')) {
+        return Promise.resolve(jsonResponse({
+          item: media({
+            path: '/movies/Dune.mp4',
+            stream_url: '/media/m1/stream',
+            streams: [
+              { stream_index: '0', stream_type: 'video', codec: 'h264', width: '1920', height: '1080' },
+              { stream_index: '1', stream_type: 'audio', codec: 'aac' },
+            ],
+          }),
+        }));
+      }
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+    // m2 lands through the SWR fast path (fresh cached entry → no by-id round
+    // trip, no skeleton branch), and carries its OWN stored resume.
+    cacheMediaItem('m2', media({ id: 'm2', name: 'Dune: Part Three', path: '/movies/Return.mkv', stream_url: '/media/m2/stream' }));
+    usePlayerStore().saveResume('m2', 75, 300);
+    const { router } = await mountAt('m1', fetchMock);
+    await flushPromises();
+    expect(attachCalls.length).toBe(0); // m1 is H.264 direct play — nothing transcodes yet
+
+    await router.push('/app/player/m2');
+    await flushPromises();
+
+    expect(attachCalls.length).toBe(1); // the mkv started via the media-change site
+    expect(attachCalls[0].opts.startPosition).toBe(75); // m2's OWN resume, threaded at :740
   });
 });

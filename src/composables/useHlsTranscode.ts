@@ -409,7 +409,11 @@ export function useHlsTranscode(opts: UseHlsTranscodeOptions): HlsTranscodeContr
         }
         if (isStale()) return;
         // Payload parsing stays OUTSIDE the transport retry: a malformed
-        // answer is not a blip — it falls to the outer catch and ends the run.
+        // answer never rides the backoff, but it is also NOT terminal — the
+        // total, tolerant parser degrades it to 'running' (its pre-retry
+        // behavior, unchanged) and polling continues. What ends a run on
+        // arrival is the SERVER VERDICT thrown below (failed/cancelled);
+        // transport death ends it only at the consecutive-failure threshold.
         const status = parseTranscodeStatus(payload);
         consecutivePollFailures = 0;
         progress.value = status.progress;
