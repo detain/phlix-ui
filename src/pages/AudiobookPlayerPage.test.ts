@@ -351,9 +351,13 @@ describe('AudiobookPlayerPage — route currency (phlix-ui-player-021)', () => {
   it('navigating to a different :id reloads the new audiobook and stops the old one', async () => {
     const bookB = detail({ id: 'a2', name: 'Dune', stream_url: '/media/a2/stream' });
     const reads: string[] = [];
+    const posts: Array<{ url: string; body: Record<string, unknown> }> = [];
     const fn = vi.fn((url: unknown, init?: RequestInit) => {
       const u = typeof url === 'string' ? url : '';
-      if (init && init.method === 'POST') return Promise.resolve(jsonResponse({ ok: true }));
+      if (init && init.method === 'POST') {
+        posts.push({ url: u, body: JSON.parse(String(init.body)) });
+        return Promise.resolve(jsonResponse({ ok: true }));
+      }
       if (isRoute(u, '/api/v1/audiobooks/a1/read')) {
         reads.push('a1');
         return Promise.resolve(jsonResponse({ audiobook: detail(), progress: null }));
@@ -373,10 +377,28 @@ describe('AudiobookPlayerPage — route currency (phlix-ui-player-021)', () => {
 
     // The shell renders a keyless <RouterView/> (src/PhlixApp.vue:65): same-route,
     // new-param navigation REUSES this instance. The page must hand itself over.
+    // Mid-book position first (phlix-ui-player-021 data-integrity half, round-1
+    // Minor): A's playhead must be PERSISTED on the hand-off — the watch's flush
+    // leg (AudiobookPlayerPage.vue:162-164) POSTs it synchronously BEFORE the
+    // state reset below nulls the ref, with the id captured at payload-build
+    // time (:240) so the request can never chase book B's endpoint.
+    const audioEl = w.find('audio').element as HTMLMediaElement;
+    audioEl.currentTime = 42;
+    await w.find('audio').trigger('timeupdate'); // currentTime ref -> 42
+
     await router.push('/app/audiobooks/a2/read');
     await flushPromises();
 
     expect(reads).toEqual(['a1', 'a2']);
+    // Exactly ONE progress POST: the flush. A's debounce armed by the timeupdate
+    // above is cancelled by the watch (:158-160), and the post-reset unmount sees
+    // a zeroed playhead — neither may add a second save.
+    expect(posts).toHaveLength(1);
+    // Captured-id pin: the flush addressed A'S endpoint with A's real position;
+    // a post-await id read would hit the nulled ref (swallowed throw -> no POST)
+    // or, after a2 lands, B's endpoint.
+    expect(isRoute(posts[0].url, PROGRESS_PATH)).toBe(true);
+    expect(posts[0].body.position_ms).toBe(42_000);
     expect(w.find('.player-title').text()).toBe('Dune');
     // Book A's element is paused before the state flips (no ghost narrator).
     expect(pauseSpy).toHaveBeenCalled();
