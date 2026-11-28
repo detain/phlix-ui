@@ -6,6 +6,7 @@
  */
 
 import { watch, watchEffect } from 'vue';
+import { ACCENT_KEYS, deriveAccentVars } from '@phlix/tokens';
 import {
   usePreferencesStore,
   readStoredPreferences,
@@ -17,7 +18,6 @@ import { useThemesStore } from '../stores/useThemesStore';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useThemeSyncStore } from '../stores/useThemeSyncStore';
 import { useApiBase } from './useApiBase';
-import { deriveAccentVars } from './color';
 import {
   applyThemeTokens,
   clearThemeTokens,
@@ -26,8 +26,6 @@ import {
   writeCachedTheme,
   type ActiveThemeStyle,
 } from './themeTokens';
-
-const ACCENT_KEYS = ['--accent', '--accent-hover', '--accent-active', '--accent-soft', '--accent-ring', '--accent-contrast'];
 
 /**
  * Apply a flat prefs object to <html> (data-theme/density + plugin-theme token

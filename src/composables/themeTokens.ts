@@ -527,12 +527,13 @@ function wcagRatio(a: readonly [number, number, number], b: readonly [number, nu
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
-// NOTE for reviewers: `src/utils/color.ts` has a `luminance()` too — it is the
-// ink-choice heuristic (0.03928 threshold, a legacy WCAG 2.0 draft constant)
-// used to pick text-on-accent. This law deliberately does NOT share it: the
-// estate's certification guards (every TokenContrastTest, the static token
-// lock) all measure with 0.04045, and a law must score IDENTICALLY to the
-// guards that pre-certify its inputs, or the two disagree at the boundary.
+// NOTE for reviewers: `@phlix/tokens` (the package this repo consumes) has a
+// `luminance()` too — it is the ink-choice heuristic (0.03928 threshold, a
+// legacy WCAG 2.0 draft constant) used to pick text-on-accent. This law
+// deliberately does NOT share it: the estate's certification guards (every
+// TokenContrastTest, the static token lock) all measure with 0.04045, and a
+// law must score IDENTICALLY to the guards that pre-certify its inputs, or the
+// two disagree at the boundary.
 
 /**
  * Contrast of a ring value COMPOSITED over a ground value, as the browser

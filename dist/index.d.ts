@@ -248,7 +248,7 @@ export { useResumeSync } from './composables/useResumeSync';
 export type { UseResumeSync } from './composables/useResumeSync';
 export { useResumeReporter } from './composables/useResumeReporter';
 export type { UseResumeReporter } from './composables/useResumeReporter';
-export { deriveAccentVars } from './composables/color';
+export { deriveAccentVars } from '@phlix/tokens';
 export { usePageTitle, setPageTitle, setAppName, formatPageTitle, } from './composables/usePageTitle';
 export { useMessages } from './composables/useMessages';
 export type { UseMessages } from './composables/useMessages';

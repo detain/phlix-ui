@@ -580,7 +580,7 @@ export { useResumeSync } from './composables/useResumeSync';
 export type { UseResumeSync } from './composables/useResumeSync';
 export { useResumeReporter } from './composables/useResumeReporter';
 export type { UseResumeReporter } from './composables/useResumeReporter';
-export { deriveAccentVars } from './composables/color';
+export { deriveAccentVars } from '@phlix/tokens';
 // Per-route page titles (U1) — `setPageTitle`/`usePageTitle` write the canonical
 // `"<title> · Phlix"` document title; `setAppName`/`formatPageTitle` are exposed
 // for hosts that set a custom wordmark and for inspection/tests.
