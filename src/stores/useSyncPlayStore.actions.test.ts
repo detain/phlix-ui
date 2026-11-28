@@ -18,7 +18,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useSyncPlayStore, SyncPlayCommandNotDeliveredError } from './useSyncPlayStore';
-import { closeSyncPlayConnection } from '../api/syncplay';
+import { closeSyncPlayConnection, sendSyncPlayCommand, setSyncPlayLogger } from '../api/syncplay';
 import { makeSyncPlayServer, type FakeSyncPlayServer } from '../api/test/syncplayServer';
 import type { SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
 
@@ -680,5 +680,143 @@ describe('useSyncPlayStore — hub-relay pending_command consumer (S298)', () =>
         store.applyPendingPlayMedia(cmd);
         store.consumePendingPlayMedia();
         expect(store.pendingPlayMedia).toBeNull();
+    });
+});
+
+// ── S-ui-player-28 — findings phlix-ui-player-038 / phlix-ui-player-040 ─────────
+//
+// The outbound frame builders used to FABRICATE wire state: a seek always
+// reported `from_position: 0` ("We don't track from position" — the cached
+// group does), and a sync always reported `is_playing: true` (a paused member
+// asking to sync announced itself as playing). Finding 040 is the receive-side
+// sibling: malformed inbound JSON vanished into an empty catch. Every pin here
+// asserts the FRAME ON THE WIRE (S287 doctrine), and the sync control pin
+// stays green on both sides of the fix so the reds cannot be vacuous.
+
+function framesOfType(type: string): Array<Record<string, unknown>> {
+    return socket()
+        .sent.map((raw) => JSON.parse(raw) as Record<string, unknown>)
+        .filter((frame) => frame['type'] === type);
+}
+
+function ackFor(over: Record<string, unknown>): Record<string, unknown> {
+    return {
+        type: 'syncplay_group_state',
+        group: {
+            group_id: GROUP_ID,
+            group_name: 'Movie Night',
+            members: [{ id: 'm1', name: 'Ada', joined_at: 1_700_000_000 }],
+            member_count: 1,
+            host_id: 'm1',
+            playback_position: 0,
+            ...over,
+        },
+    };
+}
+
+/** Join, deliver the join-ack (v0.1.8 LW-044 law, see the remote-frame tests), clear the wire. */
+async function joinAckedRoom(ack: Record<string, unknown>): Promise<ReturnType<typeof useSyncPlayStore>> {
+    const store = useSyncPlayStore();
+    await store.joinRoom(BASE, GROUP_ID);
+    socket().deliver(ack as never);
+    socket().sent.length = 0;
+    return store;
+}
+
+describe('phlix-ui-player-038 — frame builders carry the caller real state', () => {
+    it('a seek frame origin is the cached group position, not the fabricated zero', async () => {
+        await joinAckedRoom(ackFor({ playback_position: 5_678, playback_state: 'playing' }));
+
+        expect(sendSyncPlayCommand(cmd({ type: 'seek', position: 1_234 }))).toBe(true);
+
+        const seek = framesOfType('syncplay_playback_seek');
+        expect(seek).toHaveLength(1);
+        // The line this pin exists to kill: `const fromPos = 0;`.
+        expect(seek[0]!['from_position']).toBe(5_678);
+        expect(seek[0]!['to_position']).toBe(1_234);
+    });
+
+    it('a seek with no cached group sends NOTHING — unknown origin is a refusal, not a zero', async () => {
+        const store = useSyncPlayStore();
+        await store.joinRoom(BASE, GROUP_ID);
+        socket().sent.length = 0;
+
+        // No group_state ack: the client knows no origin. M-UI-12 makes that
+        // observable — false means no frame reached the wire — instead of the
+        // old shape: a frame asserting playback started at 0 (and a `true`
+        // claiming it was the cached group's own position).
+        expect(sendSyncPlayCommand(cmd({ type: 'seek', position: 1_234 }))).toBe(false);
+        expect(framesOfType('syncplay_playback_seek')).toHaveLength(0);
+        void store;
+    });
+
+    it('a sync with rate 0 reports is_playing false — the forced true does not survive to the frame', async () => {
+        await joinAckedRoom(ackFor({ playback_position: 1_000, playback_state: 'playing' }));
+
+        expect(sendSyncPlayCommand(cmd({ type: 'sync', position: 9_000, rate: 0 }))).toBe(true);
+
+        const sync = framesOfType('syncplay_playback_sync');
+        expect(sync).toHaveLength(1);
+        expect(sync[0]!['position']).toBe(9_000);
+        // rate governs when present: 0 is a paused member, whatever the group says.
+        expect(sync[0]!['is_playing']).toBe(false);
+    });
+
+    it('a sync with no rate derives is_playing from the cached group state — paused is false, never a fabricated true', async () => {
+        await joinAckedRoom(ackFor({ playback_position: 2_000, playback_state: 'paused' }));
+
+        expect(sendSyncPlayCommand(cmd({ type: 'sync', position: 4_000 }))).toBe(true);
+
+        const sync = framesOfType('syncplay_playback_sync');
+        expect(sync).toHaveLength(1);
+        expect(sync[0]!['is_playing']).toBe(false);
+    });
+
+    it('CONTROL — a sync with no rate while the group IS playing still reports is_playing true', async () => {
+        await joinAckedRoom(ackFor({ playback_position: 2_000, playback_state: 'playing' }));
+
+        expect(sendSyncPlayCommand(cmd({ type: 'sync', position: 4_000 }))).toBe(true);
+
+        const sync = framesOfType('syncplay_playback_sync');
+        expect(sync).toHaveLength(1);
+        expect(sync[0]!['is_playing']).toBe(true);
+    });
+});
+
+describe('phlix-ui-player-040 — malformed inbound JSON warns once and counts', () => {
+    afterEach(() => {
+        setSyncPlayLogger(null);
+    });
+
+    it('two broken frames produce ONE warn, a count of 2, and a connection that survives', async () => {
+        const warnSpy = vi.fn();
+        setSyncPlayLogger({ log: vi.fn(), warn: warnSpy, error: vi.fn() });
+
+        const store = await joinAckedRoom(ackFor({ playback_state: 'playing' }));
+
+        socket().onmessage?.({ data: 'not-json' } as MessageEvent);
+        socket().onmessage?.({ data: '{"broken":' } as MessageEvent);
+
+        // The empty catch made this exact assertion impossible: zero warns,
+        // zero signal, zero count.
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+
+        // The counter is this fix's new export; a static import of a name that
+        // does not exist yet would error the whole suite at load, so the pin
+        // reaches it dynamically and the red points at the export itself.
+        const mod = (await import('../api/syncplay')) as Record<string, unknown>;
+        expect(typeof mod['getSyncPlayParseErrorCount']).toBe('function');
+        const counter = mod['getSyncPlayParseErrorCount'] as () => number;
+        expect(counter()).toBe(2);
+
+        // Connection survives — a following VALID frame flows through the real
+        // chain untouched (the socket is healthy; only the bad frame is junk).
+        socket().deliver({ type: 'syncplay_playback_pause', member_id: 'someone-else', position: 3_000 });
+        expect(store.currentSession!.state).toBe('paused');
+
+        // Never spams: the third failure counts, it does not re-warn.
+        socket().onmessage?.({ data: '}' } as MessageEvent);
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(counter()).toBe(3);
     });
 });

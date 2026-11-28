@@ -505,6 +505,46 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 /** Base delay in ms for exponential backoff. */
 const RECONNECT_BASE_DELAY_MS = 1000;
 
+/**
+ * phlix-ui-player-039 — the pending reconnect rung, TRACKED.
+ *
+ * The rung used to be a bare `setTimeout` whose handle was discarded, so
+ * nothing could cancel it: a caller-initiated join to a NEW room still
+ * inherited the old room's rung, and when the new room's socket happened to
+ * be momentarily down that stray rung dialed it prematurely, off the old
+ * clock. Exactly ONE rung is ever in flight ({@link handleWsClose} replaces
+ * before it schedules); this handle is its single owner.
+ */
+let syncPlayReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Cancel the pending rung, if any. Idempotent. */
+function clearSyncPlayReconnectTimer(): void {
+  if (syncPlayReconnectTimer !== null) {
+    clearTimeout(syncPlayReconnectTimer);
+    syncPlayReconnectTimer = null;
+  }
+}
+
+/**
+ * phlix-ui-player-040 — parse-failure diagnostics.
+ *
+ * Malformed inbound JSON used to vanish into an empty catch: a server (or an
+ * intermediary) speaking broken frames looked identical to a healthy link.
+ * The first failure of a session warns through the lifecycle logger; every
+ * failure counts. The counter is reset by {@link openSyncPlayConnection}, so
+ * a session's diagnostics window is the session itself.
+ */
+let syncPlayParseErrorCount = 0;
+let syncPlayParseWarned = false;
+
+/**
+ * Parse failures observed since the last caller-initiated connect.
+ * Test/diagnostic seam for phlix-ui-player-040.
+ */
+export function getSyncPlayParseErrorCount(): number {
+  return syncPlayParseErrorCount;
+}
+
 /* ── CU-077 (review ui__crossfe #2) — a ladder that PARKS instead of dying ───
  *
  * Before this, the give-up branch nulled `syncPlayRoomId` and `syncPlayClient`
@@ -783,7 +823,14 @@ function handleWsMessage(event: MessageEvent): void {
     const raw = JSON.parse(event.data as string);
     syncPlayClient.handleIncoming(raw);
   } catch {
-    /* malformed JSON — ignore */
+    // phlix-ui-player-040: the socket is healthy; THIS frame is junk. The old
+    // empty catch made that indistinguishable from silence. Warn once per
+    // session, count every failure, never throw, never drop the connection.
+    syncPlayParseErrorCount++;
+    if (!syncPlayParseWarned) {
+      syncPlayParseWarned = true;
+      syncPlayLogger.warn('[SyncPlay] Dropping malformed WebSocket frame (JSON parse failed); further parse failures this session are counted silently');
+    }
   }
 }
 
@@ -807,17 +854,36 @@ function handleWsClose(event?: { target?: unknown }): void {
   if (syncPlayClient) {
     syncPlayClient.onDisconnect();
   }
-  if (syncPlayRoomId && syncPlayReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+  // phlix-ui-player-039: rungs never stack. A close arriving while one is
+  // ALREADY pending is a re-report of a death the ladder has scheduled (a
+  // synthetic double-fire in tests, a stray close callback in production):
+  // the pending rung keeps its slot AND its step. The ladder escalates per
+  // dial-and-die, never per close event — re-arming from every event is what
+  // let the tracked era's naive replacement skip measured rungs. The handle
+  // is kept so {@link openSyncPlayConnection} and {@link closeSyncPlayConnection}
+  // can cancel it.
+  if (syncPlayRoomId && syncPlayReconnectTimer === null && syncPlayReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     const delay = RECONNECT_BASE_DELAY_MS * Math.pow(2, syncPlayReconnectAttempts);
     syncPlayReconnectAttempts++;
+    // The rung belongs to the room that was live when it was SCHEDULED. It
+    // must not reinterpret the module's state when it fires: a stale rung of
+    // room A dialing whatever room happens to be current was the leak.
+    const scheduledRoomId = syncPlayRoomId;
     syncPlayLogger.log(`[SyncPlay] WebSocket closed, reconnecting in ${delay}ms (attempt ${syncPlayReconnectAttempts})`);
-    setTimeout(() => {
+    syncPlayReconnectTimer = setTimeout(() => {
+      syncPlayReconnectTimer = null;
       // ⚠ S283: this MUST NOT re-enter `openSyncPlayConnection()`. That is the
       // caller-initiated entry point and it clears the backoff budget, so
       // routing the reconnect through it zeroed the counter this delay is
       // computed from — the ladder measured a flat 1000 ms on every rung and
       // the give-up branch below was unreachable.
-      if (syncPlayRoomId) connectSyncPlaySocket(syncPlayRoomId);
+      // phlix-ui-player-039: the rung belongs to its SCHEDULED room, and a
+      // ladder that parked while this rung was in flight (give-up reached
+      // from a stray close during the final delay) stays silent — the wake
+      // path owns the next dial from here.
+      if (syncPlayReconnectExhausted) return;
+      if (syncPlayRoomId !== scheduledRoomId) return;
+      connectSyncPlaySocket(scheduledRoomId);
     }, delay);
   } else if (syncPlayReconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     syncPlayLogger.warn('[SyncPlay] Max reconnect attempts reached, giving up');
@@ -831,6 +897,10 @@ function handleWsClose(event?: { target?: unknown }): void {
     // explicit close, or a wake-path retry.
     syncPlayReconnectAttempts = 0;
     syncPlayClient = null;
+    // phlix-ui-player-039: "the ladder stops" must mean no timer is left
+    // in flight either — a give-up reached while a final rung is pending
+    // cancels it; the wake path owns the next dial from here.
+    clearSyncPlayReconnectTimer();
     setReconnectExhausted(true);
   }
 }
@@ -873,6 +943,13 @@ export function openSyncPlayConnection(
   // not a parameter, is what every `joinGroup` below reads, so a room switch
   // can never carry the previous room's digest forward.
   syncPlayPasswordHash = passwordHash ?? null;
+  // phlix-ui-player-039: the caller's join supersedes any pending rung — the
+  // old room's ladder must not ring into the new session ahead of its own
+  // schedule (or at all).
+  clearSyncPlayReconnectTimer();
+  // phlix-ui-player-040: a fresh session gets a fresh diagnostics window.
+  syncPlayParseErrorCount = 0;
+  syncPlayParseWarned = false;
   connectSyncPlaySocket(roomId, onMessage, memberId, memberName);
 }
 
@@ -1053,6 +1130,9 @@ export function closeSyncPlayConnection(): void {
   }
   syncPlayRoomId = null;
   syncPlayReconnectAttempts = 0;
+  // phlix-ui-player-039: an explicit leave dissolves a pending rung too — the
+  // ladder's authority ends where the user's intent does.
+  clearSyncPlayReconnectTimer();
   // CU-077: an explicit leave dissolves the park — wake signals must not
   // re-dial a room the user deliberately left.
   setReconnectExhausted(false);
@@ -1082,7 +1162,8 @@ export function sendSyncPlayStateUpdate(state: SyncPlayStateUpdate): void {
  * dropped one. It now REPORTS delivery honestly:
  *
  * - `false` — no frame reached the wire (no client, no socket, socket not
- *   OPEN, or a seek/sync with no position to put in the frame). The exact
+ *   OPEN, a seek/sync with no position to put in the frame, or a seek whose
+ *   origin position is not nameable from the cached group). The exact
  *   conditions the old guards covered, unchanged behavior, now observable.
  * - `true` — the protocol client handed a serialized frame to an OPEN socket.
  *   A `WebSocket.send()` that THROWS (the `InvalidStateError` race) still
@@ -1105,17 +1186,35 @@ export function sendSyncPlayCommand(command: SyncPlayPlaybackCommand): boolean {
       return true;
     case 'seek':
       if (command.position !== undefined) {
-        const fromPos = 0; // We don't track from position, use 0
-        syncPlayClient.sendSeek(fromPos, command.position);
-        return true;
+        // phlix-ui-player-038: `from_position` was the fabricated `0` — "We
+        // don't track from position" spoke too soon; the client's cached group
+        // knows exactly where playback is. With no group cached the origin is
+        // genuinely UNKNOWN, and M-UI-12 makes that honest: `false` (no frame
+        // reached the wire), instead of a frame asserting playback started at
+        // zero. (The client's own `seekTo` exists upstream for this shape but
+        // is not in the installed v0.1.8, so the read goes through
+        // `getGroup()` with the same no-fabrication rule.)
+        const origin = syncPlayClient.getGroup()?.playback_position;
+        if (typeof origin !== 'number' || !Number.isFinite(origin) || origin < 0) return false;
+        return syncPlayClient.sendSeek(origin, command.position);
       }
       return false;
-    case 'sync':
-      // Full sync - send current position
+    case 'sync': {
+      // Full sync - send current position. phlix-ui-player-038: the
+      // `is_playing` flag was hardcoded `true`, so a PAUSED member asking to
+      // sync announced itself as playing. Derive from what is actually known:
+      // the command's own rate when present, else the cached group's state;
+      // absent both → false — the vendored client's own precedent for a
+      // missing playing flag (`typeof is_playing === 'boolean' ? it : false`).
+      // "Playing" is never fabricated.
       if (command.position !== undefined) {
-        syncPlayClient.reportPosition(command.position, true);
-        return true;
+        const isPlaying =
+          command.rate !== undefined
+            ? command.rate > 0
+            : syncPlayClient.getGroup()?.playback_state === 'playing';
+        return syncPlayClient.reportPosition(command.position, isPlaying);
       }
       return false;
+    }
   }
 }

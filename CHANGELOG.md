@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — SyncPlay wire honesty: real cached group state in seek/sync frames, a tracked reconnect rung, logged parse failures 2026-11-28 (S-ui-player-28)
+
+### Fixed
+
+* The SyncPlay frame builders stop inventing wire state (findings phlix-ui-player-038/039/040). `sendSyncPlayCommand` no longer fabricates: a `seek` now sends the cached group's `playback_position` as `from_position` (was hardcoded `0`; when no group is cached or the origin is unnameable it returns `false` — honest no-frame, per the M-UI-12 delivery law) and a `sync` derives `is_playing` from `rate > 0` when the caller supplies a rate, or from the cached group's `playback_state` when it does not — the forced `true` is gone. The reconnect `setTimeout` is now a single tracked handle: a close while a rung is pending never stacks a second rung or skips a step, the handle is cleared by an explicit join (`openSyncPlayConnection`) and by `closeSyncPlayConnection`, the rung captures its room id at SCHEDULE time and dials only that room (a stale rung can never re-dial a room the user switched away from), and the give-up/park path clears any in-flight rung. Malformed inbound WebSocket JSON is no longer dropped silently: the first failure of a connection session emits one `syncPlayLogger.warn` (no spam), every failure increments an exported `getSyncPlayParseErrorCount()` counter, the parse window resets on each new connection, and the connection survives — valid frames after garbage still flow.
+
 ## Unreleased — SleepTimer becomes a keyboard-operable localized listbox and SkipControls buttons take full-sentence catalog labels 2026-11-28 (S-ui-player-21)
 
 ### Fixed

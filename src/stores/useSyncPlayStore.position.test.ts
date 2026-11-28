@@ -23,7 +23,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useSyncPlayStore, POSITION_REPORT_INTERVAL_MS } from './useSyncPlayStore';
-import { closeSyncPlayConnection } from '../api/syncplay';
+import { closeSyncPlayConnection, openSyncPlayConnection } from '../api/syncplay';
 import { makeSyncPlayServer, type FakeSyncPlayServer } from '../api/test/syncplayServer';
 
 const BASE = 'https://media.example.com';
@@ -304,5 +304,101 @@ describe('S287 — the position report cadence', () => {
         // The tick that found no session clears the interval, so the store is no
         // longer holding a live timer at all.
         expect(vi.getTimerCount()).toBe(0);
+    });
+});
+
+// ── S-ui-player-28 — finding phlix-ui-player-039 (the untracked reconnect rung) ─
+//
+// The reconnect rung was scheduled as a bare `setTimeout` whose handle nobody
+// kept: a caller-initiated JOIN to a new room left the OLD room's rung armed,
+// and when the new room's socket happened to be momentarily down the stray rung
+// dialed it PREMATURELY (off the old rung's clock, ahead of the budget the new
+// session had just started). The handle is now tracked, cleared on join, and a
+// re-schedule REPLACES instead of stacking. Fake timers are live per this file's
+// beforeEach; the file-level afterEach `closeSyncPlayConnection()` tears every
+// session down.
+
+const roomAck = (roomId: string): Record<string, unknown> => ({
+    type: 'syncplay_group_state',
+    group: {
+        group_id: roomId,
+        group_name: `Room ${roomId}`,
+        members: [{ id: 'm1', name: 'Ada', joined_at: 1_700_000_000 }],
+        member_count: 1,
+        host_id: 'm1',
+        playback_position: 0,
+        playback_state: 'paused',
+    },
+});
+
+describe('phlix-ui-player-039 — reconnect rungs are tracked and owned by their room', () => {
+    it('joining a second room kills the pending rung the first room scheduled', () => {
+        openSyncPlayConnection('sp_room_a', undefined, 'm1', 'Ada');
+        socket().deliver(roomAck('sp_room_a'));
+        socket().onclose?.(); // arms rung #1 at +1000 (fresh budget)
+
+        vi.advanceTimersByTime(100);
+        openSyncPlayConnection('sp_room_b', undefined, 'm1', 'Ada'); // caller join: rung #1 must die
+
+        vi.advanceTimersByTime(100); // t=200
+        socket().onclose?.(); // B drops: ITS rung at +1000 (openSyncPlayConnection reset the budget)
+
+        vi.advanceTimersByTime(800); // t=1000 — the stale A rung would ring HERE untracked
+        expect(FakeWebSocket.instances).toHaveLength(2);
+
+        vi.advanceTimersByTime(200); // t=1200 — B rung fires ON SCHEDULE
+        expect(FakeWebSocket.instances).toHaveLength(3);
+        expect(FakeWebSocket.instances[2]!.url).toContain('room=sp_room_b');
+    });
+
+    it('a second close while a rung is pending neither stacks a second rung nor skips the next step', () => {
+        // phlix-ui-player-039: with a tracked rung the close ladder escalates per
+        // DIAL-AND-DIE, never per close event. A second close with a rung already
+        // in flight is inert — the pending rung keeps both its slot and its step.
+        // Untracked, the second close armed a parallel rung two steps deep: the
+        // extra timer deduped into silence at fire time, but the attempt counter
+        // had ALREADY skipped, doubling the delay the next real outage pays.
+        openSyncPlayConnection('sp_room_a', undefined, 'm1', 'Ada');
+        socket().deliver(roomAck('sp_room_a'));
+        socket().onclose?.(); // rung #1 at t=1000 (attempt 1)
+
+        vi.advanceTimersByTime(500);
+        socket().onclose?.(); // a second close must NOT arm a parallel rung
+
+        vi.advanceTimersByTime(500); // t=1000 — rung #1 dials, ON TIME, exactly once
+        expect(FakeWebSocket.instances).toHaveLength(2);
+
+        vi.advanceTimersByTime(500); // t=1500 — the dialed socket drops too
+        socket().onclose?.();
+
+        // t=2500 — the moment the t=500 close's PARALLEL rung (the untracked old
+        // code armed one at step two) would have dialed. Tracked rungs: silence.
+        vi.advanceTimersByTime(1_000);
+        expect(FakeWebSocket.instances).toHaveLength(2);
+
+        vi.advanceTimersByTime(1_000); // t=3500 — rung #2, +2000 (never +4000)
+        expect(FakeWebSocket.instances).toHaveLength(3);
+        expect(FakeWebSocket.instances[2]!.url).toContain('room=sp_room_a');
+    });
+
+    it('a rung dials the room it was SCHEDULED for and the re-dialed socket re-joins it', () => {
+        openSyncPlayConnection('sp_room_a', undefined, 'm1', 'Ada');
+        socket().deliver(roomAck('sp_room_a'));
+        socket().onclose?.();
+
+        vi.advanceTimersByTime(999);
+        expect(FakeWebSocket.instances).toHaveLength(1);
+        vi.advanceTimersByTime(1);
+        expect(FakeWebSocket.instances).toHaveLength(2);
+        expect(FakeWebSocket.instances[1]!.url).toContain('room=sp_room_a');
+
+        // The rung carries its scheduled room end to end — the socket it dialed
+        // announces the SAME group in its GROUP_JOIN, not state re-read later.
+        socket().onopen?.();
+        const join = socket()
+            .sent.map((raw) => JSON.parse(raw) as Record<string, unknown>)
+            .find((frame) => frame['type'] === 'syncplay_group_join');
+        expect(join).toBeDefined();
+        expect(join!['group_id']).toBe('sp_room_a');
     });
 });
