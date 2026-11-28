@@ -6244,7 +6244,9 @@ var qs = {
 		K(() => {
 			D();
 		}), br(() => {
-			C && clearTimeout(C), m.value?.pause(), u.value && g.value > 0 && ae(!0);
+			C && clearTimeout(C), m.value?.pause(), u.value && g.value > 0 && ae();
+		}), Q(c, () => {
+			C &&= (clearTimeout(C), null), u.value && g.value > 0 && ae(), m.value?.pause(), h.value = !1, g.value = 0, _.value = 0, x.value = 0, u.value = null, d.value = null, D();
 		}), Q(m, (e) => {
 			e && d.value && (e.currentTime = d.value.position_ms / 1e3);
 		});
@@ -6255,7 +6257,7 @@ var qs = {
 			m.value && (g.value = m.value.currentTime, ne(), re());
 		}
 		function te() {
-			h.value = !1, ae(!0);
+			h.value = !1, ae();
 		}
 		function ne() {
 			if (!u.value?.chapters?.length) return;
@@ -6270,24 +6272,22 @@ var qs = {
 		}
 		function re() {
 			C && clearTimeout(C), C = setTimeout(() => {
-				ae(!1);
+				C = null, ae();
 			}, 2e3);
 		}
-		async function ae(e = !1) {
+		async function ae() {
 			if (!u.value) return;
-			let t = [];
+			let e = u.value.id, t = [];
 			d.value?.completed_chapters?.length && t.push(...d.value.completed_chapters);
 			let n = _.value > 0 ? g.value / _.value * 100 : 0, r = {
 				position_ms: Math.floor(g.value * 1e3),
 				current_chapter_index: x.value,
 				completed_chapters: t,
 				percent_complete: Math.min(100, Math.max(0, n))
-			}, i = async () => {
-				try {
-					await w().post(`/api/v1/audiobooks/${u.value.id}/progress`, r);
-				} catch {}
 			};
-			e ? await i() : C = setTimeout(i, 2e3);
+			try {
+				await w().post(`/api/v1/audiobooks/${e}/progress`, r);
+			} catch {}
 		}
 		function se() {
 			m.value && (h.value ? (m.value.pause(), h.value = !1) : m.value.play().then(() => {
@@ -6434,7 +6434,7 @@ var qs = {
 			], 10, kg))), 128))])])])])) : z("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-16aae567"]]), Pg = new class {
+}), [["__scopeId", "data-v-a06dd0ee"]]), Pg = new class {
 	client(e) {
 		return new vt({ baseUrl: e });
 	}

@@ -143,8 +143,33 @@ onBeforeUnmount(() => {
     audioRef.value?.pause();
     // Save progress on unmount
     if (audiobook.value && currentTime.value > 0) {
-        void saveProgress(true);
+        void saveProgress();
     }
+});
+
+// phlix-ui-player-021: route currency. The shell renders a keyless
+// <RouterView/> (src/PhlixApp.vue:65), so /audiobooks/a1/read ->
+// /audiobooks/a2/read REUSES this instance: loaded only from onMounted, the
+// page kept narrating book A forever. Mirrors the PlayerPage:605
+// `watch(currentId, load)` idiom — flush A's position (unmount-style),
+// cancel A's pending debounce, silence the element, reset local playback
+// state, then load the new record.
+watch(currentId, () => {
+    if (saveProgressTimeout) {
+        clearTimeout(saveProgressTimeout);
+        saveProgressTimeout = null;
+    }
+    if (audiobook.value && currentTime.value > 0) {
+        void saveProgress();
+    }
+    audioRef.value?.pause();
+    playing.value = false;
+    currentTime.value = 0;
+    duration.value = 0;
+    currentChapterIndex.value = 0;
+    audiobook.value = null;
+    progress.value = null;
+    void loadAudiobook();
 });
 
 // Watch for audio element and set initial position
@@ -176,7 +201,7 @@ function onTimeUpdate(): void {
 function onEnded(): void {
     playing.value = false;
     // Save final progress
-    void saveProgress(true);
+    void saveProgress();
 }
 
 function updateCurrentChapter(): void {
@@ -195,13 +220,24 @@ function scheduleProgressSave(): void {
     if (saveProgressTimeout) {
         clearTimeout(saveProgressTimeout);
     }
+    // phlix-ui-player-020: single-stage debounce — this timer IS the save.
+    // The old shape armed a SECOND 2s timer under the same handle inside
+    // saveProgress(false), so the next timeupdate (~250ms cadence while
+    // playing) cleared the real save before it could run: position never
+    // persisted during playback, and even the paused best case paid 2x2s.
     saveProgressTimeout = setTimeout(() => {
-        void saveProgress(false);
+        saveProgressTimeout = null;
+        void saveProgress();
     }, 2000);
 }
 
-async function saveProgress(immediate = false): Promise<void> {
+async function saveProgress(): Promise<void> {
     if (!audiobook.value) return;
+
+    // phlix-ui-player-021 companion: capture the id NOW. The shell reuses this
+    // instance across :id navigations; an id read after the await could POST
+    // book A's position to book B's endpoint (or throw on the nulled ref).
+    const id = audiobook.value.id;
 
     const completedChapters: number[] = [];
     if (progress.value?.completed_chapters?.length) {
@@ -220,18 +256,10 @@ async function saveProgress(immediate = false): Promise<void> {
         percent_complete: Math.min(100, Math.max(0, percentComplete)),
     };
 
-    const doSave = async () => {
-        try {
-            await getClient().post(`/api/v1/audiobooks/${audiobook.value!.id}/progress`, payload);
-        } catch {
-            // Silently fail progress saves - non-critical
-        }
-    };
-
-    if (immediate) {
-        await doSave();
-    } else {
-        saveProgressTimeout = setTimeout(doSave, 2000);
+    try {
+        await getClient().post(`/api/v1/audiobooks/${id}/progress`, payload);
+    } catch {
+        // Silently fail progress saves - non-critical
     }
 }
 

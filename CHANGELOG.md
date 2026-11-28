@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Audiobook player state fixes: single-stage progress debounce + route-param reload 2026-11-28 (S-ui-player-17)
+
+### Fixed
+
+- AudiobookPlayerPage progress save: the debounce was two-stage — `scheduleProgressSave` armed an outer 2s timer whose callback called `saveProgress(false)`, and that branch armed a SECOND 2s timer under the same `saveProgressTimeout` handle; every later `timeupdate` (~250ms cadence while playing) cleared the real save before it could run, so playback position never persisted during listening, a resume inside the inner window silently discarded the pending save, and even the paused best case paid 2×2s of latency — the debounce is single-stage now: one timer fires the save and clears its own handle. And the page is route-current: because the shell renders a keyless `<RouterView/>` (src/PhlixApp.vue:65), `/audiobooks/a1/read` → `/audiobooks/a2/read` reused the live instance that loaded only in `onMounted` and kept narrating book A forever; the page now mirrors `PlayerPage`'s `watch(currentId, load)` idiom — a param change flushes book A's position, cancels A's pending debounce, pauses the element, resets local playback state, and reloads the new record — with the progress POST capturing the book id at payload-build time so a late-resolving save can never address the wrong book (findings phlix-ui-player-020, phlix-ui-player-021).
+
+
 ## Unreleased — Audiobook player copy localized and error rail + Scrubber adoption 2026-11-28 (S-ui-player-08)
 
 ### Changed

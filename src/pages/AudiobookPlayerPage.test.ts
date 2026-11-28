@@ -321,3 +321,65 @@ describe('AudiobookPlayerPage — progress save', () => {
     w.unmount();
   });
 });
+
+describe('AudiobookPlayerPage — progress save debounce (phlix-ui-player-020)', () => {
+  it('advancing past the debounce window fires exactly one progress POST', async () => {
+    const { post } = stubFetch();
+    const w = await mountAt(makeRouter());
+    await flushPromises();
+
+    // Real timers only until the load has settled (flushPromises itself rides a
+    // setTimeout); from here the page's debounce is the only clock under test.
+    vi.useFakeTimers();
+    try {
+      await w.find('audio').trigger('timeupdate');
+      // Single-stage contract: the 2s debounce IS the save — nothing further
+      // re-arms. The base code's outer timer only armed a SECOND same-handle
+      // 2s timer here, so at +2.1s the real save had not (and during playback
+      // never would) fire.
+      vi.advanceTimersByTime(2_100);
+      expect(post).toHaveBeenCalledTimes(1);
+      expect(isRoute(String(post.mock.calls[0][0]), PROGRESS_PATH)).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+    w.unmount();
+  });
+});
+
+describe('AudiobookPlayerPage — route currency (phlix-ui-player-021)', () => {
+  it('navigating to a different :id reloads the new audiobook and stops the old one', async () => {
+    const bookB = detail({ id: 'a2', name: 'Dune', stream_url: '/media/a2/stream' });
+    const reads: string[] = [];
+    const fn = vi.fn((url: unknown, init?: RequestInit) => {
+      const u = typeof url === 'string' ? url : '';
+      if (init && init.method === 'POST') return Promise.resolve(jsonResponse({ ok: true }));
+      if (isRoute(u, '/api/v1/audiobooks/a1/read')) {
+        reads.push('a1');
+        return Promise.resolve(jsonResponse({ audiobook: detail(), progress: null }));
+      }
+      if (isRoute(u, '/api/v1/audiobooks/a2/read')) {
+        reads.push('a2');
+        return Promise.resolve(jsonResponse({ audiobook: bookB, progress: null }));
+      }
+      return Promise.reject(new Error(`Unexpected fetch URL: ${u}`));
+    });
+    vi.stubGlobal('fetch', fn);
+
+    const router = makeRouter();
+    const w = await mountAt(router);
+    await flushPromises();
+    expect(w.find('.player-title').text()).toBe('Children of Time');
+
+    // The shell renders a keyless <RouterView/> (src/PhlixApp.vue:65): same-route,
+    // new-param navigation REUSES this instance. The page must hand itself over.
+    await router.push('/app/audiobooks/a2/read');
+    await flushPromises();
+
+    expect(reads).toEqual(['a1', 'a2']);
+    expect(w.find('.player-title').text()).toBe('Dune');
+    // Book A's element is paused before the state flips (no ghost narrator).
+    expect(pauseSpy).toHaveBeenCalled();
+    w.unmount();
+  });
+});
