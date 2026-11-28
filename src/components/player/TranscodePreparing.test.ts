@@ -17,6 +17,13 @@ describe('TranscodePreparing', () => {
     expect(w.find('[role="progressbar"]').exists()).toBe(true);
   });
 
+  it('the progressbar carries an accessible name from the catalog', () => {
+    // phlix-ui-player-054 (S-ui-player-20): a bare progressbar announces nothing;
+    // the accessible name rides the message catalog (player.transcodePreparingHeading).
+    const w = mount(TranscodePreparing);
+    expect(w.find('[role="progressbar"]').attributes('aria-label')).toBe('Preparing your stream…');
+  });
+
   it('reflects progress on the bar (rounded + clamped 0–100)', () => {
     const w = mount(TranscodePreparing, { props: { progress: 42.6 } });
     const bar = w.find('[role="progressbar"]');

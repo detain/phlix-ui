@@ -1741,7 +1741,7 @@ var Rr = ["aria-label"], zr = ["src"], Br = { class: "upnext__body" }, Vr = { cl
 	class: "prep",
 	role: "status",
 	"aria-live": "polite"
-}, ti = { class: "prep__card" }, ni = { class: "prep__heading" }, ri = { class: "prep__body" }, ii = ["aria-valuenow"], ai = /*#__PURE__*/ D(/* @__PURE__ */ G({
+}, ti = { class: "prep__card" }, ni = { class: "prep__heading" }, ri = { class: "prep__body" }, ii = ["aria-label", "aria-valuenow"], ai = /*#__PURE__*/ D(/* @__PURE__ */ G({
 	__name: "TranscodePreparing",
 	props: {
 		title: {},
@@ -1760,6 +1760,7 @@ var Rr = ["aria-label"], zr = ["src"], Br = { class: "upnext__body" }, Vr = { cl
 			H("div", {
 				class: "prep__bar",
 				role: "progressbar",
+				"aria-label": Z(n)("player.transcodePreparingHeading"),
 				"aria-valuenow": r(),
 				"aria-valuemin": "0",
 				"aria-valuemax": "100"
@@ -1774,7 +1775,7 @@ var Rr = ["aria-label"], zr = ["src"], Br = { class: "upnext__body" }, Vr = { cl
 			}, [W(O, { name: "arrow-left" }), H("span", null, X(Z(n)("player.goBack")), 1)])
 		])]));
 	}
-}), [["__scopeId", "data-v-e3ea0ebf"]]), oi = /*#__PURE__*/ D(/* @__PURE__ */ G({
+}), [["__scopeId", "data-v-11136fef"]]), oi = /*#__PURE__*/ D(/* @__PURE__ */ G({
 	__name: "SkipButton",
 	props: {
 		position: {},
@@ -3343,13 +3344,7 @@ async function Xa(e, t = document, n = 16 / 9) {
 	}
 }
 // src/pages/PlayerPage.vue?vue&type=script&setup=true&lang.ts
-var Za = { class: "player-page__stage" }, Qa = {
-	key: 0,
-	class: "player-page__skeleton",
-	role: "status",
-	"aria-busy": "true",
-	"aria-label": "Loading player"
-}, $a = { class: "player-page__blocking-error" }, eo = /*#__PURE__*/ D(/* @__PURE__ */ G({
+var Za = { class: "player-page__stage" }, Qa = ["aria-label"], $a = { class: "player-page__blocking-error" }, eo = /*#__PURE__*/ D(/* @__PURE__ */ G({
 	__name: "PlayerPage",
 	setup(t) {
 		let r = /* @__PURE__ */ new Map(), s = i(), { imgSrc: d } = c(), p = a(), m = Ge(), h = Ke(), { t: _ } = o(), y = Ne("phlixConfig", null), b = u(), x = f(), S = g(), C = J(null), T = J(""), E = J(null), D = J([]), O = J(null), k = J(null), ee = J([]), A = J([]), j = J(!0), M = J(null), te = J(!1), ne = J(null), re = J(!1), ie = J(null), N = J(null), P = R(() => String(m.params.id ?? ""));
@@ -3503,7 +3498,7 @@ var Za = { class: "player-page__stage" }, Qa = {
 						G(i, a.item, r);
 						return;
 					}
-					M.value = "Couldn’t load media item", j.value = !1;
+					M.value = _("player.transcodeBodyUntitled"), j.value = !1;
 				}
 			}
 		}
@@ -3566,32 +3561,38 @@ var Za = { class: "player-page__stage" }, Qa = {
 				style: Ie(se.value),
 				"aria-hidden": "true"
 			}, null, 6)) : B("", !0),
-			H("div", Za, [j.value ? (q(), V("div", Qa, [W(Oe, {
+			H("div", Za, [j.value ? (q(), V("div", {
+				key: 0,
+				class: "player-page__skeleton",
+				role: "status",
+				"aria-busy": "true",
+				"aria-label": Z(_)("common.loading")
+			}, [W(Oe, {
 				variant: "rect",
 				radius: "var(--radius-xl)",
 				height: "100%"
-			})])) : M.value ? (q(), z(be, {
+			})], 8, Qa)) : M.value ? (q(), z(be, {
 				key: 1,
 				class: "player-page__error",
 				icon: "alert",
-				title: "Couldn’t play this title",
+				title: Z(_)("player.transcodeHeading"),
 				description: M.value
 			}, {
 				actions: $(() => [W(_e, {
 					variant: "solid",
 					onClick: Me
 				}, {
-					default: $(() => [...t[1] ||= [U("Retry", -1)]]),
+					default: $(() => [U(X(Z(_)("common.retry")), 1)]),
 					_: 1
 				}), W(_e, {
 					variant: "ghost",
 					onClick: ze
 				}, {
-					default: $(() => [...t[2] ||= [U("Back", -1)]]),
+					default: $(() => [U(X(Z(_)("player.goBack")), 1)]),
 					_: 1
 				})]),
 				_: 1
-			}, 8, ["description"])) : C.value ? (q(), z(Ja, {
+			}, 8, ["title", "description"])) : C.value ? (q(), z(Ja, {
 				key: 2,
 				media: C.value,
 				"stream-url": T.value,
@@ -3624,7 +3625,7 @@ var Za = { class: "player-page__stage" }, Qa = {
 			W(ge, {
 				modelValue: re.value,
 				"onUpdate:modelValue": t[0] ||= (e) => re.value = e,
-				title: "Can’t start playback",
+				title: Z(_)("player.transcodeHeading"),
 				size: "sm",
 				dismissible: !1,
 				"hide-close": ""
@@ -3633,15 +3634,15 @@ var Za = { class: "player-page__stage" }, Qa = {
 					variant: "solid",
 					onClick: He
 				}, {
-					default: $(() => [...t[3] ||= [U("OK", -1)]]),
+					default: $(() => [U(X(Z(_)("player.goBack")), 1)]),
 					_: 1
 				})]),
 				default: $(() => [H("p", $a, X(ne.value), 1)]),
 				_: 1
-			}, 8, ["modelValue"])
+			}, 8, ["modelValue", "title"])
 		], 2));
 	}
-}), [["__scopeId", "data-v-1e1f17e4"]]);
+}), [["__scopeId", "data-v-2a6448cc"]]);
 export { eo as default };
 
-//# sourceMappingURL=PlayerPage-CCqFyV28.js.map
+//# sourceMappingURL=PlayerPage-Cb4wI-nD.js.map

@@ -41,6 +41,7 @@ const pct = (): number => Math.max(0, Math.min(100, Math.round(props.progress ??
       <div
         class="prep__bar"
         role="progressbar"
+        :aria-label="t('player.transcodePreparingHeading')"
         :aria-valuenow="pct()"
         aria-valuemin="0"
         aria-valuemax="100"

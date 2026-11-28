@@ -9573,7 +9573,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 	class: "prep",
 	role: "status",
 	"aria-live": "polite"
-}, Of = { class: "prep__card" }, kf = { class: "prep__heading" }, Af = { class: "prep__body" }, jf = ["aria-valuenow"], Mf = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}, Of = { class: "prep__card" }, kf = { class: "prep__heading" }, Af = { class: "prep__body" }, jf = ["aria-label", "aria-valuenow"], Mf = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "TranscodePreparing",
 	props: {
 		title: {},
@@ -9592,6 +9592,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			s("div", {
 				class: "prep__bar",
 				role: "progressbar",
+				"aria-label": O(n)("player.transcodePreparingHeading"),
 				"aria-valuenow": r(),
 				"aria-valuemin": "0",
 				"aria-valuemax": "100"
@@ -9606,7 +9607,7 @@ var df = ["aria-label"], ff = ["src"], pf = { class: "upnext__body" }, mf = { cl
 			}, [u(Y, { name: "arrow-left" }), s("span", null, E(O(n)("player.goBack")), 1)])
 		])]));
 	}
-}), [["__scopeId", "data-v-e3ea0ebf"]]), Nf = /*#__PURE__*/ X(/* @__PURE__ */ d({
+}), [["__scopeId", "data-v-11136fef"]]), Nf = /*#__PURE__*/ X(/* @__PURE__ */ d({
 	__name: "SkipButton",
 	props: {
 		position: {},

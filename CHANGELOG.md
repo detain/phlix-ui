@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — PlayerPage error, loading and blocking copy rides the catalog; the transcode progressbar gains an accessible name 2026-11-28 (S-ui-player-20)
+
+### Fixed
+
+* The player page's last hardcoded chrome strings now resolve through the message catalog (findings phlix-ui-player-025/054). `PlayerPage`'s load-failure description (the degenerate 200-without-item guard) REUSES `player.transcodeBodyUntitled` instead of the dev-speak literal; the loading skeleton's `aria-label` becomes `t('common.loading')` (the Spinner precedent, ending the one-off "Loading player"); the error card's title becomes `player.transcodeHeading` and its actions `common.retry` + `player.goBack` (ending the "Back" drift from the catalog's "Go back"); and the hard-block modal adopts `player.transcodeHeading` as its title — fixing its drift from the error-card wording — with its footer action relabeled `player.goBack`, which is exactly what pressing it does. No keys were minted (all six surfaces already existed in the 826-leaf catalog; the prose trio is untouched). Separately, `TranscodePreparing`'s `role="progressbar"` bar was announcing only a number: it now carries `aria-label="t('player.transcodePreparingHeading')"`, the same string its heading renders, so assistive tech names the indeterminate preparation bar. Eight catalog-conviction pins (substitute-bundle arms) and three converted legacy assertions lock the seam; the p29 auth-recovery, p28 syncplay and marker/caption law pins stand unchanged.
+
 ## Unreleased — Failed room creation no longer orphans the created group; leaving a room clears stale local playback residue 2026-11-28 (S-ui-player-19)
 
 ### Fixed

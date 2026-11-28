@@ -1372,7 +1372,7 @@ function xo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-CCqFyV28.js")
+			component: () => import("./PlayerPage-Cb4wI-nD.js")
 		},
 		{
 			path: `${t}/login`,

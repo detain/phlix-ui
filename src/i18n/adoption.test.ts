@@ -12,6 +12,7 @@ import ResumePrompt from '../components/player/ResumePrompt.vue';
 import RatingBadge from '../components/RatingBadge.vue';
 import SourcePriorityEditor from '../components/SourcePriorityEditor.vue';
 import CaptionsMenu from '../components/player/CaptionsMenu.vue';
+import TranscodePreparing from '../components/player/TranscodePreparing.vue';
 import Select from '../components/ui/Select.vue';
 import { createPinia, setActivePinia } from 'pinia';
 import { formatTime } from '../components/player/format-time';
@@ -147,5 +148,19 @@ describe('i18n adoption (S-ui-player-07)', () => {
     expect(w.text()).toContain('Pista 1');
     const colorSelect = w.findAllComponents(Select)[1];
     expect(colorSelect.props('options').map((o) => (typeof o === 'object' ? o.label : String(o)))).toContain('Gelb');
+  });
+});
+
+// ---- progressbar accessible name reaches the override seam (S-ui-player-054) --
+
+describe('i18n adoption (S-ui-player-054)', () => {
+  it('TranscodePreparing: the progressbar accessible name is the English default when no override is provided', () => {
+    const w = mountWith(TranscodePreparing, {}, null);
+    expect(w.find('[role="progressbar"]').attributes('aria-label')).toBe('Preparing your stream…');
+  });
+
+  it('TranscodePreparing: a consumer override reaches the progressbar accessible name', () => {
+    const w = mountWith(TranscodePreparing, {}, { messages: { player: { transcodePreparingHeading: 'Dein Stream wird vorbereitet…' } } });
+    expect(w.find('[role="progressbar"]').attributes('aria-label')).toBe('Dein Stream wird vorbereitet…');
   });
 });

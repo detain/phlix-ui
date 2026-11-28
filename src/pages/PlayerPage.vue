@@ -538,7 +538,7 @@ async function load(): Promise<void> {
       applyItem(client, cached.item, run);
       return;
     }
-    error.value = 'Couldn’t load media item';
+    error.value = t('player.transcodeBodyUntitled');
     loading.value = false;
     return;
   }
@@ -719,7 +719,7 @@ function onBlockingErrorOk(): void {
         class="player-page__skeleton"
         role="status"
         aria-busy="true"
-        aria-label="Loading player"
+        :aria-label="t('common.loading')"
       >
         <Skeleton variant="rect" radius="var(--radius-xl)" height="100%" />
       </div>
@@ -728,12 +728,12 @@ function onBlockingErrorOk(): void {
         v-else-if="error"
         class="player-page__error"
         icon="alert"
-        title="Couldn’t play this title"
+        :title="t('player.transcodeHeading')"
         :description="error"
       >
         <template #actions>
-          <Button variant="solid" @click="load">Retry</Button>
-          <Button variant="ghost" @click="onBack">Back</Button>
+          <Button variant="solid" @click="load">{{ t('common.retry') }}</Button>
+          <Button variant="ghost" @click="onBack">{{ t('player.goBack') }}</Button>
         </template>
       </EmptyState>
 
@@ -759,10 +759,10 @@ function onBlockingErrorOk(): void {
     </div>
 
     <!-- P5-S5: AccessScheduled / StreamLimitExceeded blocking-error modal -->
-    <Modal v-model="blockingErrorVisible" title="Can’t start playback" size="sm" :dismissible="false" hide-close>
+    <Modal v-model="blockingErrorVisible" :title="t('player.transcodeHeading')" size="sm" :dismissible="false" hide-close>
       <p class="player-page__blocking-error">{{ blockingError }}</p>
       <template #footer>
-        <Button variant="solid" @click="onBlockingErrorOk">OK</Button>
+        <Button variant="solid" @click="onBlockingErrorOk">{{ t('player.goBack') }}</Button>
       </template>
     </Modal>
   </div>

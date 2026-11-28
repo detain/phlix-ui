@@ -342,7 +342,7 @@ describe('PlayerPage — load + stream resolution', () => {
     expect(resolve(media({ id: 'm9', stream_url: absolute }))).toBe(absolute);
   });
 
-  it('shows an error state with Retry/Back when the by-id fetch fails, and Retry re-loads', async () => {
+  it('shows an error state with the catalog Retry/Go back actions when the by-id fetch fails, and Retry re-loads', async () => {
     // UI-0.4: item + playback-info fire concurrently, so this routes by URL (not by
     // call order). The by-id endpoint fails once then succeeds on retry.
     let byIdCalls = 0;
@@ -362,7 +362,8 @@ describe('PlayerPage — load + stream resolution', () => {
     const { w } = await mountAt('m1', fetchMock);
     await flushPromises();
     expect(w.findComponent(Player).exists()).toBe(false);
-    expect(w.text()).toContain("Couldn’t play this title");
+    expect(w.text()).toContain('Can’t start playback right now');
+    expect(w.findAll('button').map((b) => b.text())).toContain('Go back');
 
     const retry = w.findAll('button').find((b) => b.text() === 'Retry');
     expect(retry).toBeTruthy();
@@ -1613,7 +1614,9 @@ describe('PlayerPage — a superseded applyItem() must not write the new item’
     gate.resolve(jsonResponse({})); // 200 with no `item`
     await flushPromises();
     await flushPromises();
-    expect(w.text()).not.toContain('Couldn’t load media item');
+    // phlix-ui-player-025: the degenerate-run description is now the catalog
+    // transcode-body sentence (was the dev-speak 'Couldn’t load media item').
+    expect(w.text()).not.toContain('We couldn’t start playback for this title right now. Please try again later.');
     expect((w.findComponent(Player).props('media') as MediaItem).id).toBe(b1.id);
   });
 
@@ -1637,7 +1640,7 @@ describe('PlayerPage — a superseded applyItem() must not write the new item’
     emptyGate.resolve(jsonResponse({}));
     await flushPromises();
     await flushPromises();
-    expect(w2.text()).toContain('Couldn’t load media item');
+    expect(w2.text()).toContain('We couldn’t start playback for this title right now. Please try again later.');
     expect(w2.findComponent(Player).exists()).toBe(false);
   });
 });
@@ -1795,5 +1798,104 @@ describe('phlix-ui-player-044 — one-shot signed-stream re-resolve on fatal med
     await w.vm.$nextTick();
 
     expect(calls.byId).toBe(1);
+  });
+});
+
+// phlix-ui-player-025 (S-ui-player-20): the error/loading/blocking copy on this page
+// resolves through the message catalog. The conviction arms below assert VALUES FROM A
+// SUBSTITUTE BUNDLE — re-hardcoding any adopted string in PlayerPage.vue reddens the
+// arm whose override it would silence, so the pin is on the seam, not the markup.
+describe('phlix-ui-player-025 — player copy resolves through the catalog', () => {
+  const OVERRIDE_PROVIDE = {
+    phlixConfig: {
+      messages: {
+        common: { retry: 'OV-RETRY', loading: 'OV-LOADING' },
+        player: { transcodeHeading: 'OV-HEADING', transcodeBodyUntitled: 'OV-BODY', goBack: 'OV-GOBACK' },
+      },
+    },
+  };
+
+  /** by-id fails with `status`/`body`; every other route answers happily. */
+  function byIdFails(status = 500, body: unknown = { error: 'boom' }) {
+    return vi.fn().mockImplementation((url: string) => {
+      const u = String(url);
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (isById(u, 'm1')) {
+        return Promise.resolve(errorResponse(status, body));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+  }
+
+  /** by-id 200s with an empty envelope (no item) — the degenerate-response guard. */
+  function byIdEmpty() {
+    return vi.fn().mockImplementation((url: string) => {
+      const u = String(url);
+      if (isAnyPlaybackInfo(u)) {
+        return Promise.resolve(jsonResponse({ intro_marker: null, outro_marker: null, chapters: [] }));
+      }
+      if (isById(u, 'm1')) {
+        return Promise.resolve(jsonResponse({}));
+      }
+      return Promise.resolve(jsonResponse({ items: [], total: 0 }));
+    });
+  }
+
+  const neverResolving = () => vi.fn().mockReturnValue(new Promise(() => {}));
+
+  it('the loading skeleton labels itself through the catalog (English default)', async () => {
+    const { w } = await mountAt('m1', neverResolving());
+    expect(w.find('[role="status"][aria-busy="true"]').attributes('aria-label')).toBe('Loading');
+  });
+
+  it('a consumer override replaces the loading skeleton aria-label', async () => {
+    const { w } = await mountAt('m1', neverResolving(), OVERRIDE_PROVIDE);
+    expect(w.find('[role="status"][aria-busy="true"]').attributes('aria-label')).toBe('OV-LOADING');
+  });
+
+  it('the error card title and actions are the English catalog defaults', async () => {
+    const { w } = await mountAt('m1', byIdFails());
+    await flushPromises();
+    expect(w.text()).toContain('Can’t start playback right now');
+    const labels = w.findAll('button').map((b) => b.text());
+    expect(labels).toContain('Retry');
+    expect(labels).toContain('Go back');
+  });
+
+  it('a consumer override replaces the error card title and both actions', async () => {
+    const { w } = await mountAt('m1', byIdFails(), OVERRIDE_PROVIDE);
+    await flushPromises();
+    expect(w.text()).toContain('OV-HEADING');
+    const labels = w.findAll('button').map((b) => b.text());
+    expect(labels).toContain('OV-RETRY');
+    expect(labels).toContain('OV-GOBACK');
+  });
+
+  it('the degenerate 200-without-item description is the catalog transcode body', async () => {
+    const { w } = await mountAt('m1', byIdEmpty());
+    await flushPromises();
+    expect(w.text()).toContain('We couldn’t start playback for this title right now. Please try again later.');
+  });
+
+  it('a consumer override replaces the degenerate-response description', async () => {
+    const { w } = await mountAt('m1', byIdEmpty(), OVERRIDE_PROVIDE);
+    await flushPromises();
+    expect(w.text()).toContain('OV-BODY');
+  });
+
+  it('the hard-block modal title and footer action are the English catalog defaults', async () => {
+    await mountAt('m1', byIdFails(403, { error: 'AccessScheduled' }));
+    await flushPromises();
+    expect(document.body.querySelector('.phlix-modal__title')?.textContent).toBe('Can’t start playback right now');
+    expect(document.body.querySelector('.phlix-modal__footer')?.textContent).toContain('Go back');
+  });
+
+  it('a consumer override replaces the hard-block modal title and footer action', async () => {
+    await mountAt('m1', byIdFails(403, { error: 'AccessScheduled' }), OVERRIDE_PROVIDE);
+    await flushPromises();
+    expect(document.body.querySelector('.phlix-modal__title')?.textContent).toBe('OV-HEADING');
+    expect(document.body.querySelector('.phlix-modal__footer')?.textContent).toContain('OV-GOBACK');
   });
 });
