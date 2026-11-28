@@ -8,14 +8,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/phlix-ui.js",
-      "require": "./dist/phlix-ui.umd.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/phlix-ui.umd.cjs"
     },
     "./player": {
+      "types": "./dist/player.d.ts",
       "import": "./dist/player.js",
-      "require": "./dist/player.umd.cjs",
-      "types": "./dist/player.d.ts"
+      "require": "./dist/player.umd.cjs"
     },
     "./player.css": "./dist/player.css",
     "./style.css": "./dist/style.css",
