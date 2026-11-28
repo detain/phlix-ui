@@ -4,6 +4,7 @@ import vue from 'eslint-plugin-vue';
 import globals from 'globals';
 import phlixPlural from './eslint-rules/index.js';
 import noRawWireHref from './eslint-rules/no-raw-wire-href.cjs';
+import noHardcodedCopy from './eslint-rules/no-hardcoded-copy.cjs';
 
 // Flat config for phlix-ui (Vue 3 + TS). Pragmatic baseline: catch real bugs
 // (js + ts recommended, vue essential) without enforcing stylistic churn across
@@ -88,6 +89,38 @@ export default tseslint.config(
     plugins: { 'phlix-href': { rules: { 'no-raw-wire-href': noRawWireHref } } },
     rules: {
       'phlix-href/no-raw-wire-href': 'error',
+    },
+  },
+  {
+    // design-026 (S-ui-design-22/22b) law, mechanically enforced: within the
+    // swept surfaces, no <template> attribute or static text node may repeat
+    // an existing catalog value verbatim — routed copy goes through t().
+    // This EXTENDS the src/i18n/catalogRouting.test.ts hardcoded-string check
+    // (pages, script-side) into component templates. Scoping is a deliberate
+    // roster: the remaining src/**/*.vue surfaces still carry pre-sweep
+    // literals (22 census hits outside this list) and join as they are
+    // swept; widening the roster is part of each future sweep's duty.
+    files: [
+      'src/components/MediaDetail.vue',
+      'src/components/SeriesDetail.vue',
+      'src/components/SeriesSeasons.vue',
+      'src/components/RatingBadge.vue',
+      'src/components/UserRatingPicker.vue',
+      'src/components/SourcePriorityEditor.vue',
+      'src/components/ItemDataInspector.vue',
+      'src/components/MediaGrid.vue',
+      'src/components/HomeRow.vue',
+      'src/components/ThumbRating.vue',
+      'src/components/LetterRail.vue',
+      'src/components/FilterBar.vue',
+      'src/components/MetadataMatchModal.vue',
+      'src/components/PosterPicker.vue',
+      'src/components/NetworkHealthIndicator.vue',
+      'src/components/ui/Switch.vue',
+    ],
+    plugins: { 'phlix-copy': { rules: { 'no-hardcoded-copy': noHardcodedCopy } } },
+    rules: {
+      'phlix-copy/no-hardcoded-copy': 'error',
     },
   },
   {

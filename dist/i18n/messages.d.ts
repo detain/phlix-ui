@@ -433,6 +433,7 @@ export declare const DEFAULT_MESSAGES: {
         posterAltCurrent: string;
         noPosters: string;
         noPostersHint: string;
+        runtimeMinutes: string;
     };
     /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
     reader: {
@@ -941,6 +942,68 @@ export declare const DEFAULT_MESSAGES: {
         jumpToCount: string;
         nonAlphaTitles: string;
         startingWith: string;
+    };
+    /** Item detail surfaces (MediaDetail) — sections, credits, trailer modal copy. */
+    detail: {
+        director: string;
+        studios: string;
+        showNameTitles: string;
+        showTitlesWith: string;
+        noOverview: string;
+        playTrailer: string;
+        links: string;
+        openExternal: string;
+        crew: string;
+        cast: string;
+        files: string;
+        moreLikeThis: string;
+        trailerModalTitle: string;
+        trailerFrameTitle: string;
+        notYetAvailable: string;
+    };
+    /** Series season tree (SeriesDetail/SeriesSeasons) — headings, counts, file info. */
+    series: {
+        seasons: string;
+        loadingSeasons: string;
+        noSeasons: string;
+        episodeCount: string;
+        treeAria: string;
+        playEpisode: string;
+        viewEpisode: string;
+        filesInfo: string;
+        filesInfoExpanded: string;
+        collapseFiles: string;
+        expandFiles: string;
+        filesLoading: string;
+        noFiles: string;
+    };
+    /** Community rating chrome (RatingBadge/UserRatingPicker) — score affordances. */
+    rating: {
+        none: string;
+        outOfTen: string;
+        signInToRate: string;
+        rateStar: string;
+        saved: string;
+    };
+    /** Source priority editor (SourcePriorityEditor) — ordering and add controls. */
+    source: {
+        unknownMark: string;
+        notKnownSource: string;
+        moveUp: string;
+        moveDown: string;
+        empty: string;
+        addPlaceholder: string;
+        add: string;
+        addLabeled: string;
+    };
+    /** Admin item data inspector (ItemDataInspector) — read-only JSON view. */
+    inspector: {
+        title: string;
+        titled: string;
+        hint: string;
+        noItem: string;
+        copied: string;
+        copyJson: string;
     };
 };
 /** The full English catalog type (derived from the defaults — single source of truth). */

@@ -3570,7 +3570,8 @@ var gn = {
 		posterAlt: "{provider} poster",
 		posterAltCurrent: "{provider} poster (current)",
 		noPosters: "No posters available",
-		noPostersHint: "No poster alternatives were found for this item."
+		noPostersHint: "No poster alternatives were found for this item.",
+		runtimeMinutes: "{minutes}m"
 	},
 	reader: {
 		decreaseFont: "Decrease font size",
@@ -4012,6 +4013,63 @@ var gn = {
 		jumpToCount: "Jump to {label} ({count})",
 		nonAlphaTitles: "non-alphabetic titles",
 		startingWith: "titles starting with {letter}"
+	},
+	detail: {
+		director: "Director",
+		studios: "Studios",
+		showNameTitles: "Show {name} titles",
+		showTitlesWith: "Show titles with {name}",
+		noOverview: "No overview available.",
+		playTrailer: "Play Trailer",
+		links: "Links",
+		openExternal: "Open on {provider} (opens in a new tab)",
+		crew: "Crew",
+		cast: "Cast",
+		files: "Files",
+		moreLikeThis: "More like this",
+		trailerModalTitle: "Trailer — {name}",
+		trailerFrameTitle: "{name} trailer",
+		notYetAvailable: "{action} isn’t available yet."
+	},
+	series: {
+		seasons: "Seasons",
+		loadingSeasons: "Loading seasons",
+		noSeasons: "This series has no seasons available to watch.",
+		episodeCount: "{count} episode | {count} episodes",
+		treeAria: "Seasons and episodes",
+		playEpisode: "Play {title}",
+		viewEpisode: "View {title}",
+		filesInfo: "Files info for {title}",
+		filesInfoExpanded: "Files info for {title} (expanded)",
+		collapseFiles: "Collapse files",
+		expandFiles: "Expand files",
+		filesLoading: "Loading…",
+		noFiles: "No files"
+	},
+	rating: {
+		none: "No rating",
+		outOfTen: "{score} out of 10",
+		signInToRate: "Sign in to rate",
+		rateStar: "Rate {star} out of {max} stars",
+		saved: "Rating saved."
+	},
+	source: {
+		unknownMark: "unknown",
+		notKnownSource: "Not a known source",
+		moveUp: "Move {name} up",
+		moveDown: "Move {name} down",
+		empty: "No sources — add one below.",
+		addPlaceholder: "Add a source…",
+		add: "Add a source",
+		addLabeled: "Add a source to {label}"
+	},
+	inspector: {
+		title: "Item data",
+		titled: "Item data — {name}",
+		hint: "Read-only view of this item’s stored data (no changes are saved).",
+		noItem: "No item selected.",
+		copied: "Copied",
+		copyJson: "Copy JSON"
 	}
 }, _n = /\{(\w+)\}/g;
 function vn(e) {

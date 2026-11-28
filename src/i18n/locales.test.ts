@@ -147,6 +147,9 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'syncplay.title',
   ],
   de: [
+    // design-026 sweep: German uses the English loanwords verbatim in media UI.
+    'detail.crew',
+    'detail.links',
     'auth.emailPlaceholder',
     'music.album',
     'music.crossfade',
@@ -176,6 +179,10 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'syncplay.title',
   ],
   it: [
+    // design-026 sweep: Italian media UI loanwords ('Crew', 'Cast', 'Trailer —').
+    'detail.crew',
+    'detail.cast',
+    'detail.trailerModalTitle',
     'auth.email',
     'auth.emailPlaceholder',
     'auth.password',
@@ -203,6 +210,8 @@ const UNTRANSLATED_OK: Record<PhlixLocaleCode, readonly string[]> = {
     'syncplay.title',
   ],
   pt_BR: [
+    // design-026 sweep: Portuguese uses the 'Links' loanword verbatim.
+    'detail.links',
     'auth.emailPlaceholder',
     'player.audioOriginal',
     'player.miniPlayer',

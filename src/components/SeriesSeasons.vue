@@ -17,8 +17,10 @@ import type { MediaItem, MediaFile } from '../types/media-item';
 import type { SeasonGroup } from './series-grouping';
 import { ApiClient } from '../api/client';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useMessages } from '../composables/useMessages';
 import Icon from './Icon.vue';
-import { pluralize } from '../utils/plural';
+
+const { t } = useMessages();
 
 const props = withDefaults(
     defineProps<{
@@ -86,7 +88,7 @@ function episodeTitle(ep: MediaItem): string {
 
 /** Runtime label (minutes, matching the rest of the UI) or null. */
 function runtimeLabel(ep: MediaItem): string | null {
-    return ep.runtime ? `${ep.runtime}m` : null;
+    return ep.runtime ? t('media.runtimeMinutes', { minutes: ep.runtime }) : null;
 }
 
 /** Human air date ("Jan 5, 2020") from an ISO-ish `air_date`, or null. */
@@ -132,7 +134,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
 </script>
 
 <template>
-    <section class="series-seasons" aria-label="Seasons and episodes">
+    <section class="series-seasons" :aria-label="t('series.treeAria')">
         <details
             v-for="(season, i) in seasons"
             :key="season.key"
@@ -142,10 +144,9 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
             <summary class="series-seasons__summary">
                 <Icon name="chevron-right" class="series-seasons__chevron" aria-hidden="true" />
                 <span class="series-seasons__season-label">{{ season.label }}</span>
-                <span class="series-seasons__season-count numeric"
-                    >{{ season.episodes.length }}
-                    {{ pluralize(season.episodes.length, 'episode', 'episodes') }}</span
-                >
+                <span class="series-seasons__season-count numeric">{{
+                    t('series.episodeCount', { count: season.episodes.length })
+                }}</span>
             </summary>
 
             <ul class="series-seasons__episodes">
@@ -153,7 +154,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                     <button
                         type="button"
                         class="series-seasons__play"
-                        :aria-label="`Play ${episodeTitle(ep)}`"
+                        :aria-label="t('series.playEpisode', { title: episodeTitle(ep) })"
                         @click="emit('play', ep)"
                     >
                         <Icon name="play" />
@@ -161,7 +162,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                     <button
                         type="button"
                         class="series-seasons__episode-main"
-                        :aria-label="`View ${episodeTitle(ep)}`"
+                        :aria-label="t('series.viewEpisode', { title: episodeTitle(ep) })"
                         @click="emit('open', ep)"
                     >
                         <span class="series-seasons__episode-title">{{ episodeTitle(ep) }}</span>
@@ -181,8 +182,8 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                         v-if="showAdminFileInfo"
                         type="button"
                         class="series-seasons__files-btn"
-                        :aria-label="`Files info for ${episodeTitle(ep)}${isExpanded(ep.id) ? ' (expanded)' : ''}`"
-                        :title="isExpanded(ep.id) ? 'Collapse files' : 'Expand files'"
+                        :aria-label="isExpanded(ep.id) ? t('series.filesInfoExpanded', { title: episodeTitle(ep) }) : t('series.filesInfo', { title: episodeTitle(ep) })"
+                        :title="isExpanded(ep.id) ? t('series.collapseFiles') : t('series.expandFiles')"
                         @click.stop="toggleExpanded(ep.id)"
                     >
                         <Icon :name="isExpanded(ep.id) ? 'x' : 'info'" aria-hidden="true" />
@@ -195,7 +196,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                             v-if="episodeFilesById(ep.id) === undefined"
                             class="series-seasons__files-loading"
                         >
-                            Loading…
+                            {{ t('series.filesLoading') }}
                         </span>
                         <template v-else-if="episodeFilesById(ep.id)?.length">
                             <span
@@ -211,7 +212,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
                                 </span>
                             </span>
                         </template>
-                        <span v-else class="series-seasons__files-empty">No files</span>
+                        <span v-else class="series-seasons__files-empty">{{ t('series.noFiles') }}</span>
                     </div>
                 </li>
             </ul>

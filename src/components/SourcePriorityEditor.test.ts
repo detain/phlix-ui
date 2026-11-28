@@ -121,3 +121,40 @@ describe('SourcePriorityEditor — accessibility / keyboard', () => {
     }
   });
 });
+
+// ── design-026 (S-ui-design-22b): template copy is catalog-backed.
+describe('SourcePriorityEditor — design-026 catalog routing (S-ui-design-22b)', () => {
+  function mountWith(messages: Record<string, unknown>, modelValue: string[], available: string[] = AVAILABLE) {
+    return mount(SourcePriorityEditor, {
+      props: { modelValue, available, label: 'Movie sources' },
+      global: { provide: { phlixConfig: { messages } } },
+    });
+  }
+
+  it('empty hint, unknown title and move/remove arias render from consumer catalog values', () => {
+    const w = mountWith(
+      {
+        source: { empty: 'Keine Quellen. Unten eine hinzufügen.', notKnownSource: 'Unbekannte Quelle', unknownMark: 'unbekannt', moveUp: '{name} nach oben' },
+        filter: { removePill: '{label} entfernen' },
+      },
+      ['mystery'],
+      [],
+    );
+    expect(w.find('.source-priority__unknown').attributes('title')).toBe('Unbekannte Quelle');
+    expect(w.find('.source-priority__unknown').text()).toBe('unbekannt');
+    const buttons = w.findAll('.source-priority__btn');
+    expect(buttons[0]!.attributes('aria-label')).toBe('mystery nach oben');
+    expect(w.find('.source-priority__btn--remove').attributes('aria-label')).toBe('mystery entfernen');
+    w.unmount();
+  });
+
+  it('the empty roster line and the labeled add control render English defaults through the catalog', () => {
+    const empty = mountWith({}, [], []);
+    expect(empty.text()).toContain('No sources — add one below.');
+    empty.unmount();
+    const w = mountWith({}, ['tmdb']);
+    expect(w.findComponent(Select).props('label')).toBe('Add a source to Movie sources');
+    expect(w.find('.source-priority__btn--remove').attributes('aria-label')).toBe('Remove tmdb');
+    w.unmount();
+  });
+});

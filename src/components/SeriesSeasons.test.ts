@@ -244,3 +244,41 @@ describe('SeriesSeasons — files-panel radius contract (S-ui-design-26)', () =>
     expect(detail![1]).toMatch(/border-radius:\s*var\(--radius-md\);/);
   });
 });
+
+// ── design-026 (S-ui-design-22b): tree aria, counts and row arias are catalog-backed.
+describe('SeriesSeasons — design-026 catalog routing (S-ui-design-22b)', () => {
+  function mountWith(messages: Record<string, unknown>) {
+    return mount(SeriesSeasons, {
+      props: { seasons },
+      global: { provide: { phlixConfig: { messages } } },
+    });
+  }
+
+  it('tree aria, season counts and play/view row arias render from consumer catalog values', () => {
+    const w = mountWith({
+      series: {
+        treeAria: 'Staffeln und Episoden',
+        episodeCount: '{count} Episode | {count} Episoden',
+        playEpisode: '{title} abspielen',
+        viewEpisode: '{title} ansehen',
+      },
+    });
+    expect(w.find('section').attributes('aria-label')).toBe('Staffeln und Episoden');
+    const counts = w.findAll('.series-seasons__season-count').map((n) => n.text());
+    expect(counts[0]).toBe('2 Episoden');
+    expect(counts[1]).toBe('1 Episode');
+    expect(w.find('.series-seasons__play').attributes('aria-label')).toMatch(/ abspielen$/);
+    expect(w.find('.series-seasons__episode-main').attributes('aria-label')).toMatch(/ ansehen$/);
+    w.unmount();
+  });
+
+  it('English defaults for the tree aria and counts still render byte-identically', () => {
+    const w = mountWith({});
+    expect(w.find('section').attributes('aria-label')).toBe('Seasons and episodes');
+    const counts = w.findAll('.series-seasons__season-count').map((n) => n.text());
+    expect(counts[0]).toContain('2 episodes');
+    expect(counts[1]).toContain('1 episode');
+    expect(w.find('.series-seasons__play').attributes('aria-label')).toMatch(/^Play /);
+    w.unmount();
+  });
+});

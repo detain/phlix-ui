@@ -13,6 +13,7 @@ import { nextTick } from 'vue';
 import { computed } from 'vue';
 import SeriesDetail from './SeriesDetail.vue';
 import MediaDetail from './MediaDetail.vue';
+import MediaCard from './MediaCard.vue';
 import { groupEpisodesBySeason } from './series-grouping';
 import type { MediaItem } from '../types/media-item';
 
@@ -259,5 +260,38 @@ describe('SeriesDetail — theme audio (delegated to MediaDetail)', () => {
     await nextTick();
     expect(document.querySelector('.media-detail__theme-audio')).toBeNull();
     host.remove();
+  });
+});
+
+// ── design-026 (S-ui-design-22b): seasons chrome is catalog-backed.
+describe('SeriesDetail — design-026 catalog routing (S-ui-design-22b)', () => {
+  it('heading, section aria, busy aria and empty copy render from consumer catalog values', async () => {
+    const messages = {
+      series: {
+        seasons: 'Staffeln',
+        loadingSeasons: 'Staffeln werden geladen',
+        noSeasons: 'Für diese Serie sind keine Staffeln verfügbar.',
+        episodeCount: '{count} Episode | {count} Episoden',
+      },
+    };
+    const w = mountIt({ loading: true }, { phlixConfig: { app: 'server', apiBase: '', messages } });
+    expect(w.find('.series-detail__seasons-title').text()).toBe('Staffeln');
+    expect(w.find('.series-detail__seasons').attributes('aria-label')).toBe('Staffeln');
+    w.unmount();
+    const empty = mountIt(
+      { seasons: [] },
+      { phlixConfig: { app: 'server', apiBase: '', messages } },
+    );
+    expect(empty.find('.series-detail__empty').text()).toBe('Für diese Serie sind keine Staffeln verfügbar.');
+    empty.unmount();
+  });
+
+  it('episode-count subtitle and English headings still render byte-identically through the catalog', async () => {
+    const w = mountIt();
+    expect(w.find('.series-detail__seasons-title').text()).toBe('Seasons');
+    const cards = w.findAllComponents(MediaCard);
+    expect(cards.length).toBeGreaterThan(0);
+    expect(cards[0]!.props('subtitle')).toMatch(/^\d+ episodes?$/);
+    w.unmount();
   });
 });

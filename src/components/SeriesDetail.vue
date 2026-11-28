@@ -24,7 +24,9 @@ import { seasonRouteParam } from './series-grouping';
 import MediaDetail from './MediaDetail.vue';
 import MediaCard from './MediaCard.vue';
 import { usePreferencesStore } from '../stores/usePreferencesStore';
-import { pluralCount } from '../utils/plural';
+import { useMessages } from '../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
     defineProps<{
@@ -76,8 +78,7 @@ function seasonPoster(group: SeasonGroup): string | null {
 }
 
 function episodeCountLabel(group: SeasonGroup): string {
-    const n = group.episodes.length;
-    return pluralCount(n, 'episode', 'episodes');
+    return t('series.episodeCount', { count: group.episodes.length });
 }
 
 /**
@@ -145,15 +146,15 @@ const cardSize = computed(() => prefs.cardSize ?? 200);
             @explore-data="emit('explore-data', $event)"
         />
 
-        <section class="series-detail__seasons" aria-label="Seasons">
-            <h2 class="series-detail__seasons-title">Seasons</h2>
+        <section class="series-detail__seasons" :aria-label="t('series.seasons')">
+            <h2 class="series-detail__seasons-title">{{ t('series.seasons') }}</h2>
 
             <div
                 v-if="loading"
                 class="series-detail__seasons-loading"
                 role="status"
                 aria-busy="true"
-                aria-label="Loading seasons"
+                :aria-label="t('series.loadingSeasons')"
             />
 
             <ul
@@ -175,7 +176,7 @@ const cardSize = computed(() => prefs.cardSize ?? 200);
                 </li>
             </ul>
 
-            <p v-else class="series-detail__empty">This series has no seasons available to watch.</p>
+            <p v-else class="series-detail__empty">{{ t('series.noSeasons') }}</p>
         </section>
     </div>
 </template>

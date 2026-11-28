@@ -9,6 +9,8 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import Spinner from '../components/ui/Spinner.vue';
 import ResumePrompt from '../components/player/ResumePrompt.vue';
+import RatingBadge from '../components/RatingBadge.vue';
+import SourcePriorityEditor from '../components/SourcePriorityEditor.vue';
 import { formatTime } from '../components/player/format-time';
 import type { PhlixAppConfig } from '../app/types';
 
@@ -77,5 +79,45 @@ describe('i18n adoption (R6.5c)', () => {
     expect(w.find('.resume__time').text()).toBe(time);
     expect(w.find('.resume__btn--amber').text()).toBe('Reanudar');
     expect(w.find('.resume__btn--ghost').text()).toBe('Empezar de nuevo');
+  });
+});
+
+// design-026 (S-ui-design-22b): the same override seam verified for remainder
+// surfaces — consumer-supplied catalog values must reach the rendered chrome of
+// real shipped components, and the null-config path must render the English
+// default byte-for-byte.
+describe('i18n adoption (design-026 remainder surfaces)', () => {
+  it('RatingBadge: catalog override reaches the unrated span and the rated aria label', () => {
+    const w = mountWith(
+      RatingBadge,
+      { rating: null },
+      { messages: { rating: { none: 'Keine Bewertung' } } } as Partial<PhlixAppConfig>,
+    );
+    expect(w.find('.rating-badge__no-rating').text()).toBe('Keine Bewertung');
+    const r = mountWith(
+      RatingBadge,
+      { rating: 6.5 },
+      { messages: { rating: { outOfTen: '{score} von 10' } } } as Partial<PhlixAppConfig>,
+    );
+    expect(r.attributes('aria-label')).toBe('6.5 von 10');
+  });
+
+  it('RatingBadge: omitting messages renders the English default exactly', () => {
+    const w = mountWith(RatingBadge, { rating: null }, null);
+    expect(w.find('.rating-badge__no-rating').text()).toBe('No rating');
+  });
+
+  it('SourcePriorityEditor: catalog override reaches the empty-state line', () => {
+    const w = mountWith(
+      SourcePriorityEditor,
+      { modelValue: [], available: [], label: 'Movie sources' },
+      { messages: { source: { empty: 'Noch keine Quellen.' } } } as Partial<PhlixAppConfig>,
+    );
+    expect(w.text()).toContain('Noch keine Quellen.');
+  });
+
+  it('SourcePriorityEditor: omitting messages renders the English default exactly', () => {
+    const w = mountWith(SourcePriorityEditor, { modelValue: [], available: [], label: 'Movie sources' }, null);
+    expect(w.text()).toContain('No sources — add one below.');
   });
 });

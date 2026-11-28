@@ -1446,3 +1446,48 @@ describe('MediaDetail — action chrome through the catalog (S-ui-design-23 / de
     w.unmount();
   });
 });
+
+// ── design-026 (S-ui-design-22b): detail-page chrome is catalog-backed.
+describe('MediaDetail — design-026 catalog routing (S-ui-design-22b)', () => {
+  function mountRouted(messages: Record<string, unknown>, over: Record<string, unknown> = {}) {
+    return mount(MediaDetail, {
+      props: { item: media(over), showBack: true },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages } } },
+    });
+  }
+
+  it('headings, Links label, runtime unit and overview fallback render from consumer catalog values', () => {
+    const w = mountRouted(
+      {
+        detail: {
+          cast: 'Besetzung',
+          crew: 'Stab',
+          links: 'Weblinks',
+          noOverview: 'Keine Beschreibung verfügbar.',
+          moreLikeThis: 'Das könnte dir auch gefallen',
+        },
+        media: { runtimeMinutes: '{minutes} Min.' },
+      },
+      { overview: '', external_ids: { imdb: 'tt123' } },
+    );
+    const headings = w.findAll('h2').map((h) => h.text());
+    expect(headings).toContain('Besetzung');
+    expect(headings).toContain('Stab');
+    expect(w.find('.media-detail__links-label').text()).toBe('Weblinks');
+    expect(w.findAll('.media-detail__meta-item').map((m) => m.text())).toContain('166 Min.');
+    expect(w.find('.media-detail__overview').text()).toBe('Keine Beschreibung verfügbar.');
+    w.unmount();
+  });
+
+  it('English defaults for the same sites still render byte-identically through the catalog', () => {
+    const w = mountRouted({}, { external_ids: { imdb: 'tt123' } });
+    const headings = w.findAll('h2').map((h) => h.text());
+    expect(headings).toContain('Cast');
+    expect(headings).toContain('Crew');
+    expect(w.find('.media-detail__links-label').text()).toBe('Links');
+    expect(w.findAll('.media-detail__meta-item').map((m) => m.text())).toContain('166m');
+    expect(w.find('.media-detail__overview').text()).toBe('Paul unites with the Fremen.');
+    w.unmount();
+  });
+});

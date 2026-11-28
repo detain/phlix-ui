@@ -110,3 +110,45 @@ describe('ItemDataInspector — JSON panel surface contract (S-ui-design-26)', (
     expect(rule![1]).toMatch(/background:\s*var\(--surface\);/);
   });
 });
+
+// ── design-026 (S-ui-design-22b): the inspector chrome is catalog-backed.
+describe('ItemDataInspector — design-026 catalog routing (S-ui-design-22b)', () => {
+  it('modal title and hint render from consumer catalog values', async () => {
+    const messages = {
+      inspector: { titled: 'Itemdaten — {name}', hint: 'Schreibgeschützte Ansicht der gespeicherten Daten.' },
+    };
+    mount(ItemDataInspector, {
+      props: { modelValue: true, item: media({ id: 'x9', name: 'Arrival' }) },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages } } },
+    });
+    await flushPromises();
+    expect(document.body.textContent).toContain('Itemdaten — Arrival');
+    const hint = document.body.querySelector('.item-inspector__hint');
+    expect(hint?.textContent?.trim()).toBe('Schreibgeschützte Ansicht der gespeicherten Daten.');
+  });
+
+  it('English defaults for hint, empty state and buttons still render through the catalog', async () => {
+    const w = mount(ItemDataInspector, {
+      props: { modelValue: true, item: media() },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    const hint = document.body.querySelector('.item-inspector__hint');
+    expect(hint?.textContent?.trim()).toBe("Read-only view of this item’s stored data (no changes are saved).");
+    expect(document.body.textContent).toContain('Copy JSON');
+    expect(document.body.textContent).toContain('Item data — Dune');
+    w.unmount();
+  });
+
+  it('the no-item placeholder renders from the catalog', async () => {
+    const messages = { inspector: { noItem: 'Kein Eintrag ausgewählt.' } };
+    mount(ItemDataInspector, {
+      props: { modelValue: true, item: null },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages } } },
+    });
+    await flushPromises();
+    expect(document.body.textContent).toContain('Kein Eintrag ausgewählt.');
+  });
+});

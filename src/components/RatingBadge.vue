@@ -18,7 +18,10 @@
  *   size      — 'sm' | 'md' | 'lg' (default 'md')
  */
 import { computed } from 'vue';
+import { useMessages } from '../composables/useMessages';
 import Icon from './Icon.vue';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -47,8 +50,8 @@ const sizeClass = computed(() => `rating-badge--${props.size}`);
 
 /** Accessibility label */
 const ariaLabel = computed(() => {
-  if (props.rating === null) return 'No rating';
-  return `${props.rating.toFixed(1)} out of 10`;
+  if (props.rating === null) return t('rating.none');
+  return t('rating.outOfTen', { score: props.rating.toFixed(1) });
 });
 </script>
 
@@ -68,7 +71,7 @@ const ariaLabel = computed(() => {
         :class="{ 'is-filled': n <= filledStars }"
       />
     </template>
-    <span v-else class="rating-badge__no-rating">No rating</span>
+    <span v-else class="rating-badge__no-rating">{{ t('rating.none') }}</span>
   </div>
 </template>
 

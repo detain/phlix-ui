@@ -405,6 +405,7 @@ export declare const ES_MESSAGES: {
         posterAltCurrent: string;
         noPosters: string;
         noPostersHint: string;
+        runtimeMinutes: string;
     };
     reader: {
         decreaseFont: string;
@@ -853,5 +854,62 @@ export declare const ES_MESSAGES: {
         jumpToCount: string;
         nonAlphaTitles: string;
         startingWith: string;
+    };
+    detail: {
+        director: string;
+        studios: string;
+        showNameTitles: string;
+        showTitlesWith: string;
+        noOverview: string;
+        playTrailer: string;
+        links: string;
+        openExternal: string;
+        crew: string;
+        cast: string;
+        files: string;
+        moreLikeThis: string;
+        trailerModalTitle: string;
+        trailerFrameTitle: string;
+        notYetAvailable: string;
+    };
+    series: {
+        seasons: string;
+        loadingSeasons: string;
+        noSeasons: string;
+        episodeCount: string;
+        treeAria: string;
+        playEpisode: string;
+        viewEpisode: string;
+        filesInfo: string;
+        filesInfoExpanded: string;
+        collapseFiles: string;
+        expandFiles: string;
+        filesLoading: string;
+        noFiles: string;
+    };
+    rating: {
+        none: string;
+        outOfTen: string;
+        signInToRate: string;
+        rateStar: string;
+        saved: string;
+    };
+    source: {
+        unknownMark: string;
+        notKnownSource: string;
+        moveUp: string;
+        moveDown: string;
+        empty: string;
+        addPlaceholder: string;
+        add: string;
+        addLabeled: string;
+    };
+    inspector: {
+        title: string;
+        titled: string;
+        hint: string;
+        noItem: string;
+        copied: string;
+        copyJson: string;
     };
 };

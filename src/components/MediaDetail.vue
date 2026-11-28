@@ -310,7 +310,7 @@ function onMenuSelect(menuItem: { key?: string; label: string }): void {
       emit('remove', props.item);
       break;
     default:
-      toasts.info(`${menuItem.label} isn’t available yet.`);
+      toasts.info(t('detail.notYetAvailable', { action: menuItem.label }));
   }
 }
 
@@ -355,7 +355,7 @@ const crew = computed<Person[]>(() => {
   if (rich?.length) {
     return rich.slice(0, 8).map((c) => ({ name: c.name, sub: c.job ?? null, profileUrl: c.profile_url ?? null }));
   }
-  if (props.item.director) return [{ name: props.item.director, sub: 'Director', profileUrl: null }];
+  if (props.item.director) return [{ name: props.item.director, sub: t('detail.director'), profileUrl: null }];
   return [];
 });
 
@@ -721,7 +721,7 @@ onBeforeUnmount(() => {
             <Icon name="calendar" class="media-detail__meta-icon" />{{ item.year }}
           </span>
           <span v-if="item.rating" class="media-detail__cert">{{ item.rating }}</span>
-          <span v-if="item.runtime" class="media-detail__meta-item">{{ item.runtime }}m</span>
+          <span v-if="item.runtime" class="media-detail__meta-item">{{ t('media.runtimeMinutes', { minutes: item.runtime }) }}</span>
           <span class="media-detail__type">{{ item.type }}</span>
         </div>
 
@@ -732,7 +732,7 @@ onBeforeUnmount(() => {
             size="sm"
             class="media-detail__genre"
             :disabled="!chipsClickable"
-            :aria-label="chipsClickable ? `Show ${g} titles` : undefined"
+            :aria-label="chipsClickable ? t('detail.showNameTitles', { name: g }) : undefined"
             @click="emit('genre', g)"
           >
             {{ g }}
@@ -740,7 +740,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="companies.length" class="media-detail__companies">
-          <span class="media-detail__companies-label">Studios</span>
+          <span class="media-detail__companies-label">{{ t('detail.studios') }}</span>
           <div class="media-detail__company-list">
             <Chip
               v-for="c in companies"
@@ -748,7 +748,7 @@ onBeforeUnmount(() => {
               size="sm"
               class="media-detail__company"
               :disabled="!chipsClickable"
-              :aria-label="chipsClickable ? `Show ${c.name} titles` : undefined"
+              :aria-label="chipsClickable ? t('detail.showNameTitles', { name: c.name }) : undefined"
               @click="emit('company', c.name)"
             >
               <img
@@ -764,12 +764,12 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <p class="media-detail__overview">{{ item.overview || 'No overview available.' }}</p>
+        <p class="media-detail__overview">{{ item.overview || t('detail.noOverview') }}</p>
 
         <div class="media-detail__actions">
           <Button variant="solid" left-icon="play" @click="emit('play', item)">{{ t('player.play') }}</Button>
           <Button v-if="resumeLabel" variant="outline" left-icon="rewind" @click="emit('resume', item)">
-            Resume <span class="media-detail__resume-at numeric">{{ resumeLabel }}</span>
+            {{ t('player.resume') }} <span class="media-detail__resume-at numeric">{{ resumeLabel }}</span>
           </Button>
           <!-- [ Play Trailer ] — only when the item has a trailer. Opens the
                in-app YouTube embed modal when we can build a safe embed URL,
@@ -781,7 +781,7 @@ onBeforeUnmount(() => {
             class="media-detail__trailer-btn"
             @click="onPlayTrailer"
           >
-            Play Trailer
+            {{ t('detail.playTrailer') }}
           </Button>
           <Button
             variant="ghost"
@@ -839,7 +839,7 @@ onBeforeUnmount(() => {
               <IconButton
                 variant="ghost"
                 name="more"
-                label="More actions"
+                :label="t('itemActions.moreActions')"
                 :aria-expanded="menuOpen ? 'true' : 'false'"
                 aria-haspopup="menu"
                 @click.stop.prevent="toggle"
@@ -851,7 +851,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="providerLinks.length" class="media-detail__links">
-          <span class="media-detail__links-label">Links</span>
+          <span class="media-detail__links-label">{{ t('detail.links') }}</span>
           <div class="media-detail__links-list">
             <a
               v-for="link in providerLinks"
@@ -860,7 +860,7 @@ onBeforeUnmount(() => {
               :href="safeHref(link.url)"
               target="_blank"
               rel="noopener noreferrer"
-              :aria-label="`Open on ${link.label} (opens in a new tab)`"
+              :aria-label="t('detail.openExternal', { provider: link.label })"
             >
               <span>{{ link.label }}</span>
               <Icon name="arrow-right" class="media-detail__link-icon" aria-hidden="true" />
@@ -870,14 +870,14 @@ onBeforeUnmount(() => {
 
         <div v-if="crew.length || cast.length" class="media-detail__credits">
           <section v-if="crew.length" class="media-detail__credit-group">
-            <h2 class="media-detail__credit-heading">Crew</h2>
+            <h2 class="media-detail__credit-heading">{{ t('detail.crew') }}</h2>
             <ul class="media-detail__people">
               <li v-for="(p, i) in crew" :key="`crew-${i}-${p.name}`">
                 <button
                   type="button"
                   class="media-detail__person"
                   :disabled="!chipsClickable"
-                  :aria-label="chipsClickable ? `Show titles with ${p.name}` : undefined"
+                  :aria-label="chipsClickable ? t('detail.showTitlesWith', { name: p.name }) : undefined"
                   @click="chipsClickable && emit('actor', p.name)"
                 >
                   <span class="media-detail__avatar">
@@ -899,14 +899,14 @@ onBeforeUnmount(() => {
           </section>
 
           <section v-if="cast.length" class="media-detail__credit-group">
-            <h2 class="media-detail__credit-heading">Cast</h2>
+            <h2 class="media-detail__credit-heading">{{ t('detail.cast') }}</h2>
             <ul class="media-detail__people">
               <li v-for="(p, i) in cast" :key="`cast-${i}-${p.name}`">
                 <button
                   type="button"
                   class="media-detail__person"
                   :disabled="!chipsClickable"
-                  :aria-label="chipsClickable ? `Show titles with ${p.name}` : undefined"
+                  :aria-label="chipsClickable ? t('detail.showTitlesWith', { name: p.name }) : undefined"
                   @click="chipsClickable && emit('actor', p.name)"
                 >
                   <span class="media-detail__avatar">
@@ -931,7 +931,7 @@ onBeforeUnmount(() => {
     </div>
 
     <section v-if="item.files?.length" class="media-detail__files">
-      <h2 class="media-detail__files-heading">Files</h2>
+      <h2 class="media-detail__files-heading">{{ t('detail.files') }}</h2>
       <ul class="media-detail__files-list">
         <li v-for="(file, i) in item.files" :key="i" class="media-detail__file">
           <span class="media-detail__file-path">{{ file.path }}</span>
@@ -947,7 +947,7 @@ onBeforeUnmount(() => {
     <MediaRow
       v-if="similarLoading || similar.length"
       class="media-detail__similar"
-      title="More like this"
+      :title="t('detail.moreLikeThis')"
       :items="similar"
       :loading="similarLoading"
       hide-when-empty
@@ -959,12 +959,12 @@ onBeforeUnmount(() => {
     <!-- In-app trailer embed. Rendered only when we could build a SAFE YouTube
          embed URL (site === YouTube + validated key); the src is bound via
          `:src` so Vue escapes it — the key is never string-injected into HTML. -->
-    <Modal v-if="youtubeEmbedUrl" v-model="trailerOpen" :title="`Trailer — ${item.name}`" size="lg">
+    <Modal v-if="youtubeEmbedUrl" v-model="trailerOpen" :title="t('detail.trailerModalTitle', { name: item.name })" size="lg">
       <div class="media-detail__trailer-embed">
         <iframe
           class="media-detail__trailer-iframe"
           :src="youtubeEmbedUrl"
-          :title="`${item.name} trailer`"
+          :title="t('detail.trailerFrameTitle', { name: item.name })"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen
           referrerpolicy="strict-origin-when-cross-origin"

@@ -21,6 +21,7 @@ import { computed, ref, watch } from 'vue';
 import type { MediaItem } from '../types/media-item';
 import Modal from './ui/Modal.vue';
 import Button from './ui/Button.vue';
+import { useMessages } from '../composables/useMessages';
 
 const props = defineProps<{
   /** Two-way open state (drives the underlying Modal). */
@@ -28,6 +29,8 @@ const props = defineProps<{
   /** The item to inspect. Null renders an empty placeholder. */
   item: MediaItem | null;
 }>();
+
+const { t } = useMessages();
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void;
@@ -64,21 +67,19 @@ async function copyJson(): Promise<void> {
   <Modal
     :model-value="modelValue"
     size="lg"
-    :title="item ? `Item data — ${item.name}` : 'Item data'"
+    :title="item ? t('inspector.titled', { name: item.name }) : t('inspector.title')"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div v-if="item" class="item-inspector">
-      <p class="item-inspector__hint">
-        Read-only view of this item's stored data (no changes are saved).
-      </p>
+      <p class="item-inspector__hint">{{ t('inspector.hint') }}</p>
       <pre class="item-inspector__json" data-test="item-json">{{ json }}</pre>
     </div>
-    <p v-else class="item-inspector__empty">No item selected.</p>
+    <p v-else class="item-inspector__empty">{{ t('inspector.noItem') }}</p>
 
     <template #footer>
-      <span v-if="copied" class="item-inspector__copied" role="status">Copied</span>
-      <Button variant="ghost" :disabled="!item" @click="copyJson">Copy JSON</Button>
-      <Button variant="solid" @click="emit('update:modelValue', false)">Close</Button>
+      <span v-if="copied" class="item-inspector__copied" role="status">{{ t('inspector.copied') }}</span>
+      <Button variant="ghost" :disabled="!item" @click="copyJson">{{ t('inspector.copyJson') }}</Button>
+      <Button variant="solid" @click="emit('update:modelValue', false)">{{ t('common.close') }}</Button>
     </template>
   </Modal>
 </template>

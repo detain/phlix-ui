@@ -134,3 +134,34 @@ describe('RatingBadge — reactivity', () => {
     expect(w.find('.rating-badge__no-rating').exists()).toBe(true);
   });
 });
+
+// ── design-026 (S-ui-design-22b): every visible string arrives through the
+// catalog. Red-first pairs: consumer override proves the override reaches the
+// rendered ARIA/text; the no-override case pins the English default byte-ident.
+describe('RatingBadge — design-026 catalog routing (S-ui-design-22b)', () => {
+  it('rating aria labels and the unrated span render from consumer catalog values', () => {
+    const messages = { rating: { none: 'Keine Bewertung', outOfTen: '{score} von 10' } };
+    const rated = mount(RatingBadge, {
+      props: { rating: 7.3 },
+      global: { provide: { phlixConfig: { messages } } },
+    });
+    expect(rated.attributes('aria-label')).toBe('7.3 von 10');
+    const unrated = mount(RatingBadge, {
+      props: { rating: null },
+      global: { provide: { phlixConfig: { messages } } },
+    });
+    expect(unrated.attributes('aria-label')).toBe('Keine Bewertung');
+    expect(unrated.find('.rating-badge__no-rating').text()).toBe('Keine Bewertung');
+    unrated.unmount();
+    rated.unmount();
+  });
+
+  it('English defaults still render byte-identically through the catalog', () => {
+    const none = mount(RatingBadge, { props: { rating: null } });
+    expect(none.find('.rating-badge__no-rating').text()).toBe('No rating');
+    const rated = mount(RatingBadge, { props: { rating: 8 } });
+    expect(rated.attributes('aria-label')).toBe('8.0 out of 10');
+    none.unmount();
+    rated.unmount();
+  });
+});

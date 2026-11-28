@@ -30,7 +30,10 @@
 import { computed } from 'vue';
 import Icon from './Icon.vue';
 import Select from './ui/Select.vue';
+import { useMessages } from '../composables/useMessages';
 import type { SelectOptionInput } from './ui/listbox';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -111,8 +114,8 @@ function addSource(name: string | number): void {
         <span class="source-priority__rank" aria-hidden="true">{{ index + 1 }}</span>
         <span class="source-priority__name">
           {{ name }}
-          <span v-if="isUnknown(name)" class="source-priority__unknown" title="Not a known source">
-            unknown
+          <span v-if="isUnknown(name)" class="source-priority__unknown" :title="t('source.notKnownSource')">
+            {{ t('source.unknownMark') }}
           </span>
         </span>
         <div class="source-priority__controls">
@@ -120,7 +123,7 @@ function addSource(name: string | number): void {
             type="button"
             class="source-priority__btn"
             :disabled="index === 0"
-            :aria-label="`Move ${name} up`"
+            :aria-label="t('source.moveUp', { name })"
             @click="moveUp(index)"
           >
             <Icon name="arrow-up" />
@@ -129,7 +132,7 @@ function addSource(name: string | number): void {
             type="button"
             class="source-priority__btn"
             :disabled="index === order.length - 1"
-            :aria-label="`Move ${name} down`"
+            :aria-label="t('source.moveDown', { name })"
             @click="moveDown(index)"
           >
             <Icon name="arrow-down" />
@@ -137,7 +140,7 @@ function addSource(name: string | number): void {
           <button
             type="button"
             class="source-priority__btn source-priority__btn--remove"
-            :aria-label="`Remove ${name}`"
+            :aria-label="t('filter.removePill', { label: name })"
             @click="removeAt(index)"
           >
             <Icon name="x" />
@@ -146,16 +149,14 @@ function addSource(name: string | number): void {
       </li>
     </ol>
 
-    <p v-else class="source-priority__empty" role="status">
-      No sources — add one below.
-    </p>
+    <p v-else class="source-priority__empty" role="status">{{ t('source.empty') }}</p>
 
     <div v-if="canAdd" class="source-priority__add">
       <Select
         :model-value="null"
         :options="addableOptions"
-        placeholder="Add a source…"
-        :label="label ? `Add a source to ${label}` : 'Add a source'"
+        :placeholder="t('source.addPlaceholder')"
+        :label="label ? t('source.addLabeled', { label }) : t('source.add')"
         @update:model-value="addSource"
       />
     </div>

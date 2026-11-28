@@ -31,6 +31,9 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { useToastStore } from '../stores/useToastStore';
 import { ApiClient } from '../api/client';
 import { useMediaApiBase } from '../composables/useApiBase';
+import { useMessages } from '../composables/useMessages';
+
+const { t } = useMessages();
 
 const props = withDefaults(
   defineProps<{
@@ -130,9 +133,9 @@ async function onStarClick(starIndex: number): Promise<void> {
       score: rating,
     });
     emit('update:modelValue', rating);
-    toast.success('Rating saved.');
+    toast.success(t('rating.saved'));
   } catch {
-    toast.error('Failed to save rating.');
+    toast.error(t('itemActions.ratingSaveError'));
   } finally {
     isSubmitting.value = false;
     isHovering.value = false;
@@ -150,7 +153,7 @@ async function onStarClick(starIndex: number): Promise<void> {
     <!-- Not authenticated state -->
     <template v-if="!isAuthenticated">
       <Icon name="lock" class="user-rating-picker__lock" />
-      <span class="user-rating-picker__signin">Sign in to rate</span>
+      <span class="user-rating-picker__signin">{{ t('rating.signInToRate') }}</span>
     </template>
 
     <!-- Rating stars -->
@@ -165,7 +168,7 @@ async function onStarClick(starIndex: number): Promise<void> {
           'is-hovered': isHovering && n <= hoverRating!,
         }"
         :disabled="readonly || isSubmitting"
-        :aria-label="`Rate ${n} out of ${size} stars`"
+        :aria-label="t('rating.rateStar', { star: n, max: size })"
         @mouseenter="onStarEnter(n)"
         @click="onStarClick(n)"
       >

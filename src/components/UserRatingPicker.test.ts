@@ -224,7 +224,7 @@ describe('UserRatingPicker — submitting a rating', () => {
     await flushPromises();
 
     expect(useToastStore().toasts.map((t) => [t.tone, t.message])).toEqual([
-      ['error', 'Failed to save rating.'],
+      ['error', 'Couldn’t save rating.'],
     ]);
     expect(w.emitted('update:modelValue')).toBeUndefined();
   });
@@ -346,5 +346,48 @@ describe('UserRatingPicker — the readonly guard', () => {
 
     expect(cap.urls).toHaveLength(1);
     expect(w.emitted('update:modelValue')).toEqual([[6]]);
+  });
+});
+
+// ── design-026 (S-ui-design-22b): picker hints, star arias and toasts are catalog-backed.
+describe('UserRatingPicker — design-026 catalog routing (S-ui-design-22b)', () => {
+  it('the signed-out hint renders from consumer catalog values', async () => {
+    localStorage.removeItem('access_token');
+    const w = mount(UserRatingPicker, {
+      props: { modelValue: null, mediaId: 'itm-1' },
+      global: { provide: { phlixConfig: { messages: { rating: { signInToRate: 'Zum Bewerten anmelden' } } } } },
+    });
+    expect(w.find('.user-rating-picker__signin').text()).toBe('Zum Bewerten anmelden');
+    w.unmount();
+  });
+
+  it('star arias render from consumer catalog values and English defaults through the catalog', async () => {
+    localStorage.setItem('access_token', 'TOKEN');
+    const de = mount(UserRatingPicker, {
+      props: { modelValue: null, mediaId: 'itm-1' },
+      global: { provide: { phlixConfig: { messages: { rating: { rateStar: 'Mit {star} von {max} Sternen bewerten' } } } } },
+    });
+    expect(de.findAll('.user-rating-picker__star')[2]!.attributes('aria-label')).toBe('Mit 3 von 5 Sternen bewerten');
+    de.unmount();
+    const en = mount(UserRatingPicker, { props: { modelValue: null, mediaId: 'itm-1' } });
+    expect(en.findAll('.user-rating-picker__star')[4]!.attributes('aria-label')).toBe('Rate 5 out of 5 stars');
+    en.unmount();
+  });
+
+  it('the success toast renders from consumer catalog values', async () => {
+    const cap = captureFetch();
+    localStorage.setItem('access_token', 'TOKEN');
+    const w = mount(UserRatingPicker, {
+      props: { modelValue: 2, mediaId: 'itm-1' },
+      attachTo: document.body,
+      global: { provide: { phlixConfig: { messages: { rating: { saved: 'Bewertung gespeichert.' } } } } },
+    });
+    await w.findAll('.user-rating-picker__star')[4]!.trigger('click');
+    await flushPromises();
+    expect(useToastStore().toasts.map((t) => [t.tone, t.message])).toEqual([
+      ['success', 'Bewertung gespeichert.'],
+    ]);
+    void cap;
+    w.unmount();
   });
 });
