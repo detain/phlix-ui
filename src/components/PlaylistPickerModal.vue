@@ -406,7 +406,9 @@ async function createAndAdd(item: PlaylistPickTarget, name: string): Promise<voi
   outline-offset: 1px;
 }
 .playlist-picker__error {
-  color: var(--danger, #dc2626);
+  /* phlix-tokens-016 / S-tokens-17: was a red-600 fork on an undefined token
+     name; canonical error colour is theme-aware --error (no silent default). */
+  color: var(--error);
   font-size: var(--text-sm, 0.875rem);
   margin: 0;
 }

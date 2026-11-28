@@ -326,13 +326,20 @@ onBeforeUnmount(() => {
   color: var(--text);
 }
 
+/* phlix-tokens-016 / S-tokens-17 (cf. Button.vue): the old hex forks lived on
+   token names no theme ever defined, so var() always shipped the literal —
+   silently forking the danger surface off the package ramp. Canonical:
+   --error / --error-bg (theme-aware, defined in every @phlix/tokens theme).
+   Plain var references, no color-mix derivation, so the CU-076 floor law is
+   met by construction; no hex fallback is carried (a missing token must
+   stay loud). */
 .phlix-menu__item.is-danger {
-  color: var(--red-400, #f87171);
+  color: var(--error);
 }
 
 .phlix-menu__item.is-danger.is-active {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--red-400, #f87171);
+  background: var(--error-bg);
+  color: var(--error);
 }
 
 .phlix-menu__item.is-disabled,
