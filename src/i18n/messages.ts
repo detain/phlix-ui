@@ -65,6 +65,8 @@ export const DEFAULT_MESSAGES = {
     scrollLeft: 'Scroll left',
     scrollRight: 'Scroll right',
     toggle: 'Toggle',
+    // S-ui-design-22 (design-026): shelf "see all" affordance.
+    seeAll: 'See all',
   },
   /** Generic chrome for the shared ConfirmDialog (R13-05). */
   confirm: {
@@ -479,10 +481,26 @@ export const DEFAULT_MESSAGES = {
     shuffleNothing: 'Nothing to shuffle yet.',
     shuffleQueued: 'Shuffle queued.',
     shuffleFailed: 'Couldn’t start shuffle play.',
+    // S-ui-design-22 (design-026): ThumbRating tooltip/aria vocabulary.
+    like: 'Like',
+    dislike: 'Dislike',
   },
   /** S-ui-design-23 (design-053): library-card badge vocabulary. */
   media: {
     new: 'New',
+    // S-ui-design-22 (design-026): MediaGrid + PosterPicker surface copy.
+    loadingMedia: 'Loading media',
+    loadingMore: 'Loading more…',
+    backToTop: 'Back to top',
+    choosePoster: 'Choose poster',
+    posterSubject: 'Select a poster for {name}',
+    loadingPosters: 'Loading posters',
+    tmdbNotConfigured: 'TMDB is not configured',
+    tmdbMetadataHint: 'Configure a TMDB API key in admin settings to search for metadata matches.',
+    tmdbPosterHint: 'Configure a TMDB API key in admin settings to search for poster alternatives.',
+    postersAlt: '{provider} posters',
+    posterAlt: '{provider} poster',
+    posterAltCurrent: '{provider} poster (current)',
   },
   /** Reader chrome (BookReaderPage) — typography/colour affordance titles. */
   reader: {
@@ -596,6 +614,8 @@ export const DEFAULT_MESSAGES = {
     loadMostWatchedError: 'Couldn’t load most watched.',
     loadingLibraries: 'Loading libraries',
     removeConfirm: 'Remove “{name}” from the library? This cannot be undone.',
+    // S-ui-design-22 (design-026): HomeRow shelf load-failure toast.
+    rowLoadError: 'Couldn’t load “{name}”.',
   },
   playlist: {
     loadError: "Couldn’t load this playlist.",
@@ -963,6 +983,91 @@ export const DEFAULT_MESSAGES = {
       'You no longer have permission to change server settings. Sign in again as an administrator and try again.',
     settingsConflict:
       'The server could not apply those settings in its current state. Reload the settings and try again.',
+  },
+  /**
+   * S-ui-design-22 (design-026): FilterBar surface vocabulary — the whole
+   * browse-filter chrome in one group (labels, aria names, pill/remove copy).
+   */
+  filter: {
+    searchHint: 'Search titles, people, genres…',
+    searchAria: 'Search media',
+    clearSearchAria: 'Clear search',
+    sortBy: 'Sort by',
+    sortAscending: 'Sort ascending',
+    sortDescending: 'Sort descending',
+    sortArtist: 'Artist',
+    sortName: 'Name',
+    sortDateAdded: 'Date added',
+    sortRuntime: 'Runtime',
+    sortGenre: 'Genre',
+    filters: 'Filters',
+    viewModeGroup: 'View mode',
+    viewGrid: 'Grid view',
+    viewList: 'List view',
+    viewBackdrop: 'Backdrop view',
+    viewTable: 'Table view',
+    genres: 'Genres',
+    addGenre: 'Add a genre…',
+    rating: 'Rating',
+    type: 'Type',
+    metadata: 'Metadata',
+    matchStatusGroup: 'Metadata match status',
+    matched: 'Matched',
+    unmatched: 'Unmatched',
+    year: 'Year',
+    ratingRange: 'Rating range',
+    yearFrom: 'Year from',
+    yearTo: 'Year to',
+    yearFromHint: 'From',
+    yearToHint: 'To',
+    min: 'Min',
+    max: 'Max',
+    minRating: 'Minimum rating',
+    maxRating: 'Maximum rating',
+    presets: 'Presets',
+    presetName: 'Preset name',
+    save: 'Save',
+    saveCurrent: 'Save current',
+    noPresets: 'No saved presets',
+    clearAll: 'Clear all',
+    deletePreset: 'Delete preset {name}',
+    removePill: 'Remove {label}',
+    pillFrom: 'From {year}',
+    pillTo: 'To {year}',
+    pillMinRating: 'Min {rating}★',
+    pillMaxRating: 'Max {rating}★',
+  },
+  /** S-ui-design-22 (design-026): MetadataMatchModal surface copy. */
+  match: {
+    subjectNoYear: 'Find the right TMDB entry for {name}.',
+    subjectWithYear: 'Find the right TMDB entry for {name} ({year}).',
+    search: 'Search',
+    titlePlaceholder: 'Title to search for',
+    yearPlaceholder: 'Any',
+    sourceInfo: 'Source info',
+    fileLabel: 'File:',
+    pathLabel: 'Path:',
+    tryAgain: 'Try again',
+    searching: 'Searching TMDB',
+    noResults: 'No results found',
+    noResultsHint: 'Try a different title or clear the year.',
+    useThis: 'Use this',
+    noDetails: 'No match details were found for that result. Try another.',
+  },
+  /** S-ui-design-22 (design-026): NetworkHealthIndicator status headline copy. */
+  network: {
+    statusHealthy: 'Network Healthy',
+    statusDegraded: 'Network Degraded',
+    statusOffline: 'Network Offline',
+    statusLoading: 'Loading health status…',
+    statusUnavailable: 'Unable to load health status',
+  },
+  /** S-ui-design-22 (design-026): LetterRail jump-to accessibility copy. */
+  rail: {
+    letterNavLabel: 'Jump to a letter',
+    jumpToCount: 'Jump to {label} ({count})',
+    nonAlphaTitles: 'non-alphabetic titles',
+    startingWith: 'titles starting with {letter}',
   },
 } satisfies Record<string, Record<string, string>>;
 
