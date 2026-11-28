@@ -99,7 +99,7 @@ async function copyJson(): Promise<void> {
   padding: var(--space-4);
   max-height: 60vh;
   overflow: auto;
-  background: var(--surface-1);
+  background: var(--surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   font-family: var(--font-mono, ui-monospace, monospace);

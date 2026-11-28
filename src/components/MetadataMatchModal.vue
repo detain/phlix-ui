@@ -489,7 +489,7 @@ onBeforeUnmount(abortSearch);
 }
 .match-modal__result-year {
   color: var(--text-subtle);
-  font-weight: var(--font-regular, 400);
+  font-weight: var(--fw-regular);
 }
 .match-modal__result-type {
   font-size: var(--text-2xs);

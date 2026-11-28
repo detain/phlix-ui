@@ -645,36 +645,36 @@ onBeforeUnmount(() => {
 }
 .filterbar__search-input {
   width: 100%;
-  padding: var(--space-3, 12px) var(--space-3, 12px) var(--space-3, 12px) var(--space-9, 38px);
-  background: var(--surface, #141420);
-  border: 1px solid var(--border, #27272a);
-  border-radius: var(--radius-md, 8px);
-  color: var(--text, #e4e4e7);
-  font-size: var(--text-sm, 0.875rem);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-10);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: var(--text-sm);
   outline: none;
-  transition: border-color var(--dur-base, 0.18s), box-shadow var(--dur-base, 0.18s);
+  transition: border-color var(--dur-base), box-shadow var(--dur-base);
 }
 .filterbar__search-input::placeholder {
-  color: var(--text-subtle, #71717a);
+  color: var(--text-subtle);
 }
 .filterbar__search-input:focus {
-  border-color: var(--accent-ring, #f5a524);
-  box-shadow: 0 0 0 3px var(--accent-soft, rgba(245, 165, 36, 0.18));
+  border-color: var(--accent-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .filterbar__search-clear {
   position: absolute;
-  right: var(--space-2, 8px);
+  right: var(--space-2);
   display: grid;
   place-items: center;
   width: 24px;
   height: 24px;
-  border-radius: var(--radius-full, 999px);
-  color: var(--text-subtle, #71717a);
+  border-radius: var(--radius-full);
+  color: var(--text-subtle);
   cursor: pointer;
 }
 .filterbar__search-clear:hover {
-  color: var(--text, #e4e4e7);
-  background: var(--surface-2, #1e1e2e);
+  color: var(--text);
+  background: var(--surface-2);
 }
 
 /* sort + order */

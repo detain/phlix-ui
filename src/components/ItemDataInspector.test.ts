@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import ItemDataInspector from './ItemDataInspector.vue';
 import type { MediaItem } from '../types/media-item';
 
@@ -84,5 +87,26 @@ describe('ItemDataInspector (S15)', () => {
     await flushPromises();
     expect(writeText).toHaveBeenCalledTimes(1);
     expect(String(writeText.mock.calls[0][0])).toContain('"id": "cp"');
+  });
+});
+
+/**
+ * S-ui-design-26 (phlix-ui-design-034) — JSON panel surface contract.
+ * The scale ships --surface / --surface-2 / --surface-3; `--surface-1` is
+ * phantom, so the panel background was dropped at computed-value time and
+ * monospace JSON floated over whatever scrolled behind it. Fix: the real
+ * --surface. Source-level pin (jsdom has no scoped-style cascade).
+ */
+describe('ItemDataInspector — JSON panel surface contract (S-ui-design-26)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './ItemDataInspector.vue'), 'utf8');
+
+  it('has no phantom --surface-1 use', () => {
+    expect(src).not.toContain('--surface-1');
+  });
+
+  it('paints the JSON panel with the real --surface token, fallback-free', () => {
+    const rule = /\.item-inspector__json\s*\{([^}]*)\}/.exec(src);
+    expect(rule, 'json panel rule missing').not.toBeNull();
+    expect(rule![1]).toMatch(/background:\s*var\(--surface\);/);
   });
 });

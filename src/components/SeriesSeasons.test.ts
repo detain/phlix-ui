@@ -8,6 +8,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import SeriesSeasons from './SeriesSeasons.vue';
 import { groupEpisodesBySeason } from './series-grouping';
 import type { MediaItem } from '../types/media-item';
@@ -212,5 +215,32 @@ describe('SeriesSeasons', () => {
       expect(w.find('.series-seasons__files-btn').attributes('title')).toBe('Collapse files');
       vi.useRealTimers();
     });
+  });
+});
+
+/**
+ * S-ui-design-26 (phlix-ui-design-033) — files-panel radius contract.
+ * Tokens v0.2.1 ships --radius-sm…-2xl/--radius-full but NO bare
+ * `--radius`; both uses were invalid at computed-value time, squaring off
+ * the component's only two rounded surfaces. The fix lands both on
+ * --radius-md (10px), the repo-dominant step for compact controls and
+ * inset panels (Button-era census; --radius-lg would round a 28px icon
+ * button almost circularly). Source-level: jsdom computes no scoped SFC
+ * cascade (see FilterBar.test.ts S08/S26 precedent).
+ */
+describe('SeriesSeasons — files-panel radius contract (S-ui-design-26)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './SeriesSeasons.vue'), 'utf8');
+
+  it('has no bare var(--radius) use (phantom name at v0.2.1)', () => {
+    expect(src).not.toMatch(/var\(--radius\)/);
+  });
+
+  it('rounds BOTH files surfaces with the real --radius-md', () => {
+    const btn = /\.series-seasons__files-btn\s*\{([^}]*)\}/.exec(src);
+    const detail = /\.series-seasons__files-detail\s*\{([^}]*)\}/.exec(src);
+    expect(btn, 'files-btn rule missing').not.toBeNull();
+    expect(btn![1]).toMatch(/border-radius:\s*var\(--radius-md\);/);
+    expect(detail, 'files-detail rule missing').not.toBeNull();
+    expect(detail![1]).toMatch(/border-radius:\s*var\(--radius-md\);/);
   });
 });

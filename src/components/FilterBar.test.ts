@@ -524,3 +524,36 @@ describe('FilterBar — leaks no mounted instance onto window scroll (S118)', ()
     expect([...liveScrollHandlers]).toHaveLength(0);
   });
 });
+
+/**
+ * S-ui-design-26 (phlix-ui-design-032) — search-cluster token contract.
+ * The pinned @phlix/tokens scale ships 0,1,2,3,4,5,6,8,10,12,16,20,24 —
+ * `--space-9` never existed, so the declaration always computed from its
+ * 38px fallback, and the cluster's zinc/catppuccin hex defaults (#141420,
+ * #27272a, #e4e4e7, #71717a, #1e1e2e) match no shipped theme surface.
+ * The fix swaps onto --space-10 and retires every inline fallback in the
+ * cluster. Source-level assertions are the ratified shape here (jsdom does
+ * not resolve scoped SFC <style> — the repo's CSS-contract precedent is the
+ * S08 block above and the d11 consumer lock in src/tokens/contrast.test.ts).
+ */
+describe('FilterBar — search cluster token contract (S-ui-design-26)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './FilterBar.vue'), 'utf8');
+
+  it('never names the phantom --space-9', () => {
+    expect(src).not.toContain('--space-9');
+  });
+
+  it('pads the search input with real scale steps, fallback-free', () => {
+    expect(src).toMatch(
+      /\.filterbar__search-input\s*\{[^}]*padding:\s*var\(--space-3\)\s+var\(--space-3\)\s+var\(--space-3\)\s+var\(--space-10\);/,
+    );
+  });
+
+  it('carries no inline var() fallbacks across the search cluster (finding 032 fix)', () => {
+    const start = src.indexOf('.filterbar__search-input {');
+    const end = src.indexOf('/* sort + order */');
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(src.slice(start, end)).not.toMatch(/var\(--[a-z0-9-]+,\s/);
+  });
+});

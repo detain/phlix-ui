@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import MetadataMatchModal from './MetadataMatchModal.vue';
 import { useAuthStore } from '../stores/useAuthStore';
 import { ApiError } from '../api/client';
@@ -228,5 +231,28 @@ describe('MetadataMatchModal', () => {
     // not closed
     expect(w.emitted('update:modelValue')).toBeFalsy();
     w.unmount();
+  });
+});
+
+/**
+ * S-ui-design-26 (phlix-ui-design-057) — result-year weight contract.
+ * `--font-regular` is named for the phantom half of a two-scale confusion:
+ * v0.2.1 ships --fw-regular (weight scale, aliasing --font-normal: 400) —
+ * the declaration was inert and the year silently inherited the modal's
+ * default weight. Context at the site is font-WEIGHT, so it moves to
+ * --fw-regular, fallback-free (the 400 only papered over the phantom).
+ * Source-level pin (jsdom has no scoped-style cascade).
+ */
+describe('MetadataMatchModal — result-year weight contract (S-ui-design-26)', () => {
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './MetadataMatchModal.vue'), 'utf8');
+
+  it('has no phantom --font-regular use', () => {
+    expect(src).not.toContain('--font-regular');
+  });
+
+  it('declares the year weight via the real --fw-regular, fallback-free', () => {
+    const rule = /\.match-modal__result-year\s*\{([^}]*)\}/.exec(src);
+    expect(rule, 'result-year rule missing').not.toBeNull();
+    expect(rule![1]).toMatch(/font-weight:\s*var\(--fw-regular\);/);
   });
 });

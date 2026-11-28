@@ -357,7 +357,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
     place-items: center;
     width: 1.75rem;
     height: 1.75rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     background: none;
     color: var(--text-subtle);
     border: none;
@@ -381,7 +381,7 @@ const showAdminFileInfo = computed(() => auth.isAdmin && !!props.apiBase);
     gap: var(--space-1);
     padding: var(--space-3);
     margin-top: var(--space-2);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     background: var(--surface-2);
     border: 1px solid var(--border);
 }
