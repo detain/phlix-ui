@@ -43,7 +43,15 @@ vi.mock('hls.js', () => {
     currentLevel = -1;
     nextLevel = -1;
     autoLevelEnabled = true;
-    bandwidthEstimate = 0;
+    // phlix-ui-player-012: real hls.js reports 0 once destroy() has run —
+    // model that so the pins convict any persist reading a dead instance.
+    private _bandwidthEstimate = 0;
+    get bandwidthEstimate(): number {
+      return this.destroyed ? 0 : this._bandwidthEstimate;
+    }
+    set bandwidthEstimate(value: number) {
+      this._bandwidthEstimate = value;
+    }
     // Audio rendition group surface (empty = no EXT-X-MEDIA group attached).
     audioTracks: Array<{ index: number; name?: string; lang?: string; default?: boolean; autoselect?: boolean }> = [];
     constructor(config: Record<string, unknown>) {
@@ -94,7 +102,7 @@ type FakeHlsCtor = typeof Hls & {
 
 const FakeHls = Hls as unknown as FakeHlsCtor;
 
-function fakeVideo(canPlay: '' | 'maybe' | 'probably' = ''): HTMLVideoElement {
+function fakeVideo(canPlay: '' | 'maybe' | 'probably' = '', readyState = 0): HTMLVideoElement {
   return {
     canPlayType: () => canPlay,
     addEventListener: vi.fn(),
@@ -102,7 +110,20 @@ function fakeVideo(canPlay: '' | 'maybe' | 'probably' = ''): HTMLVideoElement {
     load: vi.fn(),
     removeAttribute: vi.fn(),
     src: '',
+    currentTime: 0,
+    readyState,
   } as unknown as HTMLVideoElement;
+}
+
+/** Pull a listener the native path registered via the mocked addEventListener. */
+function capturedListener(video: HTMLVideoElement, name: string): ((...args: unknown[]) => void) | undefined {
+  const calls = (video.addEventListener as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+  for (const call of calls) {
+    if (call[0] === name) {
+      return call[1] as (...args: unknown[]) => void;
+    }
+  }
+  return undefined;
 }
 
 describe('hls-playback', () => {
@@ -460,22 +481,49 @@ describe('hls-playback', () => {
       expect(cb).not.toHaveBeenCalled();
     });
 
-    // UI-1.1: on the native (Safari/iOS) path a non-zero startPosition seeks the
-    // element so a decode-error / audio-switch fallback resumes mid-film, not 0:00.
-    it('seeks video.currentTime to opts.startPosition on the native path', async () => {
+    // UI-1.1 / phlix-ui-player-043 (INTENTIONAL GOLDEN CONVERSION): the old pin
+    // asserted a SYNCHRONOUS currentTime write right after video.src — Safari
+    // can drop a seek made before the element has metadata. The law is now:
+    // park the resume seek and apply it once at 'loadedmetadata'.
+    it('defers the native-path startPosition seek until loadedmetadata', async () => {
       FakeHls.supported = false;
-      const video = {
-        canPlayType: () => 'probably',
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        load: vi.fn(),
-        removeAttribute: vi.fn(),
-        src: '',
-        currentTime: 0,
-      } as unknown as HTMLVideoElement;
+      const video = fakeVideo('probably');
       await attachHls(video, 'http://h/native.m3u8', { startPosition: 42 });
       expect(video.src).toBe('http://h/native.m3u8');
+      // No metadata yet — the seek must NOT be written down front.
+      expect(video.currentTime).toBe(0);
+      const onLoaded = capturedListener(video, 'loadedmetadata');
+      expect(onLoaded).toBeDefined();
+      onLoaded!();
       expect(video.currentTime).toBe(42);
+    });
+
+    // phlix-ui-player-043: cached media can reach HAVE_METADATA before the
+    // event loop ever delivers 'loadedmetadata' — the readyState race guard
+    // must apply the parked seek at attach, and the write must stay one-shot
+    // (a late/duplicate metadata pass must not clobber a user seek).
+    it('applies the parked seek at attach when metadata is already loaded', async () => {
+      FakeHls.supported = false;
+      const video = fakeVideo('probably', 2);
+      await attachHls(video, 'http://h/native.m3u8', { startPosition: 42 });
+      expect(video.currentTime).toBe(42);
+      video.currentTime = 7;
+      const onLoaded = capturedListener(video, 'loadedmetadata');
+      onLoaded!();
+      expect(video.currentTime).toBe(7);
+    });
+
+    // phlix-ui-player-043 belt: a destroyed native handle never seeks, even if
+    // a stale listener reference is fired by hand after destroy().
+    it('drops a parked native seek when destroy() runs before metadata', async () => {
+      FakeHls.supported = false;
+      const video = fakeVideo('probably');
+      const handle = await attachHls(video, 'http://h/native.m3u8', { startPosition: 42 });
+      const onLoaded = capturedListener(video, 'loadedmetadata');
+      handle.destroy();
+      expect(video.currentTime).toBe(0);
+      onLoaded!();
+      expect(video.currentTime).toBe(0);
     });
 
     // UI-1.4: Skip hls.js dynamic import when MSE is absent AND native HLS is supported.
@@ -654,6 +702,119 @@ describe('hls-playback', () => {
       handle.destroy();
       // destroy() must persist the current bandwidthEstimate to localStorage.
       expect(localStorage.getItem(BW_KEY)).toBe(String(8_000_000));
+    });
+  });
+
+  // phlix-ui-player-012: instance-hygiene pins. A persistence tick must never
+  // run against a destroyed/stale instance (the raw-0 → clamp-100 Kbps ABR
+  // seed poisoning), fatal-error handling must release the interval AND the
+  // slot registration (no zombie ticks, no stale active handle), and
+  // overlapping players (full Player + MiniPlayer each attach) must own
+  // independent slots so one owner's destroy() cannot clobber the other.
+  describe('hls instance hygiene (phlix-ui-player-012)', () => {
+    const BW_KEY = 'phlix-bandwidth-estimate';
+
+    beforeEach(() => {
+      localStorage.removeItem(BW_KEY);
+      FakeHls.instances.length = 0;
+      // Fake ONLY the interval APIs: attachHls awaits a dynamic import and
+      // promise jobs must stay on the real microtask queue.
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      localStorage.removeItem(BW_KEY);
+      FakeHls.instances.length = 0;
+    });
+
+    it('fatal error releases the slot: live value persisted, interval dead, no 0 write', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      inst.bandwidthEstimate = 8_000_000;
+      inst.emit('error', { fatal: true, details: 'bufferStalledError' });
+      expect(inst.destroyed).toBe(true);
+      // The release must persist the LIVE estimate (read before hls.destroy()).
+      expect(localStorage.getItem(BW_KEY)).toBe(String(8_000_000));
+      // Zombie conviction: the old fatal path left the 30 s tick alive and it
+      // wrote the destroyed instance's 0.
+      expect(vi.getTimerCount()).toBe(0);
+      vi.advanceTimersByTime(60_000);
+      expect(localStorage.getItem(BW_KEY)).toBe(String(8_000_000));
+      // And the next attach seeds from the good value, not the 100 Kbps clamp.
+      const second = await attachHls(fakeVideo(), 'http://h/m2.m3u8', {});
+      expect(FakeHls.instances[1].config.abrEwmaDefaultEstimate).toBe(8_000_000);
+      // Idempotent: handle.destroy() after the fatal release must not throw.
+      handle.destroy();
+      second.destroy();
+    });
+
+    it('explicit destroy() persists live value, kills its interval, ticks stay dead', async () => {
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      expect(vi.getTimerCount()).toBe(1);
+      const inst = FakeHls.instances[0];
+      inst.bandwidthEstimate = 5_000_000;
+      handle.destroy();
+      expect(vi.getTimerCount()).toBe(0);
+      expect(localStorage.getItem(BW_KEY)).toBe(String(5_000_000));
+      vi.advanceTimersByTime(90_000);
+      expect(localStorage.getItem(BW_KEY)).toBe(String(5_000_000));
+    });
+
+    it('overlapping attaches own independent slots — destroy(A) leaves B ticking', async () => {
+      const handleA = await attachHls(fakeVideo(), 'http://h/a.m3u8', {});
+      const handleB = await attachHls(fakeVideo(), 'http://h/b.m3u8', {});
+      expect(vi.getTimerCount()).toBe(2);
+      const instA = FakeHls.instances[0];
+      const instB = FakeHls.instances[1];
+      instA.bandwidthEstimate = 5_000_000;
+      instB.bandwidthEstimate = 9_000_000;
+      handleA.destroy();
+      // Old law: A's destroy cleared THE shared interval and nulled the shared
+      // active handle — B lost its periodic persistence for the rest of its
+      // life (and a later B destroy wrote A-era state semantics instead).
+      expect(vi.getTimerCount()).toBe(1);
+      localStorage.removeItem(BW_KEY);
+      vi.advanceTimersByTime(30_000);
+      expect(localStorage.getItem(BW_KEY)).toBe(String(9_000_000));
+      instB.bandwidthEstimate = 9_500_000;
+      handleB.destroy();
+      expect(vi.getTimerCount()).toBe(0);
+      expect(localStorage.getItem(BW_KEY)).toBe(String(9_500_000));
+    });
+
+    it('destroying the last attach leaves the earlier attach ticking (reverse order)', async () => {
+      const handleA = await attachHls(fakeVideo(), 'http://h/a.m3u8', {});
+      const handleB = await attachHls(fakeVideo(), 'http://h/b.m3u8', {});
+      FakeHls.instances[0].bandwidthEstimate = 4_000_000;
+      FakeHls.instances[1].bandwidthEstimate = 7_000_000;
+      handleB.destroy();
+      expect(localStorage.getItem(BW_KEY)).toBe(String(7_000_000));
+      localStorage.removeItem(BW_KEY);
+      expect(vi.getTimerCount()).toBe(1);
+      vi.advanceTimersByTime(30_000);
+      expect(localStorage.getItem(BW_KEY)).toBe(String(4_000_000));
+      handleA.destroy();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('never stores a zero/non-probed estimate — the last good value survives', async () => {
+      localStorage.setItem(BW_KEY, String(3_000_000));
+      const handle = await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      // bandwidthEstimate is 0 on a fresh/not-yet-probed instance; a teardown
+      // must keep the previous good seed instead of writing raw '0'.
+      handle.destroy();
+      expect(localStorage.getItem(BW_KEY)).toBe(String(3_000_000));
+    });
+
+    it('a repeated fatal error after release is inert', async () => {
+      await attachHls(fakeVideo(), 'http://h/m.m3u8', {});
+      const inst = FakeHls.instances[0];
+      inst.bandwidthEstimate = 6_000_000;
+      inst.emit('error', { fatal: true, details: 'a' });
+      const persisted = localStorage.getItem(BW_KEY);
+      inst.emit('error', { fatal: true, details: 'b' });
+      expect(localStorage.getItem(BW_KEY)).toBe(persisted);
     });
   });
 });

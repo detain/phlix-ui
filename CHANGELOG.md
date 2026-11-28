@@ -8,6 +8,13 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — hls instance hygiene: per-session bandwidth slots, guarded fatal release, deferred native seeks 2026-11-28 (S-ui-player-12)
+
+### Fixed
+
+* Bandwidth persistence can no longer poison itself from a dead instance (finding phlix-ui-player-012). The module-level single `{_activeHls, _persistInterval}` slot becomes a set of per-attach sessions, each owning its own handle and interval; the periodic `_saveBandwidth` persists only while its session is still registered, and a shared `releaseSession` (run by both `destroy()` and the fatal-error arm) deregisters and clears exactly its own interval before the instance dies. Previously a fatal hls.js error called `hls.destroy()` directly, leaving the tick alive against a destroyed instance whose `bandwidthEstimate` reads `0` — the raw `0` then persisted and `loadPersistedBandwidth` clamped it to the 100 000 bps ABR seed, silently degrading every later session; and two live players (Player and MiniPlayer overlap) clobbered one another's slot, so destroying one killed the other's persistence or resurrected a stale handle. `persistBandwidth` additionally refuses non-finite and non-positive values outright, so the last good estimate stands. The deferral laws the overlap tests had been asserting since S-ui-player-02 (each attach owns its teardown) are now enforced by construction rather than convention.
+* Resume seeks wait for metadata (finding phlix-ui-player-043). On the native-HLS path `attachHls` no longer writes `video.currentTime` synchronously after `video.src` — Safari can drop a seek issued before the media is queryable — it parks the position and applies it once in the `loadedmetadata` handler (with an immediate apply when `readyState` already carries metadata, so cached media never waits for an event that will not refire, and a one-shot latch so a late duplicate pass cannot clobber a user seek made in between). `AudiobookPlayerPage` gains the same shape: the `watch(audioRef)` restore parks `pendingResumeSec` and `applyPendingResume()` runs from `@loadedmetadata`, and switching books clears the parked position so a stale book-A offset can never seek book B.
+
 ## Unreleased — Subtitle/audio delay control: ±0.1 s steppers, offset-aware cue rendering, persisted carriers 2026-11-28 (S-ui-once-16)
 
 ### Added

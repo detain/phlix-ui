@@ -19,7 +19,7 @@ function w() {
 	}
 }
 function T(e) {
-	try {
+	if (!(!Number.isFinite(e) || e <= 0)) try {
 		localStorage.setItem(S, String(e));
 	} catch {}
 }
@@ -30,16 +30,25 @@ function E(e) {
 function D(e) {
 	return e ? e.split(",").map((e) => e.trim().toLowerCase()).some((e) => e.startsWith("mp4a") || e.startsWith("ac-3") || e.startsWith("ec-3") || e.startsWith("opus")) : !1;
 }
-var O = null, k = null;
-function A() {
-	O && T(O.bandwidthEstimate);
+var O = /* @__PURE__ */ new Set();
+function k(e) {
+	O.has(e) && T(e.hls.bandwidthEstimate);
 }
-async function j(e, t, n = {}) {
+async function A(e, t, n = {}) {
 	if (typeof MediaSource > "u" && E(e)) {
-		let r = () => n.onReady?.(), i = () => n.onError?.("native hls error");
-		return e.addEventListener("loadedmetadata", r), e.addEventListener("error", i), e.src = t, n.startPosition && (e.currentTime = n.startPosition), {
+		let r = n.startPosition && n.startPosition > 0 ? n.startPosition : 0, i = () => {
+			if (r <= 0) return;
+			let t = r;
+			r = 0;
+			try {
+				e.currentTime = t;
+			} catch {}
+		}, a = () => {
+			i(), n.onReady?.();
+		}, o = () => n.onError?.("native hls error");
+		return e.addEventListener("loadedmetadata", a), e.addEventListener("error", o), e.src = t, e.readyState >= 1 && i(), {
 			destroy() {
-				e.removeEventListener("loadedmetadata", r), e.removeEventListener("error", i), e.removeAttribute("src"), e.load();
+				r = 0, e.removeEventListener("loadedmetadata", a), e.removeEventListener("error", o), e.removeAttribute("src"), e.load();
 			},
 			levels: [],
 			getCurrentLevel: () => -1,
@@ -88,16 +97,23 @@ async function j(e, t, n = {}) {
 				let t = n.getToken?.();
 				t && e.setRequestHeader("Authorization", `Bearer ${t}`);
 			}
-		});
+		}), o = {
+			hls: a,
+			interval: null
+		};
+		O.add(o), o.interval = setInterval(() => k(o), 3e4);
+		function s() {
+			O.has(o) && (T(a.bandwidthEstimate), O.delete(o), o.interval !== null && clearInterval(o.interval));
+		}
 		a.on(r.Events.MANIFEST_PARSED, () => n.onReady?.()), a.on(r.Events.ERROR, (e, t) => {
-			t?.fatal && (n.onError?.(t.details ?? "fatal hls error"), a.destroy());
+			t?.fatal && (n.onError?.(t.details ?? "fatal hls error"), s(), a.destroy());
 		});
-		let o = [];
+		let c = [];
 		return a.on(r.Events.LEVEL_LOADED, () => {
-			for (let e of [...o]) e();
-		}), O = a, k !== null && clearInterval(k), k = setInterval(A, 3e4), a.loadSource(t), a.attachMedia(e), {
+			for (let e of [...c]) e();
+		}), a.loadSource(t), a.attachMedia(e), {
 			destroy() {
-				T(a.bandwidthEstimate), k !== null && (clearInterval(k), k = null), O = null;
+				s();
 				try {
 					a.destroy();
 				} catch {}
@@ -150,9 +166,9 @@ async function j(e, t, n = {}) {
 				return a.on(r.Events.AUDIO_TRACK_SWITCHED, t), () => a.off(r.Events.AUDIO_TRACK_SWITCHED, t);
 			},
 			onLevelLoaded(e) {
-				return o.push(e), () => {
-					let t = o.indexOf(e);
-					t >= 0 && o.splice(t, 1);
+				return c.push(e), () => {
+					let t = c.indexOf(e);
+					t >= 0 && c.splice(t, 1);
 				};
 			},
 			hasAudio() {
@@ -166,7 +182,7 @@ async function j(e, t, n = {}) {
 	throw Error("HLS is not supported in this browser");
 }
 // src/stores/usePlayerUiStore.ts
-var M = x("phlix-player-ui", () => {
+var j = x("phlix-player-ui", () => {
 	let e = _(!1);
 	function t(t) {
 		e.value = t;
@@ -180,35 +196,35 @@ var M = x("phlix-player-ui", () => {
 		reset: n
 	};
 });
-function N(e) {
+function M(e) {
 	return typeof e == "object" && !!e && !Array.isArray(e);
 }
-function P(e, t) {
-	if (!N(e)) return null;
+function N(e, t) {
+	if (!M(e)) return null;
 	let n = e[t];
 	return typeof n == "string" && n !== "" ? n : null;
 }
-function F(e, t) {
-	let n = P(e, "code");
+function P(e, t) {
+	let n = N(e, "code");
 	if (n !== null && i(n)) return a(n, t);
-	let r = P(e, "error");
+	let r = N(e, "error");
 	return r === "AccessScheduled" ? "Playback blocked by access schedule. Try again during allowed hours." : r === "StreamLimitExceeded" ? "Stream limit reached. Stop another stream to continue watching." : null;
 }
-function I(e, t) {
+function F(e, t) {
 	if (e instanceof n) {
-		let n = P(e.body, "code");
+		let n = N(e.body, "code");
 		if (n !== null && i(n)) return a(n, t);
 	}
 	let r = e instanceof Error ? e.message : "";
 	return r === "" ? "Failed to load media" : r;
 }
 // src/components/player/format-time.ts
-function L(e) {
+function I(e) {
 	if (!isFinite(e) || e < 0) return "0:00";
 	let t = Math.floor(e), n = Math.floor(t / 3600), r = Math.floor(t % 3600 / 60), i = t % 60, a = n > 0 ? String(r).padStart(2, "0") : String(r);
 	return `${n > 0 ? `${n}:` : ""}${a}:${String(i).padStart(2, "0")}`;
 }
-function R(e) {
+function L(e) {
 	if (typeof e != "object" || !e) return {
 		spriteUrl: null,
 		timelineUrl: null
@@ -219,7 +235,7 @@ function R(e) {
 		timelineUrl: typeof t.timeline_url == "string" && t.timeline_url !== "" ? t.timeline_url : null
 	};
 }
-function z(e) {
+function R(e) {
 	if (!Array.isArray(e)) return [];
 	let t = [];
 	for (let n of e) {
@@ -233,7 +249,7 @@ function z(e) {
 	}
 	return t.sort((e, t) => e.time - t.time), t;
 }
-function B(e, t) {
+function z(e, t) {
 	let n = 0, r = e.length - 1;
 	for (; n <= r;) {
 		let i = n + r >>> 1;
@@ -243,7 +259,7 @@ function B(e, t) {
 	}
 	return n >= e.length ? e.length - 1 : n === 0 ? 0 : t - e[n - 1].time <= e[n].time - t ? n - 1 : n;
 }
-function V(e, t, n) {
+function B(e, t, n) {
 	let r = t % 6, i = Math.floor(t / 6), a = Math.ceil(n / 6);
 	return {
 		url: e,
@@ -251,31 +267,31 @@ function V(e, t, n) {
 		y: a > 1 ? i / (a - 1) * 100 : 0
 	};
 }
-function H(e, t) {
+function V(e, t) {
 	return e !== void 0 && t !== void 0 ? AbortSignal.any([e, t]) : e ?? t;
 }
-function U(e) {
+function H(e) {
 	return typeof e == "object" && !!e && e.name === "AbortError";
 }
-function W(e) {
+function U(e) {
 	let t = _(null), n = _(!1), i = _(null), a = /* @__PURE__ */ new Map();
 	function o() {
 		return new r({ baseUrl: e.apiBase() });
 	}
 	function s(e) {
 		let n = t.value;
-		return !n || n.sprite_url === null || n.timeline.length === 0 ? null : V(n.sprite_url, B(n.timeline, e), n.timeline.length);
+		return !n || n.sprite_url === null || n.timeline.length === 0 ? null : B(n.sprite_url, z(n.timeline, e), n.timeline.length);
 	}
 	async function c(r, s) {
 		if (a.has(r)) {
 			t.value = a.get(r) ?? null;
 			return;
 		}
-		let c = H(s, e.signal);
+		let c = V(s, e.signal);
 		if (!c?.aborted) {
 			n.value = !0, i.value = null;
 			try {
-				let e = o(), n = R(await e.getTrickplay(r, c));
+				let e = o(), n = L(await e.getTrickplay(r, c));
 				if (n.spriteUrl === null || n.timelineUrl === null) {
 					let e = {
 						sprite_url: null,
@@ -284,13 +300,13 @@ function W(e) {
 					a.set(r, e), t.value = e;
 					return;
 				}
-				let i = z(await e.get(n.timelineUrl, void 0, c)), s = {
+				let i = R(await e.get(n.timelineUrl, void 0, c)), s = {
 					sprite_url: n.spriteUrl,
 					timeline: i
 				};
 				a.set(r, s), t.value = s;
 			} catch (e) {
-				if (U(e)) return;
+				if (H(e)) return;
 				a.set(r, null), i.value = e instanceof Error ? e.message : "Failed to load trickplay data", t.value = null;
 			} finally {
 				n.value = !1;
@@ -310,12 +326,12 @@ function W(e) {
 	};
 }
 // src/components/player/Scrubber.vue?vue&type=script&setup=true&lang.ts
-var G = [
+var W = [
 	"aria-valuemax",
 	"aria-valuenow",
 	"aria-valuetext",
 	"aria-label"
-], ee = { class: "scrubber__track" }, K = ["title"], q = { class: "scrubber__time numeric" }, J = 1600, Y = /*#__PURE__*/ e(/* @__PURE__ */ d({
+], G = { class: "scrubber__track" }, K = ["title"], ee = { class: "scrubber__time numeric" }, q = 1600, J = /*#__PURE__*/ e(/* @__PURE__ */ d({
 	__name: "Scrubber",
 	props: {
 		position: {},
@@ -335,16 +351,16 @@ var G = [
 		function O(e) {
 			T.value = D(e), E !== null && clearTimeout(E), E = setTimeout(() => {
 				E = null, T.value = null;
-			}, J);
+			}, q);
 		}
 		function k() {
 			E !== null && (clearTimeout(E), E = null), T.value = null;
 		}
 		m(k);
-		let A = s(() => x.value ? C.value : a.duration > 0 ? D(a.position / a.duration) : 0), j = s(() => a.duration > 0 ? D(a.buffered / a.duration) : 0), M = s(() => (x.value || S.value || T.value !== null) && a.duration > 0), N = s(() => x.value ? C.value : S.value ? w.value : T.value ?? 0), P = s(() => N.value * a.duration), F = s(() => M.value ? a.thumbnailAt?.(P.value) ?? null : null), I = (e) => `url("${e.replace(/[\\"]/g, "\\$&").replace(/[\r\n]/g, "")}")`, R = s(() => {
+		let A = s(() => x.value ? C.value : a.duration > 0 ? D(a.position / a.duration) : 0), j = s(() => a.duration > 0 ? D(a.buffered / a.duration) : 0), M = s(() => (x.value || S.value || T.value !== null) && a.duration > 0), N = s(() => x.value ? C.value : S.value ? w.value : T.value ?? 0), P = s(() => N.value * a.duration), F = s(() => M.value ? a.thumbnailAt?.(P.value) ?? null : null), L = (e) => `url("${e.replace(/[\\"]/g, "\\$&").replace(/[\r\n]/g, "")}")`, R = s(() => {
 			let e = F.value;
-			return e === null ? {} : typeof e == "string" ? { backgroundImage: I(e) } : {
-				backgroundImage: I(e.url),
+			return e === null ? {} : typeof e == "string" ? { backgroundImage: L(e) } : {
+				backgroundImage: L(e.url),
 				backgroundPosition: `${e.x}% ${e.y}%`,
 				backgroundSize: "600% auto"
 			};
@@ -371,7 +387,7 @@ var G = [
 			let t = V(e);
 			w.value = t, x.value && (C.value = t);
 		}
-		function W(e) {
+		function J(e) {
 			if (x.value) {
 				x.value = !1;
 				try {
@@ -420,16 +436,16 @@ var G = [
 			"aria-valuemin": 0,
 			"aria-valuemax": Math.round(e.duration),
 			"aria-valuenow": Math.round(e.position),
-			"aria-valuetext": b(L)(e.position),
+			"aria-valuetext": b(I)(e.position),
 			"aria-label": b(i)("player.seek"),
 			onPointerdown: H,
 			onPointermove: U,
-			onPointerup: W,
-			onPointercancel: W,
+			onPointerup: J,
+			onPointercancel: J,
 			onPointerenter: Y,
 			onPointerleave: X,
 			onKeydown: Z
-		}, [u("div", ee, [
+		}, [u("div", G, [
 			u("div", {
 				class: "scrubber__buffered",
 				style: p({ transform: `scaleX(${j.value})` })
@@ -457,9 +473,9 @@ var G = [
 			key: 0,
 			class: "scrubber__thumb",
 			style: p(R.value)
-		}, null, 4)) : c("", !0), u("span", q, y(b(L)(P.value)), 1)], 4)) : c("", !0)], 40, G));
+		}, null, 4)) : c("", !0), u("span", ee, y(b(I)(P.value)), 1)], 4)) : c("", !0)], 40, W));
 	}
-}), [["__scopeId", "data-v-e1581471"]]), X = [
+}), [["__scopeId", "data-v-e1581471"]]), Y = [
 	{
 		id: "playpause",
 		keys: ["Space", "K"],
@@ -549,18 +565,18 @@ var G = [
 		keys: ["?"],
 		label: "This help"
 	}
-], Z = {
+], X = {
 	ArrowLeft: "arrow-left",
 	ArrowRight: "arrow-right",
 	ArrowUp: "arrow-up",
 	ArrowDown: "arrow-down"
-}, Q = {
+}, Z = {
 	ArrowLeft: "Left arrow",
 	ArrowRight: "Right arrow",
 	ArrowUp: "Up arrow",
 	ArrowDown: "Down arrow"
 };
-function te(e) {
+function Q(e) {
 	let t = e;
 	if (!t || !t.tagName) return !1;
 	let n = t.tagName.toLowerCase();
@@ -574,9 +590,9 @@ function $(e) {
 	let r = t.getAttribute?.("role");
 	return r === "textbox" || r === "searchbox";
 }
-function ne(e, t) {
+function te(e, t) {
 	switch (e.key) {
-		case " ": return !te(e.target) && (t.playPause(), !0);
+		case " ": return !Q(e.target) && (t.playPause(), !0);
 		case "k":
 		case "K": return t.playPause(), !0;
 		case "ArrowLeft": return t.seekBy(-5), !0;
@@ -613,9 +629,9 @@ function ne(e, t) {
 		default: return e.key >= "0" && e.key <= "9" && (t.seekToPercent(Number(e.key) / 10), !0);
 	}
 }
-function re(e, t = {}) {
+function ne(e, t = {}) {
 	function n(n) {
-		n.defaultPrevented || t.enabled && !t.enabled() || n.ctrlKey || n.metaKey || n.altKey || $(n.target) || ne(n, e) && n.preventDefault();
+		n.defaultPrevented || t.enabled && !t.enabled() || n.ctrlKey || n.metaKey || n.altKey || $(n.target) || te(n, e) && n.preventDefault();
 	}
 	h(() => {
 		typeof document < "u" && document.addEventListener("keydown", n);
@@ -623,6 +639,6 @@ function re(e, t = {}) {
 		typeof document < "u" && document.removeEventListener("keydown", n);
 	});
 }
-export { re as a, L as c, M as d, j as f, $ as i, I as l, Q as n, Y as o, X as r, W as s, Z as t, F as u };
+export { ne as a, I as c, j as d, A as f, $ as i, F as l, Z as n, J as o, Y as r, U as s, X as t, P as u };
 
-//# sourceMappingURL=shortcuts-CTXhjCfq.js.map
+//# sourceMappingURL=shortcuts-DRu04_zV.js.map

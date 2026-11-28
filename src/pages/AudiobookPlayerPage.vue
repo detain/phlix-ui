@@ -169,20 +169,47 @@ watch(currentId, () => {
     currentChapterIndex.value = 0;
     audiobook.value = null;
     progress.value = null;
+    pendingResumeSec = 0; // stale book-A position must never seek book B (phlix-ui-player-043)
     void loadAudiobook();
 });
 
-// Watch for audio element and set initial position
+// phlix-ui-player-043: Safari can drop an <audio> currentTime write made
+// before the element has metadata, so the resume position is PARKED here and
+// applied once at 'loadedmetadata' (onLoadedMetadata). Media that already has
+// metadata when the element appears never reliably fires that event — the
+// readyState guard in the watcher covers that race.
+let pendingResumeSec = 0;
+
+function applyPendingResume(): void {
+    const audio = audioRef.value;
+    if (!audio || pendingResumeSec <= 0) {
+        return;
+    }
+    const at = pendingResumeSec;
+    pendingResumeSec = 0; // one-shot: a late/duplicate metadata pass never clobbers
+    try {
+        audio.currentTime = at;
+    } catch {
+        /* element refused the seek */
+    }
+}
+
+// Watch for audio element and park the saved position
 watch(audioRef, (audio) => {
     if (audio && progress.value) {
-        // Seek to saved position
-        audio.currentTime = progress.value.position_ms / 1000;
+        // Park the saved position; applied at metadata (phlix-ui-player-043)
+        pendingResumeSec = progress.value.position_ms / 1000;
+        if (audio.readyState >= 1) {
+            applyPendingResume();
+        }
     }
 });
 
 function onLoadedMetadata(): void {
     if (!audioRef.value) return;
     duration.value = audioRef.value.duration;
+    // Apply the parked resume position now that metadata exists (phlix-ui-player-043)
+    applyPendingResume();
     // Apply saved playback speed
     audioRef.value.playbackRate = playbackSpeed.value;
 }

@@ -10,7 +10,7 @@ import { i as ne, n as re, r as ie, t as O } from "./useImageSrc-CSM61b-l.js";
 import { a as ae, i as oe, n as se, r as ce } from "./usePlayerStore-CAcZwoN3.js";
 import { n as le, t as ue } from "./ThumbRating-BcsfUUwy.js";
 import { n as k, r as de, t as fe } from "./useApiBase-DXTBY90j.js";
-import { d as pe, f as me, i as he, l as ge, o as _e, u as ve } from "./shortcuts-CTXhjCfq.js";
+import { d as pe, f as me, i as he, l as ge, o as _e, u as ve } from "./shortcuts-DRu04_zV.js";
 import { t as ye } from "./NetworkHealthIndicator-eD27wpnq.js";
 import { t as be } from "./useToastStore-CxO_ppM8.js";
 import { C as xe, E as Se, S as Ce, T as we, _ as Te, a as Ee, b as De, c as Oe, d as ke, f as Ae, g as je, h as Me, i as Ne, l as Pe, m as Fe, n as Ie, o as Le, p as Re, r as ze, s as Be, t as Ve, u as He, v as Ue, w as We, x as Ge, y as Ke } from "./DeviceSessionsPage-DejFy636.js";
@@ -1363,7 +1363,7 @@ function bo(e) {
 			path: `${t}/player/:id`,
 			name: "player",
 			meta: { fullBleed: !0 },
-			component: () => import("./PlayerPage-6AQZtbu6.js")
+			component: () => import("./PlayerPage-D14B8P3b.js")
 		},
 		{
 			path: `${t}/login`,
@@ -6254,22 +6254,33 @@ var Js = {
 		K(() => {
 			E();
 		}), br(() => {
-			C && clearTimeout(C), p.value?.pause(), l.value && h.value > 0 && ie();
+			C && clearTimeout(C), p.value?.pause(), l.value && h.value > 0 && oe();
 		}), Q(c, () => {
-			C &&= (clearTimeout(C), null), l.value && h.value > 0 && ie(), p.value?.pause(), m.value = !1, h.value = 0, g.value = 0, x.value = 0, l.value = null, u.value = null, E();
-		}), Q(p, (e) => {
-			e && u.value && (e.currentTime = u.value.position_ms / 1e3);
+			C &&= (clearTimeout(C), null), l.value && h.value > 0 && oe(), p.value?.pause(), m.value = !1, h.value = 0, g.value = 0, x.value = 0, l.value = null, u.value = null, D = 0, E();
 		});
-		function D() {
-			p.value && (g.value = p.value.duration, p.value.playbackRate = y.value);
-		}
+		let D = 0;
 		function ee() {
-			p.value && (h.value = p.value.currentTime, ne(), re());
+			let e = p.value;
+			if (!e || D <= 0) return;
+			let t = D;
+			D = 0;
+			try {
+				e.currentTime = t;
+			} catch {}
 		}
+		Q(p, (e) => {
+			e && u.value && (D = u.value.position_ms / 1e3, e.readyState >= 1 && ee());
+		});
 		function te() {
-			m.value = !1, ie();
+			p.value && (g.value = p.value.duration, ee(), p.value.playbackRate = y.value);
 		}
 		function ne() {
+			p.value && (h.value = p.value.currentTime, ie(), ae());
+		}
+		function re() {
+			m.value = !1, oe();
+		}
+		function ie() {
 			if (!l.value?.chapters?.length) return;
 			let e = h.value * 1e3;
 			for (let t = 0; t < l.value.chapters.length; t++) {
@@ -6280,12 +6291,12 @@ var Js = {
 				}
 			}
 		}
-		function re() {
+		function ae() {
 			C && clearTimeout(C), C = setTimeout(() => {
-				C = null, ie();
+				C = null, oe();
 			}, 2e3);
 		}
-		async function ie() {
+		async function oe() {
 			if (!l.value) return;
 			let e = l.value.id, t = [];
 			u.value?.completed_chapters?.length && t.push(...u.value.completed_chapters);
@@ -6299,44 +6310,44 @@ var Js = {
 				await w().post(`/api/v1/audiobooks/${e}/progress`, r);
 			} catch {}
 		}
-		function ae() {
+		function se() {
 			p.value && (m.value ? (p.value.pause(), m.value = !1) : p.value.play().then(() => {
 				m.value = !0;
 			}).catch(() => {
 				m.value = !1;
 			}));
 		}
-		function oe(e) {
+		function ce(e) {
 			p.value && (p.value.currentTime = Math.max(0, Math.min(g.value, p.value.currentTime + e)));
 		}
-		function se(e) {
+		function le(e) {
 			p.value && (p.value.currentTime = e, h.value = e);
 		}
-		function ce(e) {
+		function ue(e) {
 			let t = Number(e.target.value) / 100;
 			v.value = Math.max(0, Math.min(1, t)), p.value && (p.value.volume = v.value);
 		}
-		function le() {
+		function fe() {
 			let e = (S.indexOf(y.value) + 1) % S.length;
 			y.value = S[e], p.value && (p.value.playbackRate = y.value);
 		}
-		function ue(e) {
+		function pe(e) {
 			if (!l.value?.chapters?.[e]) return;
 			let t = l.value.chapters[e];
 			x.value = e, p.value && (p.value.currentTime = t.start_ms / 1e3);
 		}
-		function fe() {
+		function me() {
 			l.value ? n.push({
 				name: "audiobook-detail",
 				params: { id: l.value.id }
 			}) : n.push({ name: "audiobooks" });
 		}
-		function pe(e) {
+		function he(e) {
 			if (!isFinite(e) || e < 0) return "0:00";
 			let t = Math.floor(e / 3600), n = Math.floor(e % 3600 / 60), r = Math.floor(e % 60);
 			return t > 0 ? `${t}:${n.toString().padStart(2, "0")}:${r.toString().padStart(2, "0")}` : `${n}:${r.toString().padStart(2, "0")}`;
 		}
-		let me = L(() => l.value?.chapters?.length ? l.value.chapters[x.value] ?? null : null), he = L(() => (l.value?.chapters ?? []).map((e) => ({
+		let ye = L(() => l.value?.chapters?.length ? l.value.chapters[x.value] ?? null : null), be = L(() => (l.value?.chapters ?? []).map((e) => ({
 			start: e.start_ms / 1e3,
 			end: e.end_ms / 1e3,
 			title: e.title || void 0
@@ -6348,14 +6359,14 @@ var Js = {
 				ref: p,
 				src: T(),
 				preload: "metadata",
-				onLoadedmetadata: D,
-				onTimeupdate: ee,
-				onEnded: te
+				onLoadedmetadata: te,
+				onTimeupdate: ne,
+				onEnded: re
 			}, null, 40, tg)) : z("", !0),
 			V("header", ng, [V("button", {
 				type: "button",
 				class: "player-header__back",
-				onClick: fe
+				onClick: me
 			}, [U(b, { name: "arrow-left" }), V("span", null, X(Z(s)("player.backToAudiobook")), 1)]), V("div", rg, X(l.value?.name ?? ""), 1)]),
 			d.value ? (q(), B("div", ig, [U(P, { class: "player-loading__cover" }), V("div", ag, [U(P, { class: "player-loading__title" }), U(P, { class: "player-loading__author" })])])) : f.value ? (q(), B("div", og, [U(b, {
 				name: "alert-circle",
@@ -6373,25 +6384,25 @@ var Js = {
 				V("div", pg, [
 					V("h1", mg, X(l.value.name), 1),
 					l.value.metadata?.author ? (q(), B("p", hg, X(Z(s)("player.byAuthor", { author: l.value.metadata.author })), 1)) : z("", !0),
-					me.value ? (q(), B("p", gg, X(me.value.title || Z(s)("player.chapterNumber", { number: x.value + 1 })), 1)) : z("", !0)
+					ye.value ? (q(), B("p", gg, X(ye.value.title || Z(s)("player.chapterNumber", { number: x.value + 1 })), 1)) : z("", !0)
 				]),
 				V("div", _g, [U(_e, {
 					class: "player-progress__scrubber",
 					position: h.value,
 					duration: g.value,
-					chapters: he.value,
-					onSeek: se
+					chapters: be.value,
+					onSeek: le
 				}, null, 8, [
 					"position",
 					"duration",
 					"chapters"
-				]), V("div", vg, [V("span", null, X(pe(h.value)), 1), V("span", null, X(pe(g.value)), 1)])]),
+				]), V("div", vg, [V("span", null, X(he(h.value)), 1), V("span", null, X(he(g.value)), 1)])]),
 				V("div", yg, [
 					V("button", {
 						type: "button",
 						class: "control-btn",
 						title: Z(s)("player.skipBack30"),
-						onClick: t[0] ||= (e) => oe(-30)
+						onClick: t[0] ||= (e) => ce(-30)
 					}, [U(b, {
 						name: "rewind",
 						class: "control-btn__icon"
@@ -6400,7 +6411,7 @@ var Js = {
 						type: "button",
 						class: "control-btn control-btn--play",
 						"aria-label": m.value ? Z(s)("player.pause") : Z(s)("player.play"),
-						onClick: ae
+						onClick: se
 					}, [U(b, {
 						name: m.value ? "pause" : "play",
 						class: "control-btn__icon control-btn__icon--lg"
@@ -6409,7 +6420,7 @@ var Js = {
 						type: "button",
 						class: "control-btn",
 						title: Z(s)("player.skipForward30"),
-						onClick: t[1] ||= (e) => oe(30)
+						onClick: t[1] ||= (e) => ce(30)
 					}, [U(b, {
 						name: "forward",
 						class: "control-btn__icon"
@@ -6419,7 +6430,7 @@ var Js = {
 					type: "button",
 					class: "extra-btn",
 					"aria-label": Z(s)("player.playbackSpeedValue", { speed: y.value }),
-					onClick: le
+					onClick: fe
 				}, X(y.value) + "x ", 9, wg), V("div", Tg, [U(b, {
 					name: "volume",
 					class: "volume-icon"
@@ -6430,21 +6441,21 @@ var Js = {
 					max: "100",
 					value: v.value * 100,
 					"aria-label": Z(s)("player.volume"),
-					onInput: ce
+					onInput: ue
 				}, null, 40, Eg)])])
 			]), V("aside", Dg, [V("h3", Og, X(Z(s)("player.chapters")), 1), V("div", kg, [(q(!0), B(I, null, Y(l.value.chapters, (e, t) => (q(), B("button", {
 				key: e.index,
 				type: "button",
 				class: G(["chapter-item", { "is-active": t === x.value }]),
-				onClick: (e) => ue(t)
+				onClick: (e) => pe(t)
 			}, [
 				V("span", jg, X(t + 1), 1),
 				V("span", Mg, X(e.title || Z(s)("player.chapterNumber", { number: t + 1 })), 1),
-				V("span", Ng, X(pe((e.end_ms - e.start_ms) / 1e3)), 1)
+				V("span", Ng, X(he((e.end_ms - e.start_ms) / 1e3)), 1)
 			], 10, Ag))), 128))])])])])) : z("", !0)
 		]));
 	}
-}), [["__scopeId", "data-v-a06dd0ee"]]), Fg = new class {
+}), [["__scopeId", "data-v-dfef1e7e"]]), Fg = new class {
 	client(e) {
 		return new Tt({ baseUrl: e });
 	}

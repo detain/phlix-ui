@@ -202,8 +202,18 @@ function loadPersistedBandwidth(): number {
   }
 }
 
-/** Persist the given bandwidth estimate (bits/sec) to localStorage. */
+/**
+ * Persist the given bandwidth estimate (bits/sec) to localStorage.
+ *
+ * Non-positive / non-finite values are refused (phlix-ui-player-012): a
+ * destroyed or not-yet-probed instance reads 0, and storing raw '0' would
+ * re-seed the next attach at the clamp floor instead of keeping the last
+ * good estimate.
+ */
 function persistBandwidth(bw: number): void {
+  if (!Number.isFinite(bw) || bw <= 0) {
+    return;
+  }
   try {
     localStorage.setItem(BW_EST_KEY, String(bw));
   } catch {
@@ -253,17 +263,31 @@ export function codecStringCarriesAudio(codecs: string | undefined): boolean {
  * @returns A handle whose `destroy()` detaches and stops loading.
  */
 
-/** Tracks the active hls.js instance for bandwidth persistence across sessions. */
-let _activeHls: import('hls.js').default | null = null;
+/**
+ * Per-session persistence slots (phlix-ui-player-012).
+ *
+ * One attach = one slot: the hls instance and ITS interval, registered in a
+ * module-wide Set. Overlapping players (e.g. a full Player plus the
+ * MiniPlayer) each own a slot, so one handle's destroy() can never clear
+ * another's interval or blank its registration. The tick is identity-guarded:
+ * it persists only while its slot is still registered, so a released /
+ * destroyed instance can never write its post-destroy 0 estimate (the raw '0'
+ * that a later attach would clamp into a 100 Kbps ABR seed).
+ */
+interface HlsPersistenceSlot {
+  readonly hls: import('hls.js').default;
+  interval: ReturnType<typeof setInterval> | null;
+}
 
-/** Tracks the periodic bandwidth-persist interval id. */
-let _persistInterval: ReturnType<typeof setInterval> | null = null;
+/** All live persistence slots (attach registers; every release path removes). */
+const _persistenceSlots = new Set<HlsPersistenceSlot>();
 
-/** Saves the current bandwidth estimate to localStorage. */
-function _saveBandwidth(): void {
-  if (_activeHls) {
-    persistBandwidth(_activeHls.bandwidthEstimate);
+/** Saves a session's bandwidth estimate — only while its slot is registered. */
+function _saveBandwidth(slot: HlsPersistenceSlot): void {
+  if (!_persistenceSlots.has(slot)) {
+    return;
   }
+  persistBandwidth(slot.hls.bandwidthEstimate);
 }
 
 export async function attachHls(
@@ -276,14 +300,37 @@ export async function attachHls(
   // control, but where MSE is unavailable native is the only option.
   // Skip the 641 KB hls.js download when the browser has native HLS but no MSE.
   if (typeof MediaSource === 'undefined' && isNativeHlsSupported(video)) {
-    const onLoaded = (): void => opts.onReady?.();
+    // phlix-ui-player-043: Safari can drop a currentTime write made before the
+    // element has metadata, so the resume seek is PARKED and applied once at
+    // 'loadedmetadata'. Cached/immediate metadata may never deliver the event
+    // — the readyState guard below applies it at attach for that race.
+    let pendingSeekSec = opts.startPosition && opts.startPosition > 0 ? opts.startPosition : 0;
+    const applyPendingSeek = (): void => {
+      if (pendingSeekSec <= 0) {
+        return;
+      }
+      const at = pendingSeekSec;
+      pendingSeekSec = 0; // one-shot: a late/duplicate metadata pass never clobbers
+      try {
+        video.currentTime = at;
+      } catch {
+        /* element refused the seek */
+      }
+    };
+    const onLoaded = (): void => {
+      applyPendingSeek();
+      opts.onReady?.();
+    };
     const onErr = (): void => opts.onError?.('native hls error');
     video.addEventListener('loadedmetadata', onLoaded);
     video.addEventListener('error', onErr);
     video.src = url;
-    if (opts.startPosition) video.currentTime = opts.startPosition;
+    if (video.readyState >= 1) {
+      applyPendingSeek();
+    }
     return {
       destroy(): void {
+        pendingSeekSec = 0; // a destroyed handle never seeks (phlix-ui-player-043)
         video.removeEventListener('loadedmetadata', onLoaded);
         video.removeEventListener('error', onErr);
         video.removeAttribute('src');
@@ -371,10 +418,38 @@ export async function attachHls(
       },
     });
 
+    // Per-session persistence slot (phlix-ui-player-012): registered from
+    // creation until released through THE single teardown path below. The
+    // interval callback identity-checks the slot every tick, so a released
+    // session can never persist its (post-destroy) estimate.
+    const slot: HlsPersistenceSlot = { hls, interval: null };
+    _persistenceSlots.add(slot);
+    slot.interval = setInterval(() => _saveBandwidth(slot), 30_000);
+
+    // THE single release path (explicit destroy() AND fatal-error routing):
+    // persist the LIVE estimate, deregister the slot, clear its interval —
+    // all before hls.destroy() zeroes the instance. The finding convicted the
+    // fatal path skipping this: the zombie tick wrote the destroyed instance's
+    // 0 and the next attach clamped that '0' into a 100 Kbps ABR seed.
+    // Idempotent: the has-check de-doubles a re-fired error event.
+    function releaseSession(): void {
+      if (!_persistenceSlots.has(slot)) {
+        return;
+      }
+      persistBandwidth(hls.bandwidthEstimate);
+      _persistenceSlots.delete(slot);
+      if (slot.interval !== null) {
+        clearInterval(slot.interval);
+      }
+    }
+
     hls.on(Hls.Events.MANIFEST_PARSED, () => opts.onReady?.());
     hls.on(Hls.Events.ERROR, (_event: unknown, data: { fatal?: boolean; details?: string }) => {
       if (data?.fatal) {
         opts.onError?.(data.details ?? 'fatal hls error');
+        // Route through the same release as destroy() (phlix-ui-player-012):
+        // the interval and registration must never outlive the instance.
+        releaseSession();
         hls.destroy();
       }
     });
@@ -386,23 +461,15 @@ export async function attachHls(
       for (const notify of [...levelLoadedListeners]) notify();
     });
 
-    // Track the instance and set up periodic bandwidth persistence so the
-    // estimate survives even if the tab is closed without an explicit destroy.
-    _activeHls = hls;
-    if (_persistInterval !== null) clearInterval(_persistInterval);
-    _persistInterval = setInterval(_saveBandwidth, 30_000);
     hls.loadSource(url);
     hls.attachMedia(video);
 
     return {
       destroy(): void {
-        // Persist the final bandwidth estimate before tearing down.
-        persistBandwidth(hls.bandwidthEstimate);
-        if (_persistInterval !== null) {
-          clearInterval(_persistInterval);
-          _persistInterval = null;
-        }
-        _activeHls = null;
+        // Single release path: persists the live estimate (read BEFORE
+        // hls.destroy()), deregisters the slot, clears its interval
+        // (phlix-ui-player-012). Safe to call twice.
+        releaseSession();
         try {
           hls.destroy();
         } catch {

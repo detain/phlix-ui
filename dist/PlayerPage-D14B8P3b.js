@@ -5,7 +5,7 @@ import { r as s, t as c } from "./useImageSrc-CSM61b-l.js";
 import { n as l } from "./media-query-D7hrCu8r.js";
 import { a as u, t as d } from "./usePlayerStore-CAcZwoN3.js";
 import { n as f, t as p } from "./ThumbRating-BcsfUUwy.js";
-import { a as m, c as h, d as g, f as _, l as v, n as y, o as b, r as x, s as S, t as C, u as ee } from "./shortcuts-CTXhjCfq.js";
+import { a as m, c as h, d as g, f as _, l as v, n as y, o as b, r as x, s as S, t as C, u as ee } from "./shortcuts-DRu04_zV.js";
 import { a as w } from "./usePreferencesStore-BXm_CP7M.js";
 import { t as te } from "./useToastStore-CxO_ppM8.js";
 import { n as T, t as E } from "./Icon-55iG1rR7.js";
@@ -3567,4 +3567,4 @@ var Ga = { class: "player-page__stage" }, Ka = {
 }), [["__scopeId", "data-v-3ae2a661"]]);
 export { Ja as default };
 
-//# sourceMappingURL=PlayerPage-6AQZtbu6.js.map
+//# sourceMappingURL=PlayerPage-D14B8P3b.js.map
