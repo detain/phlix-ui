@@ -21,6 +21,7 @@
  */
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useSyncPlayStore, SYNC_DRIFT_THRESHOLD_SECONDS } from '../stores/useSyncPlayStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { UseResumeReporter } from '../composables/useResumeReporter';
 import Icon from './Icon.vue';
@@ -39,6 +40,11 @@ const { imgSrc } = useImageSrc();
 const emit = defineEmits<{ (e: 'expand', id: string): void }>();
 
 const player = usePlayerStore();
+// S-ui-player-05 (phlix-ui-player-007): the dock is a LIVE SyncPlay surface.
+// Room membership and the 5s report timer survive a Player unmount behind the
+// dock; the dock must feed the position (else the group broadcasts a frozen
+// anchor) and apply inbound play/pause/seek (else remote commands die unseen).
+const syncPlay = useSyncPlayStore();
 const { t } = useMessages();
 const videoRef = ref<HTMLVideoElement | null>(null);
 const hlsHandle = ref<HlsHandle | null>(null);
@@ -80,6 +86,36 @@ const visible = computed(() => player.miniPlayer && !!player.current && (!!playe
 const title = computed(() => player.current?.name ?? '');
 const progressPct = computed(() => Math.max(0, Math.min(1, player.progress)));
 
+// S-ui-player-05 (phlix-ui-player-007): inbound commands reach the dock.
+// Mirrors Player.vue's session watcher — apply state, feed the position, and
+// drift-correct onto the committed anchor. Gated on `visible`: while the full
+// Player is mounted it owns the element (PlayerPage shows one surface at a
+// time); the dock's copy would be a second pair of hands on the same media.
+watch(
+  () => syncPlay.currentSession,
+  (session) => {
+    if (!visible.value) return;
+    if (!session) return;
+    const v = videoRef.value;
+    if (!v) return;
+    if (session.state === 'playing') {
+      void v.play()?.catch(() => {});
+      player.play();
+    } else if (session.state === 'paused') {
+      v.pause();
+      player.pause();
+    }
+    syncPlay.updateLocalPosition(v.currentTime);
+    // driftAmount is 0 for paused/waiting (the store's law), so this only moves
+    // the element when a playing group and this element genuinely disagree.
+    if (Math.abs(syncPlay.driftAmount) > SYNC_DRIFT_THRESHOLD_SECONDS) {
+      const target = Math.min(v.duration || session.playbackPosition, Math.max(0, session.playbackPosition));
+      v.currentTime = target;
+      player.updateProgress(target, v.duration || player.duration);
+    }
+  },
+);
+
 function onLoadedMetadata(): void {
   const v = videoRef.value;
   if (!v) return;
@@ -92,13 +128,22 @@ function onLoadedMetadata(): void {
 }
 function onPlay(): void {
   player.play();
+  // S-ui-player-05 (phlix-ui-player-008, dock arm): echo-suppressed broadcast —
+  // inert unless the group's committed state disagrees with this element.
+  syncPlay.notifyTransportCommand('', 'play');
 }
 function onPause(): void {
   player.pause();
+  syncPlay.notifyTransportCommand('', 'pause');
 }
 function onTimeUpdate(): void {
   const v = videoRef.value;
-  if (v) player.updateProgress(v.currentTime, v.duration);
+  if (!v) return;
+  player.updateProgress(v.currentTime, v.duration);
+  // S-ui-player-05 (phlix-ui-player-007): the report feed. Without this the
+  // still-running timer kept broadcasting the position the Player had when it
+  // unmounted — the room watched a statue.
+  if (syncPlay.isInRoom) syncPlay.updateLocalPosition(v.currentTime);
 }
 /** End of playback in the dock — tell the server this item finished so it leaves
  *  continue-watching (S30). Reuses the SAME shell reporter (and its live session)

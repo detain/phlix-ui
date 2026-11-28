@@ -12,6 +12,25 @@ import type { PendingPlayMediaCommand } from '../api/hubRelay';
 /** Drift threshold in seconds beyond which we mark out-of-sync and seek. */
 export declare const SYNC_DRIFT_THRESHOLD_SECONDS = 2;
 /**
+ * S-ui-player-05 — how close a seek echo may land to the committed group anchor
+ * before it counts as a real position change. The echo returns the position we
+ * just sent (ms-quantized), so genuine redundancy sits within milliseconds; a
+ * deliberate second-scale seek is always further. Half a second absorbs the
+ * scale round-trip without muting anything a member actually did.
+ */
+export declare const SYNC_ECHO_TOLERANCE_SECONDS = 0.5;
+/**
+ * S-ui-player-05 — the pure echo-suppression guard. A transport event (an
+ * element `@play`/`@pause`, a shortcut seek) is only worth broadcasting when it
+ * would CHANGE the group's committed state; because `sendCommand` now commits
+ * the sender's own intent, the server's verbatim echo and the local reactions
+ * to it are, by construction, no-ops here. `null` session is inert in the
+ * store's arms (`isInRoom` guards decide that before this runs) — returning
+ * `true` keeps the guard itself side-effect-free and honest as a pure function.
+ * `'sync'` is an inbound-only shape: it is never broadcast from here.
+ */
+export declare function shouldBroadcastSyncPlayCommand(session: Pick<SyncPlaySession, 'state' | 'playbackPosition'> | null, type: SyncPlayPlaybackCommand['type'], position?: number): boolean;
+/**
  * How often, in milliseconds, this client reports its playback position to the
  * group over the SyncPlay WebSocket.
  *
@@ -248,6 +267,9 @@ export declare const useSyncPlayStore: import("pinia").SetupStoreDefinition<"phl
     sendCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
         position?: number;
         rate?: number;
+    }) => void;
+    notifyTransportCommand: (_apiBase: string, type: SyncPlayPlaybackCommand["type"], options?: {
+        position?: number;
     }) => void;
     refreshState: (apiBase: string) => Promise<void>;
     refreshMembers: (apiBase: string) => Promise<void>;

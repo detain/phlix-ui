@@ -729,8 +729,17 @@ function evaluateForCurrentMedia(): void {
 function seekTo(seconds: number): void {
   const v = videoRef.value;
   if (!v) return;
-  if (v.duration && v.duration > 0) v.currentTime = Math.min(v.duration, Math.max(0, seconds));
-  else pendingSeek = Math.max(0, seconds); // duration unknown — defer to loadedmetadata
+  // S-ui-player-05 (phlix-ui-player-008): transport routed through the STORE so
+  // the room hears it even while this component is unmounted behind the dock.
+  // Intent-level broadcast: the drift-correcting call sites seek TO the committed
+  // group anchor, so shouldBroadcastSyncPlayCommand suppresses them; genuine
+  // command-bus/resume seeks move the anchor and pass the guard.
+  const target = v.duration && v.duration > 0
+    ? Math.min(v.duration, Math.max(0, seconds))
+    : Math.max(0, seconds);
+  if (v.duration && v.duration > 0) v.currentTime = target;
+  else pendingSeek = target; // duration unknown — defer to loadedmetadata
+  syncPlay.notifyTransportCommand('', 'seek', { position: target });
 }
 function resumePlayback(): void {
   seekTo(resumeSeconds.value);
@@ -1318,11 +1327,16 @@ function onPlay(): void {
   // started-but-never-advancing stall. onTimeUpdate cancels this the moment real
   // frames move, so a healthy start never fires the fallback leg.
   armPlaybackFallbackWatch();
+  // S-ui-player-05 (phlix-ui-player-008): tell the room. Echo-safe — after the
+  // session commits 'playing' (inbound command or our own send), this is inert.
+  syncPlay.notifyTransportCommand('', 'play');
 }
 function onPause(): void {
   player.pause();
   player.setMediaPositionState();
   buffering.value = false; // an explicit pause is not "buffering"
+  // S-ui-player-05 (phlix-ui-player-008): see onPlay — echo-suppressed broadcast.
+  syncPlay.notifyTransportCommand('', 'pause');
 }
 /** webux M1: buffer ran dry (`waiting`) or data stopped arriving (`stalled`). */
 function onWaiting(): void {
@@ -1404,7 +1418,14 @@ function onDurationChange(): void {
 /** Seek to an absolute time (seconds) — driven by the Scrubber. */
 function onSeek(seconds: number): void {
   const v = videoRef.value;
-  if (v && player.duration > 0) v.currentTime = Math.min(player.duration, Math.max(0, seconds));
+  if (v && player.duration > 0) {
+    const target = Math.min(player.duration, Math.max(0, seconds));
+    v.currentTime = target;
+    // S-ui-player-05 (phlix-ui-player-008): scrubber/J-L/skip/remote seeks
+    // broadcast. The SyncPlayControls @seek arm already committed the same
+    // intent via sendCommand — the guard mutes that redundant re-send.
+    syncPlay.notifyTransportCommand('', 'seek', { position: target });
+  }
 }
 /** The center-cluster (and keyboard J/L) relative-skip step, in seconds (AD-14). */
 const CENTER_SKIP_SECONDS = 10;
@@ -1856,6 +1877,11 @@ watch(
       emit('pending-media', command.mediaId, command.title);
     }
   },
+  // S-ui-player-05 (phlix-ui-player-007): `immediate` so a Player REMOUNT
+  // consumes a command the dock era left in the slot. Membership survives
+  // unmount; a default watch never fires for an already-set value, so the
+  // queued play sat in the store forever with nothing listening.
+  { immediate: true },
 );
 onBeforeUnmount(() => {
   // S506 — flush the final playback position on teardown (route-leave / quit) so the

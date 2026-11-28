@@ -3986,3 +3986,104 @@ describe('Player — synthesized Original audio entry (L2)', () => {
     expect(radios[0].text()).not.toBe('Original');
   });
 });
+
+// ── S-ui-player-05 — Player-local transport drives the room (phlix-ui-player-008) ──
+// togglePlay/@play/@pause/seek shortcuts used to move ONLY the local element;
+// remote members watched a member who was visibly in control yet silent on the
+// wire. While in a room, every transport event now goes through
+// useSyncPlayStore.notifyTransportCommand (echo-suppressed broadcast; the pure
+// guard + wire matrix are pinned store-side in useSyncPlayStore.actions.test.ts).
+// jsdom never auto-fires media events from programmatic play()/pause(), so the
+// user paths are exercised with explicit dispatches, mirroring the S264 feed
+// tests above. With no realtime socket, a BROADCAST ATTEMPT is observable as the
+// delivery error sendCommand records — silence there means deaf-to-the-room.
+describe('Player — SyncPlay transport broadcast (S-ui-player-05)', () => {
+  function sess(over: Partial<{ state: 'playing' | 'paused' | 'waiting'; playbackPosition: number }>): SyncPlaySession {
+    return {
+      id: 'sess-1',
+      roomId: 'room-1',
+      createdBy: 'user-1',
+      createdAt: '2026-07-12T00:00:00Z',
+      state: over.state ?? 'playing',
+      currentMediaId: null,
+      playbackPosition: over.playbackPosition ?? 100,
+      playbackRate: 1,
+      serverTime: 0,
+      lastSync: '2026-07-12T00:00:00Z',
+      activeUsers: [],
+      roles: {},
+    } as unknown as SyncPlaySession;
+  }
+
+  it('a user-initiated PLAY while in a room broadcasts to the group (attempt observable)', async () => {
+    const { video } = mountPlayer();
+    const syncPlay = useSyncPlayStore();
+    syncPlay.currentSession = sess({ state: 'paused' });
+
+    video.dispatchEvent(new Event('play'));
+    await nextTick();
+
+    expect(syncPlay.error).toBe('Couldn’t deliver the SyncPlay command to the group.');
+  });
+
+  it('a user-initiated PAUSE while in a room broadcasts to the group', async () => {
+    const { video } = mountPlayer();
+    const syncPlay = useSyncPlayStore();
+    syncPlay.currentSession = sess({ state: 'playing' });
+
+    video.dispatchEvent(new Event('pause'));
+    await nextTick();
+
+    expect(syncPlay.error).toBe('Couldn’t deliver the SyncPlay command to the group.');
+  });
+
+  it('CONTROL — transport events outside any room are purely local (no attempt, no error)', async () => {
+    const { video } = mountPlayer();
+    const syncPlay = useSyncPlayStore();
+    expect(syncPlay.isInRoom).toBe(false);
+
+    video.dispatchEvent(new Event('play'));
+    video.dispatchEvent(new Event('pause'));
+    await nextTick();
+
+    expect(syncPlay.error).toBeNull();
+  });
+
+  it('an inbound command commits the session BEFORE the reacting event re-enters — echo suppressed (preservation pair of the broadcast pins)', async () => {
+    const { video } = mountPlayer();
+    const syncPlay = useSyncPlayStore();
+    syncPlay.currentSession = sess({ state: 'playing' });
+
+    // Remote pause: the store commits 'paused'; the element event that follows
+    // must NOT attempt a redundant broadcast back at the group.
+    syncPlay.onRemoteStateUpdate({ type: 'pause', issuedBy: 'other', issuedAt: '2026-07-12T00:00:00Z' } as SyncPlayPlaybackCommand);
+    await nextTick();
+    expect(syncPlay.currentSession!.state).toBe('paused');
+
+    video.dispatchEvent(new Event('pause')); // the @pause echo path
+    await nextTick();
+
+    expect(syncPlay.error, 'suppressed by the committed-state guard — never attempted').toBeNull();
+  });
+
+  it('consumes a pending play command that was staged while Player was unmounted (phlix-ui-player-007 remount path)', async () => {
+    // The dock era left a pendingPlayMedia in the slot; a DEFAULT watch never
+    // fires for an already-set value, so before the cure the command sat there
+    // forever even though the store still says the member is in the room.
+    const syncPlay = useSyncPlayStore();
+    syncPlay.applyPendingPlayMedia({
+      type: 'pending_command',
+      command: 'play_media',
+      serverId: 'srv-1',
+      mediaId: 'media-remount-1',
+      title: 'Interstellar',
+      issuedAt: 1_700_000_000,
+      source: 'alexa',
+    });
+
+    const { w } = mountPlayer();
+    await nextTick();
+
+    expect(w.emitted('pending-media')).toEqual([['media-remount-1', 'Interstellar']]);
+  });
+});

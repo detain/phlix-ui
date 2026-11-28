@@ -1,7 +1,8 @@
 import { t as e } from "./useMessages-Bgh_YqAN.js";
-import { n as t, t as n } from "./SyncPlayModal-COfOFk2C.js";
-import { t as r } from "./useToastStore-CxO_ppM8.js";
-import { n as i } from "./useApiBase-DXTBY90j.js";
+import { t } from "./useSyncPlayStore-D6WbhQzu.js";
+import { t as n } from "./useToastStore-CxO_ppM8.js";
+import { n as r } from "./useApiBase-DXTBY90j.js";
+import { t as i } from "./SyncPlayModal-Z0a8A23A.js";
 import { t as a } from "./Button-DTiNkl61.js";
 import { t as o } from "./ConfirmDialog-Btb1Kbgk.js";
 import { n as s, t as c } from "./Icon-55iG1rR7.js";
@@ -28,7 +29,7 @@ var C = { class: "syncplay-page" }, w = { class: "syncplay-page__header" }, T = 
 }, U = { class: "syncplay-page__empty-text" }, W = { class: "syncplay-page__empty-hint" }, G = { class: "syncplay-page__empty-actions" }, K = /*#__PURE__*/ s(/* @__PURE__ */ m({
 	__name: "SyncPlayPage",
 	setup(s) {
-		let { t: m } = e(), K = t(), q = r(), J = i(), Y = x(), oe = S(), X = g(!1), Z = g(void 0), Q = g(!1), se = l(() => K.currentRoom ? m("syncplay.leaveConfirm", { name: K.currentRoom.name }) : m("syncplay.leaveRoom")), $ = l(() => J.value);
+		let { t: m } = e(), K = t(), q = n(), J = r(), Y = x(), oe = S(), X = g(!1), Z = g(void 0), Q = g(!1), se = l(() => K.currentRoom ? m("syncplay.leaveConfirm", { name: K.currentRoom.name }) : m("syncplay.leaveRoom")), $ = l(() => J.value);
 		function ce(e) {
 			switch (e) {
 				case "owner": return m("syncplay.roleOwner");
@@ -137,7 +138,7 @@ var C = { class: "syncplay-page" }, w = { class: "syncplay-page__header" }, T = 
 					_: 1
 				})])
 			])),
-			p(n, {
+			p(i, {
 				modelValue: X.value,
 				"onUpdate:modelValue": t[4] ||= (e) => X.value = e,
 				"prefilled-room-id": Z.value,
@@ -160,4 +161,4 @@ var C = { class: "syncplay-page" }, w = { class: "syncplay-page__header" }, T = 
 }), [["__scopeId", "data-v-d14e7072"]]);
 export { K as default };
 
-//# sourceMappingURL=SyncPlayPage-BH-KJYlo.js.map
+//# sourceMappingURL=SyncPlayPage-DZJt69WH.js.map

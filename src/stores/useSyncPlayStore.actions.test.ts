@@ -17,7 +17,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useSyncPlayStore, SyncPlayCommandNotDeliveredError } from './useSyncPlayStore';
+import { useSyncPlayStore, SyncPlayCommandNotDeliveredError, shouldBroadcastSyncPlayCommand, SYNC_ECHO_TOLERANCE_SECONDS } from './useSyncPlayStore';
 import { closeSyncPlayConnection, sendSyncPlayCommand, setSyncPlayLogger } from '../api/syncplay';
 import { makeSyncPlayServer, type FakeSyncPlayServer } from '../api/test/syncplayServer';
 import type { SyncPlaySession, SyncPlayUser, SyncPlayPlaybackCommand } from '../types/syncplay';
@@ -527,25 +527,7 @@ describe('useSyncPlayStore — error paths', () => {
 // ── sendCommand ───────────────────────────────────────────────────────────────
 
 describe('useSyncPlayStore.sendCommand', () => {
-    /** Join, then let the server confirm the group so the client will emit. */
-    async function joinedAndInGroup(): Promise<ReturnType<typeof useSyncPlayStore>> {
-        const store = useSyncPlayStore();
-        await store.joinRoom(BASE, GROUP_ID);
-        socket().deliver({
-            type: 'syncplay_group_state',
-            group: {
-                group_id: GROUP_ID,
-                group_name: 'Movie Night',
-                members: [{ id: 'm1', name: 'Me', joined_at: 1_700_000_000 }],
-                member_count: 1,
-                host_id: 'm1',
-                playback_position: 0,
-            },
-        });
-        socket().sent.length = 0;
-        return store;
-    }
-
+    // (joinedRoom05 — module-level below the S-ui-player-05 heading)
     it('sends nothing when there is no session', () => {
         const store = useSyncPlayStore();
         // M-UI-12 law: the no-session arm is the "room vanished" early exit —
@@ -558,7 +540,7 @@ describe('useSyncPlayStore.sendCommand', () => {
     });
 
     it('puts a play frame on the wire', async () => {
-        const store = await joinedAndInGroup();
+        const store = await joinedRoom05();
         store.sendCommand(BASE, 'play', { position: 12 });
 
         const frames = socket().sent.map((raw) => JSON.parse(raw) as Record<string, unknown>);
@@ -568,7 +550,7 @@ describe('useSyncPlayStore.sendCommand', () => {
     });
 
     it('puts a seek frame on the wire with the target position', async () => {
-        const store = await joinedAndInGroup();
+        const store = await joinedRoom05();
         store.sendCommand(BASE, 'seek', { position: 900 });
 
         const frames = socket().sent.map((raw) => JSON.parse(raw) as Record<string, unknown>);
@@ -585,7 +567,7 @@ describe('useSyncPlayStore.sendCommand', () => {
      * value is never 0 and never reads the same in both units.
      */
     it('S293 — the seek frame carries MILLISECONDS in to_position, not seconds', async () => {
-        const store = await joinedAndInGroup();
+        const store = await joinedRoom05();
         store.sendCommand(BASE, 'seek', { position: 123.25 });
 
         const frames = socket().sent.map((raw) => JSON.parse(raw) as Record<string, unknown>);
@@ -594,7 +576,7 @@ describe('useSyncPlayStore.sendCommand', () => {
     });
 
     it('stamps the command with the session creator, not a placeholder', async () => {
-        const store = await joinedAndInGroup();
+        const store = await joinedRoom05();
         expect(store.currentSession!.createdBy).toBe('m1');
         store.sendCommand(BASE, 'pause', { position: 1 });
         expect(socket().sent).toHaveLength(1);
@@ -610,7 +592,7 @@ describe('useSyncPlayStore.sendCommand', () => {
      * plus a record on its honest `error` channel.
      */
     it('throws SyncPlayCommandNotDeliveredError when the socket is not OPEN', async () => {
-        const store = await joinedAndInGroup();
+        const store = await joinedRoom05();
         socket().close(); // readyState 3 — the guard tripwire in api/syncplay.ts
         socket().sent.length = 0;
 
@@ -620,7 +602,7 @@ describe('useSyncPlayStore.sendCommand', () => {
     });
 
     it('the throw carries the command type, not a placeholder string', async () => {
-        const store = await joinedAndInGroup();
+        const store = await joinedRoom05();
         socket().close();
         try {
             store.sendCommand(BASE, 'seek', { position: 42 });
@@ -632,7 +614,7 @@ describe('useSyncPlayStore.sendCommand', () => {
     });
 
     it('a delivered command leaves the error channel untouched', async () => {
-        const store = await joinedAndInGroup();
+        const store = await joinedRoom05();
         store.sendCommand(BASE, 'play', { position: 5 });
         expect(store.error).toBeNull();
     });
@@ -933,5 +915,155 @@ describe('phlix-ui-player-037 — leaveRoom clears the local playback residue', 
 
         await store.leaveRoom(BASE);
         expect(store.pendingPlayMedia).toBeNull();
+    });
+});
+
+// ── S-ui-player-05 — echo-suppressed, store-owned transport ──────────────────
+
+/** S-ui-player-05 twin of the sendCommand-suite local helper (describe-scoped there). */
+async function joinedRoom05(): Promise<ReturnType<typeof useSyncPlayStore>> {
+    const store = useSyncPlayStore();
+    await store.joinRoom(BASE, GROUP_ID);
+    socket().deliver({
+        type: 'syncplay_group_state',
+        group: {
+            group_id: GROUP_ID,
+            group_name: 'Movie Night',
+            members: [{ id: 'm1', name: 'Me', joined_at: 1_700_000_000 }],
+            member_count: 1,
+            host_id: 'm1',
+            playback_position: 0,
+        },
+    });
+    socket().sent.length = 0;
+    return store;
+}
+
+// phlix-ui-player-007/008: Player-local transport must drive the room through the
+// STORE (so an unmounted Player behind the dock keeps broadcasting), and the
+// sender must COMMIT its own intent on a successful send so the server's verbatim
+// echo (SPEC.md: play/pause/seek echo FALLBACK) is recognised as redundant and
+// never re-broadcast. The guard is the pure shouldBroadcastSyncPlayCommand;
+// sendCommand commits through the same applier the inbound path uses.
+
+describe('S-ui-player-05 — shouldBroadcastSyncPlayCommand (pure echo guard)', () => {
+    const playing = { state: 'playing' as const, playbackPosition: 100 };
+    const paused = { state: 'paused' as const, playbackPosition: 100 };
+    const waiting = { state: 'waiting' as const, playbackPosition: 0 };
+
+    it('has no opinion outside a room (the isInRoom arm stays with the caller)', () => {
+        expect(shouldBroadcastSyncPlayCommand(null, 'play')).toBe(true);
+    });
+
+    it('suppresses a play that repeats the committed PLAYING state', () => {
+        expect(shouldBroadcastSyncPlayCommand(playing, 'play')).toBe(false);
+        expect(shouldBroadcastSyncPlayCommand(paused, 'play')).toBe(true);
+        expect(shouldBroadcastSyncPlayCommand(waiting, 'play')).toBe(true);
+    });
+
+    it('suppresses a pause that repeats the committed PAUSED state', () => {
+        expect(shouldBroadcastSyncPlayCommand(paused, 'pause')).toBe(false);
+        expect(shouldBroadcastSyncPlayCommand(playing, 'pause')).toBe(true);
+    });
+
+    it('suppresses a seek that lands within tolerance of the committed position', () => {
+        expect(shouldBroadcastSyncPlayCommand(playing, 'seek', 100)).toBe(false);
+        expect(shouldBroadcastSyncPlayCommand(playing, 'seek', 100 + SYNC_ECHO_TOLERANCE_SECONDS / 2)).toBe(false);
+        expect(shouldBroadcastSyncPlayCommand(playing, 'seek', 140)).toBe(true);
+        expect(shouldBroadcastSyncPlayCommand(playing, 'seek')).toBe(true); // no position = full re-sync
+    });
+
+    it('never broadcasts a sync frame outbound — sync is an inbound-only shape', () => {
+        expect(shouldBroadcastSyncPlayCommand(playing, 'sync', 100)).toBe(false);
+    });
+});
+
+describe('S-ui-player-05 — sendCommand commits its own intent on a delivered send', () => {
+    it('a delivered play advances the LOCAL session state, making the echo redundant', async () => {
+        const store = await joinedRoom05();
+        // Park the group in a known PAUSED state (inbound frames never hit the wire).
+        store.onRemoteStateUpdate(cmd({ type: 'pause' }));
+        expect(store.currentSession!.state).toBe('paused');
+        socket().sent.length = 0;
+
+        store.sendCommand(BASE, 'play');
+
+        expect(socket().sent.length, 'one play frame on the wire').toBe(1);
+        // THE CURE: the sender's own session commits immediately — before any echo
+        // could arrive — so echo-triggered re-applies see the state they caused.
+        expect(store.currentSession!.state).toBe('playing');
+    });
+
+    it('a delivered seek commits SECONDS into the session (never the ms wire scale)', async () => {
+        const store = await joinedRoom05();
+        socket().sent.length = 0;
+
+        store.sendCommand(BASE, 'seek', { position: 900 });
+
+        expect(socket().sent.length).toBe(1); // wire carries 900000 ms (pinned upstream)
+        expect(store.currentSession!.playbackPosition, 'session scale stays seconds').toBe(900);
+    });
+
+    it('a FAILED send commits nothing (no lie to the local session)', async () => {
+        const store = await joinedRoom05();
+        store.onRemoteStateUpdate(cmd({ type: 'pause' }));
+        socket().sent.length = 0;
+        closeSyncPlayConnection(); // next sendSyncPlayCommand returns false
+
+        expect(() => store.sendCommand(BASE, 'play')).toThrow(SyncPlayCommandNotDeliveredError);
+        expect(store.currentSession!.state, 'failed delivery must not mutate the session').toBe('paused');
+        expect(store.error).toBe('Couldn’t deliver the SyncPlay command to the group.');
+    });
+});
+
+describe('S-ui-player-05 — notifyTransportCommand (transport-event entry)', () => {
+    it('is completely inert outside a room — local playback is untouched by sync', async () => {
+        const store = useSyncPlayStore();
+        expect(() => store.notifyTransportCommand(BASE, 'play')).not.toThrow();
+        expect(FakeWebSocket.instances).toHaveLength(0);
+        expect(store.error).toBeNull();
+        expect(store.currentSession).toBeNull();
+    });
+
+    it('broadcasts a genuine user action, then swallows its own echo', async () => {
+        const store = await joinedRoom05();
+        store.onRemoteStateUpdate(cmd({ type: 'pause' }));
+        socket().sent.length = 0;
+
+        store.notifyTransportCommand(BASE, 'play'); // the user hit play on a paused group
+        expect(socket().sent.length).toBe(1);
+
+        // The server echoes the play verbatim; the dock/@play path reacting to it
+        // calls notify again — the committed state now suppresses it.
+        store.onRemoteStateUpdate(cmd({ type: 'play', position: undefined }));
+        store.notifyTransportCommand(BASE, 'play');
+        expect(socket().sent.length, 'echo re-broadcast suppressed').toBe(1);
+    });
+
+    it('a repeated in-tolerance seek does not re-broadcast; a real move does', async () => {
+        const store = await joinedRoom05();
+        socket().sent.length = 0;
+
+        store.notifyTransportCommand(BASE, 'seek', { position: 42.5 });
+        expect(socket().sent.length).toBe(1);
+        store.notifyTransportCommand(BASE, 'seek', { position: 42.5 }); // echo/repeat
+        expect(socket().sent.length).toBe(1);
+        expect(store.error).toBeNull();
+        store.notifyTransportCommand(BASE, 'seek', { position: 90 }); // genuine move
+        // The client's 250 ms seek-coalescing window queues the frame (it never
+        // swallows it) — the guard decision is observable IMMEDIATELY in the
+        // store commit: a suppressed call would leave the anchor at 42.5.
+        expect(store.currentSession!.playbackPosition).toBe(90);
+        await new Promise((r) => setTimeout(r, 300)); // past seekThrottleMs
+        expect(socket().sent.length, 'the real move reaches the wire once the coalescing window flushes').toBe(2);
+    });
+
+    it('swallows a delivery failure — a transport event handler must never die over it', async () => {
+        const store = await joinedRoom05();
+        store.onRemoteStateUpdate(cmd({ type: 'pause' }));
+        closeSyncPlayConnection();
+
+        expect(() => store.notifyTransportCommand(BASE, 'play')).not.toThrow();
+        expect(store.error).toBe('Couldn’t deliver the SyncPlay command to the group.');
     });
 });

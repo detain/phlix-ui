@@ -11,6 +11,7 @@ import { nextTick } from 'vue';
 import { setActivePinia, createPinia } from 'pinia';
 import MiniPlayer from './MiniPlayer.vue';
 import { usePlayerStore } from '../stores/usePlayerStore';
+import { useSyncPlayStore } from '../stores/useSyncPlayStore';
 import { useUserItemDataStore } from '../stores/useUserItemDataStore';
 import type { MediaItem } from '../types/media-item';
 
@@ -36,6 +37,7 @@ function media(over: Partial<MediaItem> = {}): MediaItem {
 /** jsdom has no <video> playback — stub play/pause + readable/writable props. */
 function stubVideo(el: HTMLVideoElement, props: Partial<Record<'currentTime' | 'duration' | 'volume' | 'muted' | 'playbackRate' | 'paused', number | boolean>> = {}) {
   const state = { currentTime: 0, duration: 0, volume: 1, muted: false, playbackRate: 1, paused: true, ...props } as Record<string, number | boolean>;
+  stubStates.set(el, state);
   for (const k of Object.keys(state)) {
     Object.defineProperty(el, k, { configurable: true, get: () => state[k], set: (v) => (state[k] = v as number | boolean) });
   }
@@ -652,5 +654,132 @@ describe('MiniPlayer — finish signal (S30)', () => {
     const { w } = mountActive(); // no provider → resumeReporter is null
     expect(() => w.find('.mini__btn--close').trigger('click')).not.toThrow();
     expect(() => w.unmount()).not.toThrow();
+  });
+});
+
+// ── S-ui-player-05 — the dock is a live SyncPlay surface (phlix-ui-player-007) ──
+// When Player unmounts behind the dock, room membership and the 5s report timer
+// stay alive — but nothing fed the dock's <video> position into the store and
+// nothing applied inbound commands, so the group saw a frozen anchor and remote
+// play/pause/seek never reached the visible element. The dock must FEED and APPLY.
+
+const stubStates = new WeakMap<HTMLVideoElement, Record<string, number | boolean>>();
+function state_of(el: HTMLVideoElement): Record<string, number | boolean> {
+  const s = stubStates.get(el);
+  if (!s) throw new Error('video element was never stubbed by stubVideo()');
+  return s;
+}
+
+describe('MiniPlayer — SyncPlay dock liveness (S-ui-player-05)', () => {
+  /** Mirror of Player.test's U-I1 session shape (jsdom can't join a real room). */
+  function syncSession(over: Partial<{ state: 'playing' | 'paused' | 'waiting'; playbackPosition: number; playbackRate: number }> = {}) {
+    return {
+      id: 'sess-1',
+      roomId: 'room-1',
+      createdBy: 'user-1',
+      createdAt: '2026-07-12T00:00:00Z',
+      state: over.state ?? 'playing',
+      currentMediaId: null,
+      playbackPosition: over.playbackPosition ?? 500,
+      playbackRate: over.playbackRate ?? 1,
+      serverTime: 0,
+      lastSync: '2026-07-12T00:00:00Z',
+      activeUsers: [],
+      roles: {},
+    } as unknown as import('../types/syncplay').SyncPlaySession;
+  }
+
+  it('feeds the SyncPlay store its local position on timeupdate — while in a room', async () => {
+    const { video, store } = mountActive();
+    const syncPlay = useSyncPlayStore();
+    syncPlay.currentSession = syncSession({ state: 'playing', playbackPosition: 30 });
+    expect(syncPlay.isInRoom).toBe(true);
+    void store;
+
+    state_of(video).currentTime = 30;
+    state_of(video).duration = 1000;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+
+    // Before the cure the dock fed ONLY usePlayerStore — the report timer then
+    // broadcast a frozen anchor for the rest of the session (finding 007).
+    expect(syncPlay.localPlaybackPosition).toBe(30);
+
+    // And it must KEEP following: the watcher's one-shot apply could mask a
+    // dead feed for the first tick, but the finding is about the timer running
+    // for minutes against a frozen anchor.
+    state_of(video).currentTime = 45;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+    expect(syncPlay.localPlaybackPosition, 'the feed is continuous, not one-shot').toBe(45);
+  });
+
+  it('CONTROL — does NOT feed the SyncPlay store while not in a room', async () => {
+    const { video } = mountActive();
+    const syncPlay = useSyncPlayStore();
+    expect(syncPlay.isInRoom).toBe(false);
+
+    state_of(video).currentTime = 30;
+    state_of(video).duration = 1000;
+    video.dispatchEvent(new Event('timeupdate'));
+    await nextTick();
+
+    expect(syncPlay.localPlaybackPosition).toBe(0);
+    expect(usePlayerStore().position).toBe(30); // the ordinary feed still happens
+  });
+
+  it('applies an inbound PLAY command to the dock element (drift-corrected seek included)', async () => {
+    const { state, store } = mountActive();
+    const syncPlay = useSyncPlayStore();
+
+    // Group is playing far ahead of the parked dock element.
+    syncPlay.currentSession = syncSession({ state: 'playing', playbackPosition: 500 });
+    state.currentTime = 120;
+    state.duration = 1000;
+    await nextTick(); // session watcher run: dock must seek + play
+
+    expect(state.currentTime, 'drift beyond threshold corrects onto the group anchor').toBe(500);
+    expect(state.paused, 'playing group plays the dock element').toBe(false);
+    expect(store.playing).toBe(true); // mirrored into the shared player store
+  });
+
+  it('applies an inbound PAUSE command to the dock element', async () => {
+    const { state } = mountActive();
+    const syncPlay = useSyncPlayStore();
+    state.paused = false;
+
+    syncPlay.currentSession = syncSession({ state: 'paused', playbackPosition: 500 });
+    await nextTick();
+
+    expect(state.paused, 'paused group pauses the dock element').toBe(true);
+  });
+
+  it('a dock-local user pause while in a room attempts a group broadcast (delivery attempt is observable)', async () => {
+    const { video, state } = mountActive();
+    const syncPlay = useSyncPlayStore();
+    syncPlay.currentSession = syncSession({ state: 'playing', playbackPosition: 100 });
+    state.paused = false;
+    await nextTick();
+
+    // No realtime connection exists in jsdom: sendSyncPlayCommand returns false,
+    // so a BROADCAST ATTEMPT surfaces exactly one observable — the delivery error
+    // the store records (never thrown at the transport handler). Silence here
+    // means the dock is deaf to the room (the finding); the attempt means live.
+    video.dispatchEvent(new Event('pause'));
+    await nextTick();
+
+    expect(syncPlay.error).toBe('Couldn’t deliver the SyncPlay command to the group.');
+  });
+
+  it('CONTROL — a dock pause outside any room records no syncplay error', async () => {
+    const { video, state } = mountActive();
+    const syncPlay = useSyncPlayStore();
+    state.paused = false;
+
+    video.dispatchEvent(new Event('pause'));
+    await nextTick();
+
+    expect(syncPlay.isInRoom).toBe(false);
+    expect(syncPlay.error).toBeNull();
   });
 });

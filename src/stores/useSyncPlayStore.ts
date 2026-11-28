@@ -30,6 +30,97 @@ import { useAuthStore } from './useAuthStore';
 export const SYNC_DRIFT_THRESHOLD_SECONDS = 2;
 
 /**
+ * S-ui-player-05 (phlix-ui-player-007/008) — the ONE session-mutation applier
+ * shared by the inbound command path and the sender's own commit.
+ *
+ * Position scale is SECONDS throughout (the ui-internal unit; the ms→s inbound
+ * conversion happens once in `api/syncplay.ts`, S441, and the s→ms outbound
+ * conversion once in `sendCommand`, S293). Returns the next session plus a
+ * `reanchor` flag: every arm that carries a position must ALSO re-anchor the
+ * drift window — the S290 law, stated in full on `onRemoteStateUpdate`.
+ *
+ * The play/pause arms used to perform two successive object replacements (an
+ * optional position stamp, then the state stamp); merged into one replacement
+ * here. No observable change: Vue watchers flush per tick, and every intermediate
+ * field (`playbackRate: command.rate ?? 1` on play, `position !== undefined`
+ * truthiness on all arms) keeps its S290/S287 pinned semantics.
+ */
+function applySyncPlaySessionCommand(
+  session: SyncPlaySession,
+  command: { type: SyncPlayPlaybackCommand['type']; position?: number; rate?: number },
+): { session: SyncPlaySession; reanchor: boolean } {
+  const withPosition =
+    command.position !== undefined ? { playbackPosition: command.position } : {};
+  switch (command.type) {
+    case 'play':
+      return {
+        session: { ...session, ...withPosition, state: 'playing', playbackRate: command.rate ?? 1 },
+        reanchor: command.position !== undefined,
+      };
+    case 'pause':
+      return {
+        session: { ...session, ...withPosition, state: 'paused' },
+        reanchor: command.position !== undefined,
+      };
+    case 'seek':
+      return {
+        session: { ...session, ...withPosition },
+        reanchor: command.position !== undefined,
+      };
+    case 'sync':
+      return {
+        session: {
+          ...session,
+          ...withPosition,
+          ...(command.rate !== undefined ? { playbackRate: command.rate } : {}),
+        },
+        reanchor: command.position !== undefined,
+      };
+    default:
+      return { session, reanchor: false };
+  }
+}
+
+/**
+ * S-ui-player-05 — how close a seek echo may land to the committed group anchor
+ * before it counts as a real position change. The echo returns the position we
+ * just sent (ms-quantized), so genuine redundancy sits within milliseconds; a
+ * deliberate second-scale seek is always further. Half a second absorbs the
+ * scale round-trip without muting anything a member actually did.
+ */
+export const SYNC_ECHO_TOLERANCE_SECONDS = 0.5;
+
+/**
+ * S-ui-player-05 — the pure echo-suppression guard. A transport event (an
+ * element `@play`/`@pause`, a shortcut seek) is only worth broadcasting when it
+ * would CHANGE the group's committed state; because `sendCommand` now commits
+ * the sender's own intent, the server's verbatim echo and the local reactions
+ * to it are, by construction, no-ops here. `null` session is inert in the
+ * store's arms (`isInRoom` guards decide that before this runs) — returning
+ * `true` keeps the guard itself side-effect-free and honest as a pure function.
+ * `'sync'` is an inbound-only shape: it is never broadcast from here.
+ */
+export function shouldBroadcastSyncPlayCommand(
+  session: Pick<SyncPlaySession, 'state' | 'playbackPosition'> | null,
+  type: SyncPlayPlaybackCommand['type'],
+  position?: number,
+): boolean {
+  if (!session) return true;
+  switch (type) {
+    case 'play':
+      return session.state !== 'playing';
+    case 'pause':
+      return session.state !== 'paused';
+    case 'seek':
+      // A seek with no position is a full re-sync request — always meaningful.
+      if (position === undefined) return true;
+      return Math.abs(session.playbackPosition - position) > SYNC_ECHO_TOLERANCE_SECONDS;
+    default:
+      return false;
+  }
+}
+
+/**
  * How often, in milliseconds, this client reports its playback position to the
  * group over the SyncPlay WebSocket.
  *
@@ -545,69 +636,16 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
   function onRemoteStateUpdate(command: SyncPlayPlaybackCommand): void {
     if (!currentSession.value) return;
 
-    // Update session state based on command
-    switch (command.type) {
-      case 'play':
-        if (command.position !== undefined) {
-          _lastDriftCaptureMs = Date.now();
-          currentSession.value = {
-            ...currentSession.value,
-            playbackPosition: command.position,
-          };
-        }
-        // The inbound adapter (`api/syncplay.ts` `onPlaybackSync`) only ever
-        // synthesises 'play'/'pause' from a PlaybackState frame — a 'sync' arm
-        // never arrives — so the rate MUST be pinned here too. Without it a
-        // member that joined while paused kept `playbackRate: 0` after the
-        // group's play broadcast: `driftAmount` then extrapolated the expected
-        // position at 0× (frozen anchor) and `syncStatus` flapped false
-        // `outOfSync`. `command.rate ?? 1`: a play broadcast without a rate
-        // means normal speed; the wire's default.
-        currentSession.value = {
-          ...currentSession.value,
-          state: 'playing',
-          playbackRate: command.rate ?? 1,
-        };
-        break;
-      case 'pause':
-        if (command.position !== undefined) {
-          _lastDriftCaptureMs = Date.now();
-          currentSession.value = {
-            ...currentSession.value,
-            playbackPosition: command.position,
-          };
-        }
-        currentSession.value = {
-          ...currentSession.value,
-          state: 'paused',
-        };
-        break;
-      case 'seek':
-        if (command.position !== undefined) {
-          _lastDriftCaptureMs = Date.now();
-          currentSession.value = {
-            ...currentSession.value,
-            playbackPosition: command.position,
-          };
-        }
-        break;
-      case 'sync':
-        // Full state sync - update all fields
-        if (command.position !== undefined) {
-          _lastDriftCaptureMs = Date.now();
-          currentSession.value = {
-            ...currentSession.value,
-            playbackPosition: command.position,
-          };
-        }
-        if (command.rate !== undefined) {
-          currentSession.value = {
-            ...currentSession.value,
-            playbackRate: command.rate,
-          };
-        }
-        break;
-    }
+    // S-ui-player-05: the four arms now live in the module-level pure applier
+    // `applySyncPlaySessionCommand` — the SAME mutation the sender performs on
+    // a successful outbound command (echo suppression: see
+    // `shouldBroadcastSyncPlayCommand`). Semantics are byte-preserved: the
+    // `rate ?? 1` pin on play (the adapter's PlaybackState→play/pause mapping,
+    // see the S290 note above), the `position !== undefined` truthiness law on
+    // every arm, and the mandatory re-anchor for position-carrying updates.
+    const applied = applySyncPlaySessionCommand(currentSession.value, command);
+    if (applied.reanchor) _lastDriftCaptureMs = Date.now();
+    currentSession.value = applied.session;
 
     // Update members list if included
     // (Server may send updated active users in some responses)
@@ -655,6 +693,50 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     if (!sendSyncPlayCommand(command)) {
       error.value = t('syncplay.commandNotDelivered');
       throw new SyncPlayCommandNotDeliveredError(type);
+    }
+    // S-ui-player-05 — the sender commits its OWN intent the moment the frame
+    // is on the wire (failed sends never commit, pinned above). This is what
+    // makes echoes redundant: the server's verbatim echo (SPEC.md echo
+    // FALLBACK) and any local element event reacting to the send meet a
+    // session that already reflects the command and are suppressed by
+    // `shouldBroadcastSyncPlayCommand` instead of bouncing back out. Note the
+    // scale: commit in SECONDS from `options`, never the ms-converted wire
+    // object built above.
+    if (currentSession.value) {
+      const applied = applySyncPlaySessionCommand(currentSession.value, {
+        type,
+        position: options?.position,
+        rate: options?.rate,
+      });
+      if (applied.reanchor) _lastDriftCaptureMs = Date.now();
+      currentSession.value = applied.session;
+    }
+  }
+
+  /**
+   * S-ui-player-05 — the transport-event entry point for Player / dock element
+   * play/pause/seek: broadcast ONLY when the event would change the group's
+   * committed state, i.e. never for echoes. Delivery failure is swallowed here
+   * on purpose: M-UI-12 already recorded it on the store's `error` channel
+   * (and the wire error listener), and an auto-fired media event must not be
+   * able to kill the rest of a transport handler. User-invoked sends keep the
+   * `sendCommand` throw so their catch/toast (SyncPlayControls) still lands.
+   * The silent no-session arm mirrors M-UI-12's room-vanished law — NOT a
+   * failed command; the components' `isInRoom` guards never route here outside
+   * a room anyway, pinned as a store-side control.
+   */
+  function notifyTransportCommand(
+    _apiBase: string,
+    type: SyncPlayPlaybackCommand['type'],
+    options?: { position?: number },
+  ): void {
+    const session = currentSession.value;
+    if (!session) return;
+    if (!shouldBroadcastSyncPlayCommand(session, type, options?.position)) return;
+    try {
+      sendCommand(_apiBase, type, options);
+    } catch {
+      // Recorded on `error.value`; intentionally non-fatal for transport events.
     }
   }
 
@@ -743,6 +825,7 @@ export const useSyncPlayStore = defineStore('phlix-syncplay', () => {
     leaveRoom,
     onRemoteStateUpdate,
     sendCommand,
+    notifyTransportCommand,
     refreshState,
     refreshMembers,
     clearError,
