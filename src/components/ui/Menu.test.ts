@@ -8,7 +8,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import Menu from './Menu.vue';
-import { nextTick } from 'vue';
+import { nextTick, defineComponent, h } from 'vue';
 
 const items = [
   { label: 'Watched' },
@@ -368,6 +368,30 @@ describe('Menu', () => {
     await nextTick();
     expect(getMenuEl()).toBeNull();
     expect(w.emitted('select')).toBeFalsy();
+    w.unmount();
+  });
+
+  it('gives every instance a distinct non-empty menu id', async () => {
+    // Guards the per-instance id property (S-ui-design-01): two Menus in ONE
+    // render (one app tree — useId uniqueness is app-scoped, as in the real
+    // SPAs) must never collide on the teleported list id.
+    const TwoMenus = defineComponent({
+      setup() {
+        return () =>
+          h('div', [
+            h(Menu, { items, open: true }),
+            h(Menu, { items, open: true }),
+          ]);
+      },
+    });
+    const w = mount(TwoMenus, { attachTo: document.body });
+    await flushPromises();
+    await nextTick();
+    const menus = Array.from(document.querySelectorAll('[role="menu"]'));
+    expect(menus.length).toBe(2);
+    const ids = menus.map((el) => el.id);
+    expect(ids.every((id) => id !== '')).toBe(true);
+    expect(new Set(ids).size).toBe(2);
     w.unmount();
   });
 });

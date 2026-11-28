@@ -21,7 +21,7 @@
  * Flips at viewport edges.
  * Reduced-motion aware.
  */
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 import { useMessages } from '../../composables/useMessages';
 
 const { t } = useMessages();
@@ -64,7 +64,7 @@ const emit = defineEmits<{
   (e: 'select', item: MenuItem, index: number): void;
 }>();
 
-const baseId = crypto.randomUUID();
+const baseId = useId();
 const menuId = computed(() => `${baseId}-menu`);
 
 const isOpen = ref(props.open);

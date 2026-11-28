@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — Menu instance-id seam 2026-11-27 (S-ui-design-01)
+
+### Fixed
+
+- Menu: the teleported menu-list id now derives from the Vue `useId()` instance seam (like all ten sibling primitives) instead of a bare `crypto.randomUUID()`, which exists only in secure contexts and threw at instance creation on plain-HTTP origins and old embedded WebViews — killing every Menu on tizen/roku-class surfaces (S-ui-design-01; phlix-ui-design-001). A new observation test pins distinct non-empty ids for two Menus mounted in one render (mutation-convicted against a hardcoded id).
+
 ## Unreleased — player input arbitration 2026-11-27 (S-ui-player-09)
 
 ### Fixed
