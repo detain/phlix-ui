@@ -257,7 +257,8 @@ onBeforeUnmount(() => {
 
 <template>
   <Transition name="mini">
-    <div v-if="visible" class="mini" role="region" :aria-label="t('player.miniPlayer')">
+    <div v-if="visible" class="mini" role="region" data-player-surface="" :aria-label="t('player.miniPlayer')">
+      <!-- data-player-surface dock parity marker for D-pad input arbitration [S-ui-player-09] -->
       <video
         ref="videoRef"
         class="mini__video"

@@ -1843,11 +1843,13 @@ onBeforeUnmount(() => {
   <div
     ref="containerRef"
     class="player"
+    data-player-surface=""
     :class="{ 'is-chrome-hidden': !showChrome, 'is-theater': theater }"
     @pointermove="revealChrome"
     @pointerdown="revealChrome"
     @focusin="revealChrome"
   >
+    <!-- data-player-surface marks this surface for D-pad input arbitration [S-ui-player-09] -->
     <!-- ambient ("Ambilight") glow — behind the stage, spills beyond the frame -->
     <AmbientCanvas
       :video="videoRef"

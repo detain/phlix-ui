@@ -8,6 +8,12 @@ re-labels ship as new notes on top. (See M-UI-41/W-min186 for the law's own firs
 
 The `###` headings under an entry fall in three classes: Keep-a-Changelog groups (`Added`, `Changed`, `Fixed`, `Removed`, `Security`, `Dependency`), the `Release` heading for release-ritual prose, and program-ticker headings (lane/wave/step ids such as `ui` or `review-fix`) that record which fix-program step landed the change.
 
+## Unreleased — player input arbitration 2026-11-27 (S-ui-player-09)
+
+### Fixed
+
+- Player: the Player and MiniPlayer root surfaces now carry a `data-player-surface` marker so D-pad presses consumed by player shortcuts (±5s seek / volume) stop also moving spatial focus (S-ui-player-09; the engine-side `defaultPrevented`/containment half is a routed sibling step).
+
 ## 1.0.3 — fix-forward correction (2026-11-20)
 
 Two statements in the `## 1.0.3 - 2026-11-21` section below are false-to-disk, named by
