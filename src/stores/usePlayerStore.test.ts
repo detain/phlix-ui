@@ -765,6 +765,104 @@ describe('ui-min2w — a corrupted volume can never poison the player store', ()
   });
 });
 
+// S-ui-once-16 (r1 Minor): seedFromPreferences' two offset re-seed arms mirror
+// the defaultVolume discipline pinned above — the persisted 'phlix.prefs' blob
+// is foreign JSON hydrated verbatim, so garbage (NaN, out-of-range, string,
+// null) must refuse whole and keep the last good store value; a well-formed
+// value re-seeds. One pin per arm, per channel.
+describe('usePlayerStore — seedFromPreferences offset re-seed arms (S-ui-once-16)', () => {
+  it('refuses a non-finite persisted subtitleOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setSubtitleOffset(0.3);
+    prefs.subtitleOffsetSeconds = NaN; // what a corrupt blob hydrates verbatim
+    p.seedFromPreferences();
+    expect(p.subtitleOffset).toBe(0.3); // refused whole — the last good value stands
+  });
+
+  it('clamps an out-of-range persisted subtitleOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setSubtitleOffset(0.3);
+    prefs.subtitleOffsetSeconds = 50; // readStoredPreferences shallow-spreads verbatim
+    p.seedFromPreferences();
+    expect(p.subtitleOffset).toBe(10); // normalizeMediaOffset's ±10 clamp on accept
+  });
+
+  it('refuses a STRING persisted subtitleOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setSubtitleOffset(0.3);
+    // '1.5' is what a hand-edited localStorage blob stores; the typeof branch refuses it.
+    prefs.subtitleOffsetSeconds = '1.5' as unknown as number;
+    p.seedFromPreferences();
+    expect(p.subtitleOffset).toBe(0.3); // refused — never coerced to 1.5, never poisoned
+  });
+
+  it('refuses a NULL persisted subtitleOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setSubtitleOffset(0.3);
+    prefs.subtitleOffsetSeconds = null as unknown as number; // JSON null from a key-cleared write
+    p.seedFromPreferences();
+    expect(p.subtitleOffset).toBe(0.3);
+  });
+
+  it('still re-seeds a well-formed subtitleOffsetSeconds (no behavior drift)', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setSubtitleOffset(0.3);
+    prefs.subtitleOffsetSeconds = 2.5; // direct hydrate, bypassing the action mirror
+    p.seedFromPreferences();
+    expect(p.subtitleOffset).toBe(2.5);
+  });
+
+  it('refuses a non-finite persisted audioOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setAudioOffset(0.5);
+    prefs.audioOffsetSeconds = Infinity;
+    p.seedFromPreferences();
+    expect(p.audioOffset).toBe(0.5);
+  });
+
+  it('clamps an out-of-range persisted audioOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setAudioOffset(0.5);
+    prefs.audioOffsetSeconds = -50;
+    p.seedFromPreferences();
+    expect(p.audioOffset).toBe(-10);
+  });
+
+  it('refuses a STRING persisted audioOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setAudioOffset(0.5);
+    prefs.audioOffsetSeconds = '0.7' as unknown as number;
+    p.seedFromPreferences();
+    expect(p.audioOffset).toBe(0.5);
+  });
+
+  it('refuses a NULL persisted audioOffsetSeconds', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setAudioOffset(0.5);
+    prefs.audioOffsetSeconds = null as unknown as number;
+    p.seedFromPreferences();
+    expect(p.audioOffset).toBe(0.5);
+  });
+
+  it('still re-seeds a well-formed audioOffsetSeconds (no behavior drift)', () => {
+    const prefs = usePreferencesStore();
+    const p = usePlayerStore();
+    p.setAudioOffset(0.5);
+    prefs.audioOffsetSeconds = -1.2; // direct hydrate, bypassing the action mirror
+    p.seedFromPreferences();
+    expect(p.audioOffset).toBe(-1.2);
+  });
+});
+
 // The two mutes are different state: what the autoplay fallback forces belongs
 // to its source; what the user chooses outlives every media change. These pins
 // redden if the singleton `muted` stickiness is ever reintroduced.
